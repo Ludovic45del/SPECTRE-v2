@@ -30,4 +30,4 @@ whitenoise==6.7.0                       # Static file serving
 
 # -- Database ----------------------------------------------------------------
 
-psycopg2-binary==2.9.10                 # PostgreSQL adapter
+psycopg2-binary==2.9.12                 # PostgreSQL adapter
