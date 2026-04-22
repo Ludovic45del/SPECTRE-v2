@@ -13,7 +13,7 @@ pre-commit==3.7.1                       # Git pre-commit hooks
 pytest==8.3.4                           # Test runner
 pytest-django==4.9.0                    # Django integration for pytest
 pytest-cov==6.0.0                       # Coverage plugin for pytest
-coverage==7.6.9                         # Code coverage measurement
+coverage==7.13.5                         # Code coverage measurement
 factory-boy==3.3.1                      # Test data factories
 mutmut==2.5.1                           # Mutation testing
 
