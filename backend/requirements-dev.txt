@@ -5,7 +5,7 @@
 black==24.4.2                           # Code formatter
 isort==5.13.2                           # Import sorter
 flake8==7.0.0                           # Linter
-pre-commit==3.7.1                       # Git pre-commit hooks
+pre-commit==4.6.0                       # Git pre-commit hooks
 
 
 # -- Testing -----------------------------------------------------------------
