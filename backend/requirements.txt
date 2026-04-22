@@ -19,7 +19,7 @@ django-cors-headers==4.6.0
 
 # -- Configuration -----------------------------------------------------------
 
-python-dotenv==1.0.1                    # .env file loading
+python-dotenv==1.2.2                    # .env file loading
 
 
 # -- Production Server -------------------------------------------------------
