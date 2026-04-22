@@ -1,0 +1,248 @@
+/**
+ * User Zod Schema - Validation & Transformation
+ * @module entities/user/model
+ *
+ * Source of Truth: backend/app/domain/user/models/user_bean.py
+ * API Format: snake_case -> Domain Format: camelCase
+ */
+
+import { z } from 'zod';
+
+/**
+ * Roles metier SPECTRE
+ */
+export const SPECTRE_ROLES = [
+    'chef_labo',
+    'iec',
+    'rce',
+    'assembleur',
+    'metrologue',
+    'cryogenie',
+    'stagiaire',
+    'alternant',
+] as const;
+
+export type SpectreRole = (typeof SPECTRE_ROLES)[number];
+
+export const ROLE_LABELS: Record<SpectreRole, string> = {
+    chef_labo: 'Chef de laboratoire',
+    iec: 'IEC',
+    rce: 'RCE',
+    assembleur: 'Assembleur',
+    metrologue: 'Métrologue',
+    cryogenie: 'Cryogénie',
+    stagiaire: 'Stagiaire',
+    alternant: 'Alternant',
+};
+
+const PERMISSION_GROUPS = ['admin', 'operateur', 'lecteur'] as const;
+export type PermissionGroup = (typeof PERMISSION_GROUPS)[number];
+export const PERMISSION_GROUP_LABELS: Record<PermissionGroup, string> = {
+    admin: 'Administrateur',
+    operateur: 'Opérateur',
+    lecteur: 'Lecteur',
+};
+
+/**
+ * Raw API response schema (snake_case from Backend)
+ */
+const UserApiSchema = z.object({
+    uuid: z.string().uuid(),
+    username: z.string(),
+    first_name: z.string(),
+    last_name: z.string(),
+    role: z.enum(SPECTRE_ROLES),
+    permission_group: z.string(),
+    laboratoire: z.string(),
+    service: z.string(),
+    numero: z.string(),
+    bureau: z.string(),
+    is_active: z.boolean(),
+    force_password_change: z.boolean(),
+    last_login: z.string().nullable(),
+    created_at: z.string().nullable(),
+    updated_at: z.string().nullable(),
+});
+
+/**
+ * Shared mapping function: snake_case API -> camelCase domain
+ */
+function mapUserApiToUser(api: z.infer<typeof UserApiSchema>) {
+    return {
+        uuid: api.uuid,
+        username: api.username,
+        firstName: api.first_name,
+        lastName: api.last_name,
+        role: api.role as SpectreRole,
+        permissionGroup: api.permission_group,
+        laboratoire: api.laboratoire,
+        service: api.service,
+        numero: api.numero,
+        bureau: api.bureau,
+        isActive: api.is_active,
+        forcePasswordChange: api.force_password_change,
+        lastLogin: api.last_login,
+        createdAt: api.created_at,
+        updatedAt: api.updated_at,
+    };
+}
+
+/**
+ * Domain schema with camelCase transformation
+ */
+export const UserSchema = UserApiSchema.transform(mapUserApiToUser);
+
+export type User = z.infer<typeof UserSchema>;
+
+export const UserListSchema = z.array(UserSchema);
+
+/**
+ * Schema de reponse creation (inclut le lien d'activation à usage unique).
+ * Le mot de passe en clair n'est plus retourné par l'API (fix audit sécurité).
+ */
+const UserCreatedApiSchema = UserApiSchema.extend({
+    activation_url: z.string(),
+    activation_token_ttl_hours: z.number().int().positive(),
+});
+
+export const UserCreatedSchema = UserCreatedApiSchema.transform((api) => ({
+    ...mapUserApiToUser(api),
+    activationUrl: api.activation_url,
+    activationTokenTtlHours: api.activation_token_ttl_hours,
+}));
+
+export type UserCreated = z.infer<typeof UserCreatedSchema>;
+
+/**
+ * Schema reponse reset password — renvoie un lien d'activation signé single-use,
+ * plus aucun mot de passe en clair (fix audit sécurité).
+ */
+export const PasswordResetResponseSchema = z
+    .object({
+        message: z.string(),
+        username: z.string(),
+        activation_url: z.string(),
+        activation_token_ttl_hours: z.number().int().positive(),
+    })
+    .transform((api) => ({
+        message: api.message,
+        username: api.username,
+        activationUrl: api.activation_url,
+        activationTokenTtlHours: api.activation_token_ttl_hours,
+    }));
+
+export type PasswordResetResponse = z.infer<typeof PasswordResetResponseSchema>;
+
+/**
+ * Schema pour la définition du mot de passe initial via lien d'activation.
+ */
+export const SetInitialPasswordFormSchema = z
+    .object({
+        newPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+        confirmPassword: z.string().min(1, 'La confirmation est requise'),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+        message: 'Les mots de passe ne correspondent pas',
+        path: ['confirmPassword'],
+    });
+
+export type SetInitialPasswordForm = z.infer<typeof SetInitialPasswordFormSchema>;
+
+export const SetInitialPasswordResponseSchema = z.object({
+    message: z.string(),
+});
+
+export type SetInitialPasswordResponse = z.infer<typeof SetInitialPasswordResponseSchema>;
+
+/**
+ * Schema pour la creation d'un utilisateur (input formulaire)
+ */
+export const UserCreateFormSchema = z.object({
+    username: z.string().min(3, 'Le matricule doit contenir au moins 3 caractères'),
+    firstName: z.string().optional().default(''),
+    lastName: z.string().optional().default(''),
+    role: z.enum(SPECTRE_ROLES, { required_error: 'Le rôle est requis' }),
+    laboratoire: z.string().optional().default(''),
+    service: z.string().optional().default(''),
+    numero: z.string().optional().default(''),
+    bureau: z.string().optional().default(''),
+    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),
+});
+
+export type UserCreateForm = z.infer<typeof UserCreateFormSchema>;
+
+/**
+ * Transform UserCreateForm to API format (camelCase -> snake_case)
+ */
+export function userCreateToApi(data: UserCreateForm): Record<string, unknown> {
+    const payload: Record<string, unknown> = {
+        username: data.username,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role: data.role,
+        laboratoire: data.laboratoire,
+        service: data.service,
+        numero: data.numero,
+        bureau: data.bureau,
+    };
+    if (data.password) {
+        payload.password = data.password;
+    }
+    return payload;
+}
+
+/**
+ * Schema pour la modification d'un utilisateur
+ */
+export const UserUpdateFormSchema = z.object({
+    firstName: z.string().optional().default(''),
+    lastName: z.string().optional().default(''),
+    role: z.enum(SPECTRE_ROLES, { required_error: 'Le rôle est requis' }),
+    laboratoire: z.string().optional().default(''),
+    service: z.string().optional().default(''),
+    numero: z.string().optional().default(''),
+    bureau: z.string().optional().default(''),
+});
+
+export type UserUpdateForm = z.infer<typeof UserUpdateFormSchema>;
+
+export function userUpdateToApi(data: UserUpdateForm): Record<string, unknown> {
+    return {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        role: data.role,
+        laboratoire: data.laboratoire,
+        service: data.service,
+        numero: data.numero,
+        bureau: data.bureau,
+    };
+}
+
+/**
+ * Schema pour le changement de mot de passe
+ */
+export const ChangePasswordFormSchema = z
+    .object({
+        currentPassword: z.string().min(1, 'Le mot de passe actuel est requis'),
+        newPassword: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères'),
+        confirmPassword: z.string().min(1, 'La confirmation est requise'),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+        message: 'Les mots de passe ne correspondent pas',
+        path: ['confirmPassword'],
+    })
+    .refine((data) => data.currentPassword !== data.newPassword, {
+        message: "Le nouveau mot de passe doit être différent de l'ancien",
+        path: ['newPassword'],
+    });
+
+export type ChangePasswordForm = z.infer<typeof ChangePasswordFormSchema>;
+
+/**
+ * Schema reponse changement de mot de passe
+ */
+export const ChangePasswordResponseSchema = z.object({
+    message: z.string(),
+});
+
+export type ChangePasswordResponse = z.infer<typeof ChangePasswordResponseSchema>;

@@ -1,0 +1,33 @@
+# =============================================================================
+#  SPECTRE - Backend Runtime Dependencies
+# =============================================================================
+#
+#  Python 3.11 | Django 5.1 | Django REST Framework 3.15
+#
+#  Install: pip install -r requirements.txt
+#  Dev extras (testing, linting, seeding): pip install -r requirements-dev.txt
+# =============================================================================
+
+
+# -- Django & REST Framework -------------------------------------------------
+
+django==5.1.4
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.6.0
+
+
+# -- Configuration -----------------------------------------------------------
+
+python-dotenv==1.0.1                    # .env file loading
+
+
+# -- Production Server -------------------------------------------------------
+
+gunicorn==22.0.0                        # WSGI HTTP server
+whitenoise==6.7.0                       # Static file serving
+
+
+# -- Database ----------------------------------------------------------------
+
+psycopg2-binary==2.9.10                 # PostgreSQL adapter

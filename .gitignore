@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+.env
+.env.local
+.env.*.local
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+htmlcov/
+*.cover
+*.log
+.mypy_cache
+.pytest_cache/
+.hypothesis/
+.benchmarks/
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+
+# JS/TS
+node_modules/
+dist/
+build/
+coverage/
+.next/
+out/
+.vercel
+.turbo
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite generated files
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# Mutation testing cache
+.mutmut-cache
+backend/.mutmut-cache
+
+# Docs (internal notes)
+docs/
+
+# Artifacts
+.claude/

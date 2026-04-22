@@ -1,0 +1,60 @@
+name: Mutation Testing (Weekly)
+
+on:
+  schedule:
+    # Every Sunday at 03:00 UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch: # Manual trigger
+
+env:
+  PYTHON_VERSION: '3.11'
+  DJANGO_SECRET_KEY: 'ci-mutation-test-key'
+  DEBUG: 'true'
+
+jobs:
+  mutation-backend:
+    name: Backend Mutation Tests (mutmut)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install junit-xml==1.9
+
+      - name: Run mutation tests on domain services
+        run: |
+          mutmut run \
+            --paths-to-mutate=app/domain/ \
+            --tests-dir=app/tests/unit/ \
+            --runner="python -m pytest app/tests/unit -x -q --tb=no --no-header -m unit" \
+            --no-progress \
+            || true
+
+      - name: Show mutation results
+        run: mutmut results
+
+      - name: Generate HTML report
+        if: always()
+        run: |
+          mutmut html || true
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: backend/html/
+          retention-days: 30

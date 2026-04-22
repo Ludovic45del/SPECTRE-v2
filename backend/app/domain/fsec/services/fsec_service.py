@@ -1,0 +1,168 @@
+"""Service FSEC - Logique métier pure."""
+
+import logging
+from typing import Any, Dict, List
+
+from app.domain.exceptions import ConflictException, NotFoundException
+from app.domain.fsec.interface.fsec_repository import IFsecRepository
+from app.domain.fsec.models.fsec_bean import FsecBean
+
+logger = logging.getLogger(__name__)
+
+
+def create_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
+    """Crée un nouveau FSEC après validation."""
+    if bean.campaign_id:
+        if repository.exists_by_campaign_and_name(bean.campaign_id, bean.name):
+            raise ConflictException(
+                "campaign_id/name", f"{bean.campaign_id}/{bean.name}"
+            )
+    else:
+        if repository.exists_by_name(bean.name):
+            raise ConflictException("name", bean.name)
+    result = repository.create(bean)
+    logger.info(f"Created FSEC version_uuid={result.version_uuid}, name={result.name}")
+    return result
+
+
+def get_fsec_by_version_uuid(
+    repository: IFsecRepository, version_uuid: str
+) -> FsecBean:
+    """Récupère un FSEC par son version_uuid (PK)."""
+    bean = repository.get_by_version_uuid(version_uuid)
+    if bean is None:
+        raise NotFoundException("FSEC", version_uuid)
+    return bean
+
+
+def get_fsec_versions(repository: IFsecRepository, fsec_uuid: str) -> List[FsecBean]:
+    """Récupère toutes les versions d'un FSEC."""
+    return repository.get_by_fsec_uuid(fsec_uuid)
+
+
+def get_active_fsec(repository: IFsecRepository, fsec_uuid: str) -> FsecBean:
+    """Récupère la version active d'un FSEC."""
+    bean = repository.get_active_by_fsec_uuid(fsec_uuid)
+    if bean is None:
+        raise NotFoundException("FSEC (active)", fsec_uuid)
+    return bean
+
+
+def get_all_fsecs(
+    repository: IFsecRepository, limit: int = None, offset: int = 0
+) -> List[FsecBean]:
+    """Récupère tous les FSECs."""
+    return repository.get_all(limit=limit, offset=offset)
+
+
+def count_all_fsecs(repository: IFsecRepository) -> int:
+    """Retourne le nombre total de FSECs."""
+    return repository.count_all()
+
+
+def get_all_active_fsecs(repository: IFsecRepository) -> List[FsecBean]:
+    """Récupère tous les FSECs actifs."""
+    return repository.get_all_active()
+
+
+def get_fsecs_by_campaign(
+    repository: IFsecRepository, campaign_id: str
+) -> List[FsecBean]:
+    """Récupère tous les FSECs d'une campagne."""
+    return repository.get_by_campaign_id(campaign_id)
+
+
+def update_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
+    """Met à jour un FSEC."""
+    existing = repository.get_by_version_uuid(bean.version_uuid)
+    if existing is None:
+        raise NotFoundException("FSEC", bean.version_uuid)
+
+    # Vérifier les doublons nom/campagne si le nom ou la campagne a changé
+    name_changed = bean.name != existing.name
+    campaign_changed = bean.campaign_id != existing.campaign_id
+    if (name_changed or campaign_changed) and bean.campaign_id:
+        if repository.exists_by_campaign_and_name(bean.campaign_id, bean.name):
+            raise ConflictException(
+                "campaign_id/name", f"{bean.campaign_id}/{bean.name}"
+            )
+
+    result = repository.update(bean)
+    logger.info(f"Updated FSEC version_uuid={bean.version_uuid}")
+    return result
+
+
+def patch_fsec(
+    repository: IFsecRepository, version_uuid: str, partial_data: Dict[str, Any]
+) -> FsecBean:
+    """Met à jour partiellement un FSEC (PATCH).
+
+    Args:
+        repository: Le repository FSEC
+        version_uuid: Version UUID du FSEC
+        partial_data: Dictionnaire des champs à mettre à jour
+
+    Returns:
+        Le bean FSEC mis à jour
+
+    Raises:
+        NotFoundException: Si le FSEC n'existe pas
+        ConflictException: Si le nom/campagne résultant est en conflit
+    """
+    existing = repository.get_by_version_uuid(version_uuid)
+    if existing is None:
+        raise NotFoundException("FSEC", version_uuid)
+
+    # Champs protégés qui ne peuvent pas être modifiés via PATCH
+    protected_fields = {
+        "version_uuid",
+        "fsec_uuid",
+        "created_at",
+        "last_updated",
+        "is_active",
+    }
+
+    # Sauvegarde des anciennes valeurs pour vérification de conflit
+    old_name = existing.name
+    old_campaign_id = existing.campaign_id
+
+    # Fusion des données
+    for key, value in partial_data.items():
+        if key in protected_fields:
+            continue
+        if hasattr(existing, key):
+            setattr(existing, key, value)
+
+    # Vérification conflit nom/campagne APRÈS fusion
+    name_changed = existing.name != old_name
+    campaign_changed = existing.campaign_id != old_campaign_id
+    if (name_changed or campaign_changed) and existing.campaign_id:
+        if repository.exists_by_campaign_and_name(existing.campaign_id, existing.name):
+            raise ConflictException(
+                "campaign_id/name", f"{existing.campaign_id}/{existing.name}"
+            )
+
+    return repository.update(existing)
+
+
+def delete_fsec(repository: IFsecRepository, version_uuid: str) -> bool:
+    """Supprime un FSEC."""
+    if not repository.delete(version_uuid):
+        raise NotFoundException("FSEC", version_uuid)
+    logger.info(f"Deleted FSEC version_uuid={version_uuid}")
+    return True
+
+
+def create_new_version(
+    repository: IFsecRepository, fsec_uuid: str, new_bean: FsecBean
+) -> FsecBean:
+    """Crée une nouvelle version d'un FSEC existant.
+
+    Désactive toutes les versions existantes et crée la nouvelle version active.
+    L'atomicité est garantie par le repository (select_for_update + transaction unique).
+    """
+    result = repository.create_version_atomic(fsec_uuid, new_bean)
+    logger.info(
+        f"Created new version for fsec_uuid={fsec_uuid}, new version_uuid={result.version_uuid}"
+    )
+    return result

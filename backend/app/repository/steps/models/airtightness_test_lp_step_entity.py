@@ -1,0 +1,30 @@
+"""Entité AIRTIGHTNESS_TEST_LP_STEP - Test d'étanchéité basse pression."""
+
+from django.db import models
+
+from app.repository.fsec.models.fsec_entity import FsecEntity
+from app.repository.steps.models.base_step_entity import BaseStepEntity
+
+
+class AirtightnessTestLpStepEntity(BaseStepEntity):
+    """Entité représentant un test d'étanchéité basse pression."""
+
+    class Meta:
+        app_label = "app"
+        db_table = "AIRTIGHTNESS_TEST_LP_STEP"
+        indexes = [
+            models.Index(fields=["fsec_version_id"], name="airtight_lp_fsec_idx"),
+        ]
+
+    fsec_version_id = models.ForeignKey(
+        FsecEntity,
+        on_delete=models.PROTECT,
+        db_column="fsec_version_id",
+        related_name="airtightness_test_lp_steps",
+        to_field="version_uuid",
+    )
+    leak_rate_dtri = models.CharField(max_length=200, null=True, blank=True)
+    gas_type = models.CharField(max_length=200, null=True, blank=True)
+    experiment_pressure = models.FloatField(null=True, blank=True)
+    airtightness_test_duration = models.FloatField(null=True, blank=True)
+    date_of_fulfilment = models.DateField(null=True, blank=True)

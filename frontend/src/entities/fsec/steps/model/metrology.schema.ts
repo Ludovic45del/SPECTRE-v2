@@ -1,0 +1,32 @@
+/**
+ * Metrology Step Schema
+ * @module entities/steps/model
+ *
+ * Source: cible/domain/steps/models/metrology_step_bean.py
+ */
+
+import { z } from 'zod';
+
+export const MetrologyStepApiSchema = z.object({
+    uuid: z.string().uuid(),
+    fsec_version_id: z.string().uuid(),
+    machine_id: z.number().int().nullable(),
+    rack_id: z.number().int().nullable(),
+    metrologist_name: z.string().nullable(),
+    date: z.string().nullable(),
+    comments: z.string().nullable(),
+});
+
+export const MetrologyStepSchema = MetrologyStepApiSchema.transform((api) => ({
+    uuid: api.uuid,
+    fsecVersionId: api.fsec_version_id,
+    machineId: api.machine_id,
+    rackId: api.rack_id,
+    metrologistName: api.metrologist_name,
+    date: api.date ? new Date(api.date) : null,
+    comments: api.comments,
+}));
+
+export type MetrologyStep = z.infer<typeof MetrologyStepSchema>;
+
+export const MetrologyStepListSchema = z.array(MetrologyStepSchema);

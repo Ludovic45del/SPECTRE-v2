@@ -1,0 +1,146 @@
+/**
+ * Create FA Form Fields
+ * @module features/fa/create-fa
+ *
+ * Form fields for the Phase Ouvert section of a new FA.
+ */
+
+import { memo } from 'react';
+import { Stack, TextField, Typography, Divider } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Controller } from 'react-hook-form';
+import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
+
+import type { CampaignWithRelations } from '@entities/campaign';
+import type { Fsec } from '@entities/fsec';
+import type { CreateFaForm } from '../model';
+import { CampaignFsecSelector } from './CampaignFsecSelector';
+
+interface CreateFaFormFieldsProps {
+    control: Control<CreateFaForm>;
+    errors: FieldErrors<CreateFaForm>;
+    setValue: UseFormSetValue<CreateFaForm>;
+    campaigns: CampaignWithRelations[] | undefined;
+    availableFsecs: Fsec[];
+    selectedCampaignId: string;
+}
+
+export const CreateFaFormFields = memo(function CreateFaFormFields({
+    control,
+    errors,
+    setValue,
+    campaigns,
+    availableFsecs,
+    selectedCampaignId,
+}: CreateFaFormFieldsProps) {
+    return (
+        <Stack spacing={3}>
+            <CampaignFsecSelector
+                control={control}
+                errors={errors}
+                setValue={setValue}
+                campaigns={campaigns}
+                availableFsecs={availableFsecs}
+                selectedCampaignId={selectedCampaignId}
+            />
+
+            <Divider sx={{ my: 1 }} />
+
+            <Typography variant="subtitle2" color="text.secondary">
+                Informations de l'anomalie
+            </Typography>
+
+            <Controller
+                name="discoverer"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Découvreur"
+                        required
+                        error={Boolean(errors.discoverer)}
+                        helperText={errors.discoverer?.message}
+                        fullWidth
+                    />
+                )}
+            />
+
+            <Controller
+                name="eventDate"
+                control={control}
+                render={({ field }) => (
+                    <DatePicker
+                        label="Date de l'évènement"
+                        value={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        slotProps={{
+                            textField: {
+                                required: true,
+                                error: Boolean(errors.eventDate),
+                                helperText: errors.eventDate?.message,
+                                fullWidth: true,
+                            },
+                        }}
+                    />
+                )}
+            />
+
+            <Controller
+                name="observation"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Constat"
+                        required
+                        multiline
+                        rows={2}
+                        error={Boolean(errors.observation)}
+                        helperText={errors.observation?.message}
+                        fullWidth
+                    />
+                )}
+            />
+
+            <Controller
+                name="locationEquipment"
+                control={control}
+                render={({ field }) => (
+                    <TextField {...field} value={field.value ?? ''} label="Lieu / Équipement" fullWidth />
+                )}
+            />
+
+            <Controller
+                name="quickAnalysis"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Analyse rapide de l'évènement"
+                        required
+                        multiline
+                        rows={2}
+                        error={Boolean(errors.quickAnalysis)}
+                        helperText={errors.quickAnalysis?.message}
+                        fullWidth
+                    />
+                )}
+            />
+
+            <Controller
+                name="immediateMeasures"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        value={field.value ?? ''}
+                        label="Mesures immédiates"
+                        multiline
+                        rows={2}
+                        fullWidth
+                    />
+                )}
+            />
+        </Stack>
+    );
+});

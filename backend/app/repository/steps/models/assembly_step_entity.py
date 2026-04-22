@@ -1,0 +1,32 @@
+"""Entite ASSEMBLY_STEP - Etape d'assemblage."""
+
+from django.db import models
+
+from app.repository.fsec.models.fsec_entity import FsecEntity
+from app.repository.steps.models.assembly_bench_entity import AssemblyBenchEntity
+from app.repository.steps.models.base_step_entity import BaseStepEntity
+
+
+class AssemblyStepEntity(BaseStepEntity):
+    """Entite representant une etape d'assemblage."""
+
+    class Meta:
+        app_label = "app"
+        db_table = "ASSEMBLY_STEP"
+
+    fsec_version_id = models.ForeignKey(
+        FsecEntity,
+        on_delete=models.PROTECT,
+        db_column="fsec_version_id",
+        related_name="assembly_steps",
+        to_field="version_uuid",
+    )
+    hydrometric_temperature = models.FloatField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    comments = models.TextField(max_length=4000, null=True, blank=True)
+    assembly_bench = models.ManyToManyField(
+        AssemblyBenchEntity,
+        related_name="assembly_steps",
+        blank=True,
+    )
