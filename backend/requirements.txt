@@ -25,7 +25,7 @@ python-dotenv==1.0.1                    # .env file loading
 # -- Production Server -------------------------------------------------------
 
 gunicorn==22.0.0                        # WSGI HTTP server
-whitenoise==6.7.0                       # Static file serving
+whitenoise==6.12.0                       # Static file serving
 
 
 # -- Database ----------------------------------------------------------------
