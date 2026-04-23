@@ -50,3 +50,24 @@ jobs:
         uses: github/codeql-action/analyze@ce64ddcb0d8d890d2df4a9d1c04ff297367dea2a # v3
         with:
           category: "/language:${{ matrix.language }}"
+          # Emit SARIF to disk only; a separate step uploads it so the job
+          # does not fail when Code Scanning is not (yet) enabled on the repo
+          # (Settings -> Code security and analysis -> Code scanning).
+          upload: never
+          output: codeql-results
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        continue-on-error: true # no-op if Code Scanning is disabled on the repo
+        uses: github/codeql-action/upload-sarif@ce64ddcb0d8d890d2df4a9d1c04ff297367dea2a # v3
+        with:
+          sarif_file: codeql-results
+          category: "/language:${{ matrix.language }}"
+
+      - name: Upload SARIF as artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: codeql-sarif-${{ matrix.language }}
+          path: codeql-results
+          retention-days: 14
