@@ -58,6 +58,17 @@ jobs:
     name: Backend Unit Tests
     runs-on: ubuntu-latest
     needs: lint-backend
+    env:
+      # config/settings.py hard-requires DB_NAME at import time (prod safeguard).
+      # Unit tests are declared "no DB" via the `unit` pytest marker, so we
+      # point Django at an in-memory SQLite backend: settings load cleanly,
+      # no Postgres service to boot, no real SQL ever executed.
+      DB_ENGINE: django.db.backends.sqlite3
+      DB_NAME: ":memory:"
+      DB_USER: ""
+      DB_PASSWORD: ""
+      DB_HOST: ""
+      DB_PORT: ""
     defaults:
       run:
         working-directory: backend
