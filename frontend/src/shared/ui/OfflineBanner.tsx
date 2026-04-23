@@ -31,10 +31,7 @@ export function OfflineBanner() {
     if (online) return null;
 
     return (
-        <Snackbar
-            open
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
+        <Snackbar open anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
             <Alert severity="warning" variant="filled" sx={{ width: '100%' }}>
                 Connexion réseau perdue. Les modifications seront réessayées dès la reconnexion.
             </Alert>

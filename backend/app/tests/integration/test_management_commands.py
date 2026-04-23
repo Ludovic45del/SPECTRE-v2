@@ -14,7 +14,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import override_settings
 
-
 # =============================================================================
 # generate_fsecs: DEBUG guard
 # =============================================================================

@@ -12,11 +12,7 @@ import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } fr
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import {
-    SetInitialPasswordFormSchema,
-    type SetInitialPasswordForm,
-    useSetInitialPassword,
-} from '@entities/user';
+import { SetInitialPasswordFormSchema, type SetInitialPasswordForm, useSetInitialPassword } from '@entities/user';
 import { getErrorMessage, useNotificationStore } from '@shared/lib';
 import CEALogo from '@shared/assets/images/CEALogo.png';
 

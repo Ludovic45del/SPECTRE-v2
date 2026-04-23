@@ -84,9 +84,7 @@ export const EtalonnageHistoryTable = memo(function EtalonnageHistoryTable({
                 Historique des étalonnages
             </Typography>
             {sortedData.length === 0 ? (
-                <Typography color="text.secondary">
-                    Aucun étalonnage enregistré.
-                </Typography>
+                <Typography color="text.secondary">Aucun étalonnage enregistré.</Typography>
             ) : (
                 <TableContainer>
                     <Table size="small">

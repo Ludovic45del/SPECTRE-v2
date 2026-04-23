@@ -247,8 +247,8 @@ def patch_fa(
     # Champs protégés qui ne peuvent pas être modifiés via PATCH
     # On réutilise la constante globale pour éviter le drift de configuration
     protected_fields = set(_PROTECTED_MERGE_FIELDS)
-    
-    # Dans un contexte PATCH, si on souhaite autoriser la modification du statut 
+
+    # Dans un contexte PATCH, si on souhaite autoriser la modification du statut
     # de façon isolée (hors workflow standard strict), on peut l'enlever ici.
     protected_fields.discard("status_id")
 

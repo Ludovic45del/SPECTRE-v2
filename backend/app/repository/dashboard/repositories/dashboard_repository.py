@@ -15,7 +15,9 @@ from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.fa.models.fa_entity import FaEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.planning.models.planning_campaign_step_entity import PlanningCampaignStepEntity
+from app.repository.planning.models.planning_campaign_step_entity import (
+    PlanningCampaignStepEntity,
+)
 
 
 class DashboardRepository(IDashboardRepository):

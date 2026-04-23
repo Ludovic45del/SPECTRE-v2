@@ -2,7 +2,10 @@
 
 from typing import Any, Dict
 
-from app.domain.dashboard.models.dashboard_bean import DashboardCountsBean, RecentActivityItemBean
+from app.domain.dashboard.models.dashboard_bean import (
+    DashboardCountsBean,
+    RecentActivityItemBean,
+)
 
 
 def dashboard_counts_bean_to_api(bean: DashboardCountsBean) -> Dict[str, Any]:

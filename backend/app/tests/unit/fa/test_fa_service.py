@@ -1401,7 +1401,8 @@ class TestPatchFa:
         patch_fa(repo, sample_fa.uuid, {"status_id": FaStatus.CLOSED})
 
         bypass_calls = [
-            call for call in mock_logger.info.call_args_list
+            call
+            for call in mock_logger.info.call_args_list
             if call.kwargs.get("extra", {}).get("action") == "fa_status_bypass"
         ]
         assert len(bypass_calls) == 1
@@ -1424,7 +1425,8 @@ class TestPatchFa:
         patch_fa(repo, sample_fa.uuid, {"discoverer": "Jane Doe"})
 
         bypass_calls = [
-            call for call in mock_logger.info.call_args_list
+            call
+            for call in mock_logger.info.call_args_list
             if call.kwargs.get("extra", {}).get("action") == "fa_status_bypass"
         ]
         assert bypass_calls == []
@@ -1440,7 +1442,8 @@ class TestPatchFa:
         patch_fa(repo, sample_fa.uuid, {"status_id": sample_fa.status_id})
 
         bypass_calls = [
-            call for call in mock_logger.info.call_args_list
+            call
+            for call in mock_logger.info.call_args_list
             if call.kwargs.get("extra", {}).get("action") == "fa_status_bypass"
         ]
         assert bypass_calls == []

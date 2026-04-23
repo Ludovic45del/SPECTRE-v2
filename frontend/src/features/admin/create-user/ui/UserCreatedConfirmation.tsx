@@ -66,8 +66,8 @@ function UserCreatedConfirmationComponent({ open, user, onClose }: UserCreatedCo
                 <Stack spacing={2.5}>
                     <Alert severity="warning">
                         Communiquez ce lien d&apos;activation <strong>hors-bande</strong> (mail interne, SMS, chat). Il
-                        expire dans <strong>{user.activationTokenTtlHours}h</strong> et ne pourra être utilisé
-                        qu&apos;<strong>une seule fois</strong>.
+                        expire dans <strong>{user.activationTokenTtlHours}h</strong> et ne pourra être utilisé qu&apos;
+                        <strong>une seule fois</strong>.
                     </Alert>
                     <TextField
                         label="Matricule"

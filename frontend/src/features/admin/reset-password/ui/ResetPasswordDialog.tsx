@@ -144,9 +144,8 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
             </Box>
             <DialogContent sx={{ p: 3 }}>
                 <DialogContentText>
-                    Réinitialiser le mot de passe de <strong>{user?.username}</strong> ? Un lien d&apos;activation
-                    signé (usage unique, TTL 24h) sera généré et l&apos;ancien mot de passe sera immédiatement
-                    invalidé.
+                    Réinitialiser le mot de passe de <strong>{user?.username}</strong> ? Un lien d&apos;activation signé
+                    (usage unique, TTL 24h) sera généré et l&apos;ancien mot de passe sera immédiatement invalidé.
                 </DialogContentText>
             </DialogContent>
             <Divider />

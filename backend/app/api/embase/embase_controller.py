@@ -6,10 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ViewSet
 
-from app.api.embase.serializers import (
-    EmbasePatchSerializer,
-    EmbaseSerializer,
-)
+from app.api.embase.serializers import EmbasePatchSerializer, EmbaseSerializer
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.embase.services.embase_service import (

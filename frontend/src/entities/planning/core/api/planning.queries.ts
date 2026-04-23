@@ -262,8 +262,7 @@ export function useDeleteFsecCellLink() {
 export function useLabSalles() {
     return useQuery({
         queryKey: planningKeys.labSalles(),
-        queryFn: ({ signal }): Promise<LabSalle[]> =>
-            api.get('/planning/lab-salles/', LabSalleListSchema, signal),
+        queryFn: ({ signal }): Promise<LabSalle[]> => api.get('/planning/lab-salles/', LabSalleListSchema, signal),
         ...QUERY_CACHE_CONFIG,
     });
 }
@@ -355,8 +354,7 @@ export function useDeleteLabMachine() {
 export function useLabEvents() {
     return useQuery({
         queryKey: planningKeys.labEvents(),
-        queryFn: ({ signal }): Promise<LabEvent[]> =>
-            api.get('/planning/lab-events/', LabEventListSchema, signal),
+        queryFn: ({ signal }): Promise<LabEvent[]> => api.get('/planning/lab-events/', LabEventListSchema, signal),
         ...QUERY_CACHE_CONFIG,
     });
 }

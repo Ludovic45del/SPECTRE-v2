@@ -72,11 +72,9 @@ describe('api client request lifecycle', () => {
         globalThis.fetch = vi.fn(
             async (_input: RequestInfo | URL, init?: RequestInit) =>
                 new Promise<Response>((_, reject) => {
-                    init?.signal?.addEventListener(
-                        'abort',
-                        () => reject(new Error('aborted by caller')),
-                        { once: true },
-                    );
+                    init?.signal?.addEventListener('abort', () => reject(new Error('aborted by caller')), {
+                        once: true,
+                    });
                 }),
         ) as typeof fetch;
 

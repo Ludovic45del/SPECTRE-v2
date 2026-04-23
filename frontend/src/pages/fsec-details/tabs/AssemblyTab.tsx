@@ -29,15 +29,7 @@ const ASSEMBLY_BENCHES: Record<number, string> = {
 
 const ASSEMBLY_WORKFLOW_STEPS = ["Début d'assemblage", "Fin d'assemblage"];
 
-function AssemblyStepCard({
-    step,
-    index,
-    onEdit,
-}: {
-    step: AssemblyStep;
-    index: number;
-    onEdit: () => void;
-}) {
+function AssemblyStepCard({ step, index, onEdit }: { step: AssemblyStep; index: number; onEdit: () => void }) {
     const [expanded, setExpanded] = useState(false);
     const isStartComplete = Boolean(step.startDate);
     const isEndComplete = Boolean(step.endDate);

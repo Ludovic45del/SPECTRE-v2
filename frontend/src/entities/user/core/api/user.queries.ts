@@ -117,10 +117,7 @@ export function useChangePassword() {
 
 export function useSetInitialPassword() {
     return useMutation({
-        mutationFn: async (data: {
-            token: string;
-            new_password: string;
-        }): Promise<SetInitialPasswordResponse> => {
+        mutationFn: async (data: { token: string; new_password: string }): Promise<SetInitialPasswordResponse> => {
             const response = await api.post('/auth/set-initial-password/', data);
             return SetInitialPasswordResponseSchema.parse(response);
         },

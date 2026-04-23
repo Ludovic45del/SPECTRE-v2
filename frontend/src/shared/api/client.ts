@@ -85,7 +85,10 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
  */
 function buildTimedSignal(external?: AbortSignal): { signal: AbortSignal; cancel: () => void } {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(new DOMException('Request timed out', 'TimeoutError')), DEFAULT_TIMEOUT_MS);
+    const timeoutId = setTimeout(
+        () => controller.abort(new DOMException('Request timed out', 'TimeoutError')),
+        DEFAULT_TIMEOUT_MS,
+    );
 
     const onExternalAbort = () => controller.abort(external?.reason);
     if (external) {
