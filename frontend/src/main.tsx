@@ -12,8 +12,19 @@ import { App } from './app';
 dayjs.extend(isoWeek);
 dayjs.locale('fr');
 
-createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-        <App />
-    </StrictMode>,
-);
+// MSW is only bundled into the Lighthouse build (vite build --mode lighthouse)
+// where .env.lighthouse sets VITE_ENABLE_MSW=true. The dynamic import keeps
+// it out of the regular dev/prod bundles.
+async function enableMockingIfNeeded(): Promise<void> {
+    if (import.meta.env.VITE_ENABLE_MSW !== 'true') return;
+    const { worker } = await import('./mocks/browser');
+    await worker.start({ onUnhandledRequest: 'bypass' });
+}
+
+void enableMockingIfNeeded().then(() => {
+    createRoot(document.getElementById('root')!).render(
+        <StrictMode>
+            <App />
+        </StrictMode>,
+    );
+});
