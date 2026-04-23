@@ -1,0 +1,24 @@
+# Gitleaks configuration — extends the default ruleset with project-specific
+# allowlists. Default rules cover AWS keys, GCP keys, GitHub tokens, generic
+# API keys, private keys, etc. See https://github.com/gitleaks/gitleaks for
+# the full default ruleset.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Project-wide allowlist (false positives only)"
+
+paths = [
+  '''frontend/public/mockServiceWorker\.js''',
+  '''frontend/src/test/.*''',
+  '''backend/app/tests/.*''',
+  '''\.env\.example$''',
+]
+
+regexes = [
+  # CI placeholder used by the existing ci.yml workflow.
+  '''ci-test-secret-key-not-for-production''',
+  # Postgres test password used by the GitHub Actions Postgres service.
+  '''spectre_ci''',
+]
