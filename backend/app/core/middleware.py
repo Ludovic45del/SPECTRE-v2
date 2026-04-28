@@ -9,6 +9,7 @@ Ce module contient:
 """
 
 import json
+import re
 import uuid
 
 from django.conf import settings
@@ -23,6 +24,25 @@ from app.domain.exceptions import (
     ValidationException,
 )
 
+# Format autorisé pour un X-Request-ID injecté par un proxy/LB upstream.
+# Empêche la log injection et le reflection de payloads arbitraires dans le
+# header de réponse. Couvre UUID, ULID, hex, ids alphanumériques courts.
+_REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def _resolve_user_id(request) -> int | None:
+    """Retourne l'id d'un utilisateur authentifié, ou None.
+
+    `request.user` n'est défini qu'après `AuthenticationMiddleware` ; pour
+    les vues DRF authentifiées par JWT, la résolution n'a lieu qu'au moment
+    du dispatch de la vue. On reste donc tolérant aux trois états (absent,
+    AnonymousUser, User) sans lever.
+    """
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return None
+    return getattr(user, "id", None)
+
 
 class RequestIDMiddleware:
     """Middleware qui génère un request ID unique pour chaque requête.
@@ -30,33 +50,54 @@ class RequestIDMiddleware:
     Le request ID est:
     - Injecté dans LogContext pour la traçabilité des logs
     - Ajouté dans le header de réponse X-Request-ID
-    - Réutilisé si un header X-Request-ID est déjà présent (proxy/LB)
+    - Réutilisé si un header X-Request-ID upstream est présent ET valide
+      (sinon un UUID neuf est généré pour éviter la log injection).
+
+    Le user_id est réenrichi dans `process_view` (après auth Django) puis
+    une dernière fois après la vue (couvre l'auth DRF JWT, résolue dans
+    le dispatch). Indispensable pour que les logs émis pendant la vue ou
+    par `ErrorHandlerMiddleware` portent l'identité de l'utilisateur.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request):
-        # Réutiliser le request ID du proxy/LB ou en générer un nouveau
-        request_id = request.META.get("HTTP_X_REQUEST_ID", str(uuid.uuid4())[:8])
+    @staticmethod
+    def _extract_request_id(request) -> str:
+        incoming = request.META.get("HTTP_X_REQUEST_ID")
+        if incoming and _REQUEST_ID_PATTERN.match(incoming):
+            return incoming
+        return uuid.uuid4().hex[:16]
 
-        # Injecter dans le contexte de logging
-        LogContext.set(
-            request_id=request_id,
-            user_id=(
-                getattr(request.user, "id", None) if hasattr(request, "user") else None
-            ),
-        )
+    def __call__(self, request):
+        request_id = self._extract_request_id(request)
+        # `request.user` n'est typiquement pas encore défini ici (ce middleware
+        # tourne avant AuthenticationMiddleware) — on initialise donc à None
+        # et on enrichit plus tard dans process_view / après la vue.
+        LogContext.set(request_id=request_id, user_id=None)
 
         try:
             response = self.get_response(request)
-            # Ajouter le request ID dans le header de réponse
+            # Re-set : à ce stade DRF a pu résoudre l'utilisateur via JWT.
+            # Utile pour les logs émis par ErrorHandlerMiddleware en sortie.
+            LogContext.set(user_id=_resolve_user_id(request))
             response["X-Request-ID"] = request_id
             return response
         finally:
             # GARANTIR le nettoyage du contexte même en cas d'Exception serveur
             # pour éviter les fuites de données entre les requêtes (Thread/Async leak).
             LogContext.clear()
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        """Enrichit le user_id après AuthenticationMiddleware (auth Django session).
+
+        Pour DRF + JWT, l'auth se fait plus tard dans le dispatch — d'où
+        le second enrichissement après `get_response`.
+        """
+        user_id = _resolve_user_id(request)
+        if user_id is not None:
+            LogContext.set(user_id=user_id)
+        return None
 
 
 class ErrorHandlerMiddleware:
@@ -83,9 +124,7 @@ class ErrorHandlerMiddleware:
     def __call__(self, request):
         return self.get_response(request)
 
-    def _build_error_response(
-        self, message: str, error_type: str, code: str, status: int
-    ) -> JsonResponse:
+    def _build_error_response(self, message: str, error_type: str, code: str, status: int) -> JsonResponse:
         """Construit une réponse d'erreur JSON standardisée."""
         return JsonResponse(
             {
@@ -126,9 +165,7 @@ class ErrorHandlerMiddleware:
 
             # Enrichir le code d'erreur avec le contexte si disponible
             # En production, utiliser des codes génériques pour ne pas exposer le schéma
-            enriched_code = (
-                self._enrich_error_code(exception, code) if settings.DEBUG else code
-            )
+            enriched_code = self._enrich_error_code(exception, code) if settings.DEBUG else code
 
             return self._build_error_response(
                 message=str(exception),
@@ -159,12 +196,7 @@ class ErrorHandlerMiddleware:
                 return f"{resource}_NOT_FOUND"
 
         if isinstance(exception, ConflictException):
-            field = (
-                getattr(exception, "field", "")
-                .upper()
-                .replace("/", "_")
-                .replace(" ", "_")
-            )
+            field = getattr(exception, "field", "").upper().replace("/", "_").replace(" ", "_")
             if field:
                 return f"CONFLICT_{field}"
 
@@ -246,19 +278,25 @@ class ForcePasswordChangeMiddleware:
         if request.method == "OPTIONS":
             return self.get_response(request)
 
-        if (
-            hasattr(request, "user")
-            and request.user.is_authenticated
-            and hasattr(request.user, "profile")
-            and request.user.profile.force_password_change
-            and not any(request.path.startswith(p) for p in self.ALLOWED_PREFIXES)
-        ):
-            return JsonResponse(
-                {
-                    "error": "Changement de mot de passe requis",
-                    "code": "FORCE_PASSWORD_CHANGE",
-                    "status": 403,
-                },
-                status=403,
-            )
-        return self.get_response(request)
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated:
+            return self.get_response(request)
+
+        # `profile` est un OneToOne reverse : si le profil n'existe pas,
+        # Django lève RelatedObjectDoesNotExist (sous-classe d'AttributeError),
+        # donc getattr renvoie None proprement.
+        profile = getattr(user, "profile", None)
+        if profile is None or not profile.force_password_change:
+            return self.get_response(request)
+
+        if any(request.path.startswith(p) for p in self.ALLOWED_PREFIXES):
+            return self.get_response(request)
+
+        return JsonResponse(
+            {
+                "error": "Changement de mot de passe requis",
+                "code": "FORCE_PASSWORD_CHANGE",
+                "status": 403,
+            },
+            status=403,
+        )

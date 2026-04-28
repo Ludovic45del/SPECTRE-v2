@@ -34,11 +34,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # SECURITY: ALLOWED_HOSTS must be explicitly configured
 # In production, set ALLOWED_HOSTS env var (comma-separated)
 # Example: ALLOWED_HOSTS=example.com,www.example.com
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-    if h.strip()
-]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -104,8 +100,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 _db_name = os.environ.get("DB_NAME")
 if not _db_name:
     raise ValueError(
-        "DB_NAME environment variable is required. "
-        "Configure PostgreSQL via backend/.env (cf. .env.example)."
+        "DB_NAME environment variable is required. " "Configure PostgreSQL via backend/.env (cf. .env.example)."
     )
 
 DATABASES = {
@@ -116,8 +111,7 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", "5432"),
-        "ATOMIC_REQUESTS": os.environ.get("DB_ATOMIC_REQUESTS", "True").lower()
-        == "true",
+        "ATOMIC_REQUESTS": os.environ.get("DB_ATOMIC_REQUESTS", "True").lower() == "true",
     }
 }
 
@@ -206,9 +200,7 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-).split(",")
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 CORS_ALLOW_CREDENTIALS = True
 
 # File upload limits (2.5 MB max for CSV imports)
@@ -224,9 +216,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = "DENY"
-    SECURE_SSL_REDIRECT = (
-        os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
-    )
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     # Referrer-Policy défini par Django (strict-origin-when-cross-origin).
     # CSP / Permissions-Policy ajoutés par SecurityHeadersMiddleware.
@@ -236,6 +226,13 @@ if not DEBUG:
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        # Injecte request_id / user_id depuis LogContext sur chaque record,
+        # sinon StructuredFormatter ne les voit pas.
+        "request_context": {
+            "()": "app.core.logging.LogContextFilter",
+        },
+    },
     "formatters": {
         "structured": {
             "()": "app.core.logging.StructuredFormatter",
@@ -248,6 +245,7 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "structured" if not DEBUG else "simple",
+            "filters": ["request_context"],
         },
     },
     "root": {

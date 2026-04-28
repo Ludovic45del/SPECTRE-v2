@@ -14,9 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 # Thread-safe context storage for request-scoped data
-_log_context: contextvars.ContextVar[dict] = contextvars.ContextVar(
-    "log_context", default={}
-)
+_log_context: contextvars.ContextVar[dict] = contextvars.ContextVar("log_context", default={})
 
 
 class StructuredFormatter(logging.Formatter):
@@ -109,6 +107,21 @@ class LogContext:
     def as_dict(cls) -> dict:
         """Get all context as dict."""
         return _log_context.get().copy()
+
+
+class LogContextFilter(logging.Filter):
+    """Copie les valeurs de `LogContext` sur chaque `LogRecord`.
+
+    Sans ce filtre, `StructuredFormatter` ne voit jamais `request_id` /
+    `user_id` car le middleware les pose dans le contextvars, pas sur
+    le record. Branché sur le handler via `LOGGING.filters` dans settings.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        for key, value in _log_context.get().items():
+            if not hasattr(record, key):
+                setattr(record, key, value)
+        return True
 
 
 # Pre-configured logger for API module
