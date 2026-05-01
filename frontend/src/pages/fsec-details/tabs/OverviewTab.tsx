@@ -70,7 +70,7 @@ export function OverviewTab({ fsec, campaignTeam, documents }: OverviewTabProps)
                     <Stack spacing={3}>
                         <GeneralInfoSection
                             fsec={fsec}
-                            dtriNumber={campaign?.dtriNumber}
+                            campaign={campaign}
                             paperSx={paperSx}
                             editButtonSx={editButtonSx}
                         />

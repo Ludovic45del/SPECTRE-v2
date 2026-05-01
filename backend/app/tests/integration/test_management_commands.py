@@ -152,9 +152,7 @@ class TestInsertCsvIntoTableRaises:
                 return False
 
         with patch.object(database_util, "get_conn", return_value=FakeConn()):
-            with patch(
-                "app.management.commands.database_util.pd.read_csv"
-            ) as mock_read:
+            with patch("app.management.commands.database_util.pd.read_csv") as mock_read:
                 mock_df = mock_read.return_value
                 mock_df.to_sql.side_effect = boom
                 with pytest.raises(RuntimeError, match="duplicate key"):

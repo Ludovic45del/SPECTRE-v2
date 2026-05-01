@@ -1,12 +1,17 @@
 /**
  * Team Section - MOE, RCE, IEC members
  * @module pages/campaign-details/overview/components
+ *
+ * MOE est saisi en texte libre (intervenant extérieur au labo).
+ * RCE et IEC sont sélectionnés via UserSelect (FK vers UserProfile).
  */
 
 import { memo } from 'react';
-import { Box, Grid, Paper, Typography, TextField, IconButton } from '@mui/material';
+import { Box, Grid, Paper, Typography, IconButton } from '@mui/material';
 import { CampaignWithRelations } from '@entities/campaign';
-import { getMemberNameByRole } from '@entities/campaign/team';
+import { getMemberByRole } from '@entities/campaign/team';
+import { UserChip } from '@entities/user';
+import { TeamMemberInput } from '@widgets/team-member-input';
 import EditIcon from '@mui/icons-material/Edit';
 import { useCampaignTeamForm } from '../hooks';
 import { SectionHeader } from './SectionHeader';
@@ -20,6 +25,10 @@ export interface TeamSectionProps {
 export const TeamSection = memo(function TeamSection({ campaign }: TeamSectionProps) {
     const { form, isEditing, isSaving, teamMembers, setField, startEditing, cancelEditing, save } =
         useCampaignTeamForm(campaign);
+
+    const moeMember = getMemberByRole(teamMembers, 'MOE');
+    const rceMember = getMemberByRole(teamMembers, 'RCE');
+    const iecMember = getMemberByRole(teamMembers, 'IEC');
 
     return (
         <Paper variant="outlined" sx={PAPER_BASE_SX} role="region" aria-label="Équipe de la campagne">
@@ -41,30 +50,27 @@ export const TeamSection = memo(function TeamSection({ campaign }: TeamSectionPr
                 >
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
-                            <TextField
+                            <TeamMemberInput
+                                roleLabel="MOE"
+                                value={{ name: form.moeName, userUuid: null }}
+                                onChange={(v) => setField('moeName', v.name ?? '')}
                                 label="MOE"
-                                value={form.moe}
-                                onChange={(e) => setField('moe', e.target.value)}
-                                size="small"
-                                fullWidth
                             />
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <TextField
+                            <TeamMemberInput
+                                roleLabel="RCE"
+                                value={{ name: null, userUuid: form.rceUserUuid || null }}
+                                onChange={(v) => setField('rceUserUuid', v.userUuid ?? '')}
                                 label="RCE"
-                                value={form.rce}
-                                onChange={(e) => setField('rce', e.target.value)}
-                                size="small"
-                                fullWidth
                             />
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <TextField
+                            <TeamMemberInput
+                                roleLabel="IEC"
+                                value={{ name: null, userUuid: form.iecUserUuid || null }}
+                                onChange={(v) => setField('iecUserUuid', v.userUuid ?? '')}
                                 label="IEC"
-                                value={form.iec}
-                                onChange={(e) => setField('iec', e.target.value)}
-                                size="small"
-                                fullWidth
                             />
                         </Grid>
                     </Grid>
@@ -76,25 +82,19 @@ export const TeamSection = memo(function TeamSection({ campaign }: TeamSectionPr
                         <Typography variant="subtitle2" color="text.secondary">
                             MOE
                         </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                            {getMemberNameByRole(teamMembers, 'MOE')}
-                        </Typography>
+                        <UserChip fallbackText={moeMember?.name} />
                     </Grid>
                     <Grid item xs={4}>
                         <Typography variant="subtitle2" color="text.secondary">
                             RCE
                         </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                            {getMemberNameByRole(teamMembers, 'RCE')}
-                        </Typography>
+                        <UserChip userUuid={rceMember?.userUuid} fallbackText={rceMember?.name} />
                     </Grid>
                     <Grid item xs={4}>
                         <Typography variant="subtitle2" color="text.secondary">
                             IEC
                         </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                            {getMemberNameByRole(teamMembers, 'IEC')}
-                        </Typography>
+                        <UserChip userUuid={iecMember?.userUuid} fallbackText={iecMember?.name} />
                     </Grid>
                 </Grid>
             )}

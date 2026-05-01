@@ -16,21 +16,20 @@ def create_step(repository: IStepRepository[StepBean], bean: StepBean) -> StepBe
     """Crée une nouvelle étape.
 
     La plupart des steps exigent fsec_version_id.
-    SealingStepBean est rattachée via metrology_step_id (pas de fsec_version_id).
+    SealingStepBean est rattachée via metrology_step_id, PhotoViewBean via pictures_step_id.
     """
     fsec_version_id = getattr(bean, "fsec_version_id", None)
     metrology_step_id = getattr(bean, "metrology_step_id", None)
-    if not fsec_version_id and not metrology_step_id:
+    pictures_step_id = getattr(bean, "pictures_step_id", None)
+    if not fsec_version_id and not metrology_step_id and not pictures_step_id:
         raise ValidationException(
             "fsec_version_id",
-            "Le champ fsec_version_id (ou metrology_step_id pour SealingStep) est obligatoire.",
+            "Le champ fsec_version_id (ou metrology_step_id / pictures_step_id) est obligatoire.",
         )
     return repository.create(bean)
 
 
-def get_step_by_uuid(
-    repository: IStepRepository[StepBean], uuid: str, step_name: str
-) -> StepBean:
+def get_step_by_uuid(repository: IStepRepository[StepBean], uuid: str, step_name: str) -> StepBean:
     """Récupère une étape par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -38,16 +37,12 @@ def get_step_by_uuid(
     return bean
 
 
-def get_steps_by_fsec_version_id(
-    repository: IStepRepository[StepBean], fsec_version_id: str
-) -> List[StepBean]:
+def get_steps_by_fsec_version_id(repository: IStepRepository[StepBean], fsec_version_id: str) -> List[StepBean]:
     """Récupère les étapes d'un FSEC."""
     return repository.get_by_fsec_version_id(fsec_version_id)
 
 
-def update_step(
-    repository: IStepRepository[StepBean], bean: StepBean, step_name: str
-) -> StepBean:
+def update_step(repository: IStepRepository[StepBean], bean: StepBean, step_name: str) -> StepBean:
     """Met à jour une étape."""
     existing = repository.get_by_uuid(bean.uuid)  # type: ignore
     if existing is None:
@@ -55,9 +50,7 @@ def update_step(
     return repository.update(bean)
 
 
-def delete_step(
-    repository: IStepRepository[StepBean], uuid: str, step_name: str
-) -> bool:
+def delete_step(repository: IStepRepository[StepBean], uuid: str, step_name: str) -> bool:
     """Supprime une étape."""
     if not repository.delete(uuid):
         raise NotFoundException(step_name, uuid)

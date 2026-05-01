@@ -2,6 +2,7 @@
 
 from django.db import models
 
+from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
 from app.repository.steps.models.base_step_entity import BaseStepEntity
 
@@ -22,6 +23,13 @@ class GasFillingBpStepEntity(BaseStepEntity):
         db_column="fsec_version_id",
         related_name="gas_filling_bp_steps",
         to_field="version_uuid",
+    )
+    embase = models.ForeignKey(
+        EmbaseEntity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gas_filling_bp_steps_embase",
     )
     leak_rate_dtri = models.CharField(max_length=200, null=True, blank=True)
     gas_type = models.CharField(max_length=200, null=True, blank=True)

@@ -6,11 +6,7 @@ from typing import Any, Dict, List
 
 from app.domain.embase.models.embase_bean import EmbaseBean
 from app.domain.embase.models.fsec_history_bean import FsecHistoryEntryBean
-from app.mapper.type_conversion import (
-    decimal_to_float,
-    format_date_for_api,
-    parse_date_string,
-)
+from app.mapper.type_conversion import decimal_to_float, format_date_for_api, parse_date_string
 
 
 def _to_decimal(value: Any) -> Decimal | None:
@@ -37,9 +33,7 @@ def _extract_v1_fields_from_api(data: Dict[str, Any]) -> dict:
         "mesurande_lie_v1_mv": _to_decimal(data.get("mesurande_lie_v1_mv")),
         "sensibilite_v1_mv": _to_decimal(data.get("sensibilite_v1_mv")),
         "signal_meteociel_v1_mv": _to_decimal(data.get("signal_meteociel_v1_mv")),
-        "capteur_cible_pfeiffer_mbar": _to_decimal(
-            data.get("capteur_cible_pfeiffer_mbar")
-        ),
+        "capteur_cible_pfeiffer_mbar": _to_decimal(data.get("capteur_cible_pfeiffer_mbar")),
         "etendue_v1_mbar": data.get("etendue_v1_mbar"),
         "test_etancheite_he": data.get("test_etancheite_he", ""),
         "test_capteur_mrg": data.get("test_capteur_mrg", ""),
@@ -57,9 +51,7 @@ def _extract_v2_fields_from_api(data: Dict[str, Any]) -> dict:
         "mesurande_lie_v2_mv": _to_decimal(data.get("mesurande_lie_v2_mv")),
         "sensibilite_v2_mv": _to_decimal(data.get("sensibilite_v2_mv")),
         "signal_meteociel_v2_mv": _to_decimal(data.get("signal_meteociel_v2_mv")),
-        "capteur_cible_pfeiffer_v2_mbar": _to_decimal(
-            data.get("capteur_cible_pfeiffer_v2_mbar")
-        ),
+        "capteur_cible_pfeiffer_v2_mbar": _to_decimal(data.get("capteur_cible_pfeiffer_v2_mbar")),
         "etendue_v2_mbar": data.get("etendue_v2_mbar"),
         "test_etancheite_he_v2": data.get("test_etancheite_he_v2", ""),
         "test_capteur_mrg_v2": data.get("test_capteur_mrg_v2", ""),
@@ -94,9 +86,7 @@ def _build_v1_fields_for_api(bean: EmbaseBean) -> dict:
         "mesurande_lie_v1_mv": decimal_to_float(bean.mesurande_lie_v1_mv),
         "sensibilite_v1_mv": decimal_to_float(bean.sensibilite_v1_mv),
         "signal_meteociel_v1_mv": decimal_to_float(bean.signal_meteociel_v1_mv),
-        "capteur_cible_pfeiffer_mbar": decimal_to_float(
-            bean.capteur_cible_pfeiffer_mbar
-        ),
+        "capteur_cible_pfeiffer_mbar": decimal_to_float(bean.capteur_cible_pfeiffer_mbar),
         "etendue_v1_mbar": bean.etendue_v1_mbar,
         "test_etancheite_he": bean.test_etancheite_he,
         "test_capteur_mrg": bean.test_capteur_mrg,
@@ -114,9 +104,7 @@ def _build_v2_fields_for_api(bean: EmbaseBean) -> dict:
         "mesurande_lie_v2_mv": decimal_to_float(bean.mesurande_lie_v2_mv),
         "sensibilite_v2_mv": decimal_to_float(bean.sensibilite_v2_mv),
         "signal_meteociel_v2_mv": decimal_to_float(bean.signal_meteociel_v2_mv),
-        "capteur_cible_pfeiffer_v2_mbar": decimal_to_float(
-            bean.capteur_cible_pfeiffer_v2_mbar
-        ),
+        "capteur_cible_pfeiffer_v2_mbar": decimal_to_float(bean.capteur_cible_pfeiffer_v2_mbar),
         "etendue_v2_mbar": bean.etendue_v2_mbar,
         "test_etancheite_he_v2": bean.test_etancheite_he_v2,
         "test_capteur_mrg_v2": bean.test_capteur_mrg_v2,
@@ -177,12 +165,8 @@ def embase_mapper_bean_to_api(bean: EmbaseBean) -> Dict[str, Any]:
             "fsec_history": bean.fsec_history,
             # Computed
             "last_etalonnage_date": format_date_for_api(bean.last_etalonnage_date),
-            "last_etalonnage_date_v1": format_date_for_api(
-                bean.last_etalonnage_date_v1
-            ),
-            "last_etalonnage_date_v2": format_date_for_api(
-                bean.last_etalonnage_date_v2
-            ),
+            "last_etalonnage_date_v1": format_date_for_api(bean.last_etalonnage_date_v1),
+            "last_etalonnage_date_v2": format_date_for_api(bean.last_etalonnage_date_v2),
             # Metadata
             "created_at": format_date_for_api(bean.created_at),
             "updated_at": format_date_for_api(bean.updated_at),

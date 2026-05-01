@@ -5,6 +5,7 @@ export { createChildEntityKeys, type ChildEntityKeys } from './query-factory';
 export { useDebounce } from './useDebounce';
 export { QUERY_CACHE_CONFIG } from './query-config';
 export { getInputStyles, getChipStyles } from './toolbarStyles';
+export { softChipSx } from './chipTokens';
 export { stepPop } from './animations';
 export { useEntityList, ROWS_PER_PAGE_OPTIONS } from './useEntityList';
 export { getErrorMessage } from './error-utils';

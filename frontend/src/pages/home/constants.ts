@@ -3,11 +3,15 @@
  * @module pages/home/constants
  */
 
+import { motion } from '@shared/ui/motion';
+
 // ============================================================================
 // Design Tokens
 // ============================================================================
 
-export const TRANSITION = '0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+// Transition par défaut pour les composants dashboard (cards, kpis, feed).
+// Aligné sur le token `medium` (300ms / M3 emphasized).
+export const TRANSITION = motion.medium;
 export const ACTIVITY_FEED_LIMIT = 10;
 
 export const BRAND_COLORS = {

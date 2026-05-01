@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFsecsByCampaign, Fsec, getStatusInfo, getCategoryInfo } from '@entities/fsec';
 import { CampaignWithRelations } from '@entities/campaign';
 import { DataChip } from '@widgets/data-chip';
+import { motion } from '@shared/ui/motion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -114,7 +115,7 @@ const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate }: FsecTableR
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 },

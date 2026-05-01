@@ -45,12 +45,23 @@ export function usePicturesStep(uuid: string) {
 interface CreatePicturesStepInput {
     fsecVersionId: string;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     date?: Date | null;
     comments?: string | null;
 }
 
 interface UpdatePicturesStepInput extends CreatePicturesStepInput {
     uuid: string;
+}
+
+function picturesStepToApi(input: CreatePicturesStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        date: input.date?.toISOString().split('T')[0] ?? null,
+        comments: input.comments ?? null,
+    };
 }
 
 /**
@@ -61,13 +72,7 @@ export function useCreatePicturesStep() {
 
     return useMutation({
         mutationFn: async (input: CreatePicturesStepInput): Promise<PicturesStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.post('/pictures-steps/', apiData);
+            const response = await api.post('/pictures-steps/', picturesStepToApi(input));
             return PicturesStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -86,13 +91,10 @@ export function useUpdatePicturesStep() {
 
     return useMutation({
         mutationFn: async (input: UpdatePicturesStepInput): Promise<PicturesStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.put(`/pictures-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/pictures-steps/${input.uuid}/`,
+                picturesStepToApi(input),
+            );
             return PicturesStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

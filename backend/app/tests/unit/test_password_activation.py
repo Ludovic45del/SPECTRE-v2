@@ -16,11 +16,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from app.core import password_activation
-from app.core.password_activation import (
-    build_activation_url,
-    consume_activation_token,
-    issue_activation_token,
-)
+from app.core.password_activation import build_activation_url, consume_activation_token, issue_activation_token
 from app.domain.exceptions import ValidationException
 from app.repository.user.models.user_profile_entity import UserProfileEntity
 
@@ -31,9 +27,7 @@ def admin_profile(db):
         username="activation_target",
         password="OldValidP4ss!word",
     )
-    return UserProfileEntity.objects.create(
-        user=user, role="chef_labo", force_password_change=True
-    )
+    return UserProfileEntity.objects.create(user=user, role="chef_labo", force_password_change=True)
 
 
 @pytest.mark.integration
@@ -96,9 +90,7 @@ class TestConsumeActivationToken:
                 consume_activation_token(token, "StrongP4ssw0rd!")
         assert exc_info.value.field == "token"
 
-    def test_consume_weak_password_raises_and_does_not_consume_token(
-        self, admin_profile
-    ):
+    def test_consume_weak_password_raises_and_does_not_consume_token(self, admin_profile):
         token = issue_activation_token(admin_profile)
         version_before = admin_profile.password_token_version
 
@@ -114,13 +106,8 @@ class TestConsumeActivationToken:
 @pytest.mark.unit
 class TestBuildActivationUrl:
     def test_build_url_with_base(self):
-        url = build_activation_url(
-            "abc.def.ghi", base_url="https://spectre.example.com"
-        )
-        assert (
-            url
-            == "https://spectre.example.com/auth/set-initial-password?token=abc.def.ghi"
-        )
+        url = build_activation_url("abc.def.ghi", base_url="https://spectre.example.com")
+        assert url == "https://spectre.example.com/auth/set-initial-password?token=abc.def.ghi"
 
     def test_build_url_strips_trailing_slash(self):
         url = build_activation_url("tok", base_url="https://host/")

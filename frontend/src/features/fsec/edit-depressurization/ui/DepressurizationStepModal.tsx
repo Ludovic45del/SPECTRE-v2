@@ -19,6 +19,7 @@ import {
     useUpdateDepressurizationStep,
     useDeleteDepressurizationStep,
 } from '@entities/fsec/steps';
+import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -31,7 +32,7 @@ interface DepressurizationStepModalProps {
 }
 
 const DepressurizationStepFormSchema = z.object({
-    operator: z.string().min(1, 'Champ requis'),
+    operatorUserUuid: z.string().uuid('Opérateur requis'),
     dateOfFulfilment: z.date({ required_error: 'Date requise' }),
     pressureGauge: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
     enclosurePressureMeasured: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
@@ -44,8 +45,8 @@ const DepressurizationStepFormSchema = z.object({
 
 type DepressurizationStepForm = z.infer<typeof DepressurizationStepFormSchema>;
 
-const DEFAULT_VALUES = {
-    operator: undefined,
+const DEFAULT_VALUES: Partial<DepressurizationStepForm> = {
+    operatorUserUuid: '',
     dateOfFulfilment: undefined,
     pressureGauge: null,
     enclosurePressureMeasured: null,
@@ -76,7 +77,7 @@ export function DepressurizationStepModal({ open, onClose, fsecVersionId, step }
             reset(
                 step
                     ? {
-                          operator: step.operator ?? undefined,
+                          operatorUserUuid: step.operatorUserUuid ?? '',
                           dateOfFulfilment: step.dateOfFulfilment ?? undefined,
                           pressureGauge: step.pressureGauge,
                           enclosurePressureMeasured: step.enclosurePressureMeasured,
@@ -165,16 +166,17 @@ export function DepressurizationStepModal({ open, onClose, fsecVersionId, step }
                     </Grid2>
                     <Grid2 size={6}>
                         <Controller
-                            name="operator"
+                            name="operatorUserUuid"
                             control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    value={field.value ?? ''}
+                            render={({ field, fieldState }) => (
+                                <UserSelect
+                                    value={field.value || null}
+                                    onChange={(uuid) => field.onChange(uuid ?? '')}
+                                    roles={[...SPECTRE_OPERATOR_ROLES]}
                                     label="Opérateur"
-                                    size="small"
-                                    fullWidth
-                                    inputProps={{ 'aria-label': 'Opérateur' }}
+                                    required
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                 />
                             )}
                         />

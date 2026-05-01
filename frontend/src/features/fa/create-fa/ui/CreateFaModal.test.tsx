@@ -292,9 +292,17 @@ describe('CreateFaModal', () => {
         await user.click(option);
     }
 
+    // Helper: select first discoverer in UserSelect dropdown (mock /users/lookup/).
+    async function selectDiscoverer(user: ReturnType<typeof userEvent.setup>) {
+        const input = screen.getByLabelText(/découvreur/i);
+        await user.click(input);
+        const option = await screen.findByRole('option', { name: /Pierre Dupont/ });
+        await user.click(option);
+    }
+
     // Helper: fill all required Phase Ouvert fields
     async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
-        await user.type(screen.getByLabelText(/découvreur/i), 'John Doe');
+        await selectDiscoverer(user);
         await user.type(screen.getByLabelText(/constat/i), 'Test observation');
         await user.type(screen.getByLabelText(/analyse rapide/i), 'Test analysis');
     }
@@ -384,6 +392,7 @@ describe('CreateFaModal', () => {
             openModal();
             renderWithProviders(<CreateFaModal />);
 
+            // UserSelect (Autocomplete MUI) : input role textbox vide au démarrage
             const discovererInput = screen.getByLabelText(/découvreur/i) as HTMLInputElement;
             expect(discovererInput.value).toBe('');
         });
@@ -496,7 +505,7 @@ describe('CreateFaModal', () => {
             renderWithProviders(<CreateFaModal />);
 
             // Fill other fields but not campaign
-            await user.type(screen.getByLabelText(/découvreur/i), 'John Doe');
+            await selectDiscoverer(user);
             await user.type(screen.getByLabelText(/constat/i), 'Test observation');
             await user.type(screen.getByLabelText(/analyse rapide/i), 'Test analysis');
 
@@ -518,7 +527,7 @@ describe('CreateFaModal', () => {
             await selectCampaign1(user);
 
             // Fill other fields but not FSEC
-            await user.type(screen.getByLabelText(/découvreur/i), 'John Doe');
+            await selectDiscoverer(user);
             await user.type(screen.getByLabelText(/constat/i), 'Test observation');
             await user.type(screen.getByLabelText(/analyse rapide/i), 'Test analysis');
 
@@ -593,7 +602,7 @@ describe('CreateFaModal', () => {
             await selectFsec002(user);
 
             // Fill Phase Ouvert fields
-            await user.type(screen.getByLabelText(/découvreur/i), 'John Doe');
+            await selectDiscoverer(user);
             await user.type(screen.getByLabelText(/constat/i), 'Anomalie detectee');
             await user.type(screen.getByLabelText(/analyse rapide/i), 'Analyse en cours');
 
@@ -604,7 +613,7 @@ describe('CreateFaModal', () => {
                 // faCreateToApi transforms to snake_case
                 expect(submittedData).toMatchObject({
                     fsec_version_id: FSEC_VERSION_UUID_2,
-                    discoverer: 'John Doe',
+                    discoverer_user_uuid: '11111111-1111-1111-1111-111111111111',
                     observation: 'Anomalie detectee',
                     quick_analysis: 'Analyse en cours',
                 });
@@ -863,7 +872,7 @@ describe('CreateFaModal', () => {
             const { rerender } = renderWithProviders(<CreateFaModal />);
 
             // Fill form
-            await user.type(screen.getByLabelText(/découvreur/i), 'John Doe');
+            await selectDiscoverer(user);
 
             // Close modal
             await user.click(screen.getByRole('button', { name: /annuler/i }));

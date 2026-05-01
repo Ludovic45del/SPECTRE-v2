@@ -25,6 +25,7 @@ class FaBean:
     fsec_step_id: Optional[int] = None  # Étape FSEC où l'anomalie a été découverte
     fsec_step_other: Optional[str] = None  # Précision si "Autre" est sélectionné
     discoverer: str = ""
+    discoverer_user_uuid: Optional[str] = None
     event_date: Optional[date] = None
     observation: str = ""
     location_equipment: Optional[str] = None
@@ -33,6 +34,7 @@ class FaBean:
     iec_validation_open: bool = False
     iec_validation_open_date: Optional[date] = None
     iec_validation_open_name: Optional[str] = None
+    iec_validation_open_user_uuid: Optional[str] = None
 
     # Phase En cours
     cause: Optional[str] = None
@@ -40,11 +42,13 @@ class FaBean:
     iec_validation_progress: bool = False
     iec_validation_progress_date: Optional[date] = None
     iec_validation_progress_name: Optional[str] = None
+    iec_validation_progress_user_uuid: Optional[str] = None
 
     # Phase Clos
     closure_validation: Optional[str] = None
     closure_date: Optional[date] = None
     closure_validator_name: Optional[str] = None
+    closure_validator_user_uuid: Optional[str] = None
 
     # Soft delete
     is_active: bool = True
@@ -52,3 +56,9 @@ class FaBean:
     # Metadata
     created_at: Optional[datetime] = None
     last_updated: Optional[datetime] = None
+
+    # Champs dérivés (lecture seule, exposés dans /fas/ pour éviter au front
+    # de re-fetcher /fsecs/ + /campaigns/ uniquement pour résoudre ces libellés).
+    # Remplis par fa_mapper_entity_to_bean depuis le select_related élargi.
+    fsec_name: Optional[str] = None
+    installation: Optional[str] = None

@@ -95,11 +95,7 @@ class BaseStepRepository(Generic[BeanT, EntityT]):
         Returns:
             Liste des beans associés à cette version FSEC, triés par date de création
         """
-        entities = (
-            self._base_queryset()
-            .filter(fsec_version_id_id=fsec_version_id)
-            .order_by("created_at")
-        )
+        entities = self._base_queryset().filter(fsec_version_id_id=fsec_version_id).order_by("created_at")
         return [self.entity_to_bean(entity) for entity in entities]
 
     @transaction.atomic

@@ -36,6 +36,7 @@ import { useDragToMove } from '../../lib/useDragToMove';
 import { useResizeBar } from '../../lib/useResizeBar';
 import { EditableLabel } from './EditableLabel';
 import { EventPopover } from './EventPopover';
+import { motion } from '@shared/ui/motion';
 
 // ── Stable sx constants (extracted outside component to avoid re-creation) ──
 
@@ -294,7 +295,7 @@ const LabMachineRow = memo(function LabMachineRow({
                                 overflow: 'hidden',
                                 opacity: isBeingDragged || isResizedEvent ? 0.3 : 0.85,
                                 pointerEvents: 'none',
-                                transition: 'opacity 0.15s ease',
+                                transition: `opacity ${motion.fast}`,
                             }}
                         >
                             {/* Resize handles at bar edges */}

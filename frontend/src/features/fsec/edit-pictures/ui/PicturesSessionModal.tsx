@@ -21,6 +21,7 @@ import {
     useUpdatePicturesStep,
     useDeletePicturesStep,
 } from '@entities/fsec/steps';
+import { UserSelect } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -33,7 +34,7 @@ interface PicturesSessionModalProps {
 }
 
 const PicturesSessionFormSchema = z.object({
-    operator: z.string().min(1, 'Champ requis'),
+    operatorUserUuid: z.string().uuid('Opérateur requis'),
     date: z.date({ required_error: 'Date requise' }),
     comments: z.string().nullable().optional(),
 });
@@ -53,7 +54,7 @@ export function PicturesSessionModal({ open, onClose, fsecVersionId, step }: Pic
         mode: 'onBlur',
         resolver: zodResolver(PicturesSessionFormSchema),
         defaultValues: {
-            operator: '',
+            operatorUserUuid: '',
             date: undefined,
             comments: '',
         },
@@ -63,13 +64,13 @@ export function PicturesSessionModal({ open, onClose, fsecVersionId, step }: Pic
         if (open) {
             if (step) {
                 reset({
-                    operator: step.operator ?? '',
+                    operatorUserUuid: step.operatorUserUuid ?? '',
                     date: step.date ?? undefined,
                     comments: step.comments ?? '',
                 });
             } else {
                 reset({
-                    operator: '',
+                    operatorUserUuid: '',
                     date: undefined,
                     comments: '',
                 });
@@ -89,7 +90,7 @@ export function PicturesSessionModal({ open, onClose, fsecVersionId, step }: Pic
                     await updateMutation.mutateAsync({
                         uuid: step.uuid,
                         fsecVersionId,
-                        operator: data.operator,
+                        operatorUserUuid: data.operatorUserUuid,
                         date: data.date,
                         comments: data.comments,
                     });
@@ -97,7 +98,7 @@ export function PicturesSessionModal({ open, onClose, fsecVersionId, step }: Pic
                 } else {
                     await createMutation.mutateAsync({
                         fsecVersionId,
-                        operator: data.operator,
+                        operatorUserUuid: data.operatorUserUuid,
                         date: data.date,
                         comments: data.comments,
                     });
@@ -143,18 +144,18 @@ export function PicturesSessionModal({ open, onClose, fsecVersionId, step }: Pic
             modalId="pictures-session-modal"
         >
             <Stack spacing={3}>
-                {/* Opérateur */}
+                {/* Opérateur (dropdown — tous les users actifs y compris stagiaire/alternant) */}
                 <Controller
-                    name="operator"
+                    name="operatorUserUuid"
                     control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
+                    render={({ field, fieldState }) => (
+                        <UserSelect
+                            value={field.value || null}
+                            onChange={(uuid) => field.onChange(uuid ?? '')}
                             label="Opérateur"
-                            size="small"
-                            fullWidth
-                            inputProps={{ 'aria-label': "Nom de l'opérateur" }}
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
                         />
                     )}
                 />

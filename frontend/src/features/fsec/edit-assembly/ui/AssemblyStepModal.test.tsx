@@ -11,11 +11,15 @@ import { renderWithProviders, server } from '@test/test-utils';
 import { useNotificationStore } from '@shared/lib';
 import { AssemblyStepModal } from './AssemblyStepModal';
 
+// UUID de l'assembleur disponible dans mockUserLookup (Lucie Petit, role: 'assembleur').
+const ASSEMBLER_UUID = '44444444-4444-4444-4444-444444444444';
+
 // Mock data - camelCase domain model for component props
 const mockAssemblyStep = {
     uuid: '00000000-0000-0000-0000-000000000001',
     fsecVersionId: '00000000-0000-0000-0000-000000000002',
-    hydrometricTemperature: 22.5,
+    operator: 'Lucie Petit',
+    operatorUserUuid: ASSEMBLER_UUID,
     startDate: new Date('2025-02-01'),
     endDate: new Date('2025-02-15'),
     comments: 'Test assembly step',
@@ -26,7 +30,8 @@ const mockAssemblyStep = {
 const mockAssemblyStepApi = {
     uuid: '00000000-0000-0000-0000-000000000001',
     fsec_version_id: '00000000-0000-0000-0000-000000000002',
-    hydrometric_temperature: 22.5,
+    operator: 'Lucie Petit',
+    operator_user_uuid: ASSEMBLER_UUID,
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
@@ -92,50 +97,22 @@ describe('AssemblyStepModal', () => {
             expect(screen.getByText(/modifier|éditer/i)).toBeInTheDocument();
         });
 
-        it('should render form fields', () => {
+        it('should render Assembleur selector', () => {
             renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
 
-            // Check for expected form fields
-            expect(screen.getByLabelText(/température/i)).toBeInTheDocument();
+            // UserSelect rend un Autocomplete avec label "Assembleur"
+            expect(screen.getByLabelText(/assembleur/i)).toBeInTheDocument();
         });
     });
 
     describe('Create Mode', () => {
-        it('should have empty form in create mode', () => {
-            renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
-
-            const tempInput = screen.getByLabelText(/température/i) as HTMLInputElement;
-            expect(tempInput.value).toBe('');
-        });
-
-        it('should call API on submit', async () => {
+        it('should call update API on edit submit (Assembleur préservé)', async () => {
             const user = userEvent.setup();
-            renderWithProviders(
-                <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
-            );
+            const putBody: { current: Record<string, unknown> | null } = { current: null };
 
-            // Modify a field
-            const tempInput = screen.getByLabelText(/température/i);
-            await user.clear(tempInput);
-            await user.type(tempInput, '23.5');
-
-            // Submit
-            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
-            await user.click(submitButton);
-
-            // Wait for API call and modal close
-            await waitFor(() => {
-                expect(mockOnClose).toHaveBeenCalled();
-            });
-        });
-
-        it('should show loading state during submission', async () => {
-            const user = userEvent.setup();
-
-            // Delay API response
             server.use(
-                http.put(`/api/v1/assembly-steps/${mockAssemblyStep.uuid}/`, async () => {
-                    await new Promise((resolve) => setTimeout(resolve, 100));
+                http.put(`/api/v1/assembly-steps/${mockAssemblyStep.uuid}/`, async ({ request }) => {
+                    putBody.current = (await request.json()) as Record<string, unknown>;
                     return HttpResponse.json(mockAssemblyStepApi);
                 }),
             );
@@ -144,22 +121,40 @@ describe('AssemblyStepModal', () => {
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
+            // Submit (l'Assembleur et la date sont déjà pré-remplis depuis step)
             const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
             await user.click(submitButton);
 
-            // Should show loading indicator
-            expect(submitButton).toBeDisabled();
+            await waitFor(() => {
+                expect(mockOnClose).toHaveBeenCalled();
+            });
+            expect(putBody.current?.operator_user_uuid).toBe(ASSEMBLER_UUID);
+        });
+
+        it('should block submission when Assembleur is not selected', async () => {
+            const user = userEvent.setup();
+
+            renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
+
+            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
+            await user.click(submitButton);
+
+            // Validation Zod doit empêcher la soumission → onClose pas appelé.
+            expect(mockOnClose).not.toHaveBeenCalled();
         });
     });
 
     describe('Edit Mode', () => {
-        it('should pre-fill form with step data', () => {
+        it('should pre-fill Assembleur with step.operatorUserUuid', async () => {
             renderWithProviders(
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
-            const tempInput = screen.getByLabelText(/température/i) as HTMLInputElement;
-            expect(tempInput.value).toBe('22.5');
+            // Le UserSelect doit pré-sélectionner Lucie Petit
+            await waitFor(() => {
+                const input = screen.getByLabelText(/assembleur/i) as HTMLInputElement;
+                expect(input.value).toMatch(/Lucie Petit/i);
+            });
         });
 
         it('should call update API on submit', async () => {
@@ -176,11 +171,6 @@ describe('AssemblyStepModal', () => {
             renderWithProviders(
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
-
-            // Modify a field
-            const tempInput = screen.getByLabelText(/température/i);
-            await user.clear(tempInput);
-            await user.type(tempInput, '25.0');
 
             // Submit
             const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
@@ -273,27 +263,6 @@ describe('AssemblyStepModal', () => {
                 expect(mockOnClose).toHaveBeenCalled();
             }
         });
-
-        it('should reset form on close', async () => {
-            const user = userEvent.setup();
-            const { rerender } = renderWithProviders(
-                <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />,
-            );
-
-            // Fill form
-            const tempInput = screen.getByLabelText(/température/i);
-            await user.type(tempInput, '25.0');
-
-            // Close modal
-            rerender(<AssemblyStepModal open={false} onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
-
-            // Reopen modal
-            rerender(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
-
-            // Form should be reset
-            const newTempInput = screen.getByLabelText(/température/i) as HTMLInputElement;
-            expect(newTempInput.value).toBe('');
-        });
     });
 
     describe('Error Handling', () => {
@@ -327,12 +296,14 @@ describe('AssemblyStepModal', () => {
             const user = userEvent.setup();
 
             server.use(
-                http.post('/api/v1/assembly-steps/', () => {
+                http.put(`/api/v1/assembly-steps/${mockAssemblyStep.uuid}/`, () => {
                     return HttpResponse.json({ error: 'Server Error' }, { status: 500 });
                 }),
             );
 
-            renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
+            renderWithProviders(
+                <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
+            );
 
             const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
             await user.click(submitButton);

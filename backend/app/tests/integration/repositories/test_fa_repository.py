@@ -86,9 +86,7 @@ class TestFaRepositoryCreate:
         assert result.identifier == sample_fa_data["identifier"]
         assert result.status_id == 0
 
-    def test_create_fa_generates_uuid_and_timestamps(
-        self, fa_repository, sample_fa_data
-    ):
+    def test_create_fa_generates_uuid_and_timestamps(self, fa_repository, sample_fa_data):
         """Test que l'UUID et les dates sont générés automatiquement."""
         bean = FaBean(**sample_fa_data)
         result = fa_repository.create(bean)

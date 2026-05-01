@@ -16,13 +16,9 @@ def admin_user(db):
     Group.objects.get_or_create(name="admin")
     Group.objects.get_or_create(name="operateur")
     Group.objects.get_or_create(name="lecteur")
-    user = User.objects.create_user(
-        username="admin_flow", password="AdminStrongPass123!"
-    )
+    user = User.objects.create_user(username="admin_flow", password="AdminStrongPass123!")
     user.groups.add(Group.objects.get(name="admin"))
-    UserProfileEntity.objects.create(
-        user=user, role="chef_labo", force_password_change=False
-    )
+    UserProfileEntity.objects.create(user=user, role="chef_labo", force_password_change=False)
     return user
 
 
@@ -38,9 +34,7 @@ def admin_client(admin_user):
 class TestSetInitialPasswordFlow:
     """Cycle complet : admin crée un utilisateur puis l'utilisateur active son compte."""
 
-    def test_create_user_then_activate_sets_password_and_clears_force_flag(
-        self, admin_client
-    ):
+    def test_create_user_then_activate_sets_password_and_clears_force_flag(self, admin_client):
         # Étape 1 : admin crée l'utilisateur
         create_resp = admin_client.post(
             "/api/v1/users/",
@@ -107,9 +101,7 @@ class TestSetInitialPasswordFlow:
         anon = Client()
         resp = anon.post(
             "/api/v1/auth/set-initial-password/",
-            data=json.dumps(
-                {"token": "not-a-signed-token", "new_password": "Str0ngP4ss!word"}
-            ),
+            data=json.dumps({"token": "not-a-signed-token", "new_password": "Str0ngP4ss!word"}),
             content_type="application/json",
         )
         assert resp.status_code == 400
@@ -117,13 +109,9 @@ class TestSetInitialPasswordFlow:
     def test_reset_password_flow_invalidates_and_activates(self, admin_client, db):
         # Crée un utilisateur avec un mot de passe initial connu
         operateur_group, _ = Group.objects.get_or_create(name="operateur")
-        existing = User.objects.create_user(
-            username="reset_target", password="OriginalP4ss!word"
-        )
+        existing = User.objects.create_user(username="reset_target", password="OriginalP4ss!word")
         existing.groups.add(operateur_group)
-        profile = UserProfileEntity.objects.create(
-            user=existing, role="iec", force_password_change=False
-        )
+        profile = UserProfileEntity.objects.create(user=existing, role="iec", force_password_change=False)
 
         # Admin déclenche un reset
         reset_resp = admin_client.post(f"/api/v1/users/{profile.uuid}/reset-password/")

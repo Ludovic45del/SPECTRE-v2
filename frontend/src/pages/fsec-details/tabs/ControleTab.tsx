@@ -24,6 +24,9 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import dayjs from 'dayjs';
 import { MetrologyStepModal } from '@features/fsec/edit-metrology';
 import { SealingStepModal } from '@features/fsec/edit-sealing';
+import { UserChip } from '@entities/user';
+import { useNotification } from '@shared/ui';
+import { getErrorMessage } from '@shared/lib';
 import { WorkflowMiniStepper } from './components/MiniStepper';
 
 interface ControleTabProps {
@@ -48,6 +51,7 @@ function ControleMetrologiqueCard({
     const [expanded, setExpanded] = useState(false);
     const { data: sealingStep } = useSealingStepByMetrology(metrologyStep.uuid);
     const createSealingMutation = useCreateSealingStep();
+    const { showNotification } = useNotification();
 
     const isMetrologyComplete = Boolean(metrologyStep.date);
     const isSealingComplete = Boolean(sealingStep?.date);
@@ -58,8 +62,9 @@ function ControleMetrologiqueCard({
             await createSealingMutation.mutateAsync({
                 metrologyStepId: metrologyStep.uuid,
             });
-        } catch {
-            // Error handled by mutation
+            showNotification('Scellement créé', 'success');
+        } catch (error) {
+            showNotification(getErrorMessage(error, 'Erreur lors de la création du scellement'), 'error');
         }
     };
 
@@ -90,7 +95,7 @@ function ControleMetrologiqueCard({
                     <Typography variant="h6" fontWeight={600}>
                         Contrôle Métrologique n°{index + 1}
                     </Typography>
-                    {isSealingComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isSealingComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <WorkflowMiniStepper activeStep={activeStep} steps={WORKFLOW_STEPS} />
@@ -109,15 +114,7 @@ function ControleMetrologiqueCard({
                                     <Typography variant="subtitle1" fontWeight={600}>
                                         Métrologie
                                     </Typography>
-                                    {isMetrologyComplete && (
-                                        <Chip
-                                            label="Fait"
-                                            size="small"
-                                            color="success"
-                                            variant="filled"
-                                            sx={{ height: 20 }}
-                                        />
-                                    )}
+                                    {isMetrologyComplete && <Chip label="Fait" color="success" />}
                                 </Stack>
                                 <IconButton size="small" onClick={onEditMetrology} color="primary">
                                     <EditIcon fontSize="small" />
@@ -136,9 +133,12 @@ function ControleMetrologiqueCard({
                                     <Typography variant="caption" color="text.secondary">
                                         Métrologue
                                     </Typography>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {metrologyStep.metrologistName || '-'}
-                                    </Typography>
+                                    <Box>
+                                        <UserChip
+                                            userUuid={metrologyStep.metrologistUserUuid}
+                                            fallbackText={metrologyStep.metrologistName}
+                                        />
+                                    </Box>
                                 </Grid>
                                 <Grid item xs={6} md={3}>
                                     <Typography variant="caption" color="text.secondary">
@@ -178,15 +178,7 @@ function ControleMetrologiqueCard({
                                     <Typography variant="subtitle1" fontWeight={600}>
                                         Scellement
                                     </Typography>
-                                    {isSealingComplete && (
-                                        <Chip
-                                            label="Fait"
-                                            size="small"
-                                            color="success"
-                                            variant="filled"
-                                            sx={{ height: 20 }}
-                                        />
-                                    )}
+                                    {isSealingComplete && <Chip label="Fait" color="success" />}
                                 </Stack>
                                 {sealingStep ? (
                                     <IconButton size="small" onClick={() => onEditSealing(sealingStep)} color="primary">
@@ -219,9 +211,12 @@ function ControleMetrologiqueCard({
                                             <Typography variant="caption" color="text.secondary">
                                                 Métrologue
                                             </Typography>
-                                            <Typography variant="body2" fontWeight="medium">
-                                                {sealingStep.metrologistName || '-'}
-                                            </Typography>
+                                            <Box>
+                                                <UserChip
+                                                    userUuid={sealingStep.metrologistUserUuid}
+                                                    fallbackText={sealingStep.metrologistName}
+                                                />
+                                            </Box>
                                         </Grid>
                                         <Grid item xs={6} md={3}>
                                             <Typography variant="caption" color="text.secondary">

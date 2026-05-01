@@ -47,6 +47,7 @@ interface CreateSealingStepInput {
     metrologyStepId: string;
     date?: Date | null;
     metrologistName?: string | null;
+    metrologistUserUuid?: string | null;
     rackId?: number | null;
     interfaceIo?: string | null;
     comments?: string | null;
@@ -54,6 +55,18 @@ interface CreateSealingStepInput {
 
 interface UpdateSealingStepInput extends CreateSealingStepInput {
     uuid: string;
+}
+
+function sealingStepToApi(input: CreateSealingStepInput) {
+    return {
+        metrology_step_id: input.metrologyStepId,
+        date: input.date?.toISOString().split('T')[0] ?? null,
+        metrologist_name: input.metrologistName ?? null,
+        metrologist_user_uuid: input.metrologistUserUuid ?? null,
+        rack_id: input.rackId ?? null,
+        interface_io: input.interfaceIo ?? null,
+        comments: input.comments ?? null,
+    };
 }
 
 /**
@@ -64,15 +77,7 @@ export function useCreateSealingStep() {
 
     return useMutation({
         mutationFn: async (input: CreateSealingStepInput): Promise<SealingStep> => {
-            const apiData = {
-                metrology_step_id: input.metrologyStepId,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                metrologist_name: input.metrologistName ?? null,
-                rack_id: input.rackId ?? null,
-                interface_io: input.interfaceIo ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.post('/sealing-steps/', apiData);
+            const response = await api.post('/sealing-steps/', sealingStepToApi(input));
             return SealingStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -91,15 +96,10 @@ export function useUpdateSealingStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateSealingStepInput): Promise<SealingStep> => {
-            const apiData = {
-                metrology_step_id: input.metrologyStepId,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                metrologist_name: input.metrologistName ?? null,
-                rack_id: input.rackId ?? null,
-                interface_io: input.interfaceIo ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.put(`/sealing-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/sealing-steps/${input.uuid}/`,
+                sealingStepToApi(input),
+            );
             return SealingStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

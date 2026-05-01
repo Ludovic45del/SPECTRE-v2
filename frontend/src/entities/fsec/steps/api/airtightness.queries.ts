@@ -39,11 +39,13 @@ export function useAirtightnessStep(uuid: string) {
 
 interface CreateAirtightnessStepInput {
     fsecVersionId: string;
+    embaseId?: string | null;
     leakRateDtri?: string | null;
     gasType?: string | null;
     experimentPressure?: number | null;
     airtightnessTestDuration?: number | null;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     dateOfFulfilment?: Date | null;
 }
 
@@ -51,26 +53,37 @@ interface UpdateAirtightnessStepInput extends CreateAirtightnessStepInput {
     uuid: string;
 }
 
+function airtightnessStepToApi(input: CreateAirtightnessStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        embase_id: input.embaseId ?? null,
+        leak_rate_dtri: input.leakRateDtri ?? null,
+        gas_type: input.gasType ?? null,
+        experiment_pressure: input.experimentPressure ?? null,
+        airtightness_test_duration: input.airtightnessTestDuration ?? null,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
+    };
+}
+
 export function useCreateAirtightnessStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateAirtightnessStepInput): Promise<AirtightnessStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                airtightness_test_duration: input.airtightnessTestDuration ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-            };
-            const response = await api.post('/airtightness-test-lp-steps/', apiData);
+            const response = await api.post(
+                '/airtightness-test-lp-steps/',
+                airtightnessStepToApi(input),
+            );
             return AirtightnessStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.airtightnessTestLp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -81,16 +94,10 @@ export function useUpdateAirtightnessStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateAirtightnessStepInput): Promise<AirtightnessStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                airtightness_test_duration: input.airtightnessTestDuration ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-            };
-            const response = await api.put(`/airtightness-test-lp-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/airtightness-test-lp-steps/${input.uuid}/`,
+                airtightnessStepToApi(input),
+            );
             return AirtightnessStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -99,6 +106,9 @@ export function useUpdateAirtightnessStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.airtightnessTestLp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -114,6 +124,9 @@ export function useDeleteAirtightnessStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.airtightnessTestLp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

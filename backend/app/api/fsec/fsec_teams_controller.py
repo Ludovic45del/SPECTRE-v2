@@ -13,10 +13,7 @@ from app.domain.fsec.services.fsec_teams_service import (
     get_fsec_team_members,
     update_fsec_team_member,
 )
-from app.mapper.fsec.fsec_teams_mapper import (
-    fsec_teams_mapper_api_to_bean,
-    fsec_teams_mapper_bean_to_api,
-)
+from app.mapper.fsec.fsec_teams_mapper import fsec_teams_mapper_api_to_bean, fsec_teams_mapper_bean_to_api
 from app.repository.fsec.repositories.fsec_teams_repository import FsecTeamsRepository
 
 

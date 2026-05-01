@@ -18,6 +18,7 @@ import {
     useUpdatePermeationStep,
     useDeletePermeationStep,
 } from '@entities/fsec/steps';
+import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -32,7 +33,7 @@ interface PermeationStepModalProps {
 const PermeationStepFormSchema = z.object({
     gasType: z.string().nullable().optional(),
     targetPressure: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
-    operator: z.string().min(1, 'Champ requis'),
+    operatorUserUuid: z.string().uuid('Opérateur requis'),
     startDate: z.date({ required_error: 'Date requise' }),
     estimatedEndDate: z.date().nullable().optional(),
     sensorPressure: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
@@ -41,10 +42,10 @@ const PermeationStepFormSchema = z.object({
 
 type PermeationStepForm = z.infer<typeof PermeationStepFormSchema>;
 
-const DEFAULT_VALUES = {
+const DEFAULT_VALUES: Partial<PermeationStepForm> = {
     gasType: null,
     targetPressure: null,
-    operator: undefined,
+    operatorUserUuid: '',
     startDate: undefined,
     estimatedEndDate: null,
     sensorPressure: null,
@@ -73,7 +74,7 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
                     ? {
                           gasType: step.gasType,
                           targetPressure: step.targetPressure,
-                          operator: step.operator ?? undefined,
+                          operatorUserUuid: step.operatorUserUuid ?? '',
                           startDate: step.startDate ?? undefined,
                           estimatedEndDate: step.estimatedEndDate,
                           sensorPressure: step.sensorPressure,
@@ -137,16 +138,17 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
                 <Grid2 container spacing={2}>
                     <Grid2 size={6}>
                         <Controller
-                            name="operator"
+                            name="operatorUserUuid"
                             control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    value={field.value ?? ''}
+                            render={({ field, fieldState }) => (
+                                <UserSelect
+                                    value={field.value || null}
+                                    onChange={(uuid) => field.onChange(uuid ?? '')}
+                                    roles={[...SPECTRE_OPERATOR_ROLES]}
                                     label="Opérateur"
-                                    size="small"
-                                    fullWidth
-                                    inputProps={{ 'aria-label': 'Opérateur' }}
+                                    required
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                 />
                             )}
                         />

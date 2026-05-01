@@ -20,7 +20,13 @@ class IUserRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_all(self, offset: int = 0, limit: int = 50) -> List[UserBean]:
+    def get_all(
+        self,
+        offset: int = 0,
+        limit: int = 50,
+        roles: Optional[List[str]] = None,
+        is_active: Optional[bool] = None,
+    ) -> List[UserBean]:
         pass
 
     @abc.abstractmethod
@@ -55,9 +61,7 @@ class IUserRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_dashboard_preferences(
-        self, uuid: uuid_lib.UUID
-    ) -> DashboardPreferencesBean:
+    def get_dashboard_preferences(self, uuid: uuid_lib.UUID) -> DashboardPreferencesBean:
         pass
 
     @abc.abstractmethod

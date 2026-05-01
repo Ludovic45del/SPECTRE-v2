@@ -4,6 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Box, Chip, Typography } from '@mui/material';
+import { softChipSx } from '@shared/lib';
 import { ChevronRight, ExpandMore } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import type { PlanningCampaignStep } from '@entities/planning/core/model/planning.schema';
@@ -215,15 +216,8 @@ export function StepHeaderRow({
                     <Box sx={{ display: 'flex', gap: 0.3, mt: 0.5, flexWrap: 'wrap' }}>
                         {campagne.installation?.label && (
                             <Chip
-                                size="small"
                                 label={campagne.installation.label}
-                                sx={{
-                                    bgcolor: campagne.installation.label === 'LMJ' ? '#1976d2' : '#ff9800',
-                                    color: '#fff',
-                                    fontWeight: 700,
-                                    fontSize: 10,
-                                    height: 18,
-                                }}
+                                sx={softChipSx(campagne.installation.color ?? '#666')}
                             />
                         )}
                     </Box>
@@ -247,16 +241,8 @@ export function StepHeaderRow({
                     </Typography>
                     {totalFsecs > 0 && (
                         <Chip
-                            size="small"
                             label={hasProgress ? `${doneCount}/${totalFsecs}` : `${scheduledFsecCount}/${totalFsecs}`}
-                            sx={{
-                                height: 16,
-                                fontSize: 9,
-                                fontWeight: 700,
-                                bgcolor: allDone ? '#4caf50' : etape.color,
-                                color: '#fff',
-                                '& .MuiChip-label': { px: 0.5 },
-                            }}
+                            sx={softChipSx(allDone ? '#4caf50' : etape.color)}
                         />
                     )}
                 </Box>

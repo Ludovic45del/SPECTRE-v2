@@ -17,6 +17,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from '@mui/material';
+import { softChipSx } from '@shared/lib';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -26,6 +27,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { ROLE_LABELS, PERMISSION_GROUP_LABELS, type PermissionGroup, type User } from '@entities/user';
 
 import { ROLE_COLORS } from './AdminUsersPage.constants';
+import { motion } from '@shared/ui/motion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -68,7 +70,7 @@ export const UserTableRow = memo(function UserTableRow({ user, onOpenDialog }: U
         <TableRow
             hover
             sx={{
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
             }}
         >
@@ -84,13 +86,7 @@ export const UserTableRow = memo(function UserTableRow({ user, onOpenDialog }: U
             <TableCell>
                 <Chip
                     label={ROLE_LABELS[user.role] ?? user.role}
-                    size="small"
-                    sx={{
-                        bgcolor: alpha(ROLE_COLORS[user.role] ?? '#757575', 0.12),
-                        color: ROLE_COLORS[user.role] ?? '#757575',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                    }}
+                    sx={softChipSx(ROLE_COLORS[user.role] ?? '#757575')}
                 />
             </TableCell>
             <TableCell>
@@ -113,13 +109,7 @@ export const UserTableRow = memo(function UserTableRow({ user, onOpenDialog }: U
             <TableCell>
                 <Chip
                     label={user.isActive ? 'Actif' : 'Inactif'}
-                    size="small"
-                    sx={{
-                        bgcolor: alpha(user.isActive ? '#4caf50' : '#f44336', 0.12),
-                        color: user.isActive ? '#4caf50' : '#f44336',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                    }}
+                    color={user.isActive ? 'success' : 'error'}
                 />
             </TableCell>
             <TableCell align="center" sx={{ px: 0 }}>

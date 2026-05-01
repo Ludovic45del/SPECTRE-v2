@@ -48,6 +48,7 @@ class PicturesStepRepository(IPicturesStepRepository):
         entity = PicturesStepEntity.objects.get(uuid=bean.uuid)
         entity.fsec_version_id_id = bean.fsec_version_id
         entity.operator = bean.operator
+        entity.operator_user_id = bean.operator_user_uuid
         entity.date = bean.date
         entity.comments = bean.comments
         entity.save()

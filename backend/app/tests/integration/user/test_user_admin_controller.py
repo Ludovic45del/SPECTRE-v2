@@ -30,9 +30,7 @@ def admin_user(db):
         last_name="Test",
     )
     user.groups.add(group)
-    UserProfileEntity.objects.create(
-        user=user, role="chef_labo", force_password_change=False
-    )
+    UserProfileEntity.objects.create(user=user, role="chef_labo", force_password_change=False)
     return user
 
 
@@ -207,9 +205,7 @@ class TestUserAdminCreate:
         assert data["activation_token_ttl_hours"] == 24
         assert response["Cache-Control"] == "no-store"
 
-    def test_create_user_with_explicit_password(
-        self, admin_client, create_user_payload
-    ):
+    def test_create_user_with_explicit_password(self, admin_client, create_user_payload):
         create_user_payload["password"] = "MonMotDePasse123!"
         response = admin_client.post(
             "/api/v1/users/",
@@ -223,9 +219,32 @@ class TestUserAdminCreate:
         assert "temporary_password" not in data
         assert "password" not in data
 
-    def test_create_user_duplicate_username(
-        self, admin_client, create_user_payload, existing_user
-    ):
+    def test_create_user_with_blank_optional_fields(self, admin_client):
+        # Champs optionnels vides ou absents : doivent être acceptés (allow_blank).
+        payload = {
+            "username": "user_minimal",
+            "role": "iec",
+            "first_name": "",
+            "last_name": "",
+            "laboratoire": "",
+            "service": "",
+            "numero": "",
+            "bureau": "",
+        }
+        response = admin_client.post(
+            "/api/v1/users/",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["username"] == "user_minimal"
+        assert data["laboratoire"] == ""
+        assert data["bureau"] == ""
+        assert "activation_url" in data
+
+    def test_create_user_duplicate_username(self, admin_client, create_user_payload, existing_user):
         create_user_payload["username"] = "user_existant"
         response = admin_client.post(
             "/api/v1/users/",
@@ -260,9 +279,7 @@ class TestUserAdminCreate:
         )
         assert response.status_code == 400
 
-    def test_create_user_sets_force_password_change(
-        self, admin_client, create_user_payload
-    ):
+    def test_create_user_sets_force_password_change(self, admin_client, create_user_payload):
         response = admin_client.post(
             "/api/v1/users/",
             data=json.dumps(create_user_payload),
@@ -441,9 +458,7 @@ class TestUserAdminResetPassword:
         profile.refresh_from_db()
         assert profile.force_password_change is True
 
-    def test_reset_password_invalidates_current_password(
-        self, admin_client, existing_user
-    ):
+    def test_reset_password_invalidates_current_password(self, admin_client, existing_user):
         """L'ancien mot de passe ne doit plus être valide après reset."""
         user, profile = existing_user
         admin_client.post(f"/api/v1/users/{profile.uuid}/reset-password/")

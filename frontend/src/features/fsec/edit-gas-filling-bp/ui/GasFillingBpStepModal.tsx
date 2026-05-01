@@ -5,8 +5,8 @@
  * Refactored to use StepModalLayout for reduced duplication.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { TextField, Stack, Grid2 } from '@mui/material';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Autocomplete, Box, Chip, TextField, Stack, Grid2, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useForm, Controller } from 'react-hook-form';
@@ -19,9 +19,12 @@ import {
     useDeleteGasFillingBpStep,
     type CommonGasDataOptional,
 } from '@entities/fsec/steps';
+import { useEmbases, getEtalonnageStatus, type Embase } from '@entities/embase';
+import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
-import { getErrorMessage } from '@shared/lib';
+import { getErrorMessage, softChipSx } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
+import { EmbaseDetailCard } from '@features/embase/shared';
 
 interface GasFillingBpStepModalProps {
     open: boolean;
@@ -33,11 +36,12 @@ interface GasFillingBpStepModalProps {
 }
 
 const GasFillingBpStepFormSchema = z.object({
+    embaseId: z.string().uuid().nullable().optional(),
     leakRateDtri: z.string().nullable().optional(),
     gasType: z.string().nullable().optional(),
     experimentPressure: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
     leakTestDuration: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
-    operator: z.string().min(1, 'Champ requis'),
+    operatorUserUuid: z.string().uuid('Opérateur requis'),
     dateOfFulfilment: z.date({ required_error: 'Date requise' }),
     gasBase: z.number().nullable().optional(),
     gasContainer: z.number().nullable().optional(),
@@ -46,12 +50,13 @@ const GasFillingBpStepFormSchema = z.object({
 
 type GasFillingBpStepForm = z.infer<typeof GasFillingBpStepFormSchema>;
 
-const DEFAULT_VALUES = {
+const DEFAULT_VALUES: Partial<GasFillingBpStepForm> = {
+    embaseId: null,
     leakRateDtri: null,
     gasType: null,
     experimentPressure: null,
     leakTestDuration: null,
-    operator: undefined,
+    operatorUserUuid: '',
     dateOfFulfilment: undefined,
     gasBase: null,
     gasContainer: null,
@@ -67,40 +72,50 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
     const deleteMutation = useDeleteGasFillingBpStep();
     const { showNotification } = useNotification();
 
-    const { control, handleSubmit, reset } = useForm<GasFillingBpStepForm>({
+    const { data: allEmbases = [] } = useEmbases();
+    const bpEmbases = useMemo(() => allEmbases.filter((e: Embase) => e.type === 'bp'), [allEmbases]);
+
+    const { control, handleSubmit, reset, watch } = useForm<GasFillingBpStepForm>({
         mode: 'onBlur',
         resolver: zodResolver(GasFillingBpStepFormSchema),
         defaultValues: DEFAULT_VALUES,
     });
 
+    const selectedEmbaseId = watch('embaseId');
+    const selectedEmbase = useMemo(
+        () => bpEmbases.find((e: Embase) => e.uuid === selectedEmbaseId) ?? null,
+        [bpEmbases, selectedEmbaseId],
+    );
+
+    // Reset uniquement à l'ouverture (sinon les nouvelles refs de commonData écrasent
+    // ce que l'utilisateur tape).
     useEffect(() => {
-        if (open) {
-            reset(
-                step
-                    ? {
-                          // Utiliser les données du step, ou les données communes si le step n'en a pas
-                          leakRateDtri: step.leakRateDtri ?? commonData?.leakRateDtri ?? null,
-                          gasType: step.gasType ?? commonData?.gasType ?? null,
-                          experimentPressure: step.experimentPressure ?? commonData?.experimentPressure ?? null,
-                          leakTestDuration: step.leakTestDuration ?? commonData?.leakTestDuration ?? null,
-                          operator: step.operator ?? undefined,
-                          dateOfFulfilment: step.dateOfFulfilment ?? undefined,
-                          gasBase: step.gasBase,
-                          gasContainer: step.gasContainer,
-                          observations: step.observations,
-                      }
-                    : {
-                          // Nouveau step: utiliser les données communes comme valeurs par défaut
-                          ...DEFAULT_VALUES,
-                          leakRateDtri: commonData?.leakRateDtri ?? null,
-                          gasType: commonData?.gasType ?? null,
-                          experimentPressure: commonData?.experimentPressure ?? null,
-                          leakTestDuration: commonData?.leakTestDuration ?? null,
-                      },
-            );
-            setShowDeleteConfirm(false);
-        }
-    }, [open, step, commonData, reset]);
+        if (!open) return;
+        reset(
+            step
+                ? {
+                      embaseId: step.embaseId ?? null,
+                      leakRateDtri: step.leakRateDtri ?? commonData?.leakRateDtri ?? null,
+                      gasType: step.gasType ?? commonData?.gasType ?? null,
+                      experimentPressure: step.experimentPressure ?? commonData?.experimentPressure ?? null,
+                      leakTestDuration: step.leakTestDuration ?? commonData?.leakTestDuration ?? null,
+                      operatorUserUuid: step.operatorUserUuid ?? '',
+                      dateOfFulfilment: step.dateOfFulfilment ?? undefined,
+                      gasBase: step.gasBase,
+                      gasContainer: step.gasContainer,
+                      observations: step.observations,
+                  }
+                : {
+                      ...DEFAULT_VALUES,
+                      leakRateDtri: commonData?.leakRateDtri ?? null,
+                      gasType: commonData?.gasType ?? null,
+                      experimentPressure: commonData?.experimentPressure ?? null,
+                      leakTestDuration: commonData?.leakTestDuration ?? null,
+                  },
+        );
+        setShowDeleteConfirm(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, step?.uuid]);
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -156,7 +171,7 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                         <Controller
                             name="dateOfFulfilment"
                             control={control}
-                            render={({ field: { value, onChange, ...field } }) => (
+                            render={({ field: { value, onChange, ...field }, fieldState }) => (
                                 <DatePicker
                                     {...field}
                                     label="Date de réalisation"
@@ -166,6 +181,9 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                                         textField: {
                                             fullWidth: true,
                                             size: 'small',
+                                            required: true,
+                                            error: Boolean(fieldState.error),
+                                            helperText: fieldState.error?.message,
                                             inputProps: { 'aria-label': 'Date de réalisation' },
                                         },
                                     }}
@@ -175,21 +193,65 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                     </Grid2>
                     <Grid2 size={6}>
                         <Controller
-                            name="operator"
+                            name="operatorUserUuid"
                             control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    value={field.value ?? ''}
+                            render={({ field, fieldState }) => (
+                                <UserSelect
+                                    value={field.value || null}
+                                    onChange={(uuid) => field.onChange(uuid ?? '')}
+                                    roles={[...SPECTRE_OPERATOR_ROLES]}
                                     label="Opérateur"
-                                    size="small"
-                                    fullWidth
-                                    inputProps={{ 'aria-label': 'Opérateur' }}
+                                    required
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                 />
                             )}
                         />
                     </Grid2>
                 </Grid2>
+
+                <Controller
+                    name="embaseId"
+                    control={control}
+                    render={({ field: { onChange } }) => (
+                        <Autocomplete
+                            options={bpEmbases}
+                            value={selectedEmbase}
+                            onChange={(_, newValue) => onChange(newValue?.uuid ?? null)}
+                            getOptionLabel={(option: Embase) => option.identifier}
+                            isOptionEqualToValue={(option, value) => option.uuid === value.uuid}
+                            size="small"
+                            renderOption={(props, option) => {
+                                const etal = getEtalonnageStatus(option.lastEtalonnageDateV1);
+                                return (
+                                    <li {...props} key={option.uuid}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                            <Typography variant="body2" fontWeight={600} sx={{ minWidth: 40 }}>
+                                                {option.identifier}
+                                            </Typography>
+                                            <Chip label={etal.label} sx={softChipSx(etal.color)} />
+                                            {option.localisationActuelle && (
+                                                <Typography variant="caption" color="text.secondary">
+                                                    Loc: {option.localisationActuelle}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </li>
+                                );
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Embase BP"
+                                    placeholder="Sélectionner une embase BP"
+                                    inputProps={{ ...params.inputProps, 'aria-label': 'Embase BP' }}
+                                />
+                            )}
+                        />
+                    )}
+                />
+
+                {selectedEmbase && <EmbaseDetailCard embase={selectedEmbase} />}
 
                 <Grid2 container spacing={2}>
                     <Grid2 size={6}>
@@ -231,7 +293,7 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                         <Controller
                             name="experimentPressure"
                             control={control}
-                            render={({ field }) => (
+                            render={({ field, fieldState }) => (
                                 <TextField
                                     {...field}
                                     value={field.value ?? ''}
@@ -242,6 +304,8 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                                     type="number"
                                     size="small"
                                     fullWidth
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                     inputProps={{ step: 0.01, 'aria-label': "Pression d'expérimentation en bar" }}
                                 />
                             )}
@@ -251,7 +315,7 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                         <Controller
                             name="leakTestDuration"
                             control={control}
-                            render={({ field }) => (
+                            render={({ field, fieldState }) => (
                                 <TextField
                                     {...field}
                                     value={field.value ?? ''}
@@ -262,7 +326,9 @@ export function GasFillingBpStepModal({ open, onClose, fsecVersionId, step, comm
                                     type="number"
                                     size="small"
                                     fullWidth
-                                    inputProps={{ 'aria-label': 'Durée du test de fuite en minutes' }}
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
+                                    inputProps={{ min: 0, 'aria-label': 'Durée du test de fuite en minutes' }}
                                 />
                             )}
                         />

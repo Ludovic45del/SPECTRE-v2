@@ -31,6 +31,7 @@ import { FsecWorkflowStepper } from './FsecWorkflowStepper';
 import { useNotification } from '@shared/ui';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+import { motion } from '@shared/ui/motion';
 
 dayjs.locale('fr');
 
@@ -112,7 +113,7 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'action.hover',
                                     borderColor: 'primary.main',
@@ -187,7 +188,7 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                                         fontSize: '0.8rem',
                                         fontWeight: 500,
                                         width: 'fit-content',
-                                        transition: 'all 0.15s ease',
+                                        transition: `all ${motion.fast}`,
                                         '&:hover': {
                                             bgcolor: 'primary.50',
                                             color: 'primary.main',
@@ -226,7 +227,7 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'error.lighter',
                                     borderColor: 'error.main',

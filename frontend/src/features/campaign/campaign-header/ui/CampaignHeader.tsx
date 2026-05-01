@@ -31,6 +31,7 @@ import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+import { motion } from '@shared/ui/motion';
 
 dayjs.locale('fr');
 
@@ -116,7 +117,7 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'action.hover',
                                     borderColor: 'primary.main',
@@ -213,7 +214,7 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'error.lighter',
                                     borderColor: 'error.main',

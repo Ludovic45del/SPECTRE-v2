@@ -14,6 +14,7 @@ class PermeationStepBean:
     gas_type: Optional[str] = None
     target_pressure: Optional[float] = None
     operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     start_date: Optional[datetime] = None
     estimated_end_date: Optional[datetime] = None
     sensor_pressure: Optional[float] = None

@@ -160,9 +160,7 @@ class TestFaControllerRetrieve:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.get_fa_by_uuid")
-    def test_retrieve_returns_fa(
-        self, mock_get_fa, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_retrieve_returns_fa(self, mock_get_fa, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test GET /:uuid retourne la FA."""
         mock_get_fa.return_value = sample_fa_bean
 
@@ -253,9 +251,7 @@ class TestFaControllerCreate:
             fsec_name="FSEC Test",
             year=2025,
         )
-        mock_create_fa.side_effect = ConflictException(
-            "fsec_version_id", sample_fsec_version_id
-        )
+        mock_create_fa.side_effect = ConflictException("fsec_version_id", sample_fsec_version_id)
 
         request_data = {
             "fsec_version_id": sample_fsec_version_id,
@@ -282,9 +278,7 @@ class TestFaControllerUpdate:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.update_fa")
-    def test_update_returns_200(
-        self, mock_update_fa, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_update_returns_200(self, mock_update_fa, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test PUT /:uuid met à jour et retourne 200."""
         updated_bean = sample_fa_bean
         updated_bean.discoverer = "Marie Martin (modifié)"
@@ -329,18 +323,14 @@ class TestFaControllerPartialUpdate:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.patch_fa")
-    def test_partial_update_returns_200(
-        self, mock_patch_fa, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_partial_update_returns_200(self, mock_patch_fa, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test PATCH /:uuid met à jour partiellement et retourne 200."""
         updated_bean = sample_fa_bean
         updated_bean.cause = "Nouvelle cause"
         mock_patch_fa.return_value = updated_bean
 
         request_data = {"cause": "Nouvelle cause"}
-        request = _make_patch(
-            request_factory, f"/api/fa/{sample_fa_uuid}/", request_data
-        )
+        request = _make_patch(request_factory, f"/api/fa/{sample_fa_uuid}/", request_data)
 
         controller = FaController()
         response = controller.partial_update(request, uuid=sample_fa_uuid)
@@ -351,9 +341,7 @@ class TestFaControllerPartialUpdate:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.patch_fa")
-    def test_partial_update_not_found_raises_exception(
-        self, mock_patch_fa, request_factory
-    ):
+    def test_partial_update_not_found_raises_exception(self, mock_patch_fa, request_factory):
         """Test PATCH /:uuid lève NotFoundException si FA non trouvée."""
         mock_patch_fa.side_effect = NotFoundException("FA", "fake-uuid")
 
@@ -409,17 +397,13 @@ class TestFaControllerCustomActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.get_fa_by_fsec_version_id")
-    def test_get_by_fsec_returns_fa(
-        self, mock_get_fa, request_factory, sample_fsec_version_id, sample_fa_bean
-    ):
+    def test_get_by_fsec_returns_fa(self, mock_get_fa, request_factory, sample_fsec_version_id, sample_fa_bean):
         """Test GET /fsec/:fsec_version_id retourne la FA."""
         mock_get_fa.return_value = sample_fa_bean
 
         request = request_factory.get(f"/api/fa/fsec/{sample_fsec_version_id}/")
         controller = FaController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -427,13 +411,9 @@ class TestFaControllerCustomActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.get_fa_by_fsec_version_id")
-    def test_get_by_fsec_not_found_raises_exception(
-        self, mock_get_fa, request_factory, sample_fsec_version_id
-    ):
+    def test_get_by_fsec_not_found_raises_exception(self, mock_get_fa, request_factory, sample_fsec_version_id):
         """Test GET /fsec/:fsec_version_id lève NotFoundException si FA non trouvée."""
-        mock_get_fa.side_effect = NotFoundException(
-            "FA for FSEC", sample_fsec_version_id
-        )
+        mock_get_fa.side_effect = NotFoundException("FA for FSEC", sample_fsec_version_id)
 
         request = request_factory.get(f"/api/fa/fsec/{sample_fsec_version_id}/")
         controller = FaController()
@@ -452,9 +432,7 @@ class TestFaControllerWorkflowActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_open_phase")
-    def test_validate_open_returns_200(
-        self, mock_validate, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_validate_open_returns_200(self, mock_validate, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test POST /:uuid/validate-open valide la phase Ouvert."""
         sample_fa_bean.status_id = 1  # En cours
         sample_fa_bean.iec_validation_open = True
@@ -464,9 +442,7 @@ class TestFaControllerWorkflowActions:
             "validator_name": "Valideur IEC",
             "validation_date": "2025-03-20",
         }
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data)
 
         controller = FaController()
         response = controller.validate_open(request, uuid=sample_fa_uuid)
@@ -478,18 +454,12 @@ class TestFaControllerWorkflowActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_open_phase")
-    def test_validate_open_wrong_status_raises_exception(
-        self, mock_validate, request_factory, sample_fa_uuid
-    ):
+    def test_validate_open_wrong_status_raises_exception(self, mock_validate, request_factory, sample_fa_uuid):
         """Test POST /:uuid/validate-open lève ConflictException si mauvais statut."""
-        mock_validate.side_effect = ConflictException(
-            "status", "FA must be 'Ouvert' to validate."
-        )
+        mock_validate.side_effect = ConflictException("status", "FA must be 'Ouvert' to validate.")
 
         request_data = {"validator_name": "Test"}
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data)
 
         controller = FaController()
 
@@ -498,9 +468,7 @@ class TestFaControllerWorkflowActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_progress_phase")
-    def test_validate_progress_returns_200(
-        self, mock_validate, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_validate_progress_returns_200(self, mock_validate, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test POST /:uuid/validate-progress valide la phase En cours."""
         sample_fa_bean.status_id = 2  # Clos
         sample_fa_bean.iec_validation_progress = True
@@ -526,9 +494,7 @@ class TestFaControllerWorkflowActions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.close_fa")
-    def test_close_returns_200(
-        self, mock_close, request_factory, sample_fa_uuid, sample_fa_bean
-    ):
+    def test_close_returns_200(self, mock_close, request_factory, sample_fa_uuid, sample_fa_bean):
         """Test POST /:uuid/close ferme la FA."""
         sample_fa_bean.status_id = 2
         sample_fa_bean.closure_validation = "FA clôturée avec succès"
@@ -541,9 +507,7 @@ class TestFaControllerWorkflowActions:
             "closure_validation": "FA clôturée avec succès",
             "closure_date": "2025-04-15",
         }
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data)
 
         controller = FaController()
         response = controller.close(request, uuid=sample_fa_uuid)
@@ -564,9 +528,7 @@ class TestFaControllerInvalidStateTransitions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_open_phase")
-    def test_validate_open_on_closed_fa_raises(
-        self, mock_validate, request_factory, sample_fa_uuid
-    ):
+    def test_validate_open_on_closed_fa_raises(self, mock_validate, request_factory, sample_fa_uuid):
         """Impossible de valider la phase Ouvert si la FA est déjà fermée."""
         mock_validate.side_effect = ConflictException(
             "status",
@@ -574,9 +536,7 @@ class TestFaControllerInvalidStateTransitions:
         )
 
         request_data = {"validator_name": "Test"}
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data)
 
         controller = FaController()
 
@@ -587,9 +547,7 @@ class TestFaControllerInvalidStateTransitions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_progress_phase")
-    def test_validate_progress_on_open_fa_raises(
-        self, mock_validate, request_factory, sample_fa_uuid
-    ):
+    def test_validate_progress_on_open_fa_raises(self, mock_validate, request_factory, sample_fa_uuid):
         """Impossible de valider la phase En cours si la FA est au statut Ouvert."""
         mock_validate.side_effect = ConflictException(
             "status",
@@ -623,9 +581,7 @@ class TestFaControllerInvalidStateTransitions:
             "validator_name": "Chef",
             "closure_validation": "Text",
         }
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data)
 
         controller = FaController()
 
@@ -636,9 +592,7 @@ class TestFaControllerInvalidStateTransitions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.close_fa")
-    def test_close_without_iec_validation_raises(
-        self, mock_close, request_factory, sample_fa_uuid
-    ):
+    def test_close_without_iec_validation_raises(self, mock_close, request_factory, sample_fa_uuid):
         """Impossible de fermer une FA sans validation IEC de la phase En cours."""
         mock_close.side_effect = ConflictException(
             "iec_validation_progress",
@@ -649,9 +603,7 @@ class TestFaControllerInvalidStateTransitions:
             "validator_name": "Chef",
             "closure_validation": "Text",
         }
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data
-        )
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data)
 
         controller = FaController()
 
@@ -662,9 +614,7 @@ class TestFaControllerInvalidStateTransitions:
 
     @pytest.mark.integration
     @patch("app.api.fa.fa_controller.validate_progress_phase")
-    def test_validate_progress_on_closed_fa_raises(
-        self, mock_validate, request_factory, sample_fa_uuid
-    ):
+    def test_validate_progress_on_closed_fa_raises(self, mock_validate, request_factory, sample_fa_uuid):
         """Impossible de valider la phase En cours si la FA est déjà fermée."""
         mock_validate.side_effect = ConflictException(
             "status",
@@ -695,35 +645,27 @@ class TestFaControllerValidation:
     """Tests pour la validation des entrées du controller FA."""
 
     @pytest.mark.integration
-    def test_create_missing_validator_name_for_validate_open(
-        self, request_factory, sample_fa_uuid
-    ):
-        """validate-open requiert validator_name."""
-        from app.domain.exceptions import InvalidDataException
+    def test_create_missing_validator_name_for_validate_open(self, request_factory, sample_fa_uuid):
+        """validate-open requiert validator_name OU validator_user_uuid (verification service)."""
+        from app.domain.exceptions import ValidationException
 
-        request_data = {}  # Missing validator_name
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data
-        )
+        request_data = {}  # Aucun des deux validator_*
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/validate-open/", request_data)
 
         controller = FaController()
 
-        with pytest.raises(InvalidDataException):
+        with pytest.raises(ValidationException):
             controller.validate_open(request, uuid=sample_fa_uuid)
 
     @pytest.mark.integration
-    def test_create_missing_validator_name_for_close(
-        self, request_factory, sample_fa_uuid
-    ):
-        """close requiert validator_name."""
-        from app.domain.exceptions import InvalidDataException
+    def test_create_missing_validator_name_for_close(self, request_factory, sample_fa_uuid):
+        """close requiert validator_name OU validator_user_uuid (verification service)."""
+        from app.domain.exceptions import ValidationException
 
-        request_data = {"closure_validation": "Text"}  # Missing validator_name
-        request = _make_post(
-            request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data
-        )
+        request_data = {"closure_validation": "Text"}  # Aucun des deux validator_*
+        request = _make_post(request_factory, f"/api/fa/{sample_fa_uuid}/close/", request_data)
 
         controller = FaController()
 
-        with pytest.raises(InvalidDataException):
+        with pytest.raises(ValidationException):
             controller.close(request, uuid=sample_fa_uuid)

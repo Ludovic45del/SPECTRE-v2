@@ -3,10 +3,7 @@
 import logging
 from typing import List
 
-from app.domain.campaign.interface.campaign_repository import (
-    ICampaignDocumentsRepository,
-    ICampaignRepository,
-)
+from app.domain.campaign.interface.campaign_repository import ICampaignDocumentsRepository, ICampaignRepository
 from app.domain.campaign.models.campaign_documents_bean import CampaignDocumentsBean
 from app.domain.exceptions import ConflictException, NotFoundException
 
@@ -48,9 +45,7 @@ def create_campaign_document(
     return result
 
 
-def get_campaign_document_by_uuid(
-    repository: ICampaignDocumentsRepository, uuid: str
-) -> CampaignDocumentsBean:
+def get_campaign_document_by_uuid(repository: ICampaignDocumentsRepository, uuid: str) -> CampaignDocumentsBean:
     """Récupère un document par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -58,9 +53,7 @@ def get_campaign_document_by_uuid(
     return bean
 
 
-def get_campaign_documents(
-    repository: ICampaignDocumentsRepository, campaign_uuid: str
-) -> List[CampaignDocumentsBean]:
+def get_campaign_documents(repository: ICampaignDocumentsRepository, campaign_uuid: str) -> List[CampaignDocumentsBean]:
     """Récupère tous les documents d'une campagne."""
     return repository.get_by_campaign_uuid(campaign_uuid)
 
@@ -76,9 +69,7 @@ def update_campaign_document(
     return repository.update(bean)
 
 
-def delete_campaign_document(
-    repository: ICampaignDocumentsRepository, uuid: str
-) -> bool:
+def delete_campaign_document(repository: ICampaignDocumentsRepository, uuid: str) -> bool:
     """Supprime un document."""
     existing = repository.get_by_uuid(uuid)
     if existing is None:

@@ -22,7 +22,8 @@ const stepUuid2 = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
 const mockAssemblyStep = {
     uuid: stepUuid1,
     fsec_version_id: fsecVersionUuid,
-    hydrometric_temperature: 22.5,
+    operator: 'Assembleur Test',
+    operator_user_uuid: null,
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
@@ -125,7 +126,8 @@ describe('useCreateAssemblyStep', () => {
 
         const newStep = {
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: 23.0,
+            operator: 'Assembleur Dupont',
+            operatorUserUuid: null,
             startDate: new Date('2025-03-01'),
             endDate: new Date('2025-03-15'),
             comments: 'New step',
@@ -151,7 +153,8 @@ describe('useCreateAssemblyStep', () => {
 
         result.current.mutate({
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: null,
+            operator: null,
+            operatorUserUuid: null,
             startDate: null,
             endDate: null,
             comments: '',
@@ -173,7 +176,8 @@ describe('useCreateAssemblyStep', () => {
 
         result.current.mutate({
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: 22.0,
+            operator: 'Assembleur',
+            operatorUserUuid: null,
             startDate: null,
             endDate: null,
             comments: '',
@@ -208,7 +212,8 @@ describe('useUpdateAssemblyStep', () => {
         result.current.mutate({
             uuid: stepUuid,
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: 25.0,
+            operator: 'Assembleur Martin',
+            operatorUserUuid: null,
             startDate: null,
             endDate: null,
             comments: 'Updated comment',
@@ -233,7 +238,8 @@ describe('useUpdateAssemblyStep', () => {
         result.current.mutate({
             uuid: 'non-existent-uuid',
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: 22.0,
+            operator: 'Assembleur',
+            operatorUserUuid: null,
             startDate: null,
             endDate: null,
             comments: '',
@@ -331,7 +337,8 @@ describe('Cache Invalidation', () => {
         const { result: createResult } = renderHook(() => useCreateAssemblyStep(), { wrapper });
         createResult.current.mutate({
             fsecVersionId: fsecVersionUuid,
-            hydrometricTemperature: 22.0,
+            operator: 'Assembleur',
+            operatorUserUuid: null,
             startDate: null,
             endDate: null,
             comments: '',

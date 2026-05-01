@@ -14,6 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Fa, useCloseFa, useUpdateFa } from '@entities/fa';
+import { UserSelect } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 
@@ -22,7 +23,7 @@ import { getErrorMessage } from '@shared/lib';
 // ============================================================================
 
 const ClosePhaseFormSchema = z.object({
-    validatorName: z.string().min(1, 'Le nom du validateur est requis').max(200),
+    validatorUserUuid: z.string().uuid('Validateur (IEC ou chef de labo) requis'),
     closureValidation: z.string().max(4000).optional().default(''),
     closureDate: z.date({ required_error: 'La date de clôture est requise' }),
 });
@@ -59,7 +60,7 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
     } = useForm<ClosePhaseFormData>({
         resolver: zodResolver(ClosePhaseFormSchema),
         defaultValues: {
-            validatorName: '',
+            validatorUserUuid: '',
             closureValidation: '',
             closureDate: new Date(),
         },
@@ -69,7 +70,7 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
     useEffect(() => {
         if (open) {
             reset({
-                validatorName: fa.closureValidatorName ?? '',
+                validatorUserUuid: fa.closureValidatorUserUuid ?? '',
                 closureValidation: fa.closureValidation ?? '',
                 closureDate: fa.closureDate ? new Date(fa.closureDate) : new Date(),
             });
@@ -87,7 +88,7 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                 if (isClosed) {
                     await updateMutation.mutateAsync({
                         uuid: fa.uuid,
-                        closureValidatorName: data.validatorName,
+                        closureValidatorUserUuid: data.validatorUserUuid,
                         closureValidation: data.closureValidation ?? '',
                         closureDate: data.closureDate,
                     });
@@ -95,7 +96,7 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                 } else {
                     await closeMutation.mutateAsync({
                         uuid: fa.uuid,
-                        validatorName: data.validatorName,
+                        validatorUserUuid: data.validatorUserUuid,
                         closureValidation: data.closureValidation ?? '',
                         closureDate: data.closureDate,
                     });
@@ -116,16 +117,17 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                 <DialogContent>
                     <Stack spacing={3} sx={{ mt: 1 }}>
                         <Controller
-                            name="validatorName"
+                            name="validatorUserUuid"
                             control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Validé par (Chef Labo + IEC) *"
-                                    size="small"
-                                    fullWidth
-                                    error={Boolean(errors.validatorName)}
-                                    helperText={errors.validatorName?.message}
+                            render={({ field, fieldState }) => (
+                                <UserSelect
+                                    value={field.value || null}
+                                    onChange={(uuid) => field.onChange(uuid ?? '')}
+                                    roles={['iec', 'chef_labo']}
+                                    label="Validé par (IEC ou chef de labo) *"
+                                    required
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                 />
                             )}
                         />

@@ -55,9 +55,7 @@ def issue_activation_token(profile: UserProfileEntity) -> str:
     L'incrément de `password_token_version` rend immédiatement obsolètes tous
     les jetons émis précédemment pour cet utilisateur.
     """
-    UserProfileEntity.objects.filter(pk=profile.pk).update(
-        password_token_version=F("password_token_version") + 1
-    )
+    UserProfileEntity.objects.filter(pk=profile.pk).update(password_token_version=F("password_token_version") + 1)
     profile.refresh_from_db(fields=["password_token_version"])
     payload = _build_payload(profile.user_id, profile.password_token_version)
     return _signer().sign(payload)
@@ -90,9 +88,7 @@ def consume_activation_token(token: str, new_password: str) -> User:
     try:
         payload = _signer().unsign(token, max_age=TOKEN_TTL_SECONDS)
     except SignatureExpired as exc:
-        raise ValidationException(
-            "token", "Jeton d'activation expiré — demandez un nouveau lien"
-        ) from exc
+        raise ValidationException("token", "Jeton d'activation expiré — demandez un nouveau lien") from exc
     except BadSignature as exc:
         raise ValidationException("token", "Jeton d'activation invalide") from exc
 
@@ -104,9 +100,7 @@ def consume_activation_token(token: str, new_password: str) -> User:
         raise ValidationException("token", "Utilisateur introuvable") from exc
 
     if profile.password_token_version != version:
-        raise ValidationException(
-            "token", "Jeton d'activation déjà utilisé ou remplacé"
-        )
+        raise ValidationException("token", "Jeton d'activation déjà utilisé ou remplacé")
 
     user = profile.user
 

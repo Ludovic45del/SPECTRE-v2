@@ -8,11 +8,7 @@ import uuid as uuid_lib
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from app.domain.exceptions import (
-    ConflictException,
-    NotFoundException,
-    ValidationException,
-)
+from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
 from app.domain.user.interface.user_repository import IUserRepository
 from app.domain.user.models.user_bean import ALL_SPECTRE_ROLES, UserBean
 
@@ -104,14 +100,21 @@ def get_user_by_uuid(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBe
 
 
 def list_users(
-    repository: IUserRepository, offset: int = 0, limit: int = 50
+    repository: IUserRepository,
+    offset: int = 0,
+    limit: int = 50,
+    roles: list[str] | None = None,
+    is_active: bool | None = None,
 ) -> list[UserBean]:
-    return repository.get_all(offset=offset, limit=limit)
+    return repository.get_all(
+        offset=offset,
+        limit=limit,
+        roles=roles,
+        is_active=is_active,
+    )
 
 
-def update_user(
-    repository: IUserRepository, uuid: uuid_lib.UUID, bean: UserBean
-) -> UserBean:
+def update_user(repository: IUserRepository, uuid: uuid_lib.UUID, bean: UserBean) -> UserBean:
     existing = repository.get_by_uuid(uuid)
     if not existing:
         raise NotFoundException("USER", str(uuid))

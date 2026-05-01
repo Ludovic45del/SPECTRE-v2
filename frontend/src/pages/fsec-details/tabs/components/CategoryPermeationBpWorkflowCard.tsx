@@ -18,6 +18,7 @@ import type {
     PermeationStep,
     RepressurizationStep,
 } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 import { WorkflowMiniStepper } from './MiniStepper';
 import { CommonDataSection, formatDate, formatDateTime } from './gas-workflow-components';
 
@@ -158,7 +159,7 @@ export function CategoryPermeationBpWorkflowCard({
                     <Typography variant="h6" fontWeight={600}>
                         Workflow Perméation + BP
                     </Typography>
-                    {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <WorkflowMiniStepper activeStep={activeStep} steps={WORKFLOW_STEPS} />
@@ -232,13 +233,7 @@ export function CategoryPermeationBpWorkflowCard({
                                                             color={step?.dateOfFulfilment ? 'success' : 'primary'}
                                                         />
                                                         {step?.dateOfFulfilment && (
-                                                            <Chip
-                                                                label="Fait"
-                                                                size="small"
-                                                                color="success"
-                                                                variant="filled"
-                                                                sx={{ height: 20 }}
-                                                            />
+                                                            <Chip label="Fait" color="success" />
                                                         )}
                                                     </Stack>
                                                     <IconButton
@@ -266,9 +261,10 @@ export function CategoryPermeationBpWorkflowCard({
                                                             <Typography variant="caption" color="text.secondary">
                                                                 Opérateur
                                                             </Typography>
-                                                            <Typography variant="body2" fontWeight="medium">
-                                                                {step.operator ?? '-'}
-                                                            </Typography>
+                                                            <UserChip
+                                                                userUuid={step.operatorUserUuid}
+                                                                fallbackText={step.operator}
+                                                            />
                                                         </Grid>
                                                     </Grid>
                                                 ) : (
@@ -297,13 +293,7 @@ export function CategoryPermeationBpWorkflowCard({
                                         Perméation
                                     </Typography>
                                     {permeationStep?.startDate && (
-                                        <Chip
-                                            label="Fait"
-                                            size="small"
-                                            color="success"
-                                            variant="filled"
-                                            sx={{ height: 20 }}
-                                        />
+                                        <Chip label="Fait" color="success" />
                                     )}
                                 </Stack>
                                 <IconButton
@@ -398,13 +388,7 @@ export function CategoryPermeationBpWorkflowCard({
                                         Dépressurisation
                                     </Typography>
                                     {depressurizationStep?.dateOfFulfilment && (
-                                        <Chip
-                                            label="Fait"
-                                            size="small"
-                                            color="success"
-                                            variant="filled"
-                                            sx={{ height: 20 }}
-                                        />
+                                        <Chip label="Fait" color="success" />
                                     )}
                                 </Stack>
                                 <IconButton
@@ -569,13 +553,7 @@ export function CategoryPermeationBpWorkflowCard({
                                                             color={step?.dateOfFulfilment ? 'success' : 'action'}
                                                         />
                                                         {step?.dateOfFulfilment && (
-                                                            <Chip
-                                                                label="Fait"
-                                                                size="small"
-                                                                color="success"
-                                                                variant="filled"
-                                                                sx={{ height: 20 }}
-                                                            />
+                                                            <Chip label="Fait" color="success" />
                                                         )}
                                                     </Stack>
                                                     <IconButton
@@ -603,9 +581,10 @@ export function CategoryPermeationBpWorkflowCard({
                                                             <Typography variant="caption" color="text.secondary">
                                                                 Opérateur
                                                             </Typography>
-                                                            <Typography variant="body2" fontWeight="medium">
-                                                                {step.operator ?? '-'}
-                                                            </Typography>
+                                                            <UserChip
+                                                                userUuid={step.operatorUserUuid}
+                                                                fallbackText={step.operator}
+                                                            />
                                                         </Grid>
                                                         <Grid item xs={6} md={3}>
                                                             <Typography variant="caption" color="text.secondary">
@@ -672,13 +651,7 @@ export function CategoryPermeationBpWorkflowCard({
                                             Repressurisation
                                         </Typography>
                                         {repressurizationStep?.startDate && (
-                                            <Chip
-                                                label="Fait"
-                                                size="small"
-                                                color="success"
-                                                variant="filled"
-                                                sx={{ height: 20 }}
-                                            />
+                                            <Chip label="Fait" color="success" />
                                         )}
                                     </Stack>
                                     <IconButton

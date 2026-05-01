@@ -108,7 +108,8 @@ def sample_assembly_step_bean(sample_fsec_version_uuid):
     return AssemblyStepBean(
         uuid=str(uuid.uuid4()),
         fsec_version_id=sample_fsec_version_uuid,
-        hydrometric_temperature=22.5,
+        operator="Assembleur Test",
+        operator_user_uuid=None,
         start_date=date(2025, 2, 1),
         end_date=date(2025, 2, 15),
         comments="Assemblage terminé",
@@ -166,9 +167,7 @@ def sample_pictures_step_bean(sample_fsec_version_uuid):
 @pytest.fixture
 def sample_airtightness_step_bean(sample_fsec_version_uuid):
     """Bean AirtightnessTestLpStep de test."""
-    from app.domain.steps.models.airtightness_test_lp_step_bean import (
-        AirtightnessTestLpStepBean,
-    )
+    from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
     return AirtightnessTestLpStepBean(
         uuid=str(uuid.uuid4()),

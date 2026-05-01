@@ -6,9 +6,7 @@ from django.db import migrations
 
 
 def update_subtype_and_seed_doc(apps, schema_editor):
-    CampaignDocumentSubtypesEntity = apps.get_model(
-        "app", "CampaignDocumentSubtypesEntity"
-    )
+    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
     CampaignDocumentsEntity = apps.get_model("app", "CampaignDocumentsEntity")
     CampaignEntity = apps.get_model("app", "CampaignEntity")
 
@@ -27,9 +25,7 @@ def update_subtype_and_seed_doc(apps, schema_editor):
 
     if first_campaign:
         try:
-            plan_3d_subtype = CampaignDocumentSubtypesEntity.objects.get(
-                id=8
-            )  # Plan 3D
+            plan_3d_subtype = CampaignDocumentSubtypesEntity.objects.get(id=8)  # Plan 3D
 
             # Check if doc already exists to avoid dupes if migration runs twice
             if not CampaignDocumentsEntity.objects.filter(
@@ -51,9 +47,7 @@ def update_subtype_and_seed_doc(apps, schema_editor):
 
 
 def reverse_func(apps, schema_editor):
-    CampaignDocumentSubtypesEntity = apps.get_model(
-        "app", "CampaignDocumentSubtypesEntity"
-    )
+    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
     try:
         subtype = CampaignDocumentSubtypesEntity.objects.get(id=7)
         subtype.label = "CAO.pdf"

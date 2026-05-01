@@ -6,6 +6,7 @@
  */
 
 import { alpha, type SxProps, type Theme } from '@mui/material';
+import { motion } from '@shared/ui/motion';
 
 /**
  * Get input styles with hover/focus effects
@@ -13,7 +14,7 @@ import { alpha, type SxProps, type Theme } from '@mui/material';
 export const getInputStyles = (theme: Theme): SxProps<Theme> => ({
     '& .MuiOutlinedInput-root': {
         borderRadius: 1,
-        transition: 'all 0.2s ease',
+        transition: motion.transition(['box-shadow', 'border-color'], 'base'),
         '&:hover': {
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
         },
@@ -24,15 +25,17 @@ export const getInputStyles = (theme: Theme): SxProps<Theme> => ({
 });
 
 /**
- * Get chip styles with custom colors
+ * Get chip styles with custom colors.
+ *
+ * `borderRadius`, `fontWeight`, `height`, `fontSize` sont gérés par l'override
+ * `MuiChip` du thème (shared/ui/theme.ts) — ne pas les redéclarer ici.
  */
 export const getChipStyles = (bgColor: string, textColor: string): SxProps<Theme> => ({
-    borderRadius: 1,
     backgroundColor: bgColor,
     color: textColor,
-    fontWeight: 500,
     '& .MuiChip-deleteIcon': {
-        color: textColor,
-        '&:hover': { opacity: 0.7 },
+        color: 'inherit',
+        opacity: 0.6,
+        '&:hover': { opacity: 1, color: 'inherit' },
     },
 });

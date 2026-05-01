@@ -62,7 +62,7 @@ Le catalogue unique contenant TOUS les items (sérialisés + consommables). Un c
 |---|---|---|---|
 | `uuid` | UUIDField | PK, auto | Identifiant unique |
 | `kind` | CharField(20) | choices=`['element','consumable']`, **requis** | `element` = sérialisé (instance unique), `consumable` = quantifié |
-| `category` | CharField(100) | **requis**, texte libre | Catégorie métier : "Cible", "Structuration", "Plaque", "Cône", "Colle", "Visserie"… |
+| `category` | CharField(50) | choices=`['pieces_elementaires','structuration','structuration_speciale','structuration_ec','colles','autres']`, **requis** | Rubrique métier (enum strict, cf. §4.6 pour le mapping kind↔rubriques) |
 | `name` | CharField(200) | **requis** | Nom d'affichage de l'item |
 | `reference` | CharField(200) | nullable/blank | Référence fournisseur ou numéro interne (ex. `2024_LMJ_Gorfou-1`, `N°521`) |
 | `caracteristique` | CharField(200) | nullable/blank | Ex. `PEEK` |
@@ -78,8 +78,7 @@ Le catalogue unique contenant TOUS les items (sérialisés + consommables). Un c
 | **Champs element uniquement** | | | (tous nullables quand kind=`consumable`) |
 | `installation` | CharField(10) | nullable, choices=`['LMJ','OMEGA']` | Installation cible pour les éléments |
 | `status` | CharField(20) | nullable, choices=`['dispo','reservee','affectee','tiree']`, default=`'dispo'` | Cycle de vie d'un élément sérialisé |
-| `is_special` | BooleanField | default=False | Pour fusionner `structuration` / `structuration_speciale` |
-| `materiaux_mat` | CharField(200) | nullable/blank | Pour les structurations spéciales |
+| `materiaux_mat` | CharField(200) | nullable/blank | Matériau de la structuration (visible/pertinent uniquement quand `category='structuration_speciale'`) |
 | **Placement physique** | | | |
 | `boite` | CharField(200) | nullable/blank | `numero_de_boite_ou_descriptif_boite` |
 | `emplacement` | CharField(200) | nullable/blank | Emplacement physique |
@@ -100,8 +99,13 @@ indexes = [
 ```
 
 **Validations métier (à faire dans le service) :**
-- Si `kind='element'` : `status` requis, `quantite` et `unite` et `seuil_alerte` et `date_peremption` doivent être null.
-- Si `kind='consumable'` : `status` doit être null, `unite` requis, `quantite` requis (peut être 0), `installation` doit être null.
+- **Cohérence kind ↔ rubrique** (cf. §4.6) :
+  - Si `kind='element'` : `category ∈ {pieces_elementaires, structuration, structuration_speciale, structuration_ec}`.
+  - Si `kind='consumable'` : `category ∈ {colles, autres}`.
+  - Toute autre combinaison → `ValidationException` (code: `INVALID_KIND_CATEGORY`).
+- Si `kind='element'` : `status` requis, `installation` requis, `quantite` et `unite` et `seuil_alerte` et `date_peremption` et `type_d_achat` doivent être null.
+- Si `kind='consumable'` : `status` doit être null, `installation` doit être null, `materiaux_mat` doit être null, `unite` requis, `quantite` requis (peut être 0).
+- `materiaux_mat` n'est cohérent qu'avec `category='structuration_speciale'` (sinon doit être null) — soft check (warning, pas bloquant) côté service.
 - `name` + `reference` doivent être uniques ensemble pour un `kind` donné (pour éviter les doublons) → contrainte à vérifier dans le service, pas via DB (référence peut être nulle).
 
 ### 3.2 Entité `StockMovement` — table `STOCK_MOVEMENT`
@@ -218,9 +222,30 @@ L'UI doit aussi désactiver visuellement les contrôles (mais la vraie sécurit�
 
 Ces calculs se font côté frontend à partir de `quantite`, `seuil_alerte`, `date_peremption` retournés par l'API. Pas d'endpoint spécifique — un filtre côté client sur la liste du catalogue suffit pour la v1.
 
-### 4.6 Liste des catégories (dropdown frontend)
+### 4.6 Rubriques (enum)
 
-La `category` est un champ texte **libre** côté backend. Côté frontend, on propose un dropdown avec les valeurs existantes en base (récupérées via `/api/v1/stock/catalog/categories/` → endpoint dédié qui renvoie la liste distincte des `category` existantes) + option "Ajouter une nouvelle catégorie" qui libère un champ texte.
+`category` est un **enum strict de 6 valeurs**, groupées par `kind`. C'est l'unique source de vérité côté backend ET frontend (pas de saisie libre, pas d'endpoint dynamique).
+
+| Code (stocké) | Libellé UI | Kind |
+|---|---|---|
+| `pieces_elementaires` | Pièces élémentaires | `element` |
+| `structuration` | Structuration | `element` |
+| `structuration_speciale` | Structuration spéciale | `element` |
+| `structuration_ec` | Structuration EC | `element` |
+| `colles` | Colles | `consumable` |
+| `autres` | Autres | `consumable` |
+
+→ 4 rubriques élément + 2 rubriques consommable.
+
+**Comportement frontend :**
+- Le dropdown "Rubrique" du formulaire de création/édition est filtré selon le `kind` choisi à l'étape 1 du formulaire (modal de choix kind → modal de saisie). Aucune rubrique cross-kind n'est sélectionnable.
+- Le filtre "Rubrique" de la barre d'outils du catalogue affiche les 6 valeurs groupées visuellement par kind (cf. maquette HTML).
+
+**Comportement backend :**
+- Le service vérifie la cohérence `kind` ↔ `category` à chaque création/édition. Toute combinaison invalide → `ValidationException` avec code `INVALID_KIND_CATEGORY` (cf. §5.5).
+- Pas d'endpoint dynamique `/categories/` : les valeurs sont figées dans le code (constante `CATEGORY_BY_KIND` dans `stock_constants.py`).
+
+⚠️ **Pas d'ajout dynamique en v1.** Si une 7e rubrique devient nécessaire, c'est une migration backend (ajout de la valeur aux choices, mise à jour du mapping kind↔rubrique, regen du frontend).
 
 ---
 
@@ -233,7 +258,7 @@ Toutes les routes sont préfixées `/api/v1/stock/`. Authentification JWT requis
 ```
 GET    /api/v1/stock/catalog/
          ?kind=element|consumable
-         ?category=<string>
+         ?category=pieces_elementaires|structuration|structuration_speciale|structuration_ec|colles|autres
          ?status=dispo|reservee|affectee|tiree
          ?installation=LMJ|OMEGA
          ?is_active=true|false  (default: true)
@@ -244,20 +269,19 @@ GET    /api/v1/stock/catalog/:uuid/
        → Détail d'un item
 
 POST   /api/v1/stock/catalog/
-       → Création. Body = StockCatalogItemSerializer. Valide kind/champs cohérents.
+       → Création. Body = StockCatalogItemSerializer. Valide kind/champs cohérents
+         et la cohérence kind↔category (cf. §4.6).
 
 PUT    /api/v1/stock/catalog/:uuid/
        → Remplacement complet.
 
 PATCH  /api/v1/stock/catalog/:uuid/
        → Mise à jour partielle. Interdit de modifier `kind` après création.
+         Modifier `category` est autorisé tant que la cohérence kind↔category est respectée.
 
 DELETE /api/v1/stock/catalog/:uuid/
        → Soft-delete (is_active=False). Refusé si référencé dans un FsecAssemblyItem
          (ValidationException). Admin uniquement (IsReadOnlyOrAdmin).
-
-GET    /api/v1/stock/catalog/categories/
-       → Retourne la liste distincte des `category` (JSON array de strings).
 ```
 
 ### 5.2 Mouvements
@@ -336,6 +360,7 @@ GET    /api/v1/stock/alerts/
 - `FSEC_LOCKED` : tentative de modifier un tableau récap d'une FSEC Tirée
 - `ELEMENT_ALREADY_USED` : tentative de réserver un élément déjà réservé ailleurs
 - `INVALID_KIND_OPERATION` : ex. mouvement sur un item `kind='element'`
+- `INVALID_KIND_CATEGORY` : tentative de créer/éditer un item avec une rubrique incohérente avec son kind (ex. `kind=consumable` + `category=structuration`) — cf. §4.6
 - `CATALOG_ITEM_IN_USE` : tentative de supprimer un item référencé par un FsecAssemblyItem
 
 ---
@@ -443,16 +468,58 @@ Une migration `app/migrations/0046_stock_module.py` (numéro à ajuster selon la
 Le module expose 3 onglets dans sa page principale :
 
 **Onglet 1 — Catalogue** (par défaut)
-- Table paginée avec colonnes : `Type` (Élément/Consommable), `Catégorie`, `Nom`, `Référence`, `Fournisseur`, `Quantité/Statut`, `Emplacement`, `Actions`.
-- Filtres en haut : `Kind` (tous/element/consumable), `Catégorie` (dropdown peuplé dynamiquement), `Installation` (pour elements), `Statut` (pour elements), recherche texte sur nom/référence.
-- Bouton "Nouvel item" → modal avec formulaire adaptatif :
-  - D'abord on choisit `Kind`.
-  - Puis les champs pertinents s'affichent selon le kind choisi (cf. §3.1).
+- Table paginée avec colonnes : `Type` (Élément/Consommable), `Rubrique`, `Nom`, `Référence`, `Fournisseur`, `Quantité/Statut`, `Emplacement`, `Actions`.
+- Filtres en haut :
+  - `Kind` (tous / élément / consommable)
+  - `Rubrique` : dropdown des **6 valeurs figées** (cf. §4.6), groupées visuellement par kind (Éléments / Consommables) comme dans la maquette.
+  - `Installation` (LMJ / OMEGA, visible quand kind=element)
+  - `Statut` (dispo / réservée / affectée / tirée, visible quand kind=element)
+  - Recherche texte plein sur `name` + `reference`.
+- Bouton "Nouvel item" → flux en 2 étapes :
+  - **Étape 1** : modal de choix `Kind` (Élément sérialisé / Consommable) — cf. maquette écran 4.
+  - **Étape 2** : modal de saisie, formulaire adaptatif selon le kind (cf. listes de champs ci-dessous).
 - Actions par ligne : Éditer (modal), Supprimer (soft-delete, admin only).
 - Badges visuels dans la colonne Quantité/Statut :
   - Consommable sous seuil → badge orange.
   - Consommable périmé → badge rouge.
-  - Élément avec status != dispo → badge de couleur par statut.
+  - Élément avec status != dispo → badge de couleur par statut, avec le numéro FSEC associé quand applicable (réservée/affectée/tirée).
+
+**Modal kind=element — champs visibles, dans cet ordre** (cf. §3.1 pour les types) :
+
+| Champ formulaire | Champ modèle | Requis | Notes |
+|---|---|:---:|---|
+| Nom | `name` | ✓ | |
+| Référence | `reference` | | Identifiant unique de l'instance (ex. `CIB-D2-2026-042`) |
+| Rubrique | `category` | ✓ | Dropdown filtré sur les **4 valeurs element** : `pieces_elementaires`, `structuration`, `structuration_speciale`, `structuration_ec` |
+| Installation | `installation` | ✓ | Radio LMJ / OMEGA |
+| Caractéristique | `caracteristique` | | Texte libre (ex. `PEEK`, `Épaisseur 50µm`) |
+| Type de colle | `type_de_colle` | | Texte libre (ex. `UV`, `3090`) |
+| Matériaux | `materiaux_mat` | | **Visible uniquement si `category='structuration_speciale'`** |
+| Fournisseur | `fournisseur` | | |
+| Boîte | `boite` | | |
+| Emplacement | `emplacement` | | |
+| Observations | `remarques` | | Textarea |
+
+→ `status` n'est PAS un champ de formulaire en création : forcé à `dispo` côté serveur. Il devient lecture seule dans le formulaire d'édition (modifié uniquement via le cycle de vie FSEC, cf. §4.2).
+
+**Modal kind=consumable — champs visibles, dans cet ordre** :
+
+| Champ formulaire | Champ modèle | Requis | Notes |
+|---|---|:---:|---|
+| Nom | `name` | ✓ | |
+| Référence | `reference` | | Référence fournisseur ou code interne |
+| Rubrique | `category` | ✓ | Dropdown filtré sur les **2 valeurs consumable** : `colles`, `autres` |
+| Caractéristique | `caracteristique` | | Texte libre |
+| Type de colle / nature | `type_de_colle` | | Surtout pertinent pour `category='colles'` (ex. `Époxy`, `Cyanoacrylate`) |
+| Quantité initiale | `quantite` | ✓ | Entier ≥ 0 |
+| Unité | `unite` | ✓ | Texte libre (ex. `tubes`, `L`, `kits`) |
+| Seuil d'alerte | `seuil_alerte` | | Entier. Alerte si `quantite ≤ seuil_alerte` |
+| Type d'achat | `type_d_achat` | | Texte libre (cf. Excel template) |
+| Fournisseur | `fournisseur` | | |
+| Date de péremption | `date_peremption` | | Alerte 30 jours avant (cf. §4.5) |
+| Boîte | `boite` | | |
+| Emplacement | `emplacement` | | |
+| Observations | `remarques` | | Textarea |
 
 **Onglet 2 — Mouvements**
 - Table paginée : `Date`, `Item (nom + ref)`, `Type` (entrée/sortie/ajustement), `Quantité Δ`, `Stock après`, `Auteur`, `Remarque`.

@@ -12,6 +12,7 @@ class RepressurizationStepBean:
     uuid: str = ""
     fsec_version_id: str = ""
     operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     gas_type: Optional[str] = None
     start_date: Optional[datetime] = None
     estimated_end_date: Optional[datetime] = None

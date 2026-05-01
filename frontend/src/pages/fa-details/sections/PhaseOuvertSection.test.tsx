@@ -27,6 +27,7 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     fsecStepOther: null,
     eventDate: new Date('2025-02-15'),
     discoverer: 'Jean Dupont',
+    discovererUserUuid: null,
     observation: 'Test observation',
     locationEquipment: 'Salle A',
     quickAnalysis: 'Analyse rapide test',
@@ -34,16 +35,21 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     iecValidationOpen: false,
     iecValidationOpenDate: null,
     iecValidationOpenName: null,
+    iecValidationOpenUserUuid: null,
     cause: null,
     experienceImpact: null,
     iecValidationProgress: false,
     iecValidationProgressDate: null,
     iecValidationProgressName: null,
+    iecValidationProgressUserUuid: null,
     closureValidation: null,
     closureDate: null,
     closureValidatorName: null,
+    closureValidatorUserUuid: null,
     createdAt: new Date('2025-01-15T10:00:00Z'),
     lastUpdated: new Date('2025-01-15T10:00:00Z'),
+    fsecName: null,
+    installation: null,
     ...overrides,
 });
 
@@ -58,6 +64,7 @@ const createMockFaApiResponse = (overrides: Record<string, unknown> = {}) => ({
     fsec_step_id: 2,
     fsec_step_other: null,
     discoverer: 'Jean Dupont',
+    discovererUserUuid: null,
     event_date: '2025-02-15',
     observation: 'Test observation',
     location_equipment: 'Salle A',
@@ -186,6 +193,7 @@ describe('PhaseOuvertSection', () => {
         it('should show dash for empty fields', () => {
             const fa = createMockFa({
                 discoverer: '',
+    discovererUserUuid: null,
                 observation: '',
                 locationEquipment: '',
             });
@@ -229,6 +237,7 @@ describe('PhaseOuvertSection', () => {
             const user = userEvent.setup();
             const fa = createMockFa({
                 discoverer: 'Jean Dupont',
+    discovererUserUuid: null,
                 observation: 'Test observation',
             });
             renderWithProviders(<PhaseOuvertSection fa={fa} />);

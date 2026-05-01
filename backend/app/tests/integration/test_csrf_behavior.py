@@ -29,9 +29,7 @@ def admin_with_jwt(db):
         password="StrongPassword123!",
     )
     user.groups.add(Group.objects.get(name="admin"))
-    UserProfileEntity.objects.create(
-        user=user, role="chef_labo", force_password_change=False
-    )
+    UserProfileEntity.objects.create(user=user, role="chef_labo", force_password_change=False)
     refresh = RefreshToken.for_user(user)
     return user, str(refresh.access_token)
 

@@ -11,22 +11,40 @@ interface AuthTokens {
     refresh: string;
 }
 
+/**
+ * Snapshot de credentials valides en attente d'activation.
+ * Permet de jouer une animation post-login avant de flipper `isAuthenticated`
+ * (et donc avant que `PublicRoute` ne redirige). Champ purement transient :
+ * jamais persisté (cf. partialize plus bas).
+ */
+interface PendingAuth {
+    tokens: AuthTokens;
+    role: string | null;
+    forcePasswordChange: boolean;
+    firstName: string | null;
+}
+
 interface AuthState {
     tokens: AuthTokens | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
-    /** True right after login, consumed by MainLayout to show splash */
-    showSplash: boolean;
     /** Role metier SPECTRE de l'utilisateur connecte */
     role: string | null;
     /** True si l'utilisateur doit changer son mot de passe */
     forcePasswordChange: boolean;
+    /** Prenom de l'utilisateur, pour personnalisation UI (ex: anim de bienvenue) */
+    firstName: string | null;
+    /** Credentials valides non encore "commit" — voir PendingAuth */
+    pendingAuth: PendingAuth | null;
     login: (username: string, password: string) => Promise<boolean>;
+    /** Promeut le pendingAuth en etat authentifie reel (declenche la redirection) */
+    commitLogin: () => void;
+    /** Annule un pendingAuth en cours (cleanup si l'utilisateur quitte la page) */
+    discardPendingAuth: () => void;
     logout: () => Promise<void>;
     refreshToken: () => Promise<boolean>;
     getAccessToken: () => string | null;
-    clearSplash: () => void;
 }
 
 const API_BASE_URL = '/api/v1';
@@ -38,9 +56,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isLoading: false,
             error: null,
-            showSplash: false,
             role: null,
             forcePasswordChange: false,
+            firstName: null,
+            pendingAuth: null,
 
             login: async (username: string, password: string) => {
                 set({ isLoading: true, error: null });
@@ -60,14 +79,18 @@ export const useAuthStore = create<AuthState>()(
 
                     const data = await response.json();
                     const tokens: AuthTokens = { access: data.access, refresh: data.refresh };
+                    // 2-phase commit : on stocke les credentials valides dans pendingAuth
+                    // sans flipper isAuthenticated. La page de login peut alors jouer une
+                    // animation puis appeler commitLogin() pour declencher la redirection.
                     set({
-                        tokens,
-                        isAuthenticated: true,
+                        pendingAuth: {
+                            tokens,
+                            role: data.role ?? null,
+                            forcePasswordChange: data.force_password_change ?? false,
+                            firstName: data.first_name ?? null,
+                        },
                         isLoading: false,
                         error: null,
-                        showSplash: true,
-                        role: data.role ?? null,
-                        forcePasswordChange: data.force_password_change ?? false,
                     });
                     return true;
                 } catch (error) {
@@ -76,6 +99,21 @@ export const useAuthStore = create<AuthState>()(
                     return false;
                 }
             },
+
+            commitLogin: () => {
+                const { pendingAuth } = get();
+                if (!pendingAuth) return;
+                set({
+                    tokens: pendingAuth.tokens,
+                    isAuthenticated: true,
+                    role: pendingAuth.role,
+                    forcePasswordChange: pendingAuth.forcePasswordChange,
+                    firstName: pendingAuth.firstName,
+                    pendingAuth: null,
+                });
+            },
+
+            discardPendingAuth: () => set({ pendingAuth: null }),
 
             logout: async () => {
                 const { tokens } = get();
@@ -92,7 +130,15 @@ export const useAuthStore = create<AuthState>()(
                         }
                     }
                 }
-                set({ tokens: null, isAuthenticated: false, error: null, role: null, forcePasswordChange: false });
+                set({
+                    tokens: null,
+                    isAuthenticated: false,
+                    error: null,
+                    role: null,
+                    forcePasswordChange: false,
+                    firstName: null,
+                    pendingAuth: null,
+                });
             },
 
             refreshToken: async () => {
@@ -128,8 +174,6 @@ export const useAuthStore = create<AuthState>()(
                 const { tokens } = get();
                 return tokens?.access || null;
             },
-
-            clearSplash: () => set({ showSplash: false }),
         }),
         {
             name: 'auth-storage',
@@ -139,6 +183,8 @@ export const useAuthStore = create<AuthState>()(
                 isAuthenticated: state.isAuthenticated,
                 role: state.role,
                 forcePasswordChange: state.forcePasswordChange,
+                firstName: state.firstName,
+                // pendingAuth volontairement exclu : doit rester transient (en memoire)
             }),
             onRehydrateStorage: () => (state) => {
                 // Validate rehydrated state: if tokens are missing/corrupt, force logout

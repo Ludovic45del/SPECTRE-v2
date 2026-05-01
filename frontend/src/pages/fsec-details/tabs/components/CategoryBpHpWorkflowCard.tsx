@@ -7,6 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import dayjs from 'dayjs';
 import type { AirtightnessStep, CommonGasData, GasFillingBpStep, GasFillingHpStep } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 import { WorkflowMiniStepper } from './MiniStepper';
 import { CommonDataSection, BpRubriqueItem, EmptyBpState } from './gas-workflow-components';
 
@@ -59,7 +60,7 @@ function HpStepSubCard({ step, index, onEdit }: { step: GasFillingHpStep; index:
                     <Typography variant="h6" fontWeight={600}>
                         Remplissage HP n°{index + 1}
                     </Typography>
-                    {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <IconButton size="small">{expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
             </Box>
@@ -88,9 +89,7 @@ function HpStepSubCard({ step, index, onEdit }: { step: GasFillingHpStep; index:
                             <Typography variant="subtitle2" color="text.secondary">
                                 Opérateur
                             </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.operator ?? '-'}
-                            </Typography>
+                            <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary">
@@ -237,9 +236,9 @@ export function CategoryBpHpWorkflowCard({
                 <Stack direction="row" alignItems="center" spacing={2}>
                     <ScienceIcon color="primary" />
                     <Typography variant="h6" fontWeight={600}>
-                        Workflow Gaz BP + HP
+                        Gaz BP + HP
                     </Typography>
-                    {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <WorkflowMiniStepper activeStep={activeStep} steps={WORKFLOW_STEPS} />

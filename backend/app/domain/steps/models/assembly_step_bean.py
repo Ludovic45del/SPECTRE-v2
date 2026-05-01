@@ -11,7 +11,8 @@ class AssemblyStepBean:
 
     uuid: str = ""
     fsec_version_id: str = ""
-    hydrometric_temperature: Optional[float] = None
+    operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     comments: Optional[str] = None

@@ -4,65 +4,207 @@
  */
 
 import { memo, useCallback, useState, useMemo } from 'react';
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import {
+    Box,
+    ButtonBase,
+    IconButton,
+    Stack,
+    Tooltip,
+    Typography,
+    alpha,
+    useTheme,
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import LinkIcon from '@mui/icons-material/Link';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 
 import { useDashboardPreferences, useUpdateDashboardPreferences, type Shortcut } from '@entities/dashboard-preferences';
 import SectionCard from '@widgets/SectionCard';
+import { Button } from '@shared/ui/Button';
 import { ICON_MAP } from '../../lib/iconMap';
 import { useDashboardStore } from '../../model/dashboard.store';
 import ShortcutFormDialog from '../ShortcutFormDialog';
+import { motion } from '@shared/ui/motion';
 
 /* ------------------------------------------------------------------ */
-/*  Sub-components (R-STYLE-02 extraction)                            */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Stable hue derived from a string — gives each category a consistent accent color. */
+function hueFromString(input: string): number {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) hash = (hash * 31 + input.charCodeAt(i)) | 0;
+    return Math.abs(hash) % 360;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
 /** Empty state when no shortcuts exist. */
-const EmptyShortcuts = memo(function EmptyShortcuts() {
+const EmptyShortcuts = memo(function EmptyShortcuts({ onAdd }: { onAdd: () => void }) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
     return (
-        <Box sx={{ textAlign: 'center', py: 3 }}>
-            <LinkIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-            <Typography variant="body2" color="text.disabled">
-                Aucun raccourci
+        <Box
+            sx={{
+                textAlign: 'center',
+                py: 4,
+                px: 2,
+                borderRadius: 2,
+                border: '1px dashed',
+                borderColor: 'divider',
+                bgcolor: alpha(theme.palette.primary.main, isDark ? 0.04 : 0.025),
+            }}
+        >
+            <Box
+                sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mb: 1.5,
+                }}
+            >
+                <RocketLaunchIcon sx={{ fontSize: 26, color: 'primary.main' }} />
+            </Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                Vos liens rapides ici
             </Typography>
-            <Typography variant="caption" color="text.disabled">
-                Cliquez sur + pour ajouter un lien
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Outils, docs, partages réseau...
             </Typography>
+            <Button variant="primary" size="small" startIcon={<AddIcon />} onClick={onAdd}>
+                Ajouter un raccourci
+            </Button>
         </Box>
     );
 });
 
-/** A single shortcut rendered as a Chip. */
-interface ShortcutChipProps {
+/** A single shortcut rendered as a card-style button. */
+interface ShortcutCardProps {
     readonly shortcut: Shortcut;
     readonly isEditMode: boolean;
     readonly onDelete: (id: string) => void;
 }
 
-const ShortcutChip = memo(function ShortcutChip({ shortcut, isEditMode, onDelete }: ShortcutChipProps) {
+const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete }: ShortcutCardProps) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
     const IconComp = ICON_MAP[shortcut.icon] ?? LinkIcon;
+    const hue = hueFromString(shortcut.category || shortcut.label);
+    const accentBg = `hsla(${hue}, 70%, ${isDark ? 55 : 45}%, ${isDark ? 0.18 : 0.12})`;
+    const accentFg = `hsl(${hue}, 70%, ${isDark ? 70 : 38}%)`;
 
     const handleClick = useCallback(() => window.open(shortcut.url, '_blank'), [shortcut.url]);
-    const handleDelete = useCallback(() => onDelete(shortcut.id), [onDelete, shortcut.id]);
+    const handleDelete = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            onDelete(shortcut.id);
+        },
+        [onDelete, shortcut.id],
+    );
 
     return (
-        <Tooltip title={shortcut.url} arrow>
-            <Chip
-                icon={<IconComp sx={{ fontSize: 16 }} />}
-                label={shortcut.label}
-                size="small"
-                onClick={handleClick}
-                onDelete={isEditMode ? handleDelete : undefined}
-                deleteIcon={isEditMode ? <DeleteIcon sx={{ fontSize: 14 }} /> : undefined}
-                sx={{ cursor: 'pointer', borderRadius: 1 }}
-            />
+        <Tooltip title={shortcut.url} arrow placement="top">
+            <Box sx={{ position: 'relative' }}>
+                <ButtonBase
+                    onClick={handleClick}
+                    focusRipple
+                    sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.25,
+                        p: 1,
+                        pr: 1.5,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                        textAlign: 'left',
+                        justifyContent: 'flex-start',
+                        transition: motion.transition(['transform', 'border-color', 'box-shadow'], 'fast'),
+                        '&:hover': {
+                            transform: 'translateY(-1px)',
+                            borderColor: alpha(accentFg, 0.5),
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, isDark ? 0.4 : 0.08)}`,
+                            '& .shortcut-open-hint': { opacity: 1 },
+                        },
+                        '&:focus-visible': { borderColor: accentFg },
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 1.5,
+                            bgcolor: accentBg,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                        }}
+                    >
+                        <IconComp sx={{ fontSize: 18, color: accentFg }} />
+                    </Box>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            flex: 1,
+                            fontWeight: 500,
+                            fontSize: '0.85rem',
+                            color: 'text.primary',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        {shortcut.label}
+                    </Typography>
+                    <OpenInNewIcon
+                        className="shortcut-open-hint"
+                        sx={{
+                            fontSize: 14,
+                            color: 'text.disabled',
+                            opacity: 0,
+                            transition: `opacity ${motion.fast}`,
+                        }}
+                    />
+                </ButtonBase>
+                {isEditMode && (
+                    <Tooltip title="Supprimer" arrow>
+                        <IconButton
+                            size="small"
+                            onClick={handleDelete}
+                            aria-label={`Supprimer ${shortcut.label}`}
+                            sx={{
+                                position: 'absolute',
+                                top: -6,
+                                right: -6,
+                                width: 20,
+                                height: 20,
+                                bgcolor: 'error.main',
+                                color: 'error.contrastText',
+                                boxShadow: 1,
+                                '&:hover': { bgcolor: 'error.dark' },
+                            }}
+                        >
+                            <CloseIcon sx={{ fontSize: 12 }} />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
         </Tooltip>
     );
 });
 
-/** A category group header + its shortcut chips. */
+/** A category group header + its shortcut cards. */
 interface ShortcutCategoryGroupProps {
     readonly category: string;
     readonly items: Shortcut[];
@@ -76,25 +218,39 @@ const ShortcutCategoryGroup = memo(function ShortcutCategoryGroup({
     isEditMode,
     onDelete,
 }: ShortcutCategoryGroupProps) {
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+    const hue = hueFromString(category);
+    const dotColor = `hsl(${hue}, 70%, ${isDark ? 65 : 45}%)`;
     return (
         <Box>
-            <Typography
-                variant="caption"
-                color="text.secondary"
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1, px: 0.25 }}>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: dotColor }} />
+                <Typography
+                    variant="caption"
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: '0.7rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        color: 'text.secondary',
+                    }}
+                >
+                    {category}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
+                    · {items.length}
+                </Typography>
+            </Box>
+            <Box
                 sx={{
-                    fontWeight: 600,
-                    fontSize: '0.7rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.5,
-                    display: 'block',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                    gap: 1,
                 }}
             >
-                {category}
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                 {items.map((s) => (
-                    <ShortcutChip key={s.id} shortcut={s} isEditMode={isEditMode} onDelete={onDelete} />
+                    <ShortcutCard key={s.id} shortcut={s} isEditMode={isEditMode} onDelete={onDelete} />
                 ))}
             </Box>
         </Box>
@@ -171,15 +327,28 @@ export default memo(function ShortcutsWidget() {
             <SectionCard
                 title="Raccourcis"
                 action={
-                    <IconButton size="small" onClick={handleOpenDialog}>
-                        <AddIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
+                    <Tooltip title="Ajouter un raccourci" arrow>
+                        <IconButton
+                            size="small"
+                            onClick={handleOpenDialog}
+                            sx={{
+                                bgcolor: 'action.hover',
+                                color: 'primary.main',
+                                width: 28,
+                                height: 28,
+                                transition: `all ${motion.fast}`,
+                                '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+                            }}
+                        >
+                            <AddIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Tooltip>
                 }
             >
                 {shortcuts.length === 0 ? (
-                    <EmptyShortcuts />
+                    <EmptyShortcuts onAdd={handleOpenDialog} />
                 ) : (
-                    <Stack spacing={1.5}>
+                    <Stack spacing={2}>
                         {[...grouped.entries()].map(([category, items]) => (
                             <ShortcutCategoryGroup
                                 key={category}

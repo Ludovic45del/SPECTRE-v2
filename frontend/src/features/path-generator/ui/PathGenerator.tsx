@@ -12,6 +12,7 @@ import LaptopWindowsIcon from '@mui/icons-material/LaptopWindows';
 import { CampaignWithRelations } from '@entities/campaign';
 import { useNotification } from '@shared/ui';
 import { useState } from 'react';
+import { motion } from '@shared/ui/motion';
 
 interface PathGeneratorProps {
     campaign: CampaignWithRelations;
@@ -72,7 +73,7 @@ export function PathGenerator({ campaign, segments }: PathGeneratorProps) {
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
-                transition: 'all 0.3s ease',
+                transition: `all ${motion.medium}`,
                 '&:hover': {
                     borderColor: 'primary.main',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
@@ -123,7 +124,7 @@ export function PathGenerator({ campaign, segments }: PathGeneratorProps) {
                             onClick={handleCopy}
                             color={isHovered ? 'primary' : 'default'}
                             sx={{
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 bgcolor: isHovered ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
                             }}
                         >

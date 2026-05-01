@@ -365,9 +365,7 @@ class TestFsecMapperRoundtrip:
         assert restored_bean.name == sample_fsec_bean.name
         assert restored_bean.status_id == sample_fsec_bean.status_id
         assert restored_bean.is_active == sample_fsec_bean.is_active
-        assert (
-            restored_bean.preshooting_pressure == sample_fsec_bean.preshooting_pressure
-        )
+        assert restored_bean.preshooting_pressure == sample_fsec_bean.preshooting_pressure
 
     @pytest.mark.unit
     def test_entity_to_bean_to_entity_preserves_fks(self, mock_fsec_entity):

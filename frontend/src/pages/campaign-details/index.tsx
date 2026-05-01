@@ -13,6 +13,7 @@ import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { useCampaign } from '@entities/campaign';
 import { CampaignHeader } from '@features/campaign/campaign-header';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
+import { RouteTransition } from '@shared/ui/RouteTransition';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
 import { CampaignOverviewPage } from './overview';
 import { CampaignDocumentsPage } from './documents';
@@ -139,9 +140,11 @@ function CampaignDetailsPage() {
             <QueryErrorResetBoundary>
                 {({ reset }) => (
                     <ErrorBoundary compact onReset={reset}>
-                        <Box component="main" role="tabpanel" aria-label={`Onglet ${activeTab}`} sx={{ mt: 3 }}>
-                            {tabContent}
-                        </Box>
+                        <RouteTransition motionKey={activeTab}>
+                            <Box component="main" role="tabpanel" aria-label={`Onglet ${activeTab}`} sx={{ mt: 3 }}>
+                                {tabContent}
+                            </Box>
+                        </RouteTransition>
                     </ErrorBoundary>
                 )}
             </QueryErrorResetBoundary>

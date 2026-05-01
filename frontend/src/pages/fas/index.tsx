@@ -24,8 +24,6 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useFas, Fa, sortFas, type FaSortColumn } from '@entities/fa';
-import { useFsecs, Fsec } from '@entities/fsec';
-import { useCampaigns, CampaignWithRelations } from '@entities/campaign';
 import { FasToolbar, useFilterFasStore, type FaFilters, FaTableRow, CreateFaModal } from '@features/fa';
 import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
 import { FasPageSkeleton } from './FasPageSkeleton';
@@ -36,14 +34,7 @@ import { FaKpiBar } from './FaKpiBar';
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface FaWithFsec extends Fa {
-    fsecName?: string;
-    fsecIndex: number;
-    installation?: string | null;
-}
-
-interface FsecInfo {
-    name: string;
-    index: number;
+    fsecName: string;
     installation: string | null;
 }
 
@@ -74,31 +65,15 @@ const COLUMNS: { key: FaSortColumn; label: string; width: string }[] = [
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const createFsecMap = (
-    fsecs: Fsec[] | undefined,
-    campaigns: CampaignWithRelations[] | undefined,
-): Map<string, FsecInfo> => {
-    if (!fsecs) return new Map();
-    const campaignMap = new Map(campaigns?.map((c) => [c.uuid, c.installation?.label ?? null]) ?? []);
-    return new Map(
-        fsecs.map((f, index) => [
-            f.versionUuid,
-            { name: f.name, index, installation: f.campaignId ? (campaignMap.get(f.campaignId) ?? null) : null },
-        ]),
-    );
-};
-
-const enrichFasWithFsec = (fas: Fa[] | undefined, fsecMap: Map<string, FsecInfo>): FaWithFsec[] => {
+// fsec_name + installation sont désormais fournis directement par /fas/
+// (cf. fa_mapper_bean_to_api côté backend) — plus besoin de re-fetcher /fsecs/.
+const enrichFasWithFsec = (fas: Fa[] | undefined): FaWithFsec[] => {
     if (!fas) return [];
-    return fas.map((fa) => {
-        const fsec = fa.fsecVersionId ? fsecMap.get(fa.fsecVersionId) : null;
-        return {
-            ...fa,
-            fsecName: fsec?.name ?? 'N/A',
-            fsecIndex: fsec?.index ?? Number.MAX_SAFE_INTEGER,
-            installation: fsec?.installation ?? null,
-        };
-    });
+    return fas.map((fa) => ({
+        ...fa,
+        fsecName: fa.fsecName ?? 'N/A',
+        installation: fa.installation ?? null,
+    }));
 };
 
 const filterFas = (fas: FaWithFsec[], filters: FaFilters): FaWithFsec[] => {
@@ -127,8 +102,6 @@ const filterFas = (fas: FaWithFsec[], filters: FaFilters): FaWithFsec[] => {
 export default function FasPage() {
     const navigate = useNavigate();
     const { data: fas, isLoading, error } = useFas();
-    const { data: fsecs, isLoading: isLoadingFsecs } = useFsecs();
-    const { data: campaigns, isLoading: isLoadingCampaigns } = useCampaigns();
     const filters = useFilterFasStore((state) => state.filters);
     const {
         sortColumn,
@@ -141,13 +114,11 @@ export default function FasPage() {
         paginate,
     } = useEntityList<FaSortColumn>({ defaultSortColumn: 'eventDate', defaultSortDirection: 'desc' });
 
-    const fsecMap = useMemo(() => createFsecMap(fsecs, campaigns), [fsecs, campaigns]);
-
     const processedFas = useMemo(() => {
-        const enriched = enrichFasWithFsec(fas, fsecMap);
+        const enriched = enrichFasWithFsec(fas);
         const filtered = filterFas(enriched, filters);
         return sortFas(filtered, sortColumn, sortDirection);
-    }, [fas, fsecMap, filters, sortColumn, sortDirection]);
+    }, [fas, filters, sortColumn, sortDirection]);
 
     const paginatedFas = useMemo(() => paginate(processedFas), [paginate, processedFas]);
 
@@ -162,7 +133,7 @@ export default function FasPage() {
     );
 
     // Loading state - Skeleton table
-    if (isLoading || isLoadingFsecs || isLoadingCampaigns) {
+    if (isLoading) {
         return <FasPageSkeleton columns={COLUMNS} actionsWidth={COLUMN_WIDTHS.actions} />;
     }
 

@@ -14,6 +14,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import dayjs from 'dayjs';
 import type { GasFillingHpStep } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 
 interface CategoryHpWorkflowCardProps {
     steps?: GasFillingHpStep[];
@@ -53,7 +54,7 @@ function GasFillingHpStepCard({ step, index, onEdit }: { step: GasFillingHpStep;
                     <Typography variant="h6" fontWeight={600}>
                         Remplissage HP n°{index + 1}
                     </Typography>
-                    {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <IconButton size="small">{expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
             </Box>
@@ -82,9 +83,7 @@ function GasFillingHpStepCard({ step, index, onEdit }: { step: GasFillingHpStep;
                             <Typography variant="subtitle2" color="text.secondary">
                                 Opérateur
                             </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.operator ?? '-'}
-                            </Typography>
+                            <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary">

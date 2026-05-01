@@ -70,15 +70,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="labevententity",
-            index=models.Index(
-                fields=["start_date"], name="PLANNING_LA_start_d_8b13bd_idx"
-            ),
+            index=models.Index(fields=["start_date"], name="PLANNING_LA_start_d_8b13bd_idx"),
         ),
         migrations.AddIndex(
             model_name="labevententity",
-            index=models.Index(
-                fields=["machine_id"], name="PLANNING_LA_machine_1ea28f_idx"
-            ),
+            index=models.Index(fields=["machine_id"], name="PLANNING_LA_machine_1ea28f_idx"),
         ),
         migrations.AddIndex(
             model_name="planningcampaignstepentity",
@@ -86,9 +82,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="planningcampaignstepentity",
-            index=models.Index(
-                fields=["campaign_uuid"], name="PLANNING_CA_campaig_da17a4_idx"
-            ),
+            index=models.Index(fields=["campaign_uuid"], name="PLANNING_CA_campaig_da17a4_idx"),
         ),
         migrations.AddIndex(
             model_name="planningcellannotationentity",

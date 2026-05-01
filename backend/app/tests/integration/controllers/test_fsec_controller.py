@@ -243,9 +243,7 @@ class TestFsecControllerUpdate:
 class TestFsecControllerDelete:
     """Tests endpoint DELETE /api/v1/fsecs/{version_uuid}/"""
 
-    def test_delete_fsec_success(
-        self, api_client, admin_api_client, sample_fsec_payload
-    ):
+    def test_delete_fsec_success(self, api_client, admin_api_client, sample_fsec_payload):
         """Test suppression réussie (requiert rôle admin)."""
         # Créer un FSEC
         create_response = api_client.post(

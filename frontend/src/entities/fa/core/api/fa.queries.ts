@@ -276,17 +276,21 @@ export function useValidateOpenFa() {
         mutationFn: async ({
             uuid,
             validatorName,
+            validatorUserUuid,
             validationDate,
         }: {
             /** FA UUID */
             uuid: string;
-            /** Name of the IEC validator */
-            validatorName: string;
+            /** Name of the IEC validator (legacy texte). Optionnel si validatorUserUuid fourni. */
+            validatorName?: string;
+            /** UUID UserProfile du validateur (source de vérité). Rôle iec/chef_labo enforced backend. */
+            validatorUserUuid?: string;
             /** Optional validation date (defaults to today) */
             validationDate?: Date;
         }): Promise<Fa> => {
             const response = await api.post(`/fas/${uuid}/validate-open/`, {
-                validator_name: validatorName,
+                validator_name: validatorName ?? null,
+                validator_user_uuid: validatorUserUuid ?? null,
                 validation_date: validationDate?.toISOString().split('T')[0] ?? null,
             });
             return FaSchema.parse(response);
@@ -326,17 +330,21 @@ export function useValidateProgressFa() {
         mutationFn: async ({
             uuid,
             validatorName,
+            validatorUserUuid,
             validationDate,
         }: {
             /** FA UUID */
             uuid: string;
-            /** Name of the IEC validator */
-            validatorName: string;
+            /** Name of the IEC validator (legacy texte). Optionnel si validatorUserUuid fourni. */
+            validatorName?: string;
+            /** UUID UserProfile du validateur (source de vérité). */
+            validatorUserUuid?: string;
             /** Optional validation date (defaults to today) */
             validationDate?: Date;
         }): Promise<Fa> => {
             const response = await api.post(`/fas/${uuid}/validate-progress/`, {
-                validator_name: validatorName,
+                validator_name: validatorName ?? null,
+                validator_user_uuid: validatorUserUuid ?? null,
                 validation_date: validationDate?.toISOString().split('T')[0] ?? null,
             });
             return FaSchema.parse(response);
@@ -380,20 +388,24 @@ export function useCloseFa() {
         mutationFn: async ({
             uuid,
             validatorName,
+            validatorUserUuid,
             closureValidation,
             closureDate,
         }: {
             /** FA UUID */
             uuid: string;
-            /** Name of the validators (Chef Labo + IEC) */
-            validatorName: string;
+            /** Name of the validators (legacy texte). */
+            validatorName?: string;
+            /** UUID UserProfile du validateur (source de vérité). Rôle iec/chef_labo enforced backend. */
+            validatorUserUuid?: string;
             /** Closure validation text explaining resolution */
             closureValidation: string;
             /** Optional closure date (defaults to today) */
             closureDate?: Date;
         }): Promise<Fa> => {
             const response = await api.post(`/fas/${uuid}/close/`, {
-                validator_name: validatorName,
+                validator_name: validatorName ?? null,
+                validator_user_uuid: validatorUserUuid ?? null,
                 closure_validation: closureValidation,
                 closure_date: closureDate?.toISOString().split('T')[0] ?? null,
             });

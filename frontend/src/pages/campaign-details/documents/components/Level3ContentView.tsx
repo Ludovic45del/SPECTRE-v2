@@ -9,6 +9,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import { Column, DataTable } from '@widgets/data-table';
 import { Level3Item, TYPE_COLORS } from '../lib/documents.types';
 import { getFileIcon, getFolderIcon, CopyPathButton } from '../lib/documents.helpers';
+import { motion } from '@shared/ui/motion';
 
 interface Level3ContentViewProps {
     folders: Level3Item[];
@@ -82,7 +83,7 @@ export const Level3ContentView = memo(function Level3ContentView({
                                         sx={{
                                             p: 2,
                                             borderRadius: 1,
-                                            transition: 'all 0.2s',
+                                            transition: `all ${motion.base}`,
                                             borderColor: 'divider',
                                             '&:hover': { borderColor: color, bgcolor: 'background.paper' },
                                         }}
@@ -123,7 +124,7 @@ export const Level3ContentView = memo(function Level3ContentView({
                                         alignItems: 'center',
                                         gap: 2,
                                         borderRadius: 1,
-                                        transition: 'all 0.2s',
+                                        transition: `all ${motion.base}`,
                                         borderColor: 'divider',
                                         '&:hover': { borderColor: color, bgcolor: `${color}05` },
                                     }}

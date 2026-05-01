@@ -1,6 +1,7 @@
 export { userKeys } from './user.keys';
 export {
     useUsers,
+    useUserLookup,
     useMe,
     useCreateUser,
     useUpdateUser,

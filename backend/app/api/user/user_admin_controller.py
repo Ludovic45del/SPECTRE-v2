@@ -91,9 +91,7 @@ class UserAdminController(viewsets.ViewSet):
             created_bean.role,
         )
 
-        profile = UserProfileEntity.objects.select_related("user").get(
-            uuid=created_bean.uuid
-        )
+        profile = UserProfileEntity.objects.select_related("user").get(uuid=created_bean.uuid)
         response_data = user_mapper_bean_to_api(created_bean)
         response_data.update(_activation_payload(request, profile))
         response = JsonResponse(response_data, status=201)
@@ -140,9 +138,7 @@ class UserAdminController(viewsets.ViewSet):
             target_bean.username,
         )
 
-        profile = UserProfileEntity.objects.select_related("user").get(
-            uuid=target_bean.uuid
-        )
+        profile = UserProfileEntity.objects.select_related("user").get(uuid=target_bean.uuid)
         response_data = {
             "message": "Lien d'activation émis avec succès",
             "username": target_bean.username,

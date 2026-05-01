@@ -9,6 +9,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { type Embase, EMBASE_TYPE_LABELS, getEtalonnageStatus } from '@entities/embase';
 import { DataChip } from '@widgets/data-chip';
 import { getStatut, getEtancheiteStatus, getMccStatus, TYPE_COLORS } from '../embase-list-utils';
+import { motion } from '@shared/ui/motion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-component: Etancheite cell content
@@ -100,7 +101,7 @@ export const EmbaseTableRow = memo(function EmbaseTableRow({ embase, onNavigate 
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
             }}
             onDoubleClick={handleDoubleClick}

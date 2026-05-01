@@ -73,10 +73,10 @@ export const CampaignCreateSchema = z.object({
         .nullable()
         .optional(),
     description: z.string().nullable().optional(),
-    // Team members (optional)
-    moe: z.string().optional(),
-    rce: z.string().optional(),
-    iec: z.string().optional(),
+    // Team members (optional). MOE = texte libre (extérieur au labo), RCE/IEC = FK UserProfile.
+    moeName: z.string().optional(),
+    rceUserUuid: z.string().uuid().optional().or(z.literal('')),
+    iecUserUuid: z.string().uuid().optional().or(z.literal('')),
 });
 
 export type CampaignCreate = z.infer<typeof CampaignCreateSchema>;

@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { Box, Button, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { MetrologyStep, getMetrologyMachine, getFsecRack } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -46,9 +47,7 @@ function MetrologyStepCard({ step, index, onEdit }: { step: MetrologyStep; index
                     <Typography variant="subtitle2" color="text.secondary">
                         Métrologue
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                        {step.metrologistName || '-'}
-                    </Typography>
+                    <UserChip userUuid={step.metrologistUserUuid} fallbackText={step.metrologistName} />
                 </Grid>
                 <Grid item xs={6} md={3}>
                     <Typography variant="subtitle2" color="text.secondary">

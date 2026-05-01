@@ -7,13 +7,13 @@ from app.domain.user.models.user_bean import ALL_SPECTRE_ROLES
 
 class CreateUserSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=150)
-    first_name = serializers.CharField(max_length=150, required=False, default="")
-    last_name = serializers.CharField(max_length=150, required=False, default="")
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True, default="")
     role = serializers.ChoiceField(choices=[(r, r) for r in ALL_SPECTRE_ROLES])
-    laboratoire = serializers.CharField(max_length=100, required=False, default="")
-    service = serializers.CharField(max_length=100, required=False, default="")
-    numero = serializers.CharField(max_length=30, required=False, default="")
-    bureau = serializers.CharField(max_length=50, required=False, default="")
+    laboratoire = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    service = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    numero = serializers.CharField(max_length=30, required=False, allow_blank=True, default="")
+    bureau = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
     password = serializers.CharField(
         min_length=8,
         max_length=128,
@@ -33,16 +33,10 @@ class UpdateUserSerializer(serializers.Serializer):
 
 
 class DashboardPreferencesSerializer(serializers.Serializer):
-    layout = serializers.ListField(
-        child=serializers.DictField(), required=False, default=list, max_length=20
-    )
+    layout = serializers.ListField(child=serializers.DictField(), required=False, default=list, max_length=20)
     widgets = serializers.DictField(required=False, default=dict)
-    shortcuts = serializers.ListField(
-        child=serializers.DictField(), required=False, default=list, max_length=50
-    )
-    todos = serializers.ListField(
-        child=serializers.DictField(), required=False, default=list, max_length=100
-    )
+    shortcuts = serializers.ListField(child=serializers.DictField(), required=False, default=list, max_length=50)
+    todos = serializers.ListField(child=serializers.DictField(), required=False, default=list, max_length=100)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

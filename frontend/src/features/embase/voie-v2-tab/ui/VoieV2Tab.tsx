@@ -1,14 +1,12 @@
 import { memo } from 'react';
-import { Grid, FormControl, InputLabel, Select, MenuItem, Chip, Box, Typography } from '@mui/material';
+import { Grid, FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 import { VoieTab, type VoieConfig } from '@features/embase/shared/ui/VoieTab';
-import type { EditableTabProps } from '@features/embase/shared';
+import { YesNoChip, type EditableTabProps } from '@features/embase/shared';
 import type { Embase } from '@entities/embase';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Electrovanne sub-component
 // ─────────────────────────────────────────────────────────────────────────────
-
-const chipSx = { fontWeight: 600 } as const;
 
 interface ElectrovanneFieldProps {
     isEditing: boolean;
@@ -31,15 +29,13 @@ const ElectrovanneField = memo(function ElectrovanneField({
                     value={formValue ? 'Oui' : 'Non'}
                     label="Electrovanne"
                     onChange={(e) => onChange(e.target.value === 'Oui')}
-                    renderValue={(val) => (
-                        <Chip label={val} color={val === 'Oui' ? 'success' : 'error'} size="small" sx={chipSx} />
-                    )}
+                    renderValue={(val) => <YesNoChip value={val === 'Oui'} />}
                 >
                     <MenuItem value="Oui">
-                        <Chip label="Oui" color="success" size="small" sx={chipSx} />
+                        <YesNoChip value={true} />
                     </MenuItem>
                     <MenuItem value="Non">
-                        <Chip label="Non" color="error" size="small" sx={chipSx} />
+                        <YesNoChip value={false} />
                     </MenuItem>
                 </Select>
             </FormControl>
@@ -51,12 +47,7 @@ const ElectrovanneField = memo(function ElectrovanneField({
                 Electrovanne
             </Typography>
             <Box sx={{ mt: 0.5 }}>
-                <Chip
-                    label={embaseValue ? 'Oui' : 'Non'}
-                    color={embaseValue ? 'success' : 'error'}
-                    size="small"
-                    sx={chipSx}
-                />
+                <YesNoChip value={embaseValue ?? false} />
             </Box>
         </Box>
     );

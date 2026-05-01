@@ -4,13 +4,9 @@ import uuid
 
 from django.db import models
 
-from app.repository.campaign.models.campaign_document_subtypes_entity import (
-    CampaignDocumentSubtypesEntity,
-)
+from app.repository.campaign.models.campaign_document_subtypes_entity import CampaignDocumentSubtypesEntity
 from app.repository.campaign.models.campaign_entity import CampaignEntity
-from app.repository.campaign.models.campaign_file_types_entity import (
-    CampaignFileTypesEntity,
-)
+from app.repository.campaign.models.campaign_file_types_entity import CampaignFileTypesEntity
 
 
 class CampaignDocumentsEntity(models.Model):

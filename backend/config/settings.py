@@ -34,11 +34,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() == "true"
 # SECURITY: ALLOWED_HOSTS must be explicitly configured
 # In production, set ALLOWED_HOSTS env var (comma-separated)
 # Example: ALLOWED_HOSTS=example.com,www.example.com
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-    if h.strip()
-]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -104,8 +100,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 _db_name = os.environ.get("DB_NAME")
 if not _db_name:
     raise ValueError(
-        "DB_NAME environment variable is required. "
-        "Configure PostgreSQL via backend/.env (cf. .env.example)."
+        "DB_NAME environment variable is required. " "Configure PostgreSQL via backend/.env (cf. .env.example)."
     )
 
 DATABASES = {
@@ -116,8 +111,25 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", "5432"),
-        "ATOMIC_REQUESTS": os.environ.get("DB_ATOMIC_REQUESTS", "True").lower()
-        == "true",
+        "ATOMIC_REQUESTS": os.environ.get("DB_ATOMIC_REQUESTS", "True").lower() == "true",
+        # Persistent connections : évite de recréer une connexion PG à chaque requête
+        # (≈ 5-20 ms gagnés par requête en prod). 0 = comportement legacy.
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
+        # Vérifie la connexion réutilisée (Django 4.2+). Indispensable avec
+        # CONN_MAX_AGE > 0 pour tolérer les coupures réseau/redémarrages PG.
+        "CONN_HEALTH_CHECKS": True,
+    }
+}
+
+# Cache : LocMemCache par défaut (mono-process). En multi-worker (gunicorn -w N),
+# basculer sur Redis via CACHE_BACKEND=django.core.cache.backends.redis.RedisCache
+# et CACHE_LOCATION=redis://localhost:6379/1.
+# Utilisé par : DRF throttling, cache du dashboard (cf. dashboard_service.py).
+CACHES = {
+    "default": {
+        "BACKEND": os.environ.get("CACHE_BACKEND", "django.core.cache.backends.locmem.LocMemCache"),
+        "LOCATION": os.environ.get("CACHE_LOCATION", "spectre-default"),
+        "TIMEOUT": int(os.environ.get("CACHE_TIMEOUT", "300")),
     }
 }
 
@@ -206,9 +218,7 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000"
-).split(",")
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 CORS_ALLOW_CREDENTIALS = True
 
 # File upload limits (2.5 MB max for CSV imports)
@@ -224,9 +234,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = "DENY"
-    SECURE_SSL_REDIRECT = (
-        os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
-    )
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     # Referrer-Policy défini par Django (strict-origin-when-cross-origin).
     # CSP / Permissions-Policy ajoutés par SecurityHeadersMiddleware.

@@ -11,7 +11,8 @@ describe('AssemblyStepSchema', () => {
         const apiData = {
             uuid: '123e4567-e89b-12d3-a456-426614174000',
             fsec_version_id: '223e4567-e89b-12d3-a456-426614174001',
-            hydrometric_temperature: 25.5,
+            operator: 'Assembleur Dupont',
+            operator_user_uuid: '323e4567-e89b-12d3-a456-426614174002',
             start_date: '2024-01-15',
             end_date: '2024-01-20',
             comments: 'Step completed',
@@ -22,7 +23,8 @@ describe('AssemblyStepSchema', () => {
 
         expect(result.uuid).toBe('123e4567-e89b-12d3-a456-426614174000');
         expect(result.fsecVersionId).toBe('223e4567-e89b-12d3-a456-426614174001');
-        expect(result.hydrometricTemperature).toBe(25.5);
+        expect(result.operator).toBe('Assembleur Dupont');
+        expect(result.operatorUserUuid).toBe('323e4567-e89b-12d3-a456-426614174002');
         expect(result.startDate).toBeInstanceOf(Date);
         expect(result.endDate).toBeInstanceOf(Date);
         expect(result.assemblyBenchIds).toEqual([1, 2, 3]);
@@ -32,7 +34,8 @@ describe('AssemblyStepSchema', () => {
         const apiData = {
             uuid: '123e4567-e89b-12d3-a456-426614174000',
             fsec_version_id: '223e4567-e89b-12d3-a456-426614174001',
-            hydrometric_temperature: null,
+            operator: null,
+            operator_user_uuid: null,
             start_date: null,
             end_date: null,
             comments: null,
@@ -41,7 +44,8 @@ describe('AssemblyStepSchema', () => {
 
         const result = AssemblyStepSchema.parse(apiData);
 
-        expect(result.hydrometricTemperature).toBeNull();
+        expect(result.operator).toBeNull();
+        expect(result.operatorUserUuid).toBeNull();
         expect(result.startDate).toBeNull();
         expect(result.endDate).toBeNull();
         expect(result.comments).toBeNull();

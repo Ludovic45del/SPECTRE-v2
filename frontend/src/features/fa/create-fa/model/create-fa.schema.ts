@@ -11,7 +11,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 export const CreateFaFormSchema = z.object({
     campaignId: z.string().uuid('La campagne est requise'),
     fsecVersionId: z.string().uuid('La FSEC est requise'),
-    discoverer: z.string().min(1, 'Le découvreur est requis'),
+    discovererUserUuid: z.string().uuid('Le découvreur est requis'),
     eventDate: z.custom<Dayjs>((val) => dayjs.isDayjs(val), { message: 'La date est requise' }),
     observation: z.string().min(1, 'Le constat est requis'),
     locationEquipment: z.string().nullable().optional(),

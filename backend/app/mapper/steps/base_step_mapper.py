@@ -1,11 +1,27 @@
 """Mapper BaseStep - Fonctions utilitaires pour les mappers de steps.
 
-Ce module fournit des fonctions utilitaires de parsing de dates
-pour les mappers de steps.
+Ce module fournit des fonctions utilitaires de parsing de dates et de
+conversion FK <-> uuid pour les mappers de steps.
 """
 
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
+
+
+def read_operator_user_uuid(entity) -> Optional[str]:
+    """Lit l'uuid de l'operator_user FK depuis l'entité (ou None).
+
+    La FK utilise to_field='uuid' donc `entity.operator_user_id` contient
+    directement l'uuid (et non l'id auto Django). On centralise cette
+    extraction pour les 7+ mappers steps qui héritent d'operator.
+    """
+    raw = getattr(entity, "operator_user_id", None)
+    return str(raw) if raw else None
+
+
+def normalize_user_uuid(value) -> Optional[str]:
+    """Normalise une valeur d'uuid (utilisée pour api_to_bean)."""
+    return str(value) if value else None
 
 
 def parse_date_from_api(value: Any) -> date | None:

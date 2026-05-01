@@ -21,9 +21,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"  Created group: {role_name}"))
             else:
                 self.stdout.write(f"  Group already exists: {role_name}")
-        self.stdout.write(
-            self.style.NOTICE("=== Initializing CAMPAIGN referentials ===")
-        )
+        self.stdout.write(self.style.NOTICE("=== Initializing CAMPAIGN referentials ==="))
 
         # CAMPAIGN Referentials (ordre important : pas de FK)
         insert_csv_into_table(
@@ -105,9 +103,7 @@ class Command(BaseCommand):
             DATA_DIR / "fsec" / "fsec_assembly_benches.csv",
         )
 
-        self.stdout.write(
-            self.style.SUCCESS("=== Referential data initialized successfully ===")
-        )
+        self.stdout.write(self.style.SUCCESS("=== Referential data initialized successfully ==="))
         self.stdout.write(
             self.style.WARNING(
                 "NOTE: CAMPAIGN, FSEC, CAMPAIGN_TEAMS, CAMPAIGN_DOCUMENTS, FSEC_TEAMS, "

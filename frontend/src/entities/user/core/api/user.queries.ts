@@ -22,6 +22,9 @@ import {
     type ChangePasswordResponse,
     SetInitialPasswordResponseSchema,
     type SetInitialPasswordResponse,
+    type SpectreRole,
+    UserLookupListSchema,
+    type UserLookup,
 } from '../model';
 import { userKeys } from './user.keys';
 
@@ -31,6 +34,32 @@ export function useUsers() {
     return useQuery({
         queryKey: userKeys.lists(),
         queryFn: ({ signal }): Promise<User[]> => api.get('/users/', UserListSchema, signal),
+        ...QUERY_CACHE_CONFIG,
+    });
+}
+
+/**
+ * Récupère la liste réduite des utilisateurs pour les dropdowns (UserSelect).
+ *
+ * - Filtre côté serveur sur is_active=true par défaut.
+ * - Filtre optionnel par rôles métier (multi-valeurs).
+ * - Réponse projetée (uuid, username, first_name, last_name, role, is_active)
+ *   — pas de fuite de bureau/numero/dashboard.
+ */
+export function useUserLookup(roles?: readonly SpectreRole[]) {
+    const params = new URLSearchParams();
+    if (roles && roles.length > 0) {
+        for (const r of roles) {
+            params.append('role', r);
+        }
+    }
+    const qs = params.toString();
+    const url = qs ? `/users/lookup/?${qs}` : '/users/lookup/';
+
+    return useQuery({
+        queryKey: userKeys.lookup(roles),
+        queryFn: ({ signal }): Promise<UserLookup[]> =>
+            api.get(url, UserLookupListSchema, signal),
         ...QUERY_CACHE_CONFIG,
     });
 }

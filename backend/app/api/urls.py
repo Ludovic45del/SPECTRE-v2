@@ -39,12 +39,19 @@ from app.api.steps.photo_view_controller import PhotoViewController
 from app.api.steps.pictures_step_controller import PicturesStepController
 from app.api.steps.sealing_step_controller import SealingStepController
 
+# Stock Controllers
+from app.api.stock.alert_controller import StockAlertController
+from app.api.stock.catalog_controller import StockCatalogController
+from app.api.stock.fsec_assembly_controller import FsecAssemblyItemController
+from app.api.stock.movement_controller import StockMovementController
+
 # User Controllers
 from app.api.user.change_password_controller import ChangePasswordController
 from app.api.user.dashboard_preferences_controller import DashboardPreferencesController
 from app.api.user.me_controller import MeController
 from app.api.user.set_initial_password_controller import SetInitialPasswordController
 from app.api.user.user_admin_controller import UserAdminController
+from app.api.user.user_lookup_controller import UserLookupController
 
 # Create router
 router = DefaultRouter()
@@ -52,9 +59,7 @@ router = DefaultRouter()
 # Campaign routes
 router.register(r"campaigns", CampaignController, basename="campaigns")
 router.register(r"campaign-teams", CampaignTeamsController, basename="campaign-teams")
-router.register(
-    r"campaign-documents", CampaignDocumentsController, basename="campaign-documents"
-)
+router.register(r"campaign-documents", CampaignDocumentsController, basename="campaign-documents")
 
 # FSEC routes
 router.register(r"fsecs", FsecController, basename="fsecs")
@@ -67,6 +72,16 @@ router.register(r"fas", FaController, basename="fas")
 # Embase routes
 router.register(r"embases", EmbaseController, basename="embases")
 router.register(r"etalonnages", EtalonnageController, basename="etalonnages")
+
+# Stock routes
+router.register(r"stock/catalog", StockCatalogController, basename="stock-catalog")
+router.register(r"stock/movements", StockMovementController, basename="stock-movements")
+router.register(r"stock/alerts", StockAlertController, basename="stock-alerts")
+router.register(
+    r"fsec-assembly-items",
+    FsecAssemblyItemController,
+    basename="fsec-assembly-items",
+)
 
 # Steps routes
 router.register(r"assembly-steps", AssemblyStepController, basename="assembly-steps")
@@ -81,15 +96,9 @@ router.register(
     AirtightnessTestLpStepController,
     basename="airtightness-test-lp-steps",
 )
-router.register(
-    r"gas-filling-bp-steps", GasFillingBpStepController, basename="gas-filling-bp-steps"
-)
-router.register(
-    r"gas-filling-hp-steps", GasFillingHpStepController, basename="gas-filling-hp-steps"
-)
-router.register(
-    r"permeation-steps", PermeationStepController, basename="permeation-steps"
-)
+router.register(r"gas-filling-bp-steps", GasFillingBpStepController, basename="gas-filling-bp-steps")
+router.register(r"gas-filling-hp-steps", GasFillingHpStepController, basename="gas-filling-hp-steps")
+router.register(r"permeation-steps", PermeationStepController, basename="permeation-steps")
 router.register(
     r"depressurization-steps",
     DepressurizationStepController,
@@ -109,9 +118,7 @@ router.register(r"dashboard", DashboardController, basename="dashboard")
 
 # User routes
 router.register(r"users", UserAdminController, basename="users")
-router.register(
-    r"auth/change-password", ChangePasswordController, basename="change-password"
-)
+router.register(r"auth/change-password", ChangePasswordController, basename="change-password")
 router.register(
     r"auth/set-initial-password",
     SetInitialPasswordController,
@@ -125,6 +132,13 @@ router.register(
 )
 
 urlpatterns = [
+    # Endpoint dedie aux dropdowns d'operateurs (acces operateur + admin).
+    # Declare avant l'include router pour eviter la collision avec /users/<uuid>/.
+    path(
+        "users/lookup/",
+        UserLookupController.as_view({"get": "list"}),
+        name="users-lookup",
+    ),
     path("", include(router.urls)),
     path("planning/", include("app.api.planning.urls")),
 ]

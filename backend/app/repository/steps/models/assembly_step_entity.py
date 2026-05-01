@@ -21,7 +21,6 @@ class AssemblyStepEntity(BaseStepEntity):
         related_name="assembly_steps",
         to_field="version_uuid",
     )
-    hydrometric_temperature = models.FloatField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     comments = models.TextField(max_length=4000, null=True, blank=True)

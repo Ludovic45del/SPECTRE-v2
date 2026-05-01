@@ -14,9 +14,9 @@ from app.mapper.embase.embase_mapper import (
     embase_mapper_update_entity_from_bean,
 )
 from app.repository.embase.models.embase_entity import EmbaseEntity
-from app.repository.steps.models.gas_filling_hp_step_entity import (
-    GasFillingHpStepEntity,
-)
+from app.repository.steps.models.airtightness_test_lp_step_entity import AirtightnessTestLpStepEntity
+from app.repository.steps.models.gas_filling_bp_step_entity import GasFillingBpStepEntity
+from app.repository.steps.models.gas_filling_hp_step_entity import GasFillingHpStepEntity
 
 
 class EmbaseRepository(IEmbaseRepository):
@@ -27,12 +27,8 @@ class EmbaseRepository(IEmbaseRepository):
         """Retourne le queryset de base avec les annotations etalonnage."""
         return EmbaseEntity.objects.annotate(
             _last_etalonnage_date=Max("etalonnages__date"),
-            _last_etalonnage_date_v1=Max(
-                Case(When(etalonnages__voie=1, then="etalonnages__date"))
-            ),
-            _last_etalonnage_date_v2=Max(
-                Case(When(etalonnages__voie=2, then="etalonnages__date"))
-            ),
+            _last_etalonnage_date_v1=Max(Case(When(etalonnages__voie=1, then="etalonnages__date"))),
+            _last_etalonnage_date_v2=Max(Case(When(etalonnages__voie=2, then="etalonnages__date"))),
         )
 
     @transaction.atomic
@@ -95,42 +91,35 @@ class EmbaseRepository(IEmbaseRepository):
 
     def exists_duplicate(self, exclude_uuid: str, identifier: str) -> bool:
         """Verifie si une autre Embase (excluant l'UUID donne) a cet identifiant."""
-        return (
-            EmbaseEntity.objects.filter(identifier=identifier)
-            .exclude(uuid=exclude_uuid)
-            .exists()
-        )
+        return EmbaseEntity.objects.filter(identifier=identifier).exclude(uuid=exclude_uuid).exists()
 
     _FSEC_STEP_SELECT_RELATED = ("fsec_version_id", "fsec_version_id__campaign_id")
+    _GAS_STEP_SOURCES = (
+        GasFillingHpStepEntity,
+        GasFillingBpStepEntity,
+        AirtightnessTestLpStepEntity,
+    )
 
     def get_fsec_history(self, embase_uuid: str) -> List[FsecHistoryEntryBean]:
-        """Retourne l'historique des FSECs associes a une embase via les steps gaz HP."""
-        distinct_fsec_ids = list(
-            GasFillingHpStepEntity.objects.filter(embase_id=embase_uuid)
-            .values_list("fsec_version_id", flat=True)
-            .distinct()
-        )
-
-        if not distinct_fsec_ids:
-            return []
-
-        steps = (
-            GasFillingHpStepEntity.objects.filter(
-                embase_id=embase_uuid,
-                fsec_version_id__in=distinct_fsec_ids,
+        """Retourne l'historique des FSECs associés à une embase via les steps gaz (HP + BP)."""
+        all_steps = []
+        for entity_cls in self._GAS_STEP_SOURCES:
+            qs = (
+                entity_cls.objects.filter(embase_id=embase_uuid)
+                .select_related(*self._FSEC_STEP_SELECT_RELATED)
+                .order_by("-date_of_fulfilment")
             )
-            .select_related(*self._FSEC_STEP_SELECT_RELATED)
-            .order_by("fsec_version_id", "-date_of_fulfilment")
-        )
+            all_steps.extend(qs)
 
-        return self._build_history_beans(steps)
+        return self._build_history_beans(all_steps)
 
     @staticmethod
     def _build_history_beans(steps) -> List[FsecHistoryEntryBean]:
-        """Deduplique les steps et construit les beans d'historique."""
+        """Déduplique les steps (par FSEC) et construit les beans d'historique."""
         seen_fsec_ids = set()
         results = []
-        for step in steps:
+        # Prioriser les steps avec date renseignée pour conserver une date significative.
+        for step in sorted(steps, key=lambda s: s.date_of_fulfilment or "", reverse=True):
             fsec_id = step.fsec_version_id_id
             if fsec_id in seen_fsec_ids:
                 continue
@@ -145,11 +134,7 @@ class EmbaseRepository(IEmbaseRepository):
                     fsec_name=fsec.name,
                     campaign_name=campaign.name if campaign else None,
                     campaign_uuid=str(campaign.uuid) if campaign else None,
-                    date_of_fulfilment=(
-                        step.date_of_fulfilment.isoformat()
-                        if step.date_of_fulfilment
-                        else None
-                    ),
+                    date_of_fulfilment=(step.date_of_fulfilment.isoformat() if step.date_of_fulfilment else None),
                     gas_type=step.gas_type,
                 )
             )

@@ -1,10 +1,6 @@
 """API Package - Controllers REST."""
 
-from app.api.campaign import (
-    CampaignController,
-    CampaignDocumentsController,
-    CampaignTeamsController,
-)
+from app.api.campaign import CampaignController, CampaignDocumentsController, CampaignTeamsController
 from app.api.fsec import FsecController, FsecDocumentsController, FsecTeamsController
 from app.api.steps import (
     AirtightnessTestLpStepController,

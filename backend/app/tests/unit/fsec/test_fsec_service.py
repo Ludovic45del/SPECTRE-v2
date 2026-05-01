@@ -379,9 +379,7 @@ class TestFsecServiceUpdate:
         result = update_fsec(mock_repo, updated_bean)
 
         assert result.name == "Nouveau Nom"
-        mock_repo.exists_by_campaign_and_name.assert_called_once_with(
-            sample_fsec.campaign_id, "Nouveau Nom"
-        )
+        mock_repo.exists_by_campaign_and_name.assert_called_once_with(sample_fsec.campaign_id, "Nouveau Nom")
 
     def test_update_fsec_campaign_changed_checks_duplicate(self, sample_fsec):
         """Test que changer la campagne declenche le check doublon."""
@@ -402,9 +400,7 @@ class TestFsecServiceUpdate:
         result = update_fsec(mock_repo, updated_bean)
 
         assert result is updated_bean
-        mock_repo.exists_by_campaign_and_name.assert_called_once_with(
-            new_campaign_id, sample_fsec.name
-        )
+        mock_repo.exists_by_campaign_and_name.assert_called_once_with(new_campaign_id, sample_fsec.name)
 
     def test_update_fsec_name_changed_duplicate_raises_conflict(self, sample_fsec):
         mock_repo = MagicMock()
@@ -555,9 +551,7 @@ class TestFsecServicePatch:
 
         assert result.status_id == 2
         assert result.comments == "Commentaire patche"
-        mock_fsec_repository.get_by_version_uuid.assert_called_once_with(
-            sample_fsec.version_uuid
-        )
+        mock_fsec_repository.get_by_version_uuid.assert_called_once_with(sample_fsec.version_uuid)
         mock_fsec_repository.update.assert_called_once()
 
     def test_patch_fsec_not_found(self, mock_fsec_repository):
@@ -571,9 +565,7 @@ class TestFsecServicePatch:
         assert exc_info.value.identifier == fake_uuid
         mock_fsec_repository.update.assert_not_called()
 
-    def test_patch_fsec_protected_fields_ignored(
-        self, sample_fsec, mock_fsec_repository
-    ):
+    def test_patch_fsec_protected_fields_ignored(self, sample_fsec, mock_fsec_repository):
         mock_fsec_repository.get_by_version_uuid.return_value = sample_fsec
         mock_fsec_repository.update.return_value = sample_fsec
 
@@ -600,9 +592,7 @@ class TestFsecServicePatch:
         assert updated_bean.is_active == original_is_active
         assert updated_bean.comments == "Modifie"
 
-    def test_patch_each_protected_field_separately(
-        self, sample_fsec, mock_fsec_repository
-    ):
+    def test_patch_each_protected_field_separately(self, sample_fsec, mock_fsec_repository):
         """Verifie que chaque champ protege est bien ignore individuellement."""
         protected_fields = {
             "version_uuid": str(uuid.uuid4()),
@@ -677,9 +667,7 @@ class TestFsecServicePatch:
         assert exc_info.value.field == "campaign_id/name"
         mock_fsec_repository.update.assert_not_called()
 
-    def test_patch_campaign_changed_checks_duplicate(
-        self, sample_fsec, mock_fsec_repository
-    ):
+    def test_patch_campaign_changed_checks_duplicate(self, sample_fsec, mock_fsec_repository):
         """Changing campaign_id via patch triggers duplicate check."""
         mock_fsec_repository.get_by_version_uuid.return_value = sample_fsec
         new_campaign = str(uuid.uuid4())
@@ -694,9 +682,7 @@ class TestFsecServicePatch:
 
         mock_fsec_repository.exists_by_campaign_and_name.assert_called_once()
 
-    def test_patch_sets_attribute_on_existing_bean(
-        self, sample_fsec, mock_fsec_repository
-    ):
+    def test_patch_sets_attribute_on_existing_bean(self, sample_fsec, mock_fsec_repository):
         """Verify that patch mutates the existing bean and passes it to update."""
         mock_fsec_repository.get_by_version_uuid.return_value = sample_fsec
         mock_fsec_repository.update.return_value = sample_fsec
@@ -876,9 +862,7 @@ class TestFsecExceptionValueStrings:
         assert sample_fsec.campaign_id in exc_info.value.value
         assert "Doublon" in exc_info.value.value
 
-    def test_patch_conflict_value_contains_merged_values(
-        self, sample_fsec, mock_fsec_repository
-    ):
+    def test_patch_conflict_value_contains_merged_values(self, sample_fsec, mock_fsec_repository):
         """Test que ConflictException de patch contient les valeurs fusionnées."""
         mock_fsec_repository.get_by_version_uuid.return_value = sample_fsec
         mock_fsec_repository.exists_by_campaign_and_name.return_value = True
@@ -919,9 +903,7 @@ class TestFsecExceptionValueStrings:
         """Test que NotFoundException de update contient le version_uuid."""
         mock_repo = MagicMock()
         mock_repo.get_by_version_uuid.return_value = None
-        bean = FsecBean(
-            version_uuid="miss-v-uuid", fsec_uuid="f", name="X", is_active=True
-        )
+        bean = FsecBean(version_uuid="miss-v-uuid", fsec_uuid="f", name="X", is_active=True)
 
         with pytest.raises(NotFoundException) as exc_info:
             update_fsec(mock_repo, bean)

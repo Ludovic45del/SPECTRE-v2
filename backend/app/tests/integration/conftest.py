@@ -79,9 +79,7 @@ def seed_reference_data(db):
         (12, "Repressurisation", "#607d8b"),
         (13, "Dépressurisation", "#ff5722"),
     ]:
-        FsecStatusEntity.objects.get_or_create(
-            id=id_, defaults={"label": label, "color": color}
-        )
+        FsecStatusEntity.objects.get_or_create(id=id_, defaults={"label": label, "color": color})
 
     # FSEC Category
     for id_, label in [

@@ -12,5 +12,6 @@ class PicturesStepBean:
     uuid: str = ""
     fsec_version_id: str = ""
     operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     date: Optional[date] = None
     comments: Optional[str] = None

@@ -13,8 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="embaseentity",
             name="nombre_voies",
-            field=models.IntegerField(
-                choices=[(1, "1 voie"), (2, "2 voies")], default=1
-            ),
+            field=models.IntegerField(choices=[(1, "1 voie"), (2, "2 voies")], default=1),
         ),
     ]

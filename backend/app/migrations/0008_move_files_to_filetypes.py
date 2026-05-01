@@ -3,9 +3,7 @@ from django.db import migrations
 
 
 def move_files_to_filetypes(apps, schema_editor):
-    CampaignDocumentSubtypesEntity = apps.get_model(
-        "app", "CampaignDocumentSubtypesEntity"
-    )
+    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
     CampaignDocumentsEntity = apps.get_model("app", "CampaignDocumentsEntity")
     CampaignFileTypesEntity = apps.get_model("app", "CampaignFileTypesEntity")
 
@@ -32,9 +30,7 @@ def move_files_to_filetypes(apps, schema_editor):
 
         for fid, label in new_types:
             if not CampaignFileTypesEntity.objects.filter(id=fid).exists():
-                CampaignFileTypesEntity.objects.create(
-                    id=fid, label=label, subtype_id=plan_pdf
-                )
+                CampaignFileTypesEntity.objects.create(id=fid, label=label, subtype_id=plan_pdf)
     except CampaignDocumentSubtypesEntity.DoesNotExist:
         pass
 

@@ -2,7 +2,7 @@
  * Campaigns List Page
  * @module pages/campaigns
  *
- * Displays: Semestre, Nom, Type, Statut
+ * Displays: Année, Semestre, Nom, Installation, Type, Statut
  * Features: Sortable columns, pagination, filters
  */
 
@@ -89,10 +89,16 @@ export default function CampaignsPage() {
                             {[...Array(10)].map((_, i) => (
                                 <TableRow key={i}>
                                     <TableCell>
+                                        <Skeleton variant="text" width={40} height={24} />
+                                    </TableCell>
+                                    <TableCell>
                                         <Skeleton variant="rounded" width={50} height={24} />
                                     </TableCell>
                                     <TableCell>
                                         <Skeleton variant="text" width="80%" height={24} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton variant="rounded" width={70} height={24} />
                                     </TableCell>
                                     <TableCell>
                                         <Skeleton variant="rounded" width={80} height={24} />
@@ -162,7 +168,7 @@ export default function CampaignsPage() {
                         ))}
                         {paginatedCampaigns.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={5} align="center">
+                                <TableCell colSpan={COLUMNS.length + 1} align="center">
                                     <Typography color="text.secondary" sx={{ py: 4 }}>
                                         Aucune campagne trouvée
                                     </Typography>

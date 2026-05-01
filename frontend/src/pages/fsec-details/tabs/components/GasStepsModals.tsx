@@ -5,6 +5,7 @@
  * Extracted from GasStepsTab to keep file size under 250 lines (R-STYLE-03).
  */
 
+import { useMemo } from 'react';
 import {
     type AirtightnessStep,
     type GasFillingBpStep,
@@ -52,6 +53,36 @@ export function GasStepsModals({
     airtightnessSteps,
     gasFillingBpSteps,
 }: GasStepsModalsProps) {
+    const airtightnessCommonData = useMemo(
+        () => ({
+            gasType: computedCommonData.gasType,
+            leakRateDtri: computedCommonData.leakRateDtri,
+            experimentPressure: computedCommonData.experimentPressure,
+            airtightnessTestDuration: computedCommonData.testDuration,
+        }),
+        [
+            computedCommonData.gasType,
+            computedCommonData.leakRateDtri,
+            computedCommonData.experimentPressure,
+            computedCommonData.testDuration,
+        ],
+    );
+
+    const fillingBpCommonData = useMemo(
+        () => ({
+            gasType: computedCommonData.gasType,
+            leakRateDtri: computedCommonData.leakRateDtri,
+            experimentPressure: computedCommonData.experimentPressure,
+            leakTestDuration: computedCommonData.testDuration,
+        }),
+        [
+            computedCommonData.gasType,
+            computedCommonData.leakRateDtri,
+            computedCommonData.experimentPressure,
+            computedCommonData.testDuration,
+        ],
+    );
+
     return (
         <>
             {openModal === 'airtightness' && (
@@ -60,12 +91,7 @@ export function GasStepsModals({
                     onClose={onClose}
                     fsecVersionId={fsecVersionId}
                     step={selectedAirtightness}
-                    commonData={{
-                        gasType: computedCommonData.gasType,
-                        leakRateDtri: computedCommonData.leakRateDtri,
-                        experimentPressure: computedCommonData.experimentPressure,
-                        airtightnessTestDuration: computedCommonData.testDuration,
-                    }}
+                    commonData={airtightnessCommonData}
                 />
             )}
             {openModal === 'gasFillingBp' && (
@@ -74,12 +100,7 @@ export function GasStepsModals({
                     onClose={onClose}
                     fsecVersionId={fsecVersionId}
                     step={selectedGasFillingBp}
-                    commonData={{
-                        gasType: computedCommonData.gasType,
-                        leakRateDtri: computedCommonData.leakRateDtri,
-                        experimentPressure: computedCommonData.experimentPressure,
-                        leakTestDuration: computedCommonData.testDuration,
-                    }}
+                    commonData={fillingBpCommonData}
                 />
             )}
             {openModal === 'gasFillingHp' && (

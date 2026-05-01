@@ -16,6 +16,7 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     fsecStepId: null,
     fsecStepOther: null,
     discoverer: 'Jean Dupont',
+    discovererUserUuid: null,
     eventDate: new Date('2025-02-15'),
     observation: 'Observation test',
     locationEquipment: null,
@@ -24,21 +25,25 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     iecValidationOpen: false,
     iecValidationOpenDate: null,
     iecValidationOpenName: null,
+    iecValidationOpenUserUuid: null,
     cause: null,
     experienceImpact: null,
     iecValidationProgress: false,
     iecValidationProgressDate: null,
     iecValidationProgressName: null,
+    iecValidationProgressUserUuid: null,
     closureValidation: null,
     closureDate: null,
     closureValidatorName: null,
+    closureValidatorUserUuid: null,
     createdAt: new Date('2025-01-15T10:00:00Z'),
     lastUpdated: new Date('2025-01-15T10:00:00Z'),
+    fsecName: null,
+    installation: null,
     ...overrides,
 });
 
 interface FaWithFsec extends Fa {
-    fsecName?: string;
     fsecIndex?: number;
 }
 

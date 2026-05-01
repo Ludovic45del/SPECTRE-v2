@@ -6,11 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
 from app.domain.campaign.models.campaign_bean import CampaignBean
-from app.domain.exceptions import (
-    ConflictException,
-    NotFoundException,
-    ValidationException,
-)
+from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 
 logger = logging.getLogger(__name__)
@@ -56,11 +52,7 @@ def _merge_partial_data(bean: CampaignBean, partial_data: Dict[str, Any]) -> Non
             continue
         # Valider le type si une contrainte est définie
         expected = FIELD_TYPES.get(key)
-        if (
-            expected is not None
-            and value is not None
-            and not isinstance(value, expected)
-        ):
+        if expected is not None and value is not None and not isinstance(value, expected):
             raise ValidationException(
                 key,
                 f"Type invalide pour '{key}': attendu {expected}, reçu {type(value).__name__}",
@@ -78,9 +70,7 @@ def _validate_date_range(bean: CampaignBean) -> None:
         )
 
 
-def create_campaign(
-    repository: ICampaignRepository, bean: CampaignBean
-) -> CampaignBean:
+def create_campaign(repository: ICampaignRepository, bean: CampaignBean) -> CampaignBean:
     """Crée une nouvelle campagne après validation."""
     _validate_date_range(bean)
 
@@ -91,12 +81,8 @@ def create_campaign(
         bean.status_id = DEFAULT_CAMPAIGN_STATUS_ID
 
     if repository.exists_by_name_year_semester(bean.name, bean.year, bean.semester):
-        raise ConflictException(
-            "name/year/semester", f"{bean.name}/{bean.year}/{bean.semester}"
-        )
-    logger.info(
-        f"Creating campaign name={bean.name}, year={bean.year}, semester={bean.semester}"
-    )
+        raise ConflictException("name/year/semester", f"{bean.name}/{bean.year}/{bean.semester}")
+    logger.info(f"Creating campaign name={bean.name}, year={bean.year}, semester={bean.semester}")
     result = repository.create(bean)
     logger.info(f"Created campaign uuid={result.uuid}")
     return result
@@ -122,9 +108,7 @@ def count_all_campaigns(repository: ICampaignRepository) -> int:
     return repository.count_all()
 
 
-def update_campaign(
-    repository: ICampaignRepository, bean: CampaignBean
-) -> CampaignBean:
+def update_campaign(repository: ICampaignRepository, bean: CampaignBean) -> CampaignBean:
     """Met à jour une campagne (remplacement complet)."""
     # 1. Vérifie existence
     existing = repository.get_by_uuid(bean.uuid)
@@ -134,25 +118,17 @@ def update_campaign(
     _validate_date_range(bean)
 
     # 2. Vérifie conflit doublon (SI changement de clé unique)
-    has_key_changed = (
-        bean.name != existing.name
-        or bean.year != existing.year
-        or bean.semester != existing.semester
-    )
+    has_key_changed = bean.name != existing.name or bean.year != existing.year or bean.semester != existing.semester
 
     if has_key_changed:
         if repository.exists_duplicate(bean.uuid, bean.name, bean.year, bean.semester):
-            raise ConflictException(
-                "name/year/semester", f"{bean.name}/{bean.year}/{bean.semester}"
-            )
+            raise ConflictException("name/year/semester", f"{bean.name}/{bean.year}/{bean.semester}")
 
     logger.info(f"Updating campaign uuid={bean.uuid}")
     return repository.update(bean)
 
 
-def patch_campaign(
-    repository: ICampaignRepository, uuid: str, partial_data: Dict[str, Any]
-) -> CampaignBean:
+def patch_campaign(repository: ICampaignRepository, uuid: str, partial_data: Dict[str, Any]) -> CampaignBean:
     """Met à jour partiellement une campagne (PATCH)."""
     existing_bean = repository.get_by_uuid(uuid)
     if existing_bean is None:
@@ -169,9 +145,7 @@ def patch_campaign(
     # Vérification conflit APRÈS fusion (uniquement si clé modifiée)
     new_key = (existing_bean.name, existing_bean.year, existing_bean.semester)
     if new_key != old_key:
-        if repository.exists_duplicate(
-            uuid, existing_bean.name, existing_bean.year, existing_bean.semester
-        ):
+        if repository.exists_duplicate(uuid, existing_bean.name, existing_bean.year, existing_bean.semester):
             raise ConflictException(
                 "name/year/semester",
                 f"{existing_bean.name}/{existing_bean.year}/{existing_bean.semester}",
@@ -181,9 +155,7 @@ def patch_campaign(
     return repository.update(existing_bean)
 
 
-def delete_campaign(
-    repository: ICampaignRepository, uuid: str, fsec_repository: IFsecRepository
-) -> bool:
+def delete_campaign(repository: ICampaignRepository, uuid: str, fsec_repository: IFsecRepository) -> bool:
     """Supprime une campagne après vérification qu'aucun FSEC n'y est rattaché."""
     existing = repository.get_by_uuid(uuid)
     if existing is None:

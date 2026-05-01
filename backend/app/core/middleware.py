@@ -43,9 +43,7 @@ class RequestIDMiddleware:
         # Injecter dans le contexte de logging
         LogContext.set(
             request_id=request_id,
-            user_id=(
-                getattr(request.user, "id", None) if hasattr(request, "user") else None
-            ),
+            user_id=(getattr(request.user, "id", None) if hasattr(request, "user") else None),
         )
 
         try:
@@ -83,9 +81,7 @@ class ErrorHandlerMiddleware:
     def __call__(self, request):
         return self.get_response(request)
 
-    def _build_error_response(
-        self, message: str, error_type: str, code: str, status: int
-    ) -> JsonResponse:
+    def _build_error_response(self, message: str, error_type: str, code: str, status: int) -> JsonResponse:
         """Construit une réponse d'erreur JSON standardisée."""
         return JsonResponse(
             {
@@ -126,9 +122,7 @@ class ErrorHandlerMiddleware:
 
             # Enrichir le code d'erreur avec le contexte si disponible
             # En production, utiliser des codes génériques pour ne pas exposer le schéma
-            enriched_code = (
-                self._enrich_error_code(exception, code) if settings.DEBUG else code
-            )
+            enriched_code = self._enrich_error_code(exception, code) if settings.DEBUG else code
 
             return self._build_error_response(
                 message=str(exception),
@@ -159,12 +153,7 @@ class ErrorHandlerMiddleware:
                 return f"{resource}_NOT_FOUND"
 
         if isinstance(exception, ConflictException):
-            field = (
-                getattr(exception, "field", "")
-                .upper()
-                .replace("/", "_")
-                .replace(" ", "_")
-            )
+            field = getattr(exception, "field", "").upper().replace("/", "_").replace(" ", "_")
             if field:
                 return f"CONFLICT_{field}"
 

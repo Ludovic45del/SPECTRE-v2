@@ -14,5 +14,6 @@ class MetrologyStepBean:
     machine_id: Optional[int] = None
     rack_id: Optional[int] = None
     metrologist_name: Optional[str] = None
+    metrologist_user_uuid: Optional[str] = None
     date: Optional[date] = None
     comments: Optional[str] = None

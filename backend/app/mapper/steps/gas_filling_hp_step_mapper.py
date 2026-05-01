@@ -3,10 +3,8 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.gas_filling_hp_step_bean import GasFillingHpStepBean
-from app.mapper.steps.base_step_mapper import parse_date_from_api
-from app.repository.steps.models.gas_filling_hp_step_entity import (
-    GasFillingHpStepEntity,
-)
+from app.mapper.steps.base_step_mapper import normalize_user_uuid, parse_date_from_api, read_operator_user_uuid
+from app.repository.steps.models.gas_filling_hp_step_entity import GasFillingHpStepEntity
 
 
 def gas_filling_hp_step_mapper_entity_to_bean(
@@ -15,17 +13,14 @@ def gas_filling_hp_step_mapper_entity_to_bean(
     """Convertit une GasFillingHpStepEntity en GasFillingHpStepBean."""
     return GasFillingHpStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(
-            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
-        ),
+        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
         embase_id=str(entity.embase_id) if entity.embase_id else None,
-        embase_identifier=(
-            entity.embase.identifier if entity.embase_id and entity.embase else None
-        ),
+        embase_identifier=(entity.embase.identifier if entity.embase_id and entity.embase else None),
         leak_rate_dtri=entity.leak_rate_dtri,
         gas_type=entity.gas_type,
         experiment_pressure=entity.experiment_pressure,
         operator=entity.operator,
+        operator_user_uuid=read_operator_user_uuid(entity),
         date_of_fulfilment=entity.date_of_fulfilment,
         gas_base=entity.gas_base,
         gas_container=entity.gas_container,
@@ -46,6 +41,7 @@ def gas_filling_hp_step_mapper_bean_to_entity(
     entity.gas_type = bean.gas_type
     entity.experiment_pressure = bean.experiment_pressure
     entity.operator = bean.operator
+    entity.operator_user_id = bean.operator_user_uuid
     entity.date_of_fulfilment = bean.date_of_fulfilment
     entity.gas_base = bean.gas_base
     entity.gas_container = bean.gas_container
@@ -65,6 +61,7 @@ def gas_filling_hp_step_mapper_api_to_bean(
         gas_type=data.get("gas_type"),
         experiment_pressure=data.get("experiment_pressure"),
         operator=data.get("operator"),
+        operator_user_uuid=normalize_user_uuid(data.get("operator_user_uuid")),
         date_of_fulfilment=parse_date_from_api(data.get("date_of_fulfilment")),
         gas_base=data.get("gas_base"),
         gas_container=data.get("gas_container"),
@@ -85,9 +82,8 @@ def gas_filling_hp_step_mapper_bean_to_api(
         "gas_type": bean.gas_type,
         "experiment_pressure": bean.experiment_pressure,
         "operator": bean.operator,
-        "date_of_fulfilment": (
-            bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None
-        ),
+        "operator_user_uuid": bean.operator_user_uuid,
+        "date_of_fulfilment": (bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None),
         "gas_base": bean.gas_base,
         "gas_container": bean.gas_container,
         "observations": bean.observations,

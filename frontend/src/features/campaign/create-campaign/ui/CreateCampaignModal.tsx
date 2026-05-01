@@ -32,6 +32,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChipSelect } from '@widgets/chip-select';
+import { TeamMemberInput } from '@widgets/team-member-input';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CampaignCreateSchema, CampaignCreate, useCreateCampaign } from '@entities/campaign';
@@ -76,9 +77,9 @@ export function CreateCampaignModal() {
             installationId: undefined,
             dtriNumber: null,
             description: null,
-            moe: '',
-            rce: '',
-            iec: '',
+            moeName: '',
+            rceUserUuid: '',
+            iecUserUuid: '',
         },
     });
 
@@ -86,21 +87,43 @@ export function CreateCampaignModal() {
         try {
             const campaign = await createMutation.mutateAsync(data);
 
-            // Add team members after campaign creation
-            const teamMembers = [
-                { name: data.moe, role_id: CAMPAIGN_ROLE_ID.MOE, label: 'MOE' },
-                { name: data.rce, role_id: CAMPAIGN_ROLE_ID.RCE, label: 'RCE' },
-                { name: data.iec, role_id: CAMPAIGN_ROLE_ID.IEC, label: 'IEC' },
+            // Add team members after campaign creation.
+            // MOE = name texte libre, RCE/IEC = user_uuid FK (decision metier).
+            const teamMembers: ReadonlyArray<{
+                role_id: number;
+                label: string;
+                name: string | null;
+                user_uuid: string | null;
+            }> = [
+                {
+                    role_id: CAMPAIGN_ROLE_ID.MOE,
+                    label: 'MOE',
+                    name: data.moeName?.trim() || null,
+                    user_uuid: null,
+                },
+                {
+                    role_id: CAMPAIGN_ROLE_ID.RCE,
+                    label: 'RCE',
+                    name: null,
+                    user_uuid: data.rceUserUuid?.trim() || null,
+                },
+                {
+                    role_id: CAMPAIGN_ROLE_ID.IEC,
+                    label: 'IEC',
+                    name: null,
+                    user_uuid: data.iecUserUuid?.trim() || null,
+                },
             ];
 
             const failedMembers: string[] = [];
             for (const member of teamMembers) {
-                if (member.name && member.name.trim() !== '') {
+                if (member.name || member.user_uuid) {
                     try {
                         await addTeamMember.mutateAsync({
                             campaign_uuid: campaign.uuid,
                             role_id: member.role_id,
                             name: member.name,
+                            user_uuid: member.user_uuid,
                         });
                     } catch {
                         failedMembers.push(member.label);
@@ -356,19 +379,40 @@ export function CreateCampaignModal() {
 
                             <Stack direction="row" spacing={2}>
                                 <Controller
-                                    name="moe"
+                                    name="moeName"
                                     control={control}
-                                    render={({ field }) => <TextField {...field} label="MOE" fullWidth />}
+                                    render={({ field }) => (
+                                        <TeamMemberInput
+                                            roleLabel="MOE"
+                                            value={{ name: field.value ?? '', userUuid: null }}
+                                            onChange={(v) => field.onChange(v.name ?? '')}
+                                            label="MOE"
+                                        />
+                                    )}
                                 />
                                 <Controller
-                                    name="rce"
+                                    name="rceUserUuid"
                                     control={control}
-                                    render={({ field }) => <TextField {...field} label="RCE" fullWidth />}
+                                    render={({ field }) => (
+                                        <TeamMemberInput
+                                            roleLabel="RCE"
+                                            value={{ name: null, userUuid: field.value || null }}
+                                            onChange={(v) => field.onChange(v.userUuid ?? '')}
+                                            label="RCE"
+                                        />
+                                    )}
                                 />
                                 <Controller
-                                    name="iec"
+                                    name="iecUserUuid"
                                     control={control}
-                                    render={({ field }) => <TextField {...field} label="IEC" fullWidth />}
+                                    render={({ field }) => (
+                                        <TeamMemberInput
+                                            roleLabel="IEC"
+                                            value={{ name: null, userUuid: field.value || null }}
+                                            onChange={(v) => field.onChange(v.userUuid ?? '')}
+                                            label="IEC"
+                                        />
+                                    )}
                                 />
                             </Stack>
                         </Stack>

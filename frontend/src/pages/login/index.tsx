@@ -3,9 +3,10 @@
  * @module pages/login
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, Container, TextField, Typography, Alert, Paper, CircularProgress } from '@mui/material';
 import { useAuthStore } from '@features/auth';
+import { LoginSuccessAnimation } from '@shared/ui';
 import CEALogo from '@shared/assets/images/CEALogo.png';
 
 /** Brand color matching sidebar SPECTRE title */
@@ -13,10 +14,16 @@ const BRAND_COLOR = '#E31837';
 
 export default function LoginPage() {
     const login = useAuthStore((s) => s.login);
+    const commitLogin = useAuthStore((s) => s.commitLogin);
+    const discardPendingAuth = useAuthStore((s) => s.discardPendingAuth);
+    const pendingAuth = useAuthStore((s) => s.pendingAuth);
     const isLoading = useAuthStore((s) => s.isLoading);
     const error = useAuthStore((s) => s.error);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    // 'idle' : formulaire affiche.
+    // 'celebrating' : animation post-login en cours, redirige a la fin via commitLogin().
+    const [phase, setPhase] = useState<'idle' | 'celebrating'>('idle');
 
     const handleUsernameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value),
@@ -31,12 +38,33 @@ export default function LoginPage() {
     const handleSubmit = useCallback(
         async (e: React.FormEvent) => {
             e.preventDefault();
-            await login(username, password);
+            const ok = await login(username, password);
+            if (!ok) return;
+            // Lecture immediate du pendingAuth fraichement set par login().
+            const fresh = useAuthStore.getState().pendingAuth;
+            // Skip de l'animation si l'utilisateur doit changer son mot de passe :
+            // un "Bienvenue" suivi d'une page de friction serait contradictoire.
+            if (fresh?.forcePasswordChange) {
+                commitLogin();
+                return;
+            }
+            setPhase('celebrating');
         },
-        [login, username, password],
+        [login, commitLogin, username, password],
     );
 
+    // Cleanup : si l'utilisateur quitte la page de login (back, navigation manuelle)
+    // alors qu'un pendingAuth existe, on l'annule pour eviter un etat orphelin.
+    useEffect(() => {
+        return () => {
+            if (useAuthStore.getState().pendingAuth) {
+                discardPendingAuth();
+            }
+        };
+    }, [discardPendingAuth]);
+
     return (
+        <>
         <Container maxWidth="sm">
             <Box
                 sx={{
@@ -119,5 +147,13 @@ export default function LoginPage() {
                 </Paper>
             </Box>
         </Container>
+        {phase === 'celebrating' && pendingAuth && (
+            <LoginSuccessAnimation
+                firstName={pendingAuth.firstName ?? undefined}
+                accentColor={BRAND_COLOR}
+                onComplete={commitLogin}
+            />
+        )}
+        </>
     );
 }

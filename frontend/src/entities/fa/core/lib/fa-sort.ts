@@ -10,7 +10,8 @@ import type { Fa } from '../model';
 export type FaSortColumn = 'identifier' | 'fsec' | 'status' | 'criticality' | 'type5m' | 'eventDate';
 
 interface FaSortable extends Fa {
-    fsecName?: string;
+    // `fsecName` est désormais déclaré sur `Fa` (string | null). `fsecIndex` reste
+    // un fallback historique (tri par index dans la liste des FSECs côté front).
     fsecIndex?: number;
 }
 
@@ -31,7 +32,7 @@ export function sortFas<T extends FaSortable>(items: T[], column: FaSortColumn, 
                 comparison = a.identifier.localeCompare(b.identifier);
                 break;
             case 'fsec':
-                if (a.fsecName !== undefined && b.fsecName !== undefined) {
+                if (a.fsecName != null && b.fsecName != null) {
                     comparison = a.fsecName.localeCompare(b.fsecName);
                 } else {
                     comparison = (a.fsecIndex ?? Number.MAX_SAFE_INTEGER) - (b.fsecIndex ?? Number.MAX_SAFE_INTEGER);

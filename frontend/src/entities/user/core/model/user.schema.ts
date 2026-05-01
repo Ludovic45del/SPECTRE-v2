@@ -24,6 +24,32 @@ export const SPECTRE_ROLES = [
 
 export type SpectreRole = (typeof SPECTRE_ROLES)[number];
 
+// Constantes nominatives (réutilisées dans les filtres UserSelect par contexte).
+export const ROLE_CHEF_LABO: SpectreRole = 'chef_labo';
+export const ROLE_IEC: SpectreRole = 'iec';
+export const ROLE_RCE: SpectreRole = 'rce';
+export const ROLE_ASSEMBLEUR: SpectreRole = 'assembleur';
+export const ROLE_METROLOGUE: SpectreRole = 'metrologue';
+export const ROLE_CRYOGENIE: SpectreRole = 'cryogenie';
+export const ROLE_STAGIAIRE: SpectreRole = 'stagiaire';
+export const ROLE_ALTERNANT: SpectreRole = 'alternant';
+
+/**
+ * Tous les rôles "opérateur" du laboratoire (groupe permission `operateur` +
+ * `chef_labo`). Exclut stagiaire/alternant qui sont en lecteur seul.
+ *
+ * Utilisé pour filtrer les dropdowns d'opérateur des étapes gaz, étanchéité,
+ * perméation, dépressurisation, repressurisation.
+ */
+export const SPECTRE_OPERATOR_ROLES: readonly SpectreRole[] = [
+    ROLE_CHEF_LABO,
+    ROLE_IEC,
+    ROLE_RCE,
+    ROLE_ASSEMBLEUR,
+    ROLE_METROLOGUE,
+    ROLE_CRYOGENIE,
+] as const;
+
 export const ROLE_LABELS: Record<SpectreRole, string> = {
     chef_labo: 'Chef de laboratoire',
     iec: 'IEC',
@@ -166,7 +192,11 @@ export const UserCreateFormSchema = z.object({
     service: z.string().optional().default(''),
     numero: z.string().optional().default(''),
     bureau: z.string().optional().default(''),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),
+    // Champ vide = pas de mot de passe (lien d'activation envoyé). Sinon min 8 caractères.
+    password: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),
+    ),
 });
 
 export type UserCreateForm = z.infer<typeof UserCreateFormSchema>;

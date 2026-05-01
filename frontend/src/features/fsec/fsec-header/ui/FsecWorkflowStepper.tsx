@@ -24,6 +24,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import { Fsec, useUpdateFsec } from '@entities/fsec';
 import { useNotification } from '@shared/ui';
 import { stepPop } from '@shared/lib';
+import { motion, motionDuration, motionEasing } from '@shared/ui/motion';
 
 interface FsecWorkflowStepperProps {
     fsec: Fsec;
@@ -116,13 +117,13 @@ const StepIconWrapper = styled(Box, {
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        transition: 'all 0.4s ease',
+        transition: `background-color ${motionDuration.slow}ms ${motionEasing.standard}, transform ${motionDuration.base}ms ${motionEasing.standard}, filter ${motionDuration.base}ms ${motionEasing.standard}`,
         zIndex: 2,
         backgroundColor: isCompleted || isActive ? activeColor : theme.palette.grey[400],
         color: 'common.white',
         fontSize: '0.7rem',
         fontWeight: 600,
-        animation: isAnimating ? `${stepPop} 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)` : 'none',
+        animation: isAnimating ? `${stepPop} ${motionDuration.dramatic + 100}ms ${motionEasing.spring}` : 'none',
         '& svg': {
             fontSize: 16,
             color: 'common.white',
@@ -150,7 +151,7 @@ const StepLabel = styled(Typography, {
         position: 'absolute',
         left: '50%',
         transform: 'translateX(-50%)',
-        transition: 'all 0.3s ease',
+        transition: `color ${motionDuration.medium}ms ${motionEasing.standard}, font-weight ${motionDuration.medium}ms ${motionEasing.standard}`,
         ...(labelPosition === 'top' ? { bottom: '100%', marginBottom: 6 } : { top: '100%', marginTop: 6 }),
     }),
 );
@@ -168,7 +169,7 @@ const Connector = styled(Box, {
             ? theme.palette.success.main
             : theme.palette.primary.main
         : theme.palette.grey[300],
-    transition: 'background-color 0.5s ease',
+    transition: `background-color ${motionDuration.slow}ms ${motionEasing.standard}`,
     zIndex: 1,
 }));
 
@@ -265,7 +266,7 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
                 sx={{
                     width: '100%',
                     opacity: isPending ? 0.7 : 1,
-                    transition: 'opacity 0.3s ease',
+                    transition: `opacity ${motion.medium}`,
                 }}
             >
                 <StepperContainer>
@@ -315,18 +316,10 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
                     disabled={isPending}
                     color={isHS ? 'error' : 'default'}
                     variant={isHS ? 'filled' : 'outlined'}
-                    size="small"
+                    aria-label={isHS ? `Annuler le statut ${HS_STEP.label}` : `Marquer la FSEC ${HS_STEP.label}`}
                     sx={{
                         flexShrink: 0,
-                        fontSize: '0.8rem',
-                        fontWeight: isHS ? 600 : 500,
                         cursor: isHS ? 'default' : 'pointer',
-                        transition: 'all 0.3s ease',
-                        '&:hover:not(:disabled)': {
-                            bgcolor: isHS ? undefined : 'error.light',
-                            color: isHS ? undefined : 'error.contrastText',
-                            transform: isHS ? 'none' : 'scale(1.05)',
-                        },
                     }}
                 />
             </Stack>

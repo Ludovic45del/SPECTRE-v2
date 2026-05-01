@@ -2,14 +2,18 @@
  * Campaign Team Form Hook
  * @module pages/campaign-details/overview/hooks/useCampaignTeamForm
  *
- * Extracts form state and handlers for team section.
+ * Gère l'édition des 3 rôles d'équipe campagne :
+ * - MOE : texte libre (membre extérieur au labo)
+ * - RCE / IEC : FK UserProfile (sélection via UserSelect)
+ *
+ * Cohérent avec l'invariant backend (CampaignTeamsService) : MOE -> name,
+ * autres rôles -> user_uuid.
  */
 
 import { useState, useCallback } from 'react';
 import { CampaignWithRelations } from '@entities/campaign';
 import {
     useCampaignTeam,
-    getMemberNameByRole,
     getMemberByRole,
     useAddTeamMember,
     useUpdateTeamMember,
@@ -26,23 +30,39 @@ import { getErrorMessage } from '@shared/lib';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface TeamFormData {
-    moe: string;
-    rce: string;
-    iec: string;
+    /** MOE : nom texte libre (extérieur au labo). */
+    moeName: string;
+    /** RCE : UUID UserProfile (vide si non renseigné). */
+    rceUserUuid: string;
+    /** IEC : UUID UserProfile (vide si non renseigné). */
+    iecUserUuid: string;
 }
 
 export interface UseCampaignTeamFormReturn {
-    // State
     form: TeamFormData;
     isEditing: boolean;
     isSaving: boolean;
     teamMembers: CampaignTeamMember[] | undefined;
 
-    // Actions
     setField: <K extends keyof TeamFormData>(field: K, value: string) => void;
     startEditing: () => void;
     cancelEditing: () => void;
     save: () => Promise<boolean>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildInitialForm(teamMembers: CampaignTeamMember[] | undefined): TeamFormData {
+    const moe = getMemberByRole(teamMembers, 'MOE');
+    const rce = getMemberByRole(teamMembers, 'RCE');
+    const iec = getMemberByRole(teamMembers, 'IEC');
+    return {
+        moeName: moe?.name ?? '',
+        rceUserUuid: rce?.userUuid ?? '',
+        iecUserUuid: iec?.userUuid ?? '',
+    };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,43 +72,29 @@ export interface UseCampaignTeamFormReturn {
 export function useCampaignTeamForm(campaign: CampaignWithRelations): UseCampaignTeamFormReturn {
     const { showNotification } = useNotification();
 
-    // Team hooks
     const { data: teamMembers } = useCampaignTeam(campaign.uuid);
     const addTeamMember = useAddTeamMember();
     const updateTeamMember = useUpdateTeamMember();
     const deleteTeamMember = useDeleteTeamMember();
 
-    // Form state
     const [isEditing, setIsEditing] = useState(false);
-    const [form, setForm] = useState<TeamFormData>(() => ({
-        moe: getMemberNameByRole(teamMembers, 'MOE'),
-        rce: getMemberNameByRole(teamMembers, 'RCE'),
-        iec: getMemberNameByRole(teamMembers, 'IEC'),
-    }));
+    const [form, setForm] = useState<TeamFormData>(() => buildInitialForm(teamMembers));
 
     const isSaving = addTeamMember.isPending || updateTeamMember.isPending || deleteTeamMember.isPending;
 
-    // Set individual field
     const setField = useCallback(<K extends keyof TeamFormData>(field: K, value: string) => {
         setForm((prev) => ({ ...prev, [field]: value }));
     }, []);
 
-    // Start editing
     const startEditing = useCallback(() => {
-        setForm({
-            moe: getMemberNameByRole(teamMembers, 'MOE'),
-            rce: getMemberNameByRole(teamMembers, 'RCE'),
-            iec: getMemberNameByRole(teamMembers, 'IEC'),
-        });
+        setForm(buildInitialForm(teamMembers));
         setIsEditing(true);
     }, [teamMembers]);
 
-    // Cancel editing
     const cancelEditing = useCallback(() => {
         setIsEditing(false);
     }, []);
 
-    // Save
     const save = useCallback(async (): Promise<boolean> => {
         const validation = CampaignTeamFormSchema.safeParse(form);
         if (!validation.success) {
@@ -96,39 +102,59 @@ export function useCampaignTeamForm(campaign: CampaignWithRelations): UseCampaig
             return false;
         }
 
+        // Specs: MOE -> name (texte) ; RCE/IEC -> user_uuid (FK).
+        const teamUpdates: ReadonlyArray<{
+            roleId: number;
+            roleLabel: 'MOE' | 'RCE' | 'IEC';
+            name: string | null;
+            userUuid: string | null;
+        }> = [
+            {
+                roleId: CAMPAIGN_ROLE_ID.MOE,
+                roleLabel: 'MOE',
+                name: form.moeName.trim() || null,
+                userUuid: null,
+            },
+            {
+                roleId: CAMPAIGN_ROLE_ID.RCE,
+                roleLabel: 'RCE',
+                name: null,
+                userUuid: form.rceUserUuid.trim() || null,
+            },
+            {
+                roleId: CAMPAIGN_ROLE_ID.IEC,
+                roleLabel: 'IEC',
+                name: null,
+                userUuid: form.iecUserUuid.trim() || null,
+            },
+        ];
+
         try {
-            const teamUpdates = [
-                { name: form.moe, roleId: CAMPAIGN_ROLE_ID.MOE, roleLabel: 'MOE' },
-                { name: form.rce, roleId: CAMPAIGN_ROLE_ID.RCE, roleLabel: 'RCE' },
-                { name: form.iec, roleId: CAMPAIGN_ROLE_ID.IEC, roleLabel: 'IEC' },
-            ];
-
             for (const update of teamUpdates) {
-                const existingMember = getMemberByRole(teamMembers, update.roleLabel);
-                const newName = update.name?.trim() ?? '';
+                const existing = getMemberByRole(teamMembers, update.roleLabel);
+                const hasNewValue = Boolean(update.name || update.userUuid);
+                const hasChanged =
+                    existing?.name !== update.name || existing?.userUuid !== update.userUuid;
 
-                if (existingMember && newName) {
-                    // Update existing member if name changed
-                    if (existingMember.name !== newName) {
-                        await updateTeamMember.mutateAsync({
-                            uuid: existingMember.uuid,
-                            campaign_uuid: campaign.uuid,
-                            role_id: update.roleId,
-                            name: newName,
-                        });
-                    }
-                } else if (existingMember && !newName) {
-                    // Delete member if name cleared
+                if (existing && hasNewValue && hasChanged) {
+                    await updateTeamMember.mutateAsync({
+                        uuid: existing.uuid,
+                        campaign_uuid: campaign.uuid,
+                        role_id: update.roleId,
+                        name: update.name,
+                        user_uuid: update.userUuid,
+                    });
+                } else if (existing && !hasNewValue) {
                     await deleteTeamMember.mutateAsync({
-                        uuid: existingMember.uuid,
+                        uuid: existing.uuid,
                         campaign_uuid: campaign.uuid,
                     });
-                } else if (!existingMember && newName) {
-                    // Add new member
+                } else if (!existing && hasNewValue) {
                     await addTeamMember.mutateAsync({
                         campaign_uuid: campaign.uuid,
                         role_id: update.roleId,
-                        name: newName,
+                        name: update.name,
+                        user_uuid: update.userUuid,
                     });
                 }
             }

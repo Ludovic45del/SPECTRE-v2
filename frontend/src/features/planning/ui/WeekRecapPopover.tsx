@@ -26,10 +26,9 @@ export function WeekRecapPopover({ weekNum, year, onClose }: WeekRecapPopoverPro
                     </Typography>
                     {weekState && (
                         <Chip
-                            size="small"
                             label={weekState === 'fermeture' ? 'Fermeture' : 'Vacances'}
-                            sx={{ mt: 0.5, height: 18, fontSize: 10, fontWeight: 600 }}
                             color={weekState === 'fermeture' ? 'error' : 'warning'}
+                            sx={{ mt: 0.5 }}
                         />
                     )}
                 </Box>

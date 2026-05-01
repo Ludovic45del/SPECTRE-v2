@@ -9,6 +9,7 @@ import { memo, useState } from 'react';
 import { Box, IconButton, Paper, Typography, Stack, Grid } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { Fa } from '@entities/fa';
+import { UserChip } from '@entities/user';
 import { formatDateShort } from '@shared/lib';
 import { FaSectionHeader, PAPER_BASE_SX, EDIT_BUTTON_SX } from '../components';
 import { ClosePhaseModal } from './ClosePhaseModal';
@@ -55,9 +56,10 @@ export const PhaseClosSection = memo(function PhaseClosSection({ fa }: PhaseClos
                             <Typography variant="subtitle2" color="text.secondary">
                                 Validé par
                             </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {fa.closureValidatorName || '-'}
-                            </Typography>
+                            <UserChip
+                                userUuid={fa.closureValidatorUserUuid}
+                                fallbackText={fa.closureValidatorName}
+                            />
                         </Grid>
                     </Grid>
 

@@ -28,11 +28,7 @@ from app.domain.campaign.services.campaign_service import (
     patch_campaign,
     update_campaign,
 )
-from app.domain.exceptions import (
-    ConflictException,
-    NotFoundException,
-    ValidationException,
-)
+from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 
 
@@ -40,9 +36,7 @@ class TestCampaignServiceCreate:
     """Tests pour la création de campagne."""
 
     @pytest.mark.unit
-    def test_create_campaign_success(
-        self, sample_campaign_bean, mock_campaign_repository
-    ):
+    def test_create_campaign_success(self, sample_campaign_bean, mock_campaign_repository):
         """Test création réussie d'une campagne."""
         mock_campaign_repository.create.return_value = sample_campaign_bean
 
@@ -352,10 +346,7 @@ class TestModuleLogger:
     @pytest.mark.unit
     def test_logger_name(self):
         """Vérifie que le logger porte le bon nom de module."""
-        assert (
-            campaign_service.logger.name
-            == "app.domain.campaign.services.campaign_service"
-        )
+        assert campaign_service.logger.name == "app.domain.campaign.services.campaign_service"
 
 
 class TestAllowedPatchFields:
@@ -672,15 +663,10 @@ class TestPatchCampaignEachField:
         bean = self._make_existing_bean()
         mock_repo = self._make_mock_repo(bean)
 
-        result = patch_campaign(
-            mock_repo, bean.uuid, {"unknown_field": "value", "name": "OK"}
-        )
+        result = patch_campaign(mock_repo, bean.uuid, {"unknown_field": "value", "name": "OK"})
 
         assert result.name == "OK"
-        assert (
-            not hasattr(result, "unknown_field")
-            or getattr(result, "unknown_field", None) is None
-        )
+        assert not hasattr(result, "unknown_field") or getattr(result, "unknown_field", None) is None
 
     @pytest.mark.unit
     def test_patch_multiple_fields_at_once(self):
@@ -1087,9 +1073,7 @@ class TestPatchCampaignEdgeCases:
         mock_repo = create_autospec(ICampaignRepository)
         mock_repo.get_by_uuid.return_value = bean
         mock_repo.exists_duplicate.return_value = False
-        expected = CampaignBean(
-            uuid=bean.uuid, name="Updated", year=2025, semester="S1"
-        )
+        expected = CampaignBean(uuid=bean.uuid, name="Updated", year=2025, semester="S1")
         mock_repo.update.return_value = expected
 
         result = patch_campaign(mock_repo, bean.uuid, {"name": "Updated"})
@@ -1158,9 +1142,7 @@ class TestGetCampaignReturnValues:
     def test_get_returns_exact_bean(self):
         """Test que get_campaign_by_uuid retourne le bean exact du repository."""
         mock_repo = create_autospec(ICampaignRepository)
-        expected = CampaignBean(
-            uuid="test-uuid", name="Expected", year=2025, semester="S1"
-        )
+        expected = CampaignBean(uuid="test-uuid", name="Expected", year=2025, semester="S1")
         mock_repo.get_by_uuid.return_value = expected
 
         result = get_campaign_by_uuid(mock_repo, "test-uuid")
@@ -1283,9 +1265,7 @@ class TestUpdateCampaignReturnValues:
     def test_update_key_change_triggers_duplicate_check(self):
         """Test que update_campaign vérifie les doublons quand la clé change."""
         existing = CampaignBean(uuid="test-uuid", name="Old", year=2025, semester="S1")
-        changed_bean = CampaignBean(
-            uuid="test-uuid", name="New", year=2025, semester="S1"
-        )
+        changed_bean = CampaignBean(uuid="test-uuid", name="New", year=2025, semester="S1")
         mock_repo = create_autospec(ICampaignRepository)
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.exists_duplicate.return_value = False
@@ -1293,17 +1273,13 @@ class TestUpdateCampaignReturnValues:
 
         update_campaign(mock_repo, changed_bean)
 
-        mock_repo.exists_duplicate.assert_called_once_with(
-            "test-uuid", "New", 2025, "S1"
-        )
+        mock_repo.exists_duplicate.assert_called_once_with("test-uuid", "New", 2025, "S1")
 
     @pytest.mark.unit
     def test_update_year_change_triggers_duplicate_check(self):
         """Test que le changement de year seul déclenche la vérification de doublon."""
         existing = CampaignBean(uuid="test-uuid", name="Same", year=2025, semester="S1")
-        changed_bean = CampaignBean(
-            uuid="test-uuid", name="Same", year=2026, semester="S1"
-        )
+        changed_bean = CampaignBean(uuid="test-uuid", name="Same", year=2026, semester="S1")
         mock_repo = create_autospec(ICampaignRepository)
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.exists_duplicate.return_value = False
@@ -1317,9 +1293,7 @@ class TestUpdateCampaignReturnValues:
     def test_update_semester_change_triggers_duplicate_check(self):
         """Test que le changement de semester seul déclenche la vérification de doublon."""
         existing = CampaignBean(uuid="test-uuid", name="Same", year=2025, semester="S1")
-        changed_bean = CampaignBean(
-            uuid="test-uuid", name="Same", year=2025, semester="S2"
-        )
+        changed_bean = CampaignBean(uuid="test-uuid", name="Same", year=2025, semester="S2")
         mock_repo = create_autospec(ICampaignRepository)
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.exists_duplicate.return_value = False
@@ -1359,9 +1333,7 @@ class TestDeleteCampaignEdgeCases:
         """Test que delete_campaign retourne True en cas de succès."""
         mock_repo = create_autospec(ICampaignRepository)
         mock_fsec_repo = create_autospec(IFsecRepository)
-        existing = CampaignBean(
-            uuid="del-uuid", name="ToDelete", year=2025, semester="S1"
-        )
+        existing = CampaignBean(uuid="del-uuid", name="ToDelete", year=2025, semester="S1")
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.delete.return_value = True
         mock_fsec_repo.get_by_campaign_id.return_value = []
@@ -1375,9 +1347,7 @@ class TestDeleteCampaignEdgeCases:
         """Test que delete_campaign lève NotFoundException si repository.delete retourne False."""
         mock_repo = create_autospec(ICampaignRepository)
         mock_fsec_repo = create_autospec(IFsecRepository)
-        existing = CampaignBean(
-            uuid="del-uuid", name="ToDelete", year=2025, semester="S1"
-        )
+        existing = CampaignBean(uuid="del-uuid", name="ToDelete", year=2025, semester="S1")
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.delete.return_value = False
         mock_fsec_repo.get_by_campaign_id.return_value = []
@@ -1406,9 +1376,7 @@ class TestDeleteCampaignEdgeCases:
         """Test que ValidationException contient le bon champ."""
         mock_repo = create_autospec(ICampaignRepository)
         mock_fsec_repo = create_autospec(IFsecRepository)
-        existing = CampaignBean(
-            uuid="del-uuid", name="ToDelete", year=2025, semester="S1"
-        )
+        existing = CampaignBean(uuid="del-uuid", name="ToDelete", year=2025, semester="S1")
         mock_repo.get_by_uuid.return_value = existing
         mock_fsec_repo.get_by_campaign_id.return_value = [MagicMock(), MagicMock()]
 
@@ -1423,9 +1391,7 @@ class TestDeleteCampaignEdgeCases:
         """Test que fsec_repository.get_by_campaign_id est appelé avec le bon UUID."""
         mock_repo = create_autospec(ICampaignRepository)
         mock_fsec_repo = create_autospec(IFsecRepository)
-        existing = CampaignBean(
-            uuid="check-uuid", name="Check", year=2025, semester="S1"
-        )
+        existing = CampaignBean(uuid="check-uuid", name="Check", year=2025, semester="S1")
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.delete.return_value = True
         mock_fsec_repo.get_by_campaign_id.return_value = []
@@ -1549,9 +1515,7 @@ class TestCampaignLoggerMessages:
         bean = CampaignBean(uuid="x", name="Test", year=2025, semester="S1")
         mock_repo.create.return_value = bean
 
-        with patch(
-            "app.domain.campaign.services.campaign_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.campaign.services.campaign_service.logger") as mock_logger:
             create_campaign(mock_repo, bean)
 
             assert mock_logger.info.call_count == 2
@@ -1569,9 +1533,7 @@ class TestCampaignLoggerMessages:
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.update.return_value = existing
 
-        with patch(
-            "app.domain.campaign.services.campaign_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.campaign.services.campaign_service.logger") as mock_logger:
             update_campaign(mock_repo, existing)
 
             mock_logger.info.assert_called_once()
@@ -1594,9 +1556,7 @@ class TestCampaignLoggerMessages:
         mock_repo.get_by_uuid.return_value = existing
         mock_repo.update.side_effect = lambda b: b
 
-        with patch(
-            "app.domain.campaign.services.campaign_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.campaign.services.campaign_service.logger") as mock_logger:
             patch_campaign(mock_repo, "p-uuid", {"description": "New"})
 
             mock_logger.info.assert_called_once()
@@ -1614,9 +1574,7 @@ class TestCampaignLoggerMessages:
         mock_fsec_repo = create_autospec(IFsecRepository)
         mock_fsec_repo.get_by_campaign_id.return_value = []
 
-        with patch(
-            "app.domain.campaign.services.campaign_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.campaign.services.campaign_service.logger") as mock_logger:
             delete_campaign(mock_repo, "d-uuid", mock_fsec_repo)
 
             assert mock_logger.info.call_count == 2

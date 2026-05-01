@@ -28,7 +28,8 @@ def sample_assembly_bean():
     return AssemblyStepBean(
         uuid="step-uuid-123",
         fsec_version_id="fsec-v-uuid-456",
-        hydrometric_temperature=22.5,
+        operator="Assembleur Dupont",
+        operator_user_uuid=None,
         start_date=date(2025, 2, 1),
         end_date=date(2025, 2, 15),
         comments="Assemblage terminé avec succès",
@@ -42,7 +43,9 @@ def mock_assembly_entity():
     mock = MagicMock()
     mock.uuid = "step-uuid-123"
     mock.fsec_version_id_id = "fsec-v-uuid-456"
-    mock.hydrometric_temperature = 22.5
+    mock.operator = "Assembleur Dupont"
+    mock.operator_user_id = None
+    mock.operator_user = None
     mock.start_date = date(2025, 2, 1)
     mock.end_date = date(2025, 2, 15)
     mock.comments = "Assemblage terminé avec succès"
@@ -71,7 +74,7 @@ class TestAssemblyStepMapperEntityToBean:
         assert isinstance(result, AssemblyStepBean)
         assert result.uuid == str(mock_assembly_entity.uuid)
         assert result.fsec_version_id == str(mock_assembly_entity.fsec_version_id_id)
-        assert result.hydrometric_temperature == 22.5
+        assert result.operator == "Assembleur Dupont"
         assert result.start_date == date(2025, 2, 1)
         assert result.end_date == date(2025, 2, 15)
         assert result.comments == "Assemblage terminé avec succès"
@@ -90,7 +93,9 @@ class TestAssemblyStepMapperEntityToBean:
         mock = MagicMock()
         mock.uuid = "uuid"
         mock.fsec_version_id_id = "fsec-uuid"
-        mock.hydrometric_temperature = None
+        mock.operator = None
+        mock.operator_user_id = None
+        mock.operator_user = None
         mock.start_date = None
         mock.end_date = None
         mock.comments = None
@@ -98,7 +103,8 @@ class TestAssemblyStepMapperEntityToBean:
 
         result = assembly_step_mapper_entity_to_bean(mock)
 
-        assert result.hydrometric_temperature is None
+        assert result.operator is None
+        assert result.operator_user_uuid is None
         assert result.start_date is None
         assert result.end_date is None
         assert result.comments is None
@@ -110,7 +116,9 @@ class TestAssemblyStepMapperEntityToBean:
         mock = MagicMock()
         mock.uuid = "uuid"
         mock.fsec_version_id_id = None
-        mock.hydrometric_temperature = 20.0
+        mock.operator = "Assembleur"
+        mock.operator_user_id = None
+        mock.operator_user = None
         mock.start_date = None
         mock.end_date = None
         mock.comments = None
@@ -136,7 +144,7 @@ class TestAssemblyStepMapperBeanToEntity:
 
         assert result.uuid == sample_assembly_bean.uuid
         assert result.fsec_version_id_id == sample_assembly_bean.fsec_version_id
-        assert result.hydrometric_temperature == 22.5
+        assert result.operator == "Assembleur Dupont"
         assert result.start_date == date(2025, 2, 1)
         assert result.end_date == date(2025, 2, 15)
         assert result.comments == "Assemblage terminé avec succès"
@@ -147,7 +155,8 @@ class TestAssemblyStepMapperBeanToEntity:
         bean = AssemblyStepBean(
             uuid="",
             fsec_version_id="fsec-uuid",
-            hydrometric_temperature=21.0,
+            operator="Assembleur Martin",
+            operator_user_uuid=None,
             start_date=date(2025, 3, 1),
             end_date=None,
             comments="Nouveau step",
@@ -157,7 +166,7 @@ class TestAssemblyStepMapperBeanToEntity:
         result = assembly_step_mapper_bean_to_entity(bean)
 
         assert result.fsec_version_id_id == "fsec-uuid"
-        assert result.hydrometric_temperature == 21.0
+        assert result.operator == "Assembleur Martin"
 
     @pytest.mark.unit
     def test_bean_to_entity_does_not_map_m2m(self, sample_assembly_bean):
@@ -183,7 +192,8 @@ class TestAssemblyStepMapperApiToBean:
         api_data = {
             "uuid": "api-uuid",
             "fsec_version_id": "fsec-api-uuid",
-            "hydrometric_temperature": 23.5,
+            "operator": "Assembleur API",
+            "operator_user_uuid": None,
             "start_date": "2025-04-01",
             "end_date": "2025-04-15",
             "comments": "Commentaire API",
@@ -195,7 +205,7 @@ class TestAssemblyStepMapperApiToBean:
         assert isinstance(result, AssemblyStepBean)
         assert result.uuid == "api-uuid"
         assert result.fsec_version_id == "fsec-api-uuid"
-        assert result.hydrometric_temperature == 23.5
+        assert result.operator == "Assembleur API"
         assert result.comments == "Commentaire API"
         assert result.assembly_bench_ids == [1, 2, 3, 4]
 
@@ -210,7 +220,8 @@ class TestAssemblyStepMapperApiToBean:
         result = assembly_step_mapper_api_to_bean(api_data)
 
         assert result.uuid == "uuid"
-        assert result.hydrometric_temperature is None
+        assert result.operator is None
+        assert result.operator_user_uuid is None
         assert result.start_date is None
         assert result.end_date is None
         assert result.comments is None
@@ -260,7 +271,7 @@ class TestAssemblyStepMapperBeanToApi:
         assert isinstance(result, dict)
         assert result["uuid"] == sample_assembly_bean.uuid
         assert result["fsec_version_id"] == sample_assembly_bean.fsec_version_id
-        assert result["hydrometric_temperature"] == 22.5
+        assert result["operator"] == "Assembleur Dupont"
         assert result["comments"] == "Assemblage terminé avec succès"
         assert result["assembly_bench_ids"] == [1, 2, 3]
 
@@ -278,7 +289,8 @@ class TestAssemblyStepMapperBeanToApi:
         bean = AssemblyStepBean(
             uuid="uuid",
             fsec_version_id="fsec",
-            hydrometric_temperature=20.0,
+            operator="Assembleur",
+            operator_user_uuid=None,
             start_date=None,
             end_date=None,
             comments=None,
@@ -296,7 +308,8 @@ class TestAssemblyStepMapperBeanToApi:
         bean = AssemblyStepBean(
             uuid="uuid",
             fsec_version_id="fsec",
-            hydrometric_temperature=20.0,
+            operator="Assembleur",
+            operator_user_uuid=None,
             start_date="2025-06-01",  # Déjà string
             end_date="2025-06-15",
             comments=None,
@@ -325,9 +338,7 @@ class TestAssemblyStepMapperRoundtrip:
 
         assert restored.uuid == sample_assembly_bean.uuid
         assert restored.fsec_version_id == sample_assembly_bean.fsec_version_id
-        assert (
-            restored.hydrometric_temperature
-            == sample_assembly_bean.hydrometric_temperature
-        )
+        assert restored.operator == sample_assembly_bean.operator
+        assert restored.operator_user_uuid == sample_assembly_bean.operator_user_uuid
         assert restored.comments == sample_assembly_bean.comments
         assert restored.assembly_bench_ids == sample_assembly_bean.assembly_bench_ids

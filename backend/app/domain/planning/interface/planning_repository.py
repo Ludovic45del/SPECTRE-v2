@@ -6,18 +6,10 @@ import uuid as uuid_mod
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import (
-    PlanningCampaignStepBean,
-)
-from app.domain.planning.models.planning_cell_annotation_bean import (
-    PlanningCellAnnotationBean,
-)
-from app.domain.planning.models.planning_fsec_cell_link_bean import (
-    PlanningFsecCellLinkBean,
-)
-from app.domain.planning.models.planning_member_period_bean import (
-    PlanningMemberPeriodBean,
-)
+from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
+from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
+from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
+from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 
 
@@ -45,9 +37,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create_member_period(
-        self, bean: PlanningMemberPeriodBean
-    ) -> PlanningMemberPeriodBean:
+    def create_member_period(self, bean: PlanningMemberPeriodBean) -> PlanningMemberPeriodBean:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -63,15 +53,11 @@ class IPlanningRepository(abc.ABC):
     # --- Cell Annotations ---
 
     @abc.abstractmethod
-    def get_cell_annotations_by_year(
-        self, year: int
-    ) -> list[PlanningCellAnnotationBean]:
+    def get_cell_annotations_by_year(self, year: int) -> list[PlanningCellAnnotationBean]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def upsert_cell_annotation(
-        self, bean: PlanningCellAnnotationBean
-    ) -> PlanningCellAnnotationBean:
+    def upsert_cell_annotation(self, bean: PlanningCellAnnotationBean) -> PlanningCellAnnotationBean:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -85,9 +71,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create_fsec_cell_link(
-        self, bean: PlanningFsecCellLinkBean
-    ) -> PlanningFsecCellLinkBean:
+    def create_fsec_cell_link(self, bean: PlanningFsecCellLinkBean) -> PlanningFsecCellLinkBean:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -101,9 +85,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def create_campaign_step(
-        self, bean: PlanningCampaignStepBean
-    ) -> PlanningCampaignStepBean:
+    def create_campaign_step(self, bean: PlanningCampaignStepBean) -> PlanningCampaignStepBean:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -127,9 +109,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_salle(
-        self, uuid: uuid_mod.UUID, bean: LabSalleBean
-    ) -> LabSalleBean | None:
+    def update_salle(self, uuid: uuid_mod.UUID, bean: LabSalleBean) -> LabSalleBean | None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -143,9 +123,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_machine(
-        self, uuid: uuid_mod.UUID, bean: LabMachineBean
-    ) -> LabMachineBean | None:
+    def update_machine(self, uuid: uuid_mod.UUID, bean: LabMachineBean) -> LabMachineBean | None:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -163,9 +141,7 @@ class IPlanningRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_lab_event(
-        self, uuid: uuid_mod.UUID, bean: LabEventBean
-    ) -> LabEventBean | None:
+    def update_lab_event(self, uuid: uuid_mod.UUID, bean: LabEventBean) -> LabEventBean | None:
         raise NotImplementedError
 
     @abc.abstractmethod

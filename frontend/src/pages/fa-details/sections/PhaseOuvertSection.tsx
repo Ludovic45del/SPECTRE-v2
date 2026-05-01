@@ -5,10 +5,12 @@
  * Displays Phase 1 (Ouvert) with view and edit modes
  */
 
-import { memo } from 'react';
-import { Paper, IconButton } from '@mui/material';
+import { memo, useCallback, useState } from 'react';
+import { Box, Button, Paper, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import { Fa } from '@entities/fa';
+import { ValidatePhaseModal } from '@features/fa';
 
 import { FaSectionHeader, PAPER_BASE_SX, EDIT_BUTTON_SX } from '../components';
 import { useFaPhaseOuvertForm } from '../hooks';
@@ -29,6 +31,13 @@ interface PhaseOuvertSectionProps {
 
 export const PhaseOuvertSection = memo(function PhaseOuvertSection({ fa }: PhaseOuvertSectionProps) {
     const { form, setForm, isEditing, isSaving, startEditing, cancelEditing, save } = useFaPhaseOuvertForm(fa);
+    const [validateOpen, setValidateOpen] = useState(false);
+
+    const handleOpenValidate = useCallback(() => setValidateOpen(true), []);
+    const handleCloseValidate = useCallback(() => setValidateOpen(false), []);
+
+    // statusId 0 = Ouvert (en attente de validation IEC)
+    const canValidate = fa.statusId === 0 && !fa.iecValidationOpen;
 
     return (
         <Paper
@@ -48,7 +57,7 @@ export const PhaseOuvertSection = memo(function PhaseOuvertSection({ fa }: Phase
                 </IconButton>
             )}
 
-            <FaSectionHeader label="Phase 1 - Ouvert" chipColor="warning.main" />
+            <FaSectionHeader label="Phase 1 - Ouvert" chipColor="warning" />
 
             {isEditing ? (
                 <PhaseOuvertEditMode
@@ -59,8 +68,30 @@ export const PhaseOuvertSection = memo(function PhaseOuvertSection({ fa }: Phase
                     isPending={isSaving}
                 />
             ) : (
-                <PhaseOuvertViewMode fa={fa} />
+                <>
+                    <PhaseOuvertViewMode fa={fa} />
+                    {canValidate && (
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<VerifiedIcon />}
+                                onClick={handleOpenValidate}
+                                aria-label="Valider la phase Ouvert"
+                            >
+                                Valider la phase Ouvert (IEC)
+                            </Button>
+                        </Box>
+                    )}
+                </>
             )}
+
+            <ValidatePhaseModal
+                open={validateOpen}
+                onClose={handleCloseValidate}
+                fa={fa}
+                phase="open"
+            />
         </Paper>
     );
 });

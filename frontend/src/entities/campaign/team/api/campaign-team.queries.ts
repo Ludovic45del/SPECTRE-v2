@@ -61,7 +61,8 @@ export function useUpdateTeamMember() {
             const response = await api.put(`/campaign-teams/${data.uuid}/`, {
                 campaign_uuid: data.campaign_uuid,
                 role_id: data.role_id,
-                name: data.name,
+                name: data.name ?? null,
+                user_uuid: data.user_uuid ?? null,
             });
             return CampaignTeamApiSchema.parse(response);
         },

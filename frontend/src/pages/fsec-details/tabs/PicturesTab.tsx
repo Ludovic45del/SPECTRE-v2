@@ -7,7 +7,7 @@
  * - List of views/photos with names and links
  */
 
-import { useState } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
     Box,
     Button,
@@ -35,8 +35,37 @@ import {
     usePhotoViewsByPicturesStep,
     useCreatePicturesStep,
 } from '@entities/fsec/steps';
+import { useFsec } from '@entities/fsec';
+import { useCampaign } from '@entities/campaign';
 import { PicturesSessionModal, PhotoViewModal } from '@features/fsec/edit-pictures';
+import { UserChip } from '@entities/user';
 import { useNotification } from '@shared/ui';
+import { getErrorMessage } from '@shared/lib';
+import { motion } from '@shared/ui/motion';
+
+const slugify = (value: string) =>
+    value
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase();
+
+function buildViewLink(
+    campaignName: string | null | undefined,
+    year: number | null | undefined,
+    installationLabel: string | null | undefined,
+    viewName: string,
+): string {
+    const parts = [
+        campaignName ? slugify(campaignName) : 'campagne',
+        year ?? 'annee',
+        installationLabel ? slugify(installationLabel) : 'installation',
+        'photos',
+        slugify(viewName) || 'vue',
+    ];
+    return parts.join('/');
+}
 
 interface PicturesTabProps {
     fsecVersionId: string;
@@ -95,7 +124,7 @@ function SessionCard({
                         <Typography variant="h6" fontWeight={600}>
                             Session Photo
                         </Typography>
-                        {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                        {isComplete && <Chip label="Complet" color="success" />}
                     </Stack>
                     <IconButton size="small" onClick={onEdit} color="primary">
                         <EditIcon fontSize="small" />
@@ -107,9 +136,12 @@ function SessionCard({
                         <Typography variant="caption" color="text.secondary">
                             Opérateur
                         </Typography>
-                        <Typography variant="body2" fontWeight="medium">
-                            {picturesStep?.operator || '-'}
-                        </Typography>
+                        <Box>
+                            <UserChip
+                                userUuid={picturesStep?.operatorUserUuid}
+                                fallbackText={picturesStep?.operator}
+                            />
+                        </Box>
                     </Grid>
                     <Grid item xs={6} md={4}>
                         <Typography variant="caption" color="text.secondary">
@@ -138,52 +170,44 @@ function SessionCard({
 
 // ============ Photo View Item ============
 
-function PhotoViewItem({ view, isLast, onEdit }: { view: PhotoView; isLast: boolean; onEdit: () => void }) {
-    const [isHovered, setIsHovered] = useState(false);
+function PhotoViewItem({
+    view,
+    isLast,
+    onEdit,
+    fallbackLink,
+}: {
+    view: PhotoView;
+    isLast: boolean;
+    onEdit: () => void;
+    fallbackLink: string;
+}) {
     const { showNotification } = useNotification();
 
-    const handleCopy = () => {
-        if (view.link) {
-            navigator.clipboard.writeText(view.link);
-            showNotification('Lien copié !', 'success');
-        }
+    const handleCopy = (e: ReactMouseEvent) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(view.link || fallbackLink);
+        showNotification('Lien copié !', 'success');
     };
 
     return (
         <ListItem
             divider={!isLast}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
             secondaryAction={
-                <Stack direction="row" spacing={0.5}>
-                    {view.link && isHovered && (
-                        <Tooltip title="Copier le lien" arrow>
-                            <IconButton
-                                size="small"
-                                onClick={handleCopy}
-                                sx={{
-                                    borderRadius: 1,
-                                    bgcolor: 'primary.main',
-                                    color: 'white',
-                                    '&:hover': { bgcolor: 'primary.dark' },
-                                }}
-                            >
-                                <ContentCopyIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                    )}
-                    <IconButton edge="end" size="small" onClick={onEdit}>
-                        <EditIcon fontSize="small" />
+                <Tooltip title="Copier le lien" arrow>
+                    <IconButton size="small" onClick={handleCopy}>
+                        <ContentCopyIcon fontSize="small" />
                     </IconButton>
-                </Stack>
+                </Tooltip>
             }
             sx={{
                 py: 1.5,
-                transition: 'background-color 0.2s',
+                transition: `background-color ${motion.base}`,
+                cursor: 'pointer',
                 '&:hover': {
                     bgcolor: 'action.hover',
                 },
             }}
+            onClick={onEdit}
         >
             <ListItemText
                 primary={
@@ -202,10 +226,12 @@ function PhotoViewsList({
     views,
     onAdd,
     onEdit,
+    buildFallbackLink,
 }: {
     views?: PhotoView[];
     onAdd: () => void;
     onEdit: (view: PhotoView) => void;
+    buildFallbackLink: (viewName: string) => string;
 }) {
     if (!views?.length) {
         return (
@@ -243,7 +269,7 @@ function PhotoViewsList({
                         <Typography variant="subtitle1" fontWeight={600}>
                             Vues / Photos
                         </Typography>
-                        <Chip label={views.length} size="small" color="primary" variant="outlined" />
+                        <Chip label={views.length} color="primary" />
                     </Stack>
                     <Button size="small" startIcon={<AddIcon />} onClick={onAdd}>
                         Ajouter
@@ -258,6 +284,7 @@ function PhotoViewsList({
                         view={view}
                         isLast={index === views.length - 1}
                         onEdit={() => onEdit(view)}
+                        fallbackLink={buildFallbackLink(view.name)}
                     />
                 ))}
             </List>
@@ -269,6 +296,9 @@ function PhotoViewsList({
 
 export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
     const { data: picturesSteps } = usePicturesStepsByFsec(fsecVersionId);
+    const { data: fsec } = useFsec(fsecVersionId);
+    const { data: campaign } = useCampaign(fsec?.campaignId ?? '');
+
     // Session modal state
     const [sessionModalOpen, setSessionModalOpen] = useState(false);
 
@@ -284,14 +314,16 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
 
     // Create session mutation (for empty state)
     const createSessionMutation = useCreatePicturesStep();
+    const { showNotification } = useNotification();
 
     const handleCreateSession = async () => {
         try {
             await createSessionMutation.mutateAsync({
                 fsecVersionId,
             });
-        } catch {
-            // Error handled by mutation
+            showNotification('Session photo créée', 'success');
+        } catch (error) {
+            showNotification(getErrorMessage(error, 'Erreur lors de la création de la session'), 'error');
         }
     };
 
@@ -330,7 +362,16 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
                 />
 
                 {/* Photo Views List - Only show if session exists */}
-                {picturesStep && <PhotoViewsList views={photoViews} onAdd={handleAddView} onEdit={handleEditView} />}
+                {picturesStep && (
+                    <PhotoViewsList
+                        views={photoViews}
+                        onAdd={handleAddView}
+                        onEdit={handleEditView}
+                        buildFallbackLink={(viewName) =>
+                            buildViewLink(campaign?.name, campaign?.year, campaign?.installation?.label, viewName)
+                        }
+                    />
+                )}
             </Stack>
 
             {/* Modals */}

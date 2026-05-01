@@ -70,9 +70,7 @@ class TestFaWorkflowComplete:
         )
 
         mock_fa_repo.create.return_value = fa_bean
-        created_fa = create_fa(
-            mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025
-        )
+        created_fa = create_fa(mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025)
 
         assert created_fa.uuid == fa_uuid
         assert created_fa.status_id == 0  # Ouvert
@@ -134,9 +132,7 @@ class TestFaPhase1:
         )
 
         mock_fa_repo.create.return_value = fa_bean
-        created_fa = create_fa(
-            mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025
-        )
+        created_fa = create_fa(mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025)
 
         assert created_fa.discoverer == "Marie Martin"
         assert created_fa.observation == "Anomalie mineure observée"
@@ -164,9 +160,7 @@ class TestFaPhase1:
         )
 
         mock_fa_repo.create.return_value = fa_bean
-        created_fa = create_fa(
-            mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025
-        )
+        created_fa = create_fa(mock_fa_repo, fa_bean, campaign_name="Test", fsec_name="FSEC-01", year=2025)
 
         assert created_fa.fsec_step_id == 7
         assert created_fa.fsec_step_other == "Étape transport"
@@ -255,9 +249,7 @@ class TestFaPhase2:
             (3, "Critique"),
         ],
     )
-    def test_fa_criticality_levels(
-        self, mock_fa_repo, fsec_version_uuid, criticality_id, criticality_name
-    ):
+    def test_fa_criticality_levels(self, mock_fa_repo, fsec_version_uuid, criticality_id, criticality_name):
         """Test tous les niveaux de criticité disponibles."""
         fa_bean = FaBean(
             uuid=str(uuid.uuid4()),

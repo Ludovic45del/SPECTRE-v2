@@ -1,5 +1,12 @@
 export { Field } from './Field';
-export { StatusChip, STATUS_OPTIONS, renderStatusValue } from './StatusChip';
+export { EmbaseDetailCard } from './EmbaseDetailCard';
+export {
+    StatusChip,
+    STATUS_OPTIONS,
+    TestStatusChip,
+    YesNoChip,
+    renderStatusValue,
+} from './StatusChip';
 export { EditableSection } from './EditableSection';
 export { parseNum } from './parseNum';
 export { TestsSection } from './TestsSection';

@@ -6,9 +6,10 @@
  */
 
 import { memo } from 'react';
-import { TextField, Stack, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
+import { TextField, Stack, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Controller, type Control } from 'react-hook-form';
 import { type EmbaseCreate } from '@entities/embase';
+import { YesNoChip } from '@features/embase/shared';
 import { NumericControllerField } from './NumericControllerField';
 
 interface VoieV2FormTabProps {
@@ -27,20 +28,13 @@ const ElectrovanneField = memo(function ElectrovanneField({ control }: { control
                         value={value ? 'Oui' : 'Non'}
                         label="Electrovanne"
                         onChange={(e) => onChange(e.target.value === 'Oui')}
-                        renderValue={(val) => (
-                            <Chip
-                                label={val}
-                                color={val === 'Oui' ? 'success' : 'error'}
-                                size="small"
-                                sx={{ fontWeight: 600 }}
-                            />
-                        )}
+                        renderValue={(val) => <YesNoChip value={val === 'Oui'} />}
                     >
                         <MenuItem value="Oui">
-                            <Chip label="Oui" color="success" size="small" sx={{ fontWeight: 600 }} />
+                            <YesNoChip value={true} />
                         </MenuItem>
                         <MenuItem value="Non">
-                            <Chip label="Non" color="error" size="small" sx={{ fontWeight: 600 }} />
+                            <YesNoChip value={false} />
                         </MenuItem>
                     </Select>
                 </FormControl>

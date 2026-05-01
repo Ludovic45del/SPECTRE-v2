@@ -24,6 +24,7 @@ import {
 } from '@features/embase';
 import { RoutedTabs } from '@widgets/routed-tabs';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
+import { RouteTransition } from '@shared/ui/RouteTransition';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { TABS_1_VOIE, TABS_2_VOIES, getActiveTab } from './constants';
@@ -150,7 +151,9 @@ function EmbaseDetailsPage() {
             <QueryErrorResetBoundary>
                 {({ reset }) => (
                     <ErrorBoundary compact onReset={reset}>
-                        <Box sx={{ mt: 3 }}>{tabContent}</Box>
+                        <RouteTransition>
+                            <Box sx={{ mt: 3 }}>{tabContent}</Box>
+                        </RouteTransition>
                     </ErrorBoundary>
                 )}
             </QueryErrorResetBoundary>

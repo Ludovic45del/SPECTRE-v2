@@ -10,7 +10,8 @@ export const CampaignTeamApiSchema = z.object({
     uuid: z.string().uuid(),
     campaign_uuid: z.string().uuid(),
     role_id: z.number().int().nullable(),
-    name: z.string(),
+    name: z.string().nullable(),
+    user_uuid: z.string().uuid().nullable().optional(),
 });
 
 export const CampaignTeamSchema = CampaignTeamApiSchema.transform((api) => ({
@@ -18,6 +19,7 @@ export const CampaignTeamSchema = CampaignTeamApiSchema.transform((api) => ({
     campaignUuid: api.campaign_uuid,
     role: getCampaignRole(api.role_id),
     name: api.name,
+    userUuid: api.user_uuid ?? null,
 }));
 
 export type CampaignTeamMember = z.infer<typeof CampaignTeamSchema>;
@@ -25,8 +27,9 @@ export const CampaignTeamListSchema = z.array(CampaignTeamSchema);
 
 export const CampaignTeamMemberCreateSchema = z.object({
     campaign_uuid: z.string().uuid(),
-    role_id: z.number().int().min(1),
-    name: z.string().min(1).max(200),
+    role_id: z.number().int().min(0),
+    name: z.string().max(200).nullable().optional(),
+    user_uuid: z.string().uuid().nullable().optional(),
 });
 
 export type CampaignTeamMemberCreate = z.infer<typeof CampaignTeamMemberCreateSchema>;
@@ -45,12 +48,15 @@ export const CampaignTeamMemberDeleteSchema = z.object({
 export type CampaignTeamMemberDelete = z.infer<typeof CampaignTeamMemberDeleteSchema>;
 
 /**
- * Schema for team form validation (overview page)
+ * Schema pour le formulaire team (overview page).
+ *
+ * MOE est en texte libre (extérieur au labo) : on stocke un nom max 50.
+ * RCE et IEC sont des UUID UserProfile (max 36 chars).
  */
 export const CampaignTeamFormSchema = z.object({
-    moe: z.string().max(200, 'Nom MOE trop long (max 200 caractères)'),
-    rce: z.string().max(200, 'Nom RCE trop long (max 200 caractères)'),
-    iec: z.string().max(200, 'Nom IEC trop long (max 200 caractères)'),
+    moeName: z.string().max(50, 'Nom MOE trop long (max 50 caractères)'),
+    rceUserUuid: z.string().uuid().or(z.literal('')),
+    iecUserUuid: z.string().uuid().or(z.literal('')),
 });
 
 export type CampaignTeamFormData = z.infer<typeof CampaignTeamFormSchema>;

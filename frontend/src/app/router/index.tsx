@@ -26,6 +26,7 @@ const FaDetailsPage = lazy(() => import('@pages/fa-details'));
 const EmbasesPage = lazy(() => import('@pages/embases'));
 const EmbaseDetailsPage = lazy(() => import('@pages/embase-details'));
 const PlanningPage = lazy(() => import('@pages/planning'));
+const StockPage = lazy(() => import('@pages/stock'));
 
 // Minimal loader for login page Suspense
 function LoginLoader() {
@@ -184,6 +185,14 @@ export const router = createBrowserRouter([
                 element: (
                     <QuerySafeErrorBoundary sectionName="Planning">
                         <PlanningPage />
+                    </QuerySafeErrorBoundary>
+                ),
+            },
+            {
+                path: 'stock/*',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Stock">
+                        <StockPage />
                     </QuerySafeErrorBoundary>
                 ),
             },

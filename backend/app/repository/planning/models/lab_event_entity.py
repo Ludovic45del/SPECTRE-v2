@@ -21,9 +21,7 @@ class LabEventEntity(models.Model):
         ]
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    machine = models.ForeignKey(
-        LabMachineEntity, on_delete=models.CASCADE, db_column="machine_id"
-    )
+    machine = models.ForeignKey(LabMachineEntity, on_delete=models.CASCADE, db_column="machine_id")
     category = models.CharField(
         max_length=50,
         choices=[(c, c) for c in LAB_EVENT_CATEGORY_CHOICES],

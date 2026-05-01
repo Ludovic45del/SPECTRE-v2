@@ -20,6 +20,7 @@ class SpectreTokenObtainPairSerializer(TokenObtainPairSerializer):
         if hasattr(self.user, "profile"):
             data["role"] = self.user.profile.role
             data["force_password_change"] = self.user.profile.force_password_change
+        data["first_name"] = self.user.first_name or None
         return data
 
 

@@ -16,6 +16,7 @@ import { getErrorMessage } from '@shared/lib';
 import { HeaderInfo } from './HeaderInfo';
 import { HeaderActions } from './HeaderActions';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { motion } from '@shared/ui/motion';
 
 interface EmbaseHeaderProps {
     embase: Embase;
@@ -80,7 +81,7 @@ function EmbaseHeaderComponent({ embase, onCompare, onAddEtalonnage }: EmbaseHea
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'action.hover',
                                     borderColor: 'primary.main',

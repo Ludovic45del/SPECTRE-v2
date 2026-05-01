@@ -10,7 +10,8 @@ import { z } from 'zod';
 export const AssemblyStepApiSchema = z.object({
     uuid: z.string().uuid(),
     fsec_version_id: z.string().uuid(),
-    hydrometric_temperature: z.number().nullable(),
+    operator: z.string().nullable(),
+    operator_user_uuid: z.string().uuid().nullable(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     comments: z.string().nullable(),
@@ -20,7 +21,8 @@ export const AssemblyStepApiSchema = z.object({
 export const AssemblyStepSchema = AssemblyStepApiSchema.transform((api) => ({
     uuid: api.uuid,
     fsecVersionId: api.fsec_version_id,
-    hydrometricTemperature: api.hydrometric_temperature,
+    operator: api.operator,
+    operatorUserUuid: api.operator_user_uuid,
     startDate: api.start_date ? new Date(api.start_date) : null,
     endDate: api.end_date ? new Date(api.end_date) : null,
     comments: api.comments,

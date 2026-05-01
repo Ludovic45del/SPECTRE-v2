@@ -1,52 +1,27 @@
 /**
- * DataChip Component - Colored Chip for Types/Status
- * @module widgets/data-chip
+ * DataChip — chip coloré générique à partir d'une couleur métier (hex).
  *
- * Source: Legacy src/core/chip/DataChip.tsx
+ * Le rendu suit le formalisme "soft" (bg pâle + texte foncé de la même teinte)
+ * via `softChipSx` — cohérent avec l'override `MuiChip` du thème.
  */
 
 import { Chip, useTheme, type ChipProps } from '@mui/material';
+import { softChipSx } from '@shared/lib';
 
 interface DataChipProps extends Omit<ChipProps, 'color'> {
     label: string;
+    /** Couleur métier (hex). `null`/`undefined` → fallback grey du thème. */
     color?: string | null;
 }
 
 export function DataChip({ label, color, sx, ...props }: DataChipProps) {
     const theme = useTheme();
-    const fallback = theme.palette.grey[300];
-    const bgColor = color ?? fallback;
-
+    const hex = color ?? theme.palette.grey[300];
     return (
         <Chip
             label={label}
-            size="small"
-            sx={{
-                backgroundColor: bgColor,
-                color: getContrastColor(bgColor),
-                fontWeight: 500,
-                borderRadius: 1,
-                ...sx,
-            }}
+            sx={[softChipSx(hex), ...(Array.isArray(sx) ? sx : [sx])]}
             {...props}
         />
     );
-}
-
-/**
- * Get contrasting text color for readability
- */
-function getContrastColor(hexColor: string): string {
-    // Remove # if present
-    const hex = hexColor.replace('#', '');
-
-    // Convert to RGB
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-
-    // Calculate luminance
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-    return luminance > 0.5 ? '#000000' : '#ffffff';
 }

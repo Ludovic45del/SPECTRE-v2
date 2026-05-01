@@ -13,6 +13,7 @@ class SealingStepBean:
     metrology_step_id: str = ""
     date: Optional[date] = None
     metrologist_name: Optional[str] = None
+    metrologist_user_uuid: Optional[str] = None
     rack_id: Optional[int] = None
     interface_io: Optional[str] = None
     comments: Optional[str] = None

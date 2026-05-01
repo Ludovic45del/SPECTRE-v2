@@ -55,6 +55,7 @@ const createMockApiFA = (overrides = {}) => ({
     fsec_step_id: 1,
     fsec_step_other: null,
     discoverer: 'Jean Dupont',
+    discoverer_user_uuid: '11111111-1111-1111-1111-111111111111',
     event_date: '2024-01-15',
     observation: 'Anomalie détectée',
     location_equipment: 'Zone A',
@@ -269,7 +270,7 @@ describe('FA Query Hooks', () => {
             await act(async () => {
                 await result.current.mutateAsync({
                     fsecVersionId: '223e4567-e89b-12d3-a456-426614174001',
-                    discoverer: 'Jean Dupont',
+                    discovererUserUuid: '11111111-1111-1111-1111-111111111111',
                     eventDate: new Date('2024-01-15'),
                     observation: 'Anomalie détectée',
                     quickAnalysis: 'Analyse rapide',
@@ -280,7 +281,7 @@ describe('FA Query Hooks', () => {
                 '/fas/',
                 expect.objectContaining({
                     fsec_version_id: '223e4567-e89b-12d3-a456-426614174001',
-                    discoverer: 'Jean Dupont',
+                    discoverer_user_uuid: '11111111-1111-1111-1111-111111111111',
                     event_date: '2024-01-15',
                     observation: 'Anomalie détectée',
                     quick_analysis: 'Analyse rapide',
@@ -301,7 +302,7 @@ describe('FA Query Hooks', () => {
                     fsecVersionId: 'test-id',
                     fsecStepId: 5,
                     fsecStepOther: 'Other',
-                    discoverer: 'Test',
+                    discovererUserUuid: '11111111-1111-1111-1111-111111111111',
                     eventDate: new Date('2024-01-15'),
                     observation: 'Test',
                     locationEquipment: 'Zone B',
@@ -577,7 +578,7 @@ describe('FA Complete Workflow', () => {
         await act(async () => {
             fa = await createResult.current.mutateAsync({
                 fsecVersionId: WORKFLOW_FSEC_UUID,
-                discoverer: 'Jean Dupont',
+                discovererUserUuid: '11111111-1111-1111-1111-111111111111',
                 eventDate: new Date('2024-01-15'),
                 observation: 'Anomalie détectée',
                 quickAnalysis: 'Fuite probable',

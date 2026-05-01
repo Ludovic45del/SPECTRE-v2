@@ -9,8 +9,4 @@ class Command(BaseCommand):
         try:
             management.call_command("initdb")
         except Exception as e:
-            self.stderr.write(
-                self.style.WARNING(
-                    f"initdb reported errors (likely already seeded): {e}"
-                )
-            )
+            self.stderr.write(self.style.WARNING(f"initdb reported errors (likely already seeded): {e}"))

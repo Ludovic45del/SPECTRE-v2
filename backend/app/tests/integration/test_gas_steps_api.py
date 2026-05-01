@@ -108,9 +108,7 @@ class TestAirtightnessTestLpStepControllerAPI:
         sample_fsec_version_id,
         sample_airtightness_uuid,
     ):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import (
-            AirtightnessTestLpStepBean,
-        )
+        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
         mock_bean = AirtightnessTestLpStepBean(
             uuid=sample_airtightness_uuid,
@@ -124,13 +122,9 @@ class TestAirtightnessTestLpStepControllerAPI:
         )
         mock_get_steps.return_value = [mock_bean]
 
-        request = request_factory.get(
-            f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}")
         controller = AirtightnessTestLpStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -148,9 +142,7 @@ class TestAirtightnessTestLpStepControllerAPI:
         sample_fsec_version_id,
         sample_airtightness_uuid,
     ):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import (
-            AirtightnessTestLpStepBean,
-        )
+        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
         mock_bean = AirtightnessTestLpStepBean(
             uuid=sample_airtightness_uuid,
@@ -164,9 +156,7 @@ class TestAirtightnessTestLpStepControllerAPI:
         )
         mock_get_step.return_value = mock_bean
 
-        request = request_factory.get(
-            f"/api/airtightness-test-lp/{sample_airtightness_uuid}"
-        )
+        request = request_factory.get(f"/api/airtightness-test-lp/{sample_airtightness_uuid}")
         controller = AirtightnessTestLpStepController()
         response = controller.retrieve(request, uuid=sample_airtightness_uuid)
 
@@ -181,9 +171,7 @@ class TestAirtightnessTestLpStepControllerAPI:
     def test_retrieve_not_found_raises_exception(self, mock_get_step, request_factory):
         from app.domain.exceptions import NotFoundException
 
-        mock_get_step.side_effect = NotFoundException(
-            "AirtightnessTestLpStep", "fake-uuid"
-        )
+        mock_get_step.side_effect = NotFoundException("AirtightnessTestLpStep", "fake-uuid")
 
         request = request_factory.get("/api/airtightness-test-lp/fake-uuid")
         controller = AirtightnessTestLpStepController()
@@ -192,9 +180,7 @@ class TestAirtightnessTestLpStepControllerAPI:
             controller.retrieve(request, uuid="fake-uuid")
 
     @pytest.mark.integration
-    @patch(
-        "app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists"
-    )
+    @patch("app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists")
     @patch("app.api.steps.gas_steps_controller.create_step")
     def test_create_returns_201(
         self,
@@ -204,9 +190,7 @@ class TestAirtightnessTestLpStepControllerAPI:
         sample_fsec_version_id,
         sample_airtightness_uuid,
     ):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import (
-            AirtightnessTestLpStepBean,
-        )
+        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
         mock_validate_fsec.return_value = None
         mock_bean = AirtightnessTestLpStepBean(
@@ -230,9 +214,7 @@ class TestAirtightnessTestLpStepControllerAPI:
             "operator": "Pierre Duval",
             "date_of_fulfilment": "2025-05-20",
         }
-        request = _make_post(
-            request_factory, "/api/airtightness-test-lp/", request_data
-        )
+        request = _make_post(request_factory, "/api/airtightness-test-lp/", request_data)
 
         controller = AirtightnessTestLpStepController()
         response = controller.create(request)
@@ -251,9 +233,7 @@ class TestAirtightnessTestLpStepControllerAPI:
         sample_fsec_version_id,
         sample_airtightness_uuid,
     ):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import (
-            AirtightnessTestLpStepBean,
-        )
+        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
         mock_bean = AirtightnessTestLpStepBean(
             uuid=sample_airtightness_uuid,
@@ -292,14 +272,10 @@ class TestAirtightnessTestLpStepControllerAPI:
 
     @pytest.mark.integration
     @patch("app.api.steps.gas_steps_controller.delete_step")
-    def test_destroy_returns_204(
-        self, mock_delete_step, request_factory, sample_airtightness_uuid
-    ):
+    def test_destroy_returns_204(self, mock_delete_step, request_factory, sample_airtightness_uuid):
         mock_delete_step.return_value = True
 
-        request = request_factory.delete(
-            f"/api/airtightness-test-lp/{sample_airtightness_uuid}"
-        )
+        request = request_factory.delete(f"/api/airtightness-test-lp/{sample_airtightness_uuid}")
         controller = AirtightnessTestLpStepController()
         response = controller.destroy(request, uuid=sample_airtightness_uuid)
 
@@ -324,9 +300,7 @@ class TestGasFillingBpStepControllerAPI:
         sample_fsec_version_id,
         sample_gas_filling_bp_uuid,
     ):
-        from app.domain.steps.models.gas_filling_bp_step_bean import (
-            GasFillingBpStepBean,
-        )
+        from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
 
         mock_bean = GasFillingBpStepBean(
             uuid=sample_gas_filling_bp_uuid,
@@ -343,13 +317,9 @@ class TestGasFillingBpStepControllerAPI:
         )
         mock_get_steps.return_value = [mock_bean]
 
-        request = request_factory.get(
-            f"/api/gas-filling-bp/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/gas-filling-bp/fsec/{sample_fsec_version_id}")
         controller = GasFillingBpStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -358,9 +328,7 @@ class TestGasFillingBpStepControllerAPI:
         assert data[0]["uuid"] == sample_gas_filling_bp_uuid
 
     @pytest.mark.integration
-    @patch(
-        "app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists"
-    )
+    @patch("app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists")
     @patch("app.api.steps.gas_steps_controller.create_step")
     def test_create_gas_filling_bp_returns_201(
         self,
@@ -370,9 +338,7 @@ class TestGasFillingBpStepControllerAPI:
         sample_fsec_version_id,
         sample_gas_filling_bp_uuid,
     ):
-        from app.domain.steps.models.gas_filling_bp_step_bean import (
-            GasFillingBpStepBean,
-        )
+        from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
 
         mock_bean = GasFillingBpStepBean(
             uuid=sample_gas_filling_bp_uuid,
@@ -427,9 +393,7 @@ class TestGasFillingHpStepControllerAPI:
         sample_fsec_version_id,
         sample_gas_filling_hp_uuid,
     ):
-        from app.domain.steps.models.gas_filling_hp_step_bean import (
-            GasFillingHpStepBean,
-        )
+        from app.domain.steps.models.gas_filling_hp_step_bean import GasFillingHpStepBean
 
         mock_bean = GasFillingHpStepBean(
             uuid=sample_gas_filling_hp_uuid,
@@ -445,13 +409,9 @@ class TestGasFillingHpStepControllerAPI:
         )
         mock_get_steps.return_value = [mock_bean]
 
-        request = request_factory.get(
-            f"/api/gas-filling-hp/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/gas-filling-hp/fsec/{sample_fsec_version_id}")
         controller = GasFillingHpStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -490,9 +450,7 @@ class TestPermeationStepControllerAPI:
 
         request = request_factory.get(f"/api/permeation/fsec/{sample_fsec_version_id}")
         controller = PermeationStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -516,9 +474,7 @@ class TestDepressurizationStepControllerAPI:
         sample_fsec_version_id,
         sample_depressurization_uuid,
     ):
-        from app.domain.steps.models.depressurization_step_bean import (
-            DepressurizationStepBean,
-        )
+        from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean
 
         mock_bean = DepressurizationStepBean(
             uuid=sample_depressurization_uuid,
@@ -533,13 +489,9 @@ class TestDepressurizationStepControllerAPI:
         )
         mock_get_steps.return_value = [mock_bean]
 
-        request = request_factory.get(
-            f"/api/depressurization/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/depressurization/fsec/{sample_fsec_version_id}")
         controller = DepressurizationStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -550,9 +502,7 @@ class TestDepressurizationStepControllerAPI:
     def test_delete_not_found_raises_exception(self, mock_delete_step, request_factory):
         from app.domain.exceptions import NotFoundException
 
-        mock_delete_step.side_effect = NotFoundException(
-            "DepressurizationStep", "fake-uuid"
-        )
+        mock_delete_step.side_effect = NotFoundException("DepressurizationStep", "fake-uuid")
 
         request = request_factory.delete("/api/depressurization/fake-uuid")
         controller = DepressurizationStepController()
@@ -578,9 +528,7 @@ class TestRepressurizationStepControllerAPI:
         sample_fsec_version_id,
         sample_repressurization_uuid,
     ):
-        from app.domain.steps.models.repressurization_step_bean import (
-            RepressurizationStepBean,
-        )
+        from app.domain.steps.models.repressurization_step_bean import RepressurizationStepBean
 
         mock_bean = RepressurizationStepBean(
             uuid=sample_repressurization_uuid,
@@ -592,22 +540,16 @@ class TestRepressurizationStepControllerAPI:
         )
         mock_get_steps.return_value = [mock_bean]
 
-        request = request_factory.get(
-            f"/api/repressurization/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/repressurization/fsec/{sample_fsec_version_id}")
         controller = RepressurizationStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
         assert isinstance(data, list)
 
     @pytest.mark.integration
-    @patch(
-        "app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists"
-    )
+    @patch("app.api.steps.gas_steps_controller.BaseGasStepController._validate_fsec_exists")
     @patch("app.api.steps.gas_steps_controller.create_step")
     def test_create_repressurization_returns_201(
         self,
@@ -617,9 +559,7 @@ class TestRepressurizationStepControllerAPI:
         sample_fsec_version_id,
         sample_repressurization_uuid,
     ):
-        from app.domain.steps.models.repressurization_step_bean import (
-            RepressurizationStepBean,
-        )
+        from app.domain.steps.models.repressurization_step_bean import RepressurizationStepBean
 
         mock_bean = RepressurizationStepBean(
             uuid=sample_repressurization_uuid,
@@ -657,18 +597,12 @@ class TestGasStepsAPIEdgeCases:
 
     @pytest.mark.integration
     @patch("app.api.steps.gas_steps_controller.get_steps_by_fsec_version_id")
-    def test_get_by_fsec_empty_list(
-        self, mock_get_steps, request_factory, sample_fsec_version_id
-    ):
+    def test_get_by_fsec_empty_list(self, mock_get_steps, request_factory, sample_fsec_version_id):
         mock_get_steps.return_value = []
 
-        request = request_factory.get(
-            f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}")
         controller = AirtightnessTestLpStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)
@@ -676,24 +610,18 @@ class TestGasStepsAPIEdgeCases:
 
     @pytest.mark.integration
     @patch("app.api.steps.gas_steps_controller.update_step")
-    def test_update_not_found_raises_exception(
-        self, mock_update_step, request_factory, sample_fsec_version_id
-    ):
+    def test_update_not_found_raises_exception(self, mock_update_step, request_factory, sample_fsec_version_id):
         from app.domain.exceptions import NotFoundException
 
         SAMPLE_NONEXISTENT_UUID = "00000000-0000-0000-0000-000000000001"
         fake_uuid = SAMPLE_NONEXISTENT_UUID
-        mock_update_step.side_effect = NotFoundException(
-            "AirtightnessTestLpStep", fake_uuid
-        )
+        mock_update_step.side_effect = NotFoundException("AirtightnessTestLpStep", fake_uuid)
 
         request_data = {
             "fsec_version_id": sample_fsec_version_id,
             "gas_type": "Modified",
         }
-        request = _make_put(
-            request_factory, f"/api/airtightness-test-lp/{fake_uuid}", request_data
-        )
+        request = _make_put(request_factory, f"/api/airtightness-test-lp/{fake_uuid}", request_data)
 
         controller = AirtightnessTestLpStepController()
 
@@ -702,12 +630,8 @@ class TestGasStepsAPIEdgeCases:
 
     @pytest.mark.integration
     @patch("app.api.steps.gas_steps_controller.get_steps_by_fsec_version_id")
-    def test_get_by_fsec_multiple_steps(
-        self, mock_get_steps, request_factory, sample_fsec_version_id
-    ):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import (
-            AirtightnessTestLpStepBean,
-        )
+    def test_get_by_fsec_multiple_steps(self, mock_get_steps, request_factory, sample_fsec_version_id):
+        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 
         beans = [
             AirtightnessTestLpStepBean(
@@ -724,13 +648,9 @@ class TestGasStepsAPIEdgeCases:
         ]
         mock_get_steps.return_value = beans
 
-        request = request_factory.get(
-            f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}"
-        )
+        request = request_factory.get(f"/api/airtightness-test-lp/fsec/{sample_fsec_version_id}")
         controller = AirtightnessTestLpStepController()
-        response = controller.get_by_fsec(
-            request, fsec_version_id=sample_fsec_version_id
-        )
+        response = controller.get_by_fsec(request, fsec_version_id=sample_fsec_version_id)
 
         assert response.status_code == 200
         data = json.loads(response.content)

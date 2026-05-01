@@ -12,7 +12,7 @@ import { CampaignFilters } from '@features/campaign/filter-campaigns';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SortColumn = 'semester' | 'name' | 'type' | 'status';
+export type SortColumn = 'year' | 'semester' | 'name' | 'installation' | 'type' | 'status';
 export type SortDirection = 'asc' | 'desc';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,16 +20,20 @@ export type SortDirection = 'asc' | 'desc';
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const COLUMN_WIDTHS = {
-    semester: '12%',
-    name: '40%',
-    type: '20%',
-    status: '20%',
-    actions: '8%',
+    year: '8%',
+    semester: '10%',
+    name: '30%',
+    installation: '14%',
+    type: '18%',
+    status: '14%',
+    actions: '6%',
 } as const;
 
 export const COLUMNS: { key: SortColumn; label: string; width: string }[] = [
+    { key: 'year', label: 'Année', width: COLUMN_WIDTHS.year },
     { key: 'semester', label: 'Semestre', width: COLUMN_WIDTHS.semester },
     { key: 'name', label: 'Nom', width: COLUMN_WIDTHS.name },
+    { key: 'installation', label: 'Installation', width: COLUMN_WIDTHS.installation },
     { key: 'type', label: 'Type', width: COLUMN_WIDTHS.type },
     { key: 'status', label: 'Statut', width: COLUMN_WIDTHS.status },
 ];
@@ -37,11 +41,6 @@ export const COLUMNS: { key: SortColumn; label: string; width: string }[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-export const formatCampaignName = (campaign: CampaignWithRelations): string => {
-    const installation = campaign.installation?.label ?? '';
-    return `${campaign.year}-${installation}_${campaign.name.toUpperCase()}`;
-};
 
 export const filterCampaigns = (
     campaigns: CampaignWithRelations[] | undefined,
@@ -64,11 +63,8 @@ export const filterCampaigns = (
         if (filters.semester !== null && campaign.semester !== filters.semester) {
             return false;
         }
-        if (filters.name) {
-            const fullName = formatCampaignName(campaign).toLowerCase();
-            if (!fullName.includes(nameLower)) {
-                return false;
-            }
+        if (filters.name && !campaign.name.toLowerCase().includes(nameLower)) {
+            return false;
         }
         if (filters.type !== null && campaign.type?.id !== filters.type.id) {
             return false;
@@ -91,11 +87,17 @@ export const sortCampaigns = (
     sorted.sort((a, b) => {
         let comparison = 0;
         switch (column) {
+            case 'year':
+                comparison = (a.year ?? 0) - (b.year ?? 0);
+                break;
             case 'semester':
                 comparison = (a.semester ?? '').localeCompare(b.semester ?? '');
                 break;
             case 'name':
-                comparison = formatCampaignName(a).localeCompare(formatCampaignName(b));
+                comparison = a.name.localeCompare(b.name);
+                break;
+            case 'installation':
+                comparison = (a.installation?.label ?? '').localeCompare(b.installation?.label ?? '');
                 break;
             case 'type':
                 comparison = (a.type?.label ?? '').localeCompare(b.type?.label ?? '');

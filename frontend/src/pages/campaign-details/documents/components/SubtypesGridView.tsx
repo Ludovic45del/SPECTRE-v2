@@ -8,6 +8,7 @@ import { Box, Typography, Grid, Paper, Stack } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 import { TYPE_COLORS } from '../lib/documents.types';
 import { CopyPathButton } from '../lib/documents.helpers';
+import { motion } from '@shared/ui/motion';
 
 interface SubtypesGridViewProps {
     subtypes: { id: number; label: string; typeId: number }[];
@@ -53,7 +54,7 @@ export const SubtypesGridView = memo(function SubtypesGridView({
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 2,
-                                    transition: 'all 0.2s',
+                                    transition: `all ${motion.base}`,
                                     borderColor: 'divider',
                                     position: 'relative',
                                     '&:hover': {
@@ -105,7 +106,7 @@ export const SubtypesGridView = memo(function SubtypesGridView({
                             alignItems: 'center',
                             gap: 2,
                             borderRadius: 1,
-                            transition: 'all 0.2s',
+                            transition: `all ${motion.base}`,
                             borderColor: 'divider',
                             '&:hover': { borderColor: color, bgcolor: `${color}05` },
                         }}

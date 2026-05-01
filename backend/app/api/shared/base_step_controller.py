@@ -9,12 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.viewsets import ViewSet
 
 from app.domain.exceptions import InvalidDataException
-from app.domain.steps.services.steps_service import (
-    create_step,
-    delete_step,
-    get_step_by_uuid,
-    update_step,
-)
+from app.domain.steps.services.steps_service import create_step, delete_step, get_step_by_uuid, update_step
 
 
 class BaseStepController(ViewSet):
@@ -56,9 +51,7 @@ class BaseStepController(ViewSet):
         validated = self._validate(request.data)
         bean = self.mapper_api_to_bean(validated)
         result = create_step(self.repository, bean)
-        return JsonResponse(
-            self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
-        )
+        return JsonResponse(self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
 
     def update(self, request, uuid=None) -> JsonResponse:
         data = request.data.copy()

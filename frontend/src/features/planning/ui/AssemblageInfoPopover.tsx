@@ -17,10 +17,11 @@ import {
     Stack,
     Typography,
 } from '@mui/material';
-import { useTheme, alpha } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { softChipSx } from '@shared/lib';
 import { getEventCategoryMeta, getPeriodeMeta, type Membre } from '../lib/planning.constants';
 import type { PlanningData } from '../lib/planning.hooks';
 import { type TimelineColumn, dateRangeOverlapsColumn } from '../lib/planning.utils';
@@ -139,22 +140,7 @@ export function AssemblageInfoPopover({
                     {memberSchedules.length > 0 && (
                         <Chip
                             label={`${availableMemberCount} / ${memberSchedules.length} dispo`}
-                            size="small"
-                            sx={{
-                                bgcolor: alpha(
-                                    availableMemberCount === memberSchedules.length
-                                        ? theme.palette.success.main
-                                        : theme.palette.warning.main,
-                                    0.12,
-                                ),
-                                color:
-                                    availableMemberCount === memberSchedules.length
-                                        ? theme.palette.success.dark
-                                        : theme.palette.warning.dark,
-                                fontWeight: 700,
-                                fontSize: 11,
-                                height: 22,
-                            }}
+                            color={availableMemberCount === memberSchedules.length ? 'success' : 'warning'}
                         />
                     )}
                 </Box>
@@ -191,17 +177,7 @@ export function AssemblageInfoPopover({
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                     {a.isAvailable ? (
-                                        <Chip
-                                            label="Disponible"
-                                            size="small"
-                                            sx={{
-                                                bgcolor: theme.palette.success.main,
-                                                color: '#fff',
-                                                height: 22,
-                                                fontSize: 10,
-                                                fontWeight: 700,
-                                            }}
-                                        />
+                                        <Chip label="Disponible" color="success" />
                                     ) : (
                                         a.periods.map((p) => {
                                             const meta = getPeriodeMeta(p.periodType);
@@ -209,14 +185,7 @@ export function AssemblageInfoPopover({
                                                 <Chip
                                                     key={p.uuid}
                                                     label={meta?.label ?? p.periodType}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: meta?.color ?? '#999',
-                                                        color: '#fff',
-                                                        height: 22,
-                                                        fontSize: 10,
-                                                        fontWeight: 700,
-                                                    }}
+                                                    sx={softChipSx(meta?.color ?? '#999')}
                                                 />
                                             );
                                         })
@@ -237,22 +206,7 @@ export function AssemblageInfoPopover({
                     {salle && machineSchedules.length > 0 && (
                         <Chip
                             label={`${availableMachineCount} / ${machineSchedules.length} dispo`}
-                            size="small"
-                            sx={{
-                                bgcolor: alpha(
-                                    availableMachineCount === machineSchedules.length
-                                        ? theme.palette.success.main
-                                        : theme.palette.warning.main,
-                                    0.12,
-                                ),
-                                color:
-                                    availableMachineCount === machineSchedules.length
-                                        ? theme.palette.success.dark
-                                        : theme.palette.warning.dark,
-                                fontWeight: 700,
-                                fontSize: 11,
-                                height: 22,
-                            }}
+                            color={availableMachineCount === machineSchedules.length ? 'success' : 'warning'}
                         />
                     )}
                 </Box>
@@ -293,17 +247,7 @@ export function AssemblageInfoPopover({
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                     {m.isAvailable ? (
-                                        <Chip
-                                            label="Disponible"
-                                            size="small"
-                                            sx={{
-                                                bgcolor: theme.palette.success.main,
-                                                color: '#fff',
-                                                height: 22,
-                                                fontSize: 10,
-                                                fontWeight: 700,
-                                            }}
-                                        />
+                                        <Chip label="Disponible" color="success" />
                                     ) : (
                                         m.events.map((ev) => {
                                             const meta = getEventCategoryMeta(ev.category);
@@ -311,14 +255,7 @@ export function AssemblageInfoPopover({
                                                 <Chip
                                                     key={ev.uuid}
                                                     label={ev.category}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: meta?.color ?? '#999',
-                                                        color: '#fff',
-                                                        height: 22,
-                                                        fontSize: 10,
-                                                        fontWeight: 700,
-                                                    }}
+                                                    sx={softChipSx(meta?.color ?? '#999')}
                                                 />
                                             );
                                         })
@@ -339,22 +276,7 @@ export function AssemblageInfoPopover({
                     {campaignFsecs.length > 0 && (
                         <Chip
                             label={`${scheduledCount} / ${campaignFsecs.length} planifiees`}
-                            size="small"
-                            sx={{
-                                bgcolor: alpha(
-                                    scheduledCount === campaignFsecs.length
-                                        ? theme.palette.success.main
-                                        : theme.palette.primary.main,
-                                    0.12,
-                                ),
-                                color:
-                                    scheduledCount === campaignFsecs.length
-                                        ? theme.palette.success.dark
-                                        : theme.palette.primary.dark,
-                                fontWeight: 700,
-                                fontSize: 11,
-                                height: 22,
-                            }}
+                            color={scheduledCount === campaignFsecs.length ? 'success' : 'primary'}
                         />
                     )}
                 </Box>

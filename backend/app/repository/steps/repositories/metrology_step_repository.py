@@ -50,6 +50,7 @@ class MetrologyStepRepository(IMetrologyStepRepository):
         entity.machine_id_id = bean.machine_id
         entity.rack_id_id = bean.rack_id
         entity.metrologist_name = bean.metrologist_name
+        entity.metrologist_user_id = bean.metrologist_user_uuid
         entity.date = bean.date
         entity.comments = bean.comments
         entity.save()

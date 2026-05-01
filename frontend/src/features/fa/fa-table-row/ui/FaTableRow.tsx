@@ -11,10 +11,11 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { type Fa, getStatusInfo, getCriticalityInfo, getTypeInfo } from '@entities/fa';
 import { DataChip } from '@widgets/data-chip';
+import { motion } from '@shared/ui/motion';
 
-export interface FaTableRowItem extends Fa {
-    fsecName?: string;
-}
+// `fsecName` est désormais directement présent sur `Fa` (string | null) :
+// l'extension est conservée comme alias pour ne pas casser les imports.
+export type FaTableRowItem = Fa;
 
 export interface FaTableRowProps {
     fa: FaTableRowItem;
@@ -43,7 +44,7 @@ export const FaTableRow = memo(function FaTableRow({ fa, onNavigate, onNavigateF
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 ...(isHighCriticality && {
                     borderLeft: `4px solid ${borderColor}`,
                 }),
@@ -69,7 +70,7 @@ export const FaTableRow = memo(function FaTableRow({ fa, onNavigate, onNavigateF
                             py: 0.25,
                             mx: -1,
                             borderRadius: 0.5,
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            transition: `all ${motion.base}`,
                             '&:hover': {
                                 color: 'primary.dark',
                                 backgroundColor: alpha(theme.palette.primary.main, 0.08),

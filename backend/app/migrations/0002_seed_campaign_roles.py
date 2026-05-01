@@ -14,9 +14,7 @@ def seed_campaign_roles(apps, schema_editor):
     ]
 
     for role_data in roles:
-        CampaignRolesEntity.objects.get_or_create(
-            id=role_data["id"], defaults={"label": role_data["label"]}
-        )
+        CampaignRolesEntity.objects.get_or_create(id=role_data["id"], defaults={"label": role_data["label"]})
 
 
 def reverse_seed_campaign_roles(apps, schema_editor):

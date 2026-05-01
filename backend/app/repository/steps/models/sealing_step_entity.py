@@ -24,6 +24,15 @@ class SealingStepEntity(models.Model):
     )
     date = models.DateField(null=True, blank=True)
     metrologist_name = models.CharField(max_length=255, null=True, blank=True)
+    metrologist_user = models.ForeignKey(
+        "app.UserProfileEntity",
+        on_delete=models.PROTECT,
+        db_column="metrologist_user_uuid",
+        to_field="uuid",
+        null=True,
+        blank=True,
+        related_name="+",
+    )
     rack_id = models.ForeignKey(
         FsecRackEntity,
         on_delete=models.PROTECT,

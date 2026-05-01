@@ -13,23 +13,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="embaseentity",
             name="capteur_cible_pfeiffer_v2_mbar",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=10, null=True
-            ),
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name="embaseentity",
             name="mesurande_lie_v2_mv",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=10, null=True
-            ),
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name="embaseentity",
             name="signal_meteociel_v2_mv",
-            field=models.DecimalField(
-                blank=True, decimal_places=2, max_digits=10, null=True
-            ),
+            field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
         ),
         migrations.AddField(
             model_name="embaseentity",

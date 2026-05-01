@@ -28,6 +28,7 @@ export const FaApiSchema = z.object({
     fsec_step_id: z.number().int().nullable(),
     fsec_step_other: z.string().nullable(),
     discoverer: z.string(),
+    discoverer_user_uuid: z.string().uuid().nullable().optional(),
     event_date: z.string().nullable(),
     observation: z.string(),
     location_equipment: z.string().nullable(),
@@ -36,6 +37,7 @@ export const FaApiSchema = z.object({
     iec_validation_open: z.boolean(),
     iec_validation_open_date: z.string().nullable(),
     iec_validation_open_name: z.string().nullable(),
+    iec_validation_open_user_uuid: z.string().uuid().nullable().optional(),
 
     // Phase En cours
     cause: z.string().nullable(),
@@ -43,15 +45,22 @@ export const FaApiSchema = z.object({
     iec_validation_progress: z.boolean(),
     iec_validation_progress_date: z.string().nullable(),
     iec_validation_progress_name: z.string().nullable(),
+    iec_validation_progress_user_uuid: z.string().uuid().nullable().optional(),
 
     // Phase Clos
     closure_validation: z.string().nullable(),
     closure_date: z.string().nullable(),
     closure_validator_name: z.string().nullable(),
+    closure_validator_user_uuid: z.string().uuid().nullable().optional(),
 
     // Metadata
     created_at: z.string().nullable(),
     last_updated: z.string().nullable(),
+
+    // Champs dérivés exposés par /fas/ (évite un re-fetch /fsecs/ + /campaigns/ côté front).
+    // Optionnels pour préserver la compatibilité avec d'éventuels payloads anciens.
+    fsec_name: z.string().nullable().optional(),
+    installation: z.string().nullable().optional(),
 });
 
 /**
@@ -74,6 +83,7 @@ export const FaSchema = FaApiSchema.transform((api) => ({
     fsecStepId: api.fsec_step_id,
     fsecStepOther: api.fsec_step_other,
     discoverer: api.discoverer,
+    discovererUserUuid: api.discoverer_user_uuid ?? null,
     eventDate: api.event_date ? new Date(api.event_date) : null,
     observation: api.observation,
     locationEquipment: api.location_equipment,
@@ -82,6 +92,7 @@ export const FaSchema = FaApiSchema.transform((api) => ({
     iecValidationOpen: api.iec_validation_open,
     iecValidationOpenDate: api.iec_validation_open_date ? new Date(api.iec_validation_open_date) : null,
     iecValidationOpenName: api.iec_validation_open_name,
+    iecValidationOpenUserUuid: api.iec_validation_open_user_uuid ?? null,
 
     // Phase En cours
     cause: api.cause,
@@ -89,15 +100,21 @@ export const FaSchema = FaApiSchema.transform((api) => ({
     iecValidationProgress: api.iec_validation_progress,
     iecValidationProgressDate: api.iec_validation_progress_date ? new Date(api.iec_validation_progress_date) : null,
     iecValidationProgressName: api.iec_validation_progress_name,
+    iecValidationProgressUserUuid: api.iec_validation_progress_user_uuid ?? null,
 
     // Phase Clos
     closureValidation: api.closure_validation,
     closureDate: api.closure_date ? new Date(api.closure_date) : null,
     closureValidatorName: api.closure_validator_name,
+    closureValidatorUserUuid: api.closure_validator_user_uuid ?? null,
 
     // Metadata
     createdAt: api.created_at ? new Date(api.created_at) : null,
     lastUpdated: api.last_updated ? new Date(api.last_updated) : null,
+
+    // Champs dérivés (lecture seule)
+    fsecName: api.fsec_name ?? null,
+    installation: api.installation ?? null,
 }));
 
 export type Fa = z.infer<typeof FaSchema>;
@@ -114,7 +131,7 @@ export const FaCreateSchema = z.object({
     fsecVersionId: z.string().uuid('FSEC requis'),
     fsecStepId: z.number().int().nullable().optional(),
     fsecStepOther: z.string().nullable().optional(),
-    discoverer: z.string().min(1, 'Découvreur requis'),
+    discovererUserUuid: z.string().uuid('Découvreur requis'),
     eventDate: z.date({ required_error: 'Date requise' }),
     observation: z.string().min(1, 'Constat requis'),
     locationEquipment: z.string().nullable().optional(),
@@ -135,6 +152,7 @@ export const FaUpdateSchema = z.object({
     fsecStepId: z.number().int().nullable().optional(),
     fsecStepOther: z.string().nullable().optional(),
     discoverer: z.string().min(1, 'Découvreur requis').optional(),
+    discovererUserUuid: z.string().uuid().nullable().optional(),
     eventDate: z.date().optional(),
     observation: z.string().min(1, 'Constat requis').optional(),
     locationEquipment: z.string().nullable().optional(),
@@ -149,6 +167,7 @@ export const FaUpdateSchema = z.object({
     closureValidation: z.string().nullable().optional(),
     closureDate: z.date().nullable().optional(),
     closureValidatorName: z.string().nullable().optional(),
+    closureValidatorUserUuid: z.string().uuid().nullable().optional(),
 });
 
 export type FaUpdate = z.infer<typeof FaUpdateSchema>;
@@ -181,7 +200,9 @@ export function faCreateToApi(data: FaCreate): Record<string, unknown> {
         fsec_version_id: data.fsecVersionId,
         fsec_step_id: data.fsecStepId ?? null,
         fsec_step_other: data.fsecStepOther ?? null,
-        discoverer: data.discoverer,
+        // discoverer (texte legacy) reste vide : la source de verite est la FK.
+        discoverer: '',
+        discoverer_user_uuid: data.discovererUserUuid,
         event_date: data.eventDate?.toISOString().split('T')[0] ?? null,
         observation: data.observation,
         location_equipment: data.locationEquipment ?? null,
@@ -204,6 +225,7 @@ export function faUpdateToApi(data: FaUpdate): Record<string, unknown> {
     if (data.fsecStepId !== undefined) result.fsec_step_id = data.fsecStepId;
     if (data.fsecStepOther !== undefined) result.fsec_step_other = data.fsecStepOther ?? null;
     if (data.discoverer !== undefined) result.discoverer = data.discoverer;
+    if (data.discovererUserUuid !== undefined) result.discoverer_user_uuid = data.discovererUserUuid;
     if (data.eventDate !== undefined) result.event_date = data.eventDate?.toISOString().split('T')[0] ?? null;
     if (data.observation !== undefined) result.observation = data.observation;
     if (data.locationEquipment !== undefined) result.location_equipment = data.locationEquipment ?? null;
@@ -218,6 +240,8 @@ export function faUpdateToApi(data: FaUpdate): Record<string, unknown> {
     if (data.closureValidation !== undefined) result.closure_validation = data.closureValidation ?? null;
     if (data.closureDate !== undefined) result.closure_date = data.closureDate?.toISOString().split('T')[0] ?? null;
     if (data.closureValidatorName !== undefined) result.closure_validator_name = data.closureValidatorName ?? null;
+    if (data.closureValidatorUserUuid !== undefined)
+        result.closure_validator_user_uuid = data.closureValidatorUserUuid ?? null;
 
     return result;
 }

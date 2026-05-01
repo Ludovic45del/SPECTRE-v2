@@ -3,10 +3,7 @@
 import abc
 from typing import List
 
-from app.domain.dashboard.models.dashboard_bean import (
-    DashboardCountsBean,
-    RecentActivityItemBean,
-)
+from app.domain.dashboard.models.dashboard_bean import DashboardCountsBean, RecentActivityItemBean
 
 
 class IDashboardRepository(abc.ABC):

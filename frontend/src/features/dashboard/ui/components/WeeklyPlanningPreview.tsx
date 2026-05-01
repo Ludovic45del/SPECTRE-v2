@@ -16,6 +16,7 @@ import {
 // FSD exception: cross-feature import (R-ARCH-03).
 // WeekDayGrid depends on @entities hooks internally, preventing promotion to @widgets.
 import { WeekDayGrid } from '@features/planning';
+import { motion } from '@shared/ui/motion';
 
 function getWeekLabel(weekNum: number, year: number): string {
     const monday = dayjs(`${year}-01-04`).isoWeek(weekNum).startOf('isoWeek');
@@ -53,7 +54,7 @@ export default memo(function WeeklyPlanningPreview() {
                 bgcolor: 'background.paper',
                 border: '1px solid',
                 borderColor: 'divider',
-                transition: 'all 0.2s ease',
+                transition: `all ${motion.base}`,
                 '&:hover': {
                     borderColor: 'primary.main',
                     bgcolor: 'rgba(0, 122, 255, 0.02)',

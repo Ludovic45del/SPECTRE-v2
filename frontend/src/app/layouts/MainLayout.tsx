@@ -2,18 +2,25 @@
  * Main Layout Component
  * @module app/layouts
  *
- * Optimized layout with collapsible sidebar
+ * Sidebar pinned (clic sur le logo CEA pour basculer), avec une transition
+ * d'entrée discrète (`pageEnter`) sur le contenu de page à chaque
+ * changement de SECTION top-level — pas à chaque changement d'onglet
+ * interne d'une page détail (sinon le header re-flash sous l'animation
+ * et l'effet est désagréable). Les rubriques internes utilisent leur
+ * propre `<RouteTransition>` plus localisé.
  */
 
-import { Suspense, memo, useCallback, useMemo } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Suspense, memo, useMemo } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { Sidebar, SIDEBAR_WIDTH_OPEN, SIDEBAR_WIDTH_CLOSED, useSidebarStore } from '@widgets/sidebar';
 import type { SidebarUserInfo } from '@widgets/sidebar';
-import { useAuthStore } from '@features/auth';
 import { useMe, ROLE_LABELS } from '@entities/user';
-import { SplashScreen } from '@shared/ui/SplashScreen';
+import { motionDuration, motionEasing } from '@shared/ui/motion';
 
+// Fallback Suspense — discret (pas de spinner intrusif quand le code-split
+// arrive en quelques ms). Affiche un cercle uniquement après 200 ms via
+// `animation-delay`, ce qui couvre la majorité des cas sans flash visuel.
 const PageLoader = memo(function PageLoader() {
     return (
         <Box
@@ -21,19 +28,38 @@ const PageLoader = memo(function PageLoader() {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '100vh',
+                minHeight: '50vh',
+                opacity: 0,
+                animation: `pl-fade ${motionDuration.base}ms ${motionEasing.decelerate} 200ms forwards`,
+                '@keyframes pl-fade': {
+                    to: { opacity: 1 },
+                },
             }}
         >
-            <CircularProgress />
+            <CircularProgress size={28} thickness={4} />
         </Box>
     );
 });
 
+// Sections où le 1er segment d'URL identifie une page détail (`fsec-details/:uuid`,
+// `campagne-details/:uuid`, etc.). Pour ces routes, la clé d'animation est
+// figée sur les 2 premiers segments → changer d'onglet (`/overview` → `/assemblage`)
+// ne déclenche PAS le pageEnter global, seul `<RouteTransition>` interne joue.
+const DETAIL_SECTIONS = new Set(['fsec-details', 'campagne-details', 'fa-details', 'embase-details', 'stock']);
+
+function getSectionKey(pathname: string): string {
+    const segments = pathname.split('/').filter(Boolean);
+    if (segments.length === 0) return '/';
+    if (segments.length >= 2 && DETAIL_SECTIONS.has(segments[0])) {
+        return `/${segments[0]}/${segments[1]}`;
+    }
+    return pathname;
+}
+
 function MainLayoutComponent() {
+    const location = useLocation();
     const isOpen = useSidebarStore((state) => state.isOpen);
     const marginLeft = isOpen ? SIDEBAR_WIDTH_OPEN : SIDEBAR_WIDTH_CLOSED;
-    const showSplash = useAuthStore((s) => s.showSplash);
-    const clearSplash = useAuthStore((s) => s.clearSplash);
     const { data: meData } = useMe();
 
     const sidebarUser = useMemo<SidebarUserInfo | undefined>(
@@ -48,14 +74,6 @@ function MainLayoutComponent() {
                 : undefined,
         [meData],
     );
-
-    const handleSplashComplete = useCallback(() => {
-        clearSplash();
-    }, [clearSplash]);
-
-    if (showSplash) {
-        return <SplashScreen onComplete={handleSplashComplete} />;
-    }
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -96,7 +114,7 @@ function MainLayoutComponent() {
                     ml: `${marginLeft}px`,
                     minHeight: '100vh',
                     bgcolor: 'background.default',
-                    transition: 'margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: `margin-left ${motionDuration.medium}ms ${motionEasing.standard}`,
                     '@media (prefers-reduced-motion: reduce)': {
                         transition: 'none',
                     },
@@ -104,7 +122,31 @@ function MainLayoutComponent() {
                 }}
             >
                 <Suspense fallback={<PageLoader />}>
-                    <Outlet />
+                    {/*
+                     * `key={getSectionKey(...)}` force un remount du wrapper
+                     * uniquement à chaque changement de SECTION top-level
+                     * (pas à chaque sous-route d'une page détail). Sinon le
+                     * header de la page (FSEC, Campagne, FA, Embase) re-flashait
+                     * en même temps que le contenu d'onglet → animation
+                     * imperceptible et désagréable. Les rubriques internes
+                     * sont animées par <RouteTransition>.
+                     */}
+                    <Box
+                        key={getSectionKey(location.pathname)}
+                        sx={{
+                            animation: `pageEnter ${motionDuration.medium}ms ${motionEasing.apple} both`,
+                            willChange: 'opacity, transform',
+                            '@keyframes pageEnter': {
+                                '0%': { opacity: 0, transform: 'translateY(8px)' },
+                                '100%': { opacity: 1, transform: 'translateY(0)' },
+                            },
+                            '@media (prefers-reduced-motion: reduce)': {
+                                animation: 'none',
+                            },
+                        }}
+                    >
+                        <Outlet />
+                    </Box>
                 </Suspense>
             </Box>
         </Box>

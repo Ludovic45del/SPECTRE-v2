@@ -6,18 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-    TextField,
-    Stack,
-    Grid2,
-    Autocomplete,
-    Paper,
-    Typography,
-    Chip,
-    Box,
-    ToggleButtonGroup,
-    ToggleButton,
-} from '@mui/material';
+import { TextField, Stack, Grid2, Autocomplete, Typography, Chip, Box } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useForm, Controller } from 'react-hook-form';
@@ -30,9 +19,12 @@ import {
     useDeleteGasFillingHpStep,
 } from '@entities/fsec/steps';
 import { useEmbases, getEtalonnageStatus, type Embase } from '@entities/embase';
+import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
+import { EmbaseDetailCard } from '@features/embase/shared';
+import { softChipSx } from '@shared/lib';
 
 interface GasFillingHpStepModalProps {
     open: boolean;
@@ -46,7 +38,7 @@ const GasFillingHpStepFormSchema = z.object({
     leakRateDtri: z.string().nullable().optional(),
     gasType: z.string().nullable().optional(),
     experimentPressure: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
-    operator: z.string().min(1, 'Champ requis'),
+    operatorUserUuid: z.string().uuid('Opérateur requis'),
     dateOfFulfilment: z.date({ required_error: 'Date requise' }),
     gasContainer: z.number().nullable().optional(),
     observations: z.string().nullable().optional(),
@@ -54,176 +46,16 @@ const GasFillingHpStepFormSchema = z.object({
 
 type GasFillingHpStepForm = z.infer<typeof GasFillingHpStepFormSchema>;
 
-const DEFAULT_VALUES = {
+const DEFAULT_VALUES: Partial<GasFillingHpStepForm> = {
     embaseId: null,
     leakRateDtri: null,
     gasType: null,
     experimentPressure: null,
-    operator: undefined,
+    operatorUserUuid: '',
     dateOfFulfilment: undefined,
     gasContainer: null,
     observations: null,
 };
-
-function StatusChip({ value }: { value: string }) {
-    if (!value) return null;
-    const lower = value.toLowerCase().trim();
-    const isOk = lower === 'ok';
-    const isKo = lower === 'ko';
-    if (isOk)
-        return (
-            <Chip label="OK" size="small" color="success" sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }} />
-        );
-    if (isKo)
-        return <Chip label="KO" size="small" color="error" sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600 }} />;
-    return (
-        <Typography variant="caption" fontWeight={500}>
-            {value}
-        </Typography>
-    );
-}
-
-function EmbaseInfoRow({ label, value, isStatus }: { label: string; value: React.ReactNode; isStatus?: boolean }) {
-    if (value === null || value === undefined || value === '') return null;
-    return (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.25 }}>
-            <Typography variant="caption" color="text.secondary">
-                {label}
-            </Typography>
-            {isStatus && typeof value === 'string' ? (
-                <StatusChip value={value} />
-            ) : (
-                <Typography variant="caption" fontWeight={500}>
-                    {value}
-                </Typography>
-            )}
-        </Box>
-    );
-}
-
-function EmbaseDetailCard({ embase }: { embase: Embase }) {
-    const [voie, setVoie] = useState<'v1' | 'v2'>('v1');
-    const etalStatusV1 = getEtalonnageStatus(embase.lastEtalonnageDateV1);
-    const etalStatusV2 = getEtalonnageStatus(embase.lastEtalonnageDateV2);
-    const etalStatus = voie === 'v1' ? etalStatusV1 : etalStatusV2;
-    const observations = voie === 'v1' ? embase.observationsV1 : embase.observationsV2;
-
-    return (
-        <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'action.hover' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Typography variant="subtitle2">{embase.identifier}</Typography>
-                <Chip
-                    label={etalStatus.label}
-                    size="small"
-                    sx={{ bgcolor: etalStatus.color, color: '#fff', fontWeight: 500 }}
-                />
-                {embase.nombreVoies === 2 && (
-                    <ToggleButtonGroup
-                        value={voie}
-                        exclusive
-                        onChange={(_, v) => {
-                            if (v) setVoie(v);
-                        }}
-                        size="small"
-                        sx={{ ml: 'auto' }}
-                    >
-                        <ToggleButton value="v1" sx={{ py: 0, px: 1.5, fontSize: '0.75rem' }}>
-                            V1
-                        </ToggleButton>
-                        <ToggleButton value="v2" sx={{ py: 0, px: 1.5, fontSize: '0.75rem' }}>
-                            V2
-                        </ToggleButton>
-                    </ToggleButtonGroup>
-                )}
-            </Box>
-            <Grid2 container spacing={2}>
-                <Grid2 size={6}>
-                    <Typography variant="caption" fontWeight={600} sx={{ mb: 0.5, display: 'block' }}>
-                        Voie {voie === 'v1' ? 'V1' : 'V2'}
-                    </Typography>
-                    <EmbaseInfoRow label="Soufflet" value={voie === 'v1' ? embase.souffletV1 : embase.souffletV2} />
-                    <EmbaseInfoRow label="Capteur" value={voie === 'v1' ? embase.capteurV1 : embase.capteurV2} />
-                    <EmbaseInfoRow label="Offset (mV)" value={voie === 'v1' ? embase.offsetV1Mv : embase.offsetV2Mv} />
-                    <EmbaseInfoRow
-                        label="Sensibilite (mV)"
-                        value={voie === 'v1' ? embase.sensibiliteV1Mv : embase.sensibiliteV2Mv}
-                    />
-                    <EmbaseInfoRow
-                        label="Etendue (mbar)"
-                        value={voie === 'v1' ? embase.etendueV1Mbar : embase.etendueV2Mbar}
-                    />
-                    <EmbaseInfoRow
-                        label="Pfeiffer (mbar)"
-                        value={voie === 'v1' ? embase.capteurCiblePfeifferMbar : embase.capteurCiblePfeifferV2Mbar}
-                    />
-                    <EmbaseInfoRow
-                        label="Etancheite He"
-                        value={voie === 'v1' ? embase.testEtancheiteHe : embase.testEtancheiteHeV2}
-                        isStatus
-                    />
-                    <EmbaseInfoRow
-                        label="Capteur MRG"
-                        value={voie === 'v1' ? embase.testCapteurMrg : embase.testCapteurMrgV2}
-                        isStatus
-                    />
-                </Grid2>
-                <Grid2 size={6}>
-                    <Typography variant="caption" fontWeight={600} sx={{ mb: 0.5, display: 'block' }}>
-                        Mecanique
-                    </Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.25 }}>
-                        <Typography variant="caption" color="text.secondary">
-                            Operationnelle
-                        </Typography>
-                        {embase.operationnelleAimant ? (
-                            <Chip
-                                label="Aimant"
-                                size="small"
-                                sx={{
-                                    height: 20,
-                                    fontSize: '0.7rem',
-                                    fontWeight: 600,
-                                    bgcolor: '#1976d2',
-                                    color: '#fff',
-                                }}
-                            />
-                        ) : embase.operationnelleBroche ? (
-                            <Chip
-                                label="Broche"
-                                size="small"
-                                sx={{
-                                    height: 20,
-                                    fontSize: '0.7rem',
-                                    fontWeight: 600,
-                                    bgcolor: '#7b1fa2',
-                                    color: '#fff',
-                                }}
-                            />
-                        ) : (
-                            <Typography variant="caption" color="text.secondary">
-                                -
-                            </Typography>
-                        )}
-                    </Box>
-                    <EmbaseInfoRow label="Localisation" value={embase.localisationActuelle} />
-                    <EmbaseInfoRow label="Cote VE" value={embase.coteVe} />
-                    <EmbaseInfoRow label="MCC" value={embase.chargementMcc} isStatus />
-                    {embase.nombreVoies === 2 && (
-                        <EmbaseInfoRow label="Electrovanne" value={embase.electrovanne ? 'Oui' : 'Non'} isStatus />
-                    )}
-                </Grid2>
-            </Grid2>
-            {observations && (
-                <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                        Observations:{' '}
-                    </Typography>
-                    <Typography variant="caption">{observations}</Typography>
-                </Box>
-            )}
-        </Paper>
-    );
-}
 
 export function GasFillingHpStepModal({ open, onClose, fsecVersionId, step }: GasFillingHpStepModalProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -258,7 +90,7 @@ export function GasFillingHpStepModal({ open, onClose, fsecVersionId, step }: Ga
                           leakRateDtri: step.leakRateDtri,
                           gasType: step.gasType,
                           experimentPressure: step.experimentPressure,
-                          operator: step.operator ?? undefined,
+                          operatorUserUuid: step.operatorUserUuid ?? '',
                           dateOfFulfilment: step.dateOfFulfilment ?? undefined,
                           gasContainer: step.gasContainer,
                           observations: step.observations,
@@ -342,16 +174,17 @@ export function GasFillingHpStepModal({ open, onClose, fsecVersionId, step }: Ga
                     </Grid2>
                     <Grid2 size={6}>
                         <Controller
-                            name="operator"
+                            name="operatorUserUuid"
                             control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    value={field.value ?? ''}
+                            render={({ field, fieldState }) => (
+                                <UserSelect
+                                    value={field.value || null}
+                                    onChange={(uuid) => field.onChange(uuid ?? '')}
+                                    roles={[...SPECTRE_OPERATOR_ROLES]}
                                     label="Opérateur"
-                                    size="small"
-                                    fullWidth
-                                    inputProps={{ 'aria-label': 'Opérateur' }}
+                                    required
+                                    error={Boolean(fieldState.error)}
+                                    helperText={fieldState.error?.message}
                                 />
                             )}
                         />
@@ -377,16 +210,7 @@ export function GasFillingHpStepModal({ open, onClose, fsecVersionId, step }: Ga
                                             <Typography variant="body2" fontWeight={600} sx={{ minWidth: 40 }}>
                                                 {option.identifier}
                                             </Typography>
-                                            <Chip
-                                                label={etal.label}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: etal.color,
-                                                    color: '#fff',
-                                                    height: 20,
-                                                    fontSize: '0.7rem',
-                                                }}
-                                            />
+                                            <Chip label={etal.label} sx={softChipSx(etal.color)} />
                                             {option.capteurV1 && (
                                                 <Typography variant="caption" color="text.secondary">
                                                     Capteur: {option.capteurV1}

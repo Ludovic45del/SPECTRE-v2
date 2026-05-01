@@ -3,10 +3,11 @@
  * @module widgets/sidebar
  */
 
-import { memo, useCallback, useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
+    Chip,
     IconButton,
     List,
     ListItem,
@@ -19,6 +20,7 @@ import {
     type Theme,
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
@@ -27,7 +29,9 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import { useSidebarStore } from './sidebar.store';
 import { useThemeStore } from '@shared/lib/theme.store';
 import { useAuthStore } from '@features/auth';
+import { useStockAlerts } from '@entities/stock-item';
 import { queryClient } from '@shared/lib/query-client';
+import { motion } from '@shared/ui/motion';
 import CEALogo from '@shared/assets/images/CEALogo.png';
 
 // ============================================================================
@@ -39,8 +43,11 @@ const SIDEBAR_WIDTH_CLOSED = 64;
 const ICON_SIZE = 28;
 const NAV_ITEM_HEIGHT = 44;
 const NAV_ITEM_GAP = 4; // mb: 0.5 = 4px
-const TRANSITION = '0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-const TRANSITION_SPRING = '0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+// Aliases vers les tokens motion. `TRANSITION` = micro-interactions (hover,
+// color), `TRANSITION_SPRING` = indicateur coulissant (overshoot doux).
+const TRANSITION = motion.base;
+const TRANSITION_SPRING = motion.spring;
 
 const COLORS = {
     brand: '#E31837',
@@ -134,6 +141,20 @@ const HomeCircleIcon = memo(function HomeCircleIcon({ isActive }: { isActive?: b
     );
 });
 
+const StockCircleIcon = memo(function StockCircleIcon({ isActive }: { isActive?: boolean }) {
+    return (
+        <CircleIcon isActive={isActive}>
+            <Inventory2Icon
+                sx={{
+                    color: getIconColor(isActive),
+                    fontSize: '0.95rem',
+                    transition: `color ${TRANSITION}`,
+                }}
+            />
+        </CircleIcon>
+    );
+});
+
 const AdminCircleIcon = memo(function AdminCircleIcon({ isActive }: { isActive?: boolean }) {
     return (
         <CircleIcon isActive={isActive}>
@@ -152,11 +173,25 @@ const AdminCircleIcon = memo(function AdminCircleIcon({ isActive }: { isActive?:
 // Navigation Configuration
 // ============================================================================
 
+interface NavSubItem {
+    path: string;
+    label: string;
+    /** Badge de notification (compteur affiché à droite). 0 ou undefined → pas de badge. */
+    badgeCount?: number;
+}
+
 interface NavItem {
     path: string;
     label: string;
     icon: (isActive: boolean) => ReactNode;
+    /** Sous-items affichés en dépliant l'entrée quand sa section est active. */
+    children?: NavSubItem[];
 }
+
+/** Élément aplati pour le rendu (parent OU enfant), 1 ligne = 1 entrée. */
+type FlatNavItem =
+    | ({ kind: 'parent' } & NavItem)
+    | ({ kind: 'child' } & NavSubItem);
 
 const BASE_NAV_ITEMS: NavItem[] = [
     { path: '/', label: 'Accueil', icon: (isActive) => <HomeCircleIcon isActive={isActive} /> },
@@ -175,6 +210,16 @@ const BASE_NAV_ITEMS: NavItem[] = [
     },
     { path: '/embases', label: 'Embases', icon: (isActive) => <TextCircleIcon isActive={isActive} label="E" /> },
     { path: '/planning', label: 'Planning', icon: (isActive) => <TextCircleIcon isActive={isActive} label="P" /> },
+    {
+        path: '/stock',
+        label: 'Stock',
+        icon: (isActive) => <StockCircleIcon isActive={isActive} />,
+        children: [
+            { path: '/stock/catalogue', label: 'Catalogue' },
+            { path: '/stock/mouvements', label: 'Mouvements' },
+            { path: '/stock/alertes', label: 'Alertes' },
+        ],
+    },
 ];
 
 const ADMIN_NAV_ITEM: NavItem = {
@@ -255,6 +300,70 @@ interface NavItemComponentProps {
     onNavigate: (path: string) => void;
 }
 
+const NavSubItemComponent = memo(function NavSubItemComponent({
+    item,
+    isActive,
+    onNavigate,
+}: {
+    item: NavSubItem;
+    isActive: boolean;
+    onNavigate: (path: string) => void;
+}) {
+    const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
+
+    return (
+        <ListItem
+            disablePadding
+            sx={{ height: NAV_ITEM_HEIGHT, mb: `${NAV_ITEM_GAP}px`, position: 'relative', zIndex: 1 }}
+        >
+            <ListItemButton
+                onClick={handleClick}
+                sx={{
+                    borderRadius: 2,
+                    py: 0.75,
+                    pl: 4.5, // indent : aligné après l'icône cercle parent
+                    pr: 1.5,
+                    height: '100%',
+                    bgcolor: 'transparent',
+                    transition: `all ${TRANSITION}`,
+                    '&:hover': {
+                        bgcolor: isActive ? 'transparent' : 'grey.100',
+                    },
+                    gap: 1,
+                }}
+            >
+                <ListItemText
+                    primary={item.label}
+                    slotProps={{
+                        primary: {
+                            sx: {
+                                fontWeight: isActive ? 600 : 400,
+                                fontSize: '0.82rem',
+                                color: isActive ? 'primary.main' : 'text.secondary',
+                                whiteSpace: 'nowrap',
+                                transition: `all ${TRANSITION}`,
+                            },
+                        },
+                    }}
+                />
+                {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                    <Chip
+                        label={item.badgeCount}
+                        color="error"
+                        sx={{
+                            // Badge dense : on conserve une hauteur réduite par rapport à
+                            // la chip standard du thème (22px) pour l'intégrer dans la rangée.
+                            height: 18,
+                            minWidth: 22,
+                            fontSize: '0.68rem',
+                        }}
+                    />
+                )}
+            </ListItemButton>
+        </ListItem>
+    );
+});
+
 const NavItemComponent = memo(function NavItemComponent({ item, isOpen, isActive, onNavigate }: NavItemComponentProps) {
     const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
 
@@ -334,37 +443,43 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
     const location = useLocation();
     const pathname = location.pathname;
     const navigate = useNavigate();
-    const { isOpen, open, close } = useSidebarStore();
+    const { isOpen, toggle } = useSidebarStore();
     const { mode, toggleMode } = useThemeStore();
     const logout = useAuthStore((s) => s.logout);
     const role = useAuthStore((s) => s.role);
-    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const NAV_ITEMS = useMemo(
         () => (role === 'chef_labo' ? [...BASE_NAV_ITEMS, ADMIN_NAV_ITEM] : BASE_NAV_ITEMS),
         [role],
     );
 
-    const handleMouseEnter = useCallback(() => {
-        if (closeTimerRef.current) {
-            clearTimeout(closeTimerRef.current);
-            closeTimerRef.current = null;
+    // Compteur d'alertes Stock (cf. CDC §5.4) — affiché en badge sur le sous-item Alertes.
+    const { data: stockAlerts } = useStockAlerts();
+    const stockAlertsCount = stockAlerts
+        ? stockAlerts.lowStock.length + stockAlerts.expired.length + stockAlerts.expiringSoon.length
+        : 0;
+
+    /**
+     * Liste linéaire pour le rendu : 1 entrée = 1 ligne (NAV_ITEM_HEIGHT).
+     * Les sous-items d'un parent ne sont insérés que si la sidebar est ouverte
+     * ET que la section parent est active (chemin commence par /parent).
+     */
+    const FLAT_NAV_ITEMS = useMemo<FlatNavItem[]>(() => {
+        const flat: FlatNavItem[] = [];
+        for (const item of NAV_ITEMS) {
+            flat.push({ kind: 'parent', ...item });
+            if (item.children && isOpen && pathname.startsWith(item.path)) {
+                for (const child of item.children) {
+                    const enriched: NavSubItem =
+                        child.path === '/stock/alertes'
+                            ? { ...child, badgeCount: stockAlertsCount }
+                            : child;
+                    flat.push({ kind: 'child', ...enriched });
+                }
+            }
         }
-        open();
-    }, [open]);
-
-    const handleMouseLeave = useCallback(() => {
-        closeTimerRef.current = setTimeout(() => {
-            close();
-            closeTimerRef.current = null;
-        }, 150);
-    }, [close]);
-
-    useEffect(() => {
-        return () => {
-            if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-        };
-    }, []);
+        return flat;
+    }, [NAV_ITEMS, isOpen, pathname, stockAlertsCount]);
 
     const handleLogout = useCallback(async () => {
         await logout();
@@ -372,15 +487,24 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
         navigate('/login');
     }, [logout, navigate]);
 
-    const activeIndex = useMemo(
-        () => NAV_ITEMS.findIndex((item) => (item.path === '/' ? pathname === '/' : pathname.startsWith(item.path))),
-        [pathname, NAV_ITEMS],
-    );
+    /**
+     * Index de l'item actif : on prend le chemin le plus spécifique qui matche
+     * (sinon le parent éclipserait son enfant déplié).
+     */
+    const activeIndex = useMemo(() => {
+        let bestIdx = -1;
+        let bestLen = -1;
+        FLAT_NAV_ITEMS.forEach((item, idx) => {
+            const matches = item.path === '/' ? pathname === '/' : pathname.startsWith(item.path);
+            if (matches && item.path.length > bestLen) {
+                bestIdx = idx;
+                bestLen = item.path.length;
+            }
+        });
+        return bestIdx;
+    }, [pathname, FLAT_NAV_ITEMS]);
 
-    const checkIsActive = useCallback(
-        (path: string) => (path === '/' ? pathname === '/' : pathname.startsWith(path)),
-        [pathname],
-    );
+    const checkIsActive = useCallback((idx: number) => idx === activeIndex, [activeIndex]);
 
     const sidebarStyles = useMemo<SxProps<Theme>>(
         () => ({
@@ -407,10 +531,8 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
             role="navigation"
             aria-label="Navigation principale"
             sx={sidebarStyles}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
         >
-            {/* Header */}
+            {/* Header — clic sur le logo pour basculer le menu */}
             <Box
                 sx={{
                     px: 1.5,
@@ -423,25 +545,35 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                     minHeight: 56,
                 }}
             >
-                <Tooltip title={isOpen ? '' : 'Survolez pour ouvrir le menu'} placement="right" arrow>
+                <Tooltip
+                    title={isOpen ? 'Réduire le menu' : 'Étendre le menu'}
+                    placement="right"
+                    arrow
+                >
                     <Box
-                        component="div"
-                        aria-label="Menu de navigation"
+                        component="button"
+                        type="button"
+                        onClick={toggle}
+                        aria-label={isOpen ? 'Réduire le menu' : 'Étendre le menu'}
                         aria-expanded={isOpen}
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 1.5,
                             cursor: 'pointer',
-                            borderRadius: 1,
+                            borderRadius: 1.5,
                             p: 0.5,
-                            transition: `all ${TRANSITION}`,
+                            transition: `background-color ${TRANSITION}`,
                             border: 'none',
                             bgcolor: 'transparent',
+                            font: 'inherit',
+                            color: 'inherit',
+                            textAlign: 'left',
                             '&:hover': {
                                 bgcolor: 'action.hover',
                                 '& img': { transform: 'scale(1.05)' },
                             },
+                            '&:active img': { transform: 'scale(0.96)' },
                             '&:focus-visible': {
                                 outline: '2px solid',
                                 outlineColor: 'primary.main',
@@ -458,6 +590,7 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                                 height: 'auto',
                                 borderRadius: 1,
                                 transition: `all ${TRANSITION_SPRING}`,
+                                flexShrink: 0,
                             }}
                         />
                         {isOpen && (
@@ -490,15 +623,24 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                 }}
             >
                 <SlidingIndicator activeIndex={activeIndex} isOpen={isOpen} />
-                {NAV_ITEMS.map((item) => (
-                    <NavItemComponent
-                        key={item.path}
-                        item={item}
-                        isOpen={isOpen}
-                        isActive={checkIsActive(item.path)}
-                        onNavigate={navigate}
-                    />
-                ))}
+                {FLAT_NAV_ITEMS.map((item, idx) =>
+                    item.kind === 'parent' ? (
+                        <NavItemComponent
+                            key={item.path}
+                            item={item}
+                            isOpen={isOpen}
+                            isActive={checkIsActive(idx)}
+                            onNavigate={navigate}
+                        />
+                    ) : (
+                        <NavSubItemComponent
+                            key={item.path}
+                            item={item}
+                            isActive={checkIsActive(idx)}
+                            onNavigate={navigate}
+                        />
+                    ),
+                )}
             </List>
 
             {/* Footer — User card */}

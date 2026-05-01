@@ -40,9 +40,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(str(e)))
             return
 
-        self.stdout.write(
-            self.style.SUCCESS("\nCompte chef de laboratoire cree avec succes :")
-        )
+        self.stdout.write(self.style.SUCCESS("\nCompte chef de laboratoire cree avec succes :"))
         self.stdout.write(f"  Username : {created_bean.username}")
         self.stdout.write("  Role     : Chef de laboratoire")
         self.stdout.write(f"  Mot de passe temporaire : {password}")

@@ -44,6 +44,7 @@ interface CreateGasFillingHpStepInput {
     gasType?: string | null;
     experimentPressure?: number | null;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     dateOfFulfilment?: Date | null;
     gasBase?: number | null;
     gasContainer?: number | null;
@@ -54,29 +55,39 @@ interface UpdateGasFillingHpStepInput extends CreateGasFillingHpStepInput {
     uuid: string;
 }
 
+function gasFillingHpStepToApi(input: CreateGasFillingHpStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        embase_id: input.embaseId ?? null,
+        leak_rate_dtri: input.leakRateDtri ?? null,
+        gas_type: input.gasType ?? null,
+        experiment_pressure: input.experimentPressure ?? null,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
+        gas_base: input.gasBase ?? null,
+        gas_container: input.gasContainer ?? null,
+        observations: input.observations ?? null,
+    };
+}
+
 export function useCreateGasFillingHpStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateGasFillingHpStepInput): Promise<GasFillingHpStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                embase_id: input.embaseId ?? null,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                gas_base: input.gasBase ?? null,
-                gas_container: input.gasContainer ?? null,
-                observations: input.observations ?? null,
-            };
-            const response = await api.post('/gas-filling-hp-steps/', apiData);
+            const response = await api.post(
+                '/gas-filling-hp-steps/',
+                gasFillingHpStepToApi(input),
+            );
             return GasFillingHpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingHp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -87,19 +98,10 @@ export function useUpdateGasFillingHpStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateGasFillingHpStepInput): Promise<GasFillingHpStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                embase_id: input.embaseId ?? null,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                gas_base: input.gasBase ?? null,
-                gas_container: input.gasContainer ?? null,
-                observations: input.observations ?? null,
-            };
-            const response = await api.put(`/gas-filling-hp-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/gas-filling-hp-steps/${input.uuid}/`,
+                gasFillingHpStepToApi(input),
+            );
             return GasFillingHpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -108,6 +110,9 @@ export function useUpdateGasFillingHpStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingHp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -123,6 +128,9 @@ export function useDeleteGasFillingHpStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingHp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

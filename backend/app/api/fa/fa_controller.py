@@ -6,12 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ViewSet
 
-from app.api.fa.serializers import (
-    FaCloseSerializer,
-    FaPatchSerializer,
-    FaSerializer,
-    FaValidatePhaseSerializer,
-)
+from app.api.fa.serializers import FaCloseSerializer, FaPatchSerializer, FaSerializer, FaValidatePhaseSerializer
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.exceptions import InvalidDataException
@@ -34,6 +29,7 @@ from app.mapper.type_conversion import parse_date_string
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
 from app.repository.fa.repositories.fa_repository import FaRepository
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
+from app.repository.user.repositories.user_repository import UserRepository
 
 
 class FaPagination(PageNumberPagination):
@@ -54,6 +50,7 @@ class FaController(PaginatedControllerMixin, ViewSet):
         self.repository = FaRepository()
         self.fsec_repository = FsecRepository()
         self.campaign_repository = CampaignRepository()
+        self.user_repository = UserRepository()
         self.paginator = FaPagination()
 
     def _validate(self, data, serializer_class):
@@ -70,9 +67,7 @@ class FaController(PaginatedControllerMixin, ViewSet):
         acceptés pour ~2000 FA max sur 10 ans. Le frontend utilise toujours ?page=.
         """
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: get_all_fas(
-                self.repository, limit=limit, offset=offset
-            ),
+            fetch_func=lambda limit, offset: get_all_fas(self.repository, limit=limit, offset=offset),
             count_func=lambda: count_all_fas(self.repository),
         )
         return self.paginate_or_json(request, source, fa_mapper_bean_to_api)
@@ -93,9 +88,7 @@ class FaController(PaginatedControllerMixin, ViewSet):
         bean = fa_mapper_api_to_bean(validated)
 
         # Résoudre le contexte de création via le service
-        context = resolve_fa_creation_context(
-            bean, self.fsec_repository, self.campaign_repository
-        )
+        context = resolve_fa_creation_context(bean, self.fsec_repository, self.campaign_repository)
 
         result = create_fa(
             self.repository,
@@ -104,9 +97,7 @@ class FaController(PaginatedControllerMixin, ViewSet):
             fsec_name=context.fsec_name,
             year=context.year,
         )
-        return JsonResponse(
-            fa_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
-        )
+        return JsonResponse(fa_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
 
     def update(self, request, uuid=None) -> JsonResponse:
         """Met à jour une FA (PUT /:uuid/)."""
@@ -151,15 +142,24 @@ class FaController(PaginatedControllerMixin, ViewSet):
     def validate_open(self, request, uuid=None) -> JsonResponse:
         """Valide la phase Ouvert et passe à En cours (POST /:uuid/validate-open/).
 
-        Body attendu: { "validator_name": "...", "validation_date": "YYYY-MM-DD" }
+        Body : { validator_user_uuid?, validator_name?, validation_date? }
+        Au moins un des deux validator_* est requis. Si validator_user_uuid est
+        fourni, le rôle du user est validé strictement (iec ou chef_labo) ;
+        rejet 400 sinon.
         """
         data = request.data
         validated = self._validate(data, FaValidatePhaseSerializer)
-        validator_name = validated.get("validator_name", "")
+        validator_name = validated.get("validator_name") or None
+        validator_user_uuid = validated.get("validator_user_uuid")
         validation_date = validated.get("validation_date")
 
         result = validate_open_phase(
-            self.repository, uuid, validator_name, validation_date
+            self.repository,
+            uuid,
+            validator_name=validator_name,
+            validation_date=validation_date,
+            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
 
@@ -167,15 +167,21 @@ class FaController(PaginatedControllerMixin, ViewSet):
     def validate_progress(self, request, uuid=None) -> JsonResponse:
         """Valide la phase En cours et passe à Clos (POST /:uuid/validate-progress/).
 
-        Body attendu: { "validator_name": "...", "validation_date": "YYYY-MM-DD" }
+        Voir validate_open : mêmes règles validateur (rôle iec/chef_labo strict).
         """
         data = request.data
         validated = self._validate(data, FaValidatePhaseSerializer)
-        validator_name = validated.get("validator_name", "")
+        validator_name = validated.get("validator_name") or None
+        validator_user_uuid = validated.get("validator_user_uuid")
         validation_date = validated.get("validation_date")
 
         result = validate_progress_phase(
-            self.repository, uuid, validator_name, validation_date
+            self.repository,
+            uuid,
+            validator_name=validator_name,
+            validation_date=validation_date,
+            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
 
@@ -183,23 +189,22 @@ class FaController(PaginatedControllerMixin, ViewSet):
     def close(self, request, uuid=None) -> JsonResponse:
         """Ferme définitivement une FA (POST /:uuid/close/).
 
-        Body attendu: {
-            "validator_name": "...",
-            "closure_validation": "...",
-            "closure_date": "YYYY-MM-DD"
-        }
+        Voir validate_open : mêmes règles validateur (rôle iec/chef_labo strict).
         """
         data = request.data
         validated = self._validate(data, FaCloseSerializer)
-        validator_name = validated.get("validator_name", "")
+        validator_name = validated.get("validator_name") or None
+        validator_user_uuid = validated.get("validator_user_uuid")
         closure_validation = validated.get("closure_validation", "")
         closure_date = validated.get("closure_date")
 
         result = close_fa(
             self.repository,
             uuid,
-            validator_name,
-            closure_validation,
-            closure_date,
+            validator_name=validator_name,
+            closure_validation=closure_validation,
+            closure_date=closure_date,
+            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)

@@ -15,6 +15,7 @@ import {
     type CommonGasData,
 } from '@entities/fsec/steps';
 import { useNotification } from '@shared/ui';
+import { getErrorMessage } from '@shared/lib';
 
 export function useGasStepsMutations(fsecVersionId: string, computedCommonData: CommonGasData) {
     const createAirtightnessMutation = useCreateAirtightnessStep();
@@ -44,8 +45,8 @@ export function useGasStepsMutations(fsecVersionId: string, computedCommonData: 
                     });
                 }
                 showNotification('Rubrique Gaz BP supprimée', 'success');
-            } catch {
-                showNotification('Erreur lors de la suppression', 'error');
+            } catch (error) {
+                showNotification(getErrorMessage(error, 'Erreur lors de la suppression'), 'error');
             }
         },
         [deleteAirtightnessMutation, deleteGasFillingBpMutation, fsecVersionId, showNotification],
@@ -56,8 +57,8 @@ export function useGasStepsMutations(fsecVersionId: string, computedCommonData: 
         try {
             await createGasFillingHpMutation.mutateAsync({ fsecVersionId });
             showNotification('Rubrique Gaz HP ajoutée', 'success');
-        } catch {
-            showNotification('Erreur lors de la création', 'error');
+        } catch (error) {
+            showNotification(getErrorMessage(error, 'Erreur lors de la création'), 'error');
         }
     }, [isCreatingHpRubrique, createGasFillingHpMutation, fsecVersionId, showNotification]);
 
@@ -82,8 +83,8 @@ export function useGasStepsMutations(fsecVersionId: string, computedCommonData: 
                 }),
             ]);
             showNotification('Rubrique Gaz BP ajoutée', 'success');
-        } catch {
-            showNotification('Erreur lors de la création', 'error');
+        } catch (error) {
+            showNotification(getErrorMessage(error, 'Erreur lors de la création'), 'error');
         }
     }, [
         isCreatingRubrique,

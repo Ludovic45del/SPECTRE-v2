@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 import CircleIcon from '@mui/icons-material/Circle';
+import { motion } from '@shared/ui/motion';
 
 interface DonutSegment {
     label: string;
@@ -72,7 +73,7 @@ export const DonutChart = memo(function DonutChart({ segments, total, size = 180
                             strokeDashoffset={arc.dashOffset}
                             strokeLinecap="round"
                             transform={`rotate(-90 ${CENTER} ${CENTER})`}
-                            style={{ transition: 'stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease' }}
+                            style={{ transition: motion.transition(['stroke-dasharray', 'stroke-dashoffset'], 'dramatic') }}
                         />
                     ))}
                 </svg>

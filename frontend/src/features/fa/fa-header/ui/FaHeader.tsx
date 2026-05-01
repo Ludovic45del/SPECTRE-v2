@@ -23,6 +23,7 @@ import { DataChip } from '@widgets/data-chip';
 
 import { FaWorkflowStepper } from './FaWorkflowStepper';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { motion } from '@shared/ui/motion';
 
 dayjs.locale('fr');
 
@@ -107,7 +108,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                     borderRadius: '50%',
                                     bgcolor: 'background.paper',
                                     color: 'text.secondary',
-                                    transition: 'all 0.2s',
+                                    transition: `all ${motion.base}`,
                                     '&:hover': {
                                         bgcolor: 'action.hover',
                                         borderColor: 'primary.main',
@@ -189,7 +190,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                             textDecoration: 'none',
                                             fontSize: '0.8rem',
                                             fontWeight: 500,
-                                            transition: 'all 0.15s ease',
+                                            transition: `all ${motion.fast}`,
                                             '&:hover': {
                                                 bgcolor: 'primary.50',
                                                 color: 'primary.main',
@@ -215,7 +216,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                             textDecoration: 'none',
                                             fontSize: '0.8rem',
                                             fontWeight: 500,
-                                            transition: 'all 0.15s ease',
+                                            transition: `all ${motion.fast}`,
                                             '&:hover': {
                                                 bgcolor: 'primary.50',
                                                 color: 'primary.main',
@@ -255,7 +256,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                 borderRadius: '50%',
                                 bgcolor: 'background.paper',
                                 color: 'text.secondary',
-                                transition: 'all 0.2s',
+                                transition: `all ${motion.base}`,
                                 '&:hover': {
                                     bgcolor: 'error.lighter',
                                     borderColor: 'error.main',

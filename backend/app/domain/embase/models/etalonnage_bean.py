@@ -23,6 +23,7 @@ class EtalonnageBean:
     # Metadata étalonnage
     date: Optional[date] = None
     operateur: str = ""
+    operateur_user_uuid: Optional[str] = None
 
     # Metadata système
     created_at: Optional[datetime] = None

@@ -44,15 +44,11 @@ class TestFsecTeamsServiceCreate:
     """Tests pour la création de membre d'équipe FSEC."""
 
     @pytest.mark.unit
-    def test_create_fsec_team_member_success(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_create_fsec_team_member_success(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test création réussie d'un membre d'équipe FSEC."""
         mock_fsec_teams_repository.create.return_value = sample_fsec_team_bean
 
-        result = create_fsec_team_member(
-            mock_fsec_teams_repository, sample_fsec_team_bean
-        )
+        result = create_fsec_team_member(mock_fsec_teams_repository, sample_fsec_team_bean)
 
         assert result.uuid == sample_fsec_team_bean.uuid
         assert result.name == sample_fsec_team_bean.name
@@ -76,15 +72,11 @@ class TestFsecTeamsServiceCreate:
         )
 
         assert result.uuid == sample_fsec_team_bean.uuid
-        mock_fsec_repo.get_by_version_uuid.assert_called_once_with(
-            sample_fsec_team_bean.fsec_id
-        )
+        mock_fsec_repo.get_by_version_uuid.assert_called_once_with(sample_fsec_team_bean.fsec_id)
         mock_fsec_teams_repository.create.assert_called_once_with(sample_fsec_team_bean)
 
     @pytest.mark.unit
-    def test_create_fsec_team_member_parent_not_found(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_create_fsec_team_member_parent_not_found(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test NotFoundException quand le FSEC parent n'existe pas."""
         mock_fsec_repo = MagicMock()
         mock_fsec_repo.get_by_version_uuid.return_value = None  # parent absent
@@ -101,9 +93,7 @@ class TestFsecTeamsServiceCreate:
         mock_fsec_teams_repository.create.assert_not_called()
 
     @pytest.mark.unit
-    def test_create_fsec_team_member_repository_exception(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_create_fsec_team_member_repository_exception(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test que les exceptions du repository sont propagées."""
         mock_fsec_teams_repository.create.side_effect = RuntimeError("DB error")
 
@@ -111,9 +101,7 @@ class TestFsecTeamsServiceCreate:
             create_fsec_team_member(mock_fsec_teams_repository, sample_fsec_team_bean)
 
     @pytest.mark.unit
-    def test_create_duplicate_raises_conflict(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_create_duplicate_raises_conflict(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test qu'un doublon nom+role_id dans le même FSEC lève ConflictException."""
         existing_member = FsecTeamsBean(
             uuid=str(uuid.uuid4()),
@@ -134,20 +122,14 @@ class TestFsecTeamsServiceGet:
     """Tests pour la récupération de membre d'équipe FSEC."""
 
     @pytest.mark.unit
-    def test_get_fsec_team_member_by_uuid_success(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_get_fsec_team_member_by_uuid_success(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test récupération réussie par UUID."""
         mock_fsec_teams_repository.get_by_uuid.return_value = sample_fsec_team_bean
 
-        result = get_fsec_team_member_by_uuid(
-            mock_fsec_teams_repository, sample_fsec_team_bean.uuid
-        )
+        result = get_fsec_team_member_by_uuid(mock_fsec_teams_repository, sample_fsec_team_bean.uuid)
 
         assert result.uuid == sample_fsec_team_bean.uuid
-        mock_fsec_teams_repository.get_by_uuid.assert_called_once_with(
-            sample_fsec_team_bean.uuid
-        )
+        mock_fsec_teams_repository.get_by_uuid.assert_called_once_with(sample_fsec_team_bean.uuid)
 
     @pytest.mark.unit
     def test_get_fsec_team_member_by_uuid_not_found(self, mock_fsec_teams_repository):
@@ -174,14 +156,10 @@ class TestFsecTeamsServiceGet:
             sample_fsec_team_bean,
         ]
 
-        result = get_fsec_team_members(
-            mock_fsec_teams_repository, sample_fsec_version_uuid
-        )
+        result = get_fsec_team_members(mock_fsec_teams_repository, sample_fsec_version_uuid)
 
         assert len(result) == 2
-        mock_fsec_teams_repository.get_by_fsec_id.assert_called_once_with(
-            sample_fsec_version_uuid
-        )
+        mock_fsec_teams_repository.get_by_fsec_id.assert_called_once_with(sample_fsec_version_uuid)
 
     @pytest.mark.unit
     def test_get_fsec_team_members_empty(self, mock_fsec_teams_repository):
@@ -198,9 +176,7 @@ class TestFsecTeamsServiceUpdate:
     """Tests pour la mise à jour de membre d'équipe FSEC."""
 
     @pytest.mark.unit
-    def test_update_fsec_team_member_success(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_update_fsec_team_member_success(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test mise à jour réussie."""
         mock_fsec_teams_repository.get_by_uuid.return_value = sample_fsec_team_bean
         updated_bean = FsecTeamsBean(
@@ -234,9 +210,7 @@ class TestFsecTeamsServiceUpdate:
         mock_fsec_teams_repository.update.assert_not_called()
 
     @pytest.mark.unit
-    def test_update_fsec_team_member_repository_exception(
-        self, sample_fsec_team_bean, mock_fsec_teams_repository
-    ):
+    def test_update_fsec_team_member_repository_exception(self, sample_fsec_team_bean, mock_fsec_teams_repository):
         """Test que les exceptions du repository sont propagées lors de la mise à jour."""
         mock_fsec_teams_repository.get_by_uuid.return_value = sample_fsec_team_bean
         mock_fsec_teams_repository.update.side_effect = RuntimeError("DB error")
@@ -269,9 +243,7 @@ class TestFsecTeamsServiceDelete:
             delete_fsec_team_member(mock_fsec_teams_repository, fake_uuid)
 
     @pytest.mark.unit
-    def test_delete_fsec_team_member_repository_exception(
-        self, mock_fsec_teams_repository
-    ):
+    def test_delete_fsec_team_member_repository_exception(self, mock_fsec_teams_repository):
         """Test que les exceptions du repository sont propagées lors de la suppression."""
         mock_fsec_teams_repository.delete.side_effect = RuntimeError("DB error")
         member_uuid = str(uuid.uuid4())
@@ -296,10 +268,7 @@ class TestFsecTeamsModuleLogger:
     @pytest.mark.unit
     def test_logger_name(self):
         """Vérifie que le logger porte le bon nom de module."""
-        assert (
-            fsec_teams_service.logger.name
-            == "app.domain.fsec.services.fsec_teams_service"
-        )
+        assert fsec_teams_service.logger.name == "app.domain.fsec.services.fsec_teams_service"
 
 
 class TestCreateFsecTeamMemberAndOrMutants:
@@ -340,9 +309,7 @@ class TestCreateFsecTeamMemberAndOrMutants:
         mock_repo.get_by_fsec_id.return_value = []
         mock_fsec_repo = MagicMock()
 
-        result = create_fsec_team_member(
-            mock_repo, bean, fsec_repository=mock_fsec_repo
-        )
+        result = create_fsec_team_member(mock_repo, bean, fsec_repository=mock_fsec_repo)
 
         assert result is bean
         mock_fsec_repo.get_by_version_uuid.assert_not_called()

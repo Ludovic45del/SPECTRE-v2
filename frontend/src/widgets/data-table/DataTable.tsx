@@ -10,7 +10,7 @@ import {
     Box,
     Typography,
 } from '@mui/material';
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 
 export interface Column<T> {
     id: string;
@@ -41,6 +41,10 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
     }, obj);
 }
 
+const ROW_SX_CLICKABLE = { cursor: 'pointer' } as const;
+const ROW_SX_DEFAULT = { cursor: 'default' } as const;
+const EMPTY_BOX_SX = { py: 3 } as const;
+
 export function DataTable<T extends { uuid?: string; id?: number | string }>({
     columns,
     data,
@@ -49,6 +53,45 @@ export function DataTable<T extends { uuid?: string; id?: number | string }>({
     emptyMessage = 'Aucune donnée disponible',
     rowKey,
 }: DataTableProps<T>) {
+    const rowSx = onRowClick ? ROW_SX_CLICKABLE : ROW_SX_DEFAULT;
+
+    // onClick stable : référence le `onRowClick` courant via une closure unique
+    // pour éviter la création d'une fonction inline par ligne et par render.
+    const handleRowClick = useCallback(
+        (row: T) => () => {
+            onRowClick?.(row);
+        },
+        [onRowClick],
+    );
+
+    const renderedRows = useMemo(() => {
+        return data.map((row, index) => {
+            const key = rowKey ? rowKey(row) : row.uuid || row.id || index;
+            return (
+                <TableRow hover key={key} onClick={handleRowClick(row)} sx={rowSx}>
+                    {columns.map((col) => {
+                        let value;
+                        if (col.render) {
+                            value = col.render(row);
+                        } else if (typeof col.accessor === 'function') {
+                            value = col.accessor(row);
+                        } else if (typeof col.accessor === 'string') {
+                            value = getNestedValue(row, col.accessor);
+                        } else {
+                            value = '-';
+                        }
+
+                        return (
+                            <TableCell key={col.id} align={col.align}>
+                                {value as ReactNode}
+                            </TableCell>
+                        );
+                    })}
+                </TableRow>
+            );
+        });
+    }, [data, columns, rowKey, handleRowClick, rowSx]);
+
     return (
         <TableContainer component={Paper}>
             {isLoading && <LinearProgress aria-label="Chargement des données" />}
@@ -72,42 +115,13 @@ export function DataTable<T extends { uuid?: string; id?: number | string }>({
                     {!isLoading && data.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={columns.length} align="center">
-                                <Box sx={{ py: 3 }}>
+                                <Box sx={EMPTY_BOX_SX}>
                                     <Typography color="text.secondary">{emptyMessage}</Typography>
                                 </Box>
                             </TableCell>
                         </TableRow>
                     ) : (
-                        data.map((row, index) => {
-                            const key = rowKey ? rowKey(row) : row.uuid || row.id || index;
-                            return (
-                                <TableRow
-                                    hover
-                                    key={key}
-                                    onClick={() => onRowClick && onRowClick(row)}
-                                    sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
-                                >
-                                    {columns.map((col) => {
-                                        let value;
-                                        if (col.render) {
-                                            value = col.render(row);
-                                        } else if (typeof col.accessor === 'function') {
-                                            value = col.accessor(row);
-                                        } else if (typeof col.accessor === 'string') {
-                                            value = getNestedValue(row, col.accessor);
-                                        } else {
-                                            value = '-';
-                                        }
-
-                                        return (
-                                            <TableCell key={col.id} align={col.align}>
-                                                {value as ReactNode}
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
-                            );
-                        })
+                        renderedRows
                     )}
                 </TableBody>
             </Table>

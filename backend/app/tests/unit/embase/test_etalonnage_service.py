@@ -16,11 +16,7 @@ from app.domain.embase.services.etalonnage_service import (
     get_etalonnage_by_uuid,
     get_etalonnages_by_embase,
 )
-from app.domain.exceptions import (
-    ConflictException,
-    InvalidDataException,
-    NotFoundException,
-)
+from app.domain.exceptions import ConflictException, InvalidDataException, NotFoundException
 
 # ============================================================================
 # GET
@@ -31,13 +27,9 @@ class TestEtalonnageServiceGet:
     """Tests récupération d'étalonnages."""
 
     @pytest.mark.unit
-    def test_get_etalonnages_by_embase(
-        self, sample_etalonnage_bean, mock_etalonnage_repository
-    ):
+    def test_get_etalonnages_by_embase(self, sample_etalonnage_bean, mock_etalonnage_repository):
         """Test récupération des étalonnages d'une embase."""
-        mock_etalonnage_repository.get_by_embase_uuid_paginated.return_value = [
-            sample_etalonnage_bean
-        ]
+        mock_etalonnage_repository.get_by_embase_uuid_paginated.return_value = [sample_etalonnage_bean]
 
         result = get_etalonnages_by_embase(mock_etalonnage_repository, "some-uuid")
 
@@ -47,9 +39,7 @@ class TestEtalonnageServiceGet:
         )
 
     @pytest.mark.unit
-    def test_get_etalonnages_by_embase_with_voie_filter(
-        self, mock_etalonnage_repository
-    ):
+    def test_get_etalonnages_by_embase_with_voie_filter(self, mock_etalonnage_repository):
         """Test filtrage par voie."""
         mock_etalonnage_repository.get_by_embase_uuid_paginated.return_value = []
 
@@ -69,9 +59,7 @@ class TestEtalonnageServiceCreate:
     """Tests création d'étalonnage."""
 
     @pytest.mark.unit
-    def test_create_etalonnage_success(
-        self, sample_etalonnage_bean, mock_etalonnage_repository
-    ):
+    def test_create_etalonnage_success(self, sample_etalonnage_bean, mock_etalonnage_repository):
         """Test création réussie."""
         mock_embase_repo = MagicMock()
         mock_embase_repo.get_by_uuid.return_value = EmbaseBean(
@@ -81,35 +69,25 @@ class TestEtalonnageServiceCreate:
             nombre_voies=1,
         )
         mock_etalonnage_repository.create.return_value = sample_etalonnage_bean
-        mock_etalonnage_repository.get_latest_by_embase_voie.return_value = (
-            sample_etalonnage_bean
-        )
+        mock_etalonnage_repository.get_latest_by_embase_voie.return_value = sample_etalonnage_bean
 
-        result = create_etalonnage(
-            mock_etalonnage_repository, mock_embase_repo, sample_etalonnage_bean
-        )
+        result = create_etalonnage(mock_etalonnage_repository, mock_embase_repo, sample_etalonnage_bean)
 
         assert result.voie == 1
         mock_etalonnage_repository.create.assert_called_once()
         mock_embase_repo.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_create_etalonnage_embase_not_found(
-        self, sample_etalonnage_bean, mock_etalonnage_repository
-    ):
+    def test_create_etalonnage_embase_not_found(self, sample_etalonnage_bean, mock_etalonnage_repository):
         """Test NotFoundException si embase inexistante."""
         mock_embase_repo = MagicMock()
         mock_embase_repo.get_by_uuid.return_value = None
 
         with pytest.raises(NotFoundException):
-            create_etalonnage(
-                mock_etalonnage_repository, mock_embase_repo, sample_etalonnage_bean
-            )
+            create_etalonnage(mock_etalonnage_repository, mock_embase_repo, sample_etalonnage_bean)
 
     @pytest.mark.unit
-    def test_create_etalonnage_voie2_on_single_voie_raises_error(
-        self, mock_etalonnage_repository
-    ):
+    def test_create_etalonnage_voie2_on_single_voie_raises_error(self, mock_etalonnage_repository):
         """Test InvalidDataException si voie 2 sur embase 1 voie."""
         mock_embase_repo = MagicMock()
         mock_embase_repo.get_by_uuid.return_value = EmbaseBean(
@@ -124,9 +102,7 @@ class TestEtalonnageServiceCreate:
             create_etalonnage(mock_etalonnage_repository, mock_embase_repo, bean)
 
     @pytest.mark.unit
-    def test_create_etalonnage_duplicate_raises_conflict(
-        self, mock_etalonnage_repository
-    ):
+    def test_create_etalonnage_duplicate_raises_conflict(self, mock_etalonnage_repository):
         """Test ConflictException si doublon embase/voie/date."""
         mock_embase_repo = MagicMock()
         mock_embase_repo.get_by_uuid.return_value = EmbaseBean(
@@ -155,18 +131,14 @@ class TestEtalonnageServiceDelete:
     def test_delete_etalonnage_success(self, mock_etalonnage_repository):
         """Test suppression réussie."""
         mock_embase_repo = MagicMock()
-        mock_embase_repo.get_by_uuid.return_value = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz"
-        )
+        mock_embase_repo.get_by_uuid.return_value = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz")
         mock_etalonnage_repository.get_by_uuid.return_value = EtalonnageBean(
             uuid="some-uuid", embase_uuid="embase-uuid", voie=1
         )
         mock_etalonnage_repository.delete.return_value = True
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
-        result = delete_etalonnage(
-            mock_etalonnage_repository, mock_embase_repo, "some-uuid"
-        )
+        result = delete_etalonnage(mock_etalonnage_repository, mock_embase_repo, "some-uuid")
         assert result is True
 
     @pytest.mark.unit
@@ -201,19 +173,13 @@ class TestEtalonnageServiceGetByUuid:
     """Tests get_etalonnage_by_uuid."""
 
     @pytest.mark.unit
-    def test_get_by_uuid_success(
-        self, sample_etalonnage_bean, mock_etalonnage_repository
-    ):
+    def test_get_by_uuid_success(self, sample_etalonnage_bean, mock_etalonnage_repository):
         mock_etalonnage_repository.get_by_uuid.return_value = sample_etalonnage_bean
 
-        result = get_etalonnage_by_uuid(
-            mock_etalonnage_repository, sample_etalonnage_bean.uuid
-        )
+        result = get_etalonnage_by_uuid(mock_etalonnage_repository, sample_etalonnage_bean.uuid)
 
         assert result is sample_etalonnage_bean
-        mock_etalonnage_repository.get_by_uuid.assert_called_once_with(
-            sample_etalonnage_bean.uuid
-        )
+        mock_etalonnage_repository.get_by_uuid.assert_called_once_with(sample_etalonnage_bean.uuid)
 
     @pytest.mark.unit
     def test_get_by_uuid_not_found(self, mock_etalonnage_repository):
@@ -238,9 +204,7 @@ class TestEtalonnageServiceGetExtra:
     def test_get_with_pagination(self, mock_etalonnage_repository):
         mock_etalonnage_repository.get_by_embase_uuid_paginated.return_value = []
 
-        get_etalonnages_by_embase(
-            mock_etalonnage_repository, "uuid", voie=1, limit=10, offset=5
-        )
+        get_etalonnages_by_embase(mock_etalonnage_repository, "uuid", voie=1, limit=10, offset=5)
 
         mock_etalonnage_repository.get_by_embase_uuid_paginated.assert_called_once_with(
             "uuid", voie=1, limit=10, offset=5
@@ -271,22 +235,16 @@ class TestEtalonnageServiceCount:
         result = count_etalonnages_by_embase(mock_etalonnage_repository, "uuid-1")
 
         assert result == 5
-        mock_etalonnage_repository.count_by_embase_uuid.assert_called_once_with(
-            "uuid-1", voie=None
-        )
+        mock_etalonnage_repository.count_by_embase_uuid.assert_called_once_with("uuid-1", voie=None)
 
     @pytest.mark.unit
     def test_count_with_voie(self, mock_etalonnage_repository):
         mock_etalonnage_repository.count_by_embase_uuid.return_value = 3
 
-        result = count_etalonnages_by_embase(
-            mock_etalonnage_repository, "uuid-1", voie=2
-        )
+        result = count_etalonnages_by_embase(mock_etalonnage_repository, "uuid-1", voie=2)
 
         assert result == 3
-        mock_etalonnage_repository.count_by_embase_uuid.assert_called_once_with(
-            "uuid-1", voie=2
-        )
+        mock_etalonnage_repository.count_by_embase_uuid.assert_called_once_with("uuid-1", voie=2)
 
     @pytest.mark.unit
     def test_count_returns_zero(self, mock_etalonnage_repository):
@@ -309,9 +267,7 @@ class TestEtalonnageServiceCreateExtra:
     def test_create_returns_repository_result(self, mock_etalonnage_repository):
         """Verify create returns exactly what repository returns."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=2
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=2)
         mock_embase_repo.get_by_uuid.return_value = embase
         expected = EtalonnageBean(uuid="new-uuid", embase_uuid="embase-uuid", voie=1)
         mock_etalonnage_repository.create.return_value = expected
@@ -326,13 +282,9 @@ class TestEtalonnageServiceCreateExtra:
     def test_create_voie1_on_2voie_embase_succeeds(self, mock_etalonnage_repository):
         """Voie 1 is always valid regardless of nombre_voies."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="hp", nombre_voies=2
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="hp", nombre_voies=2)
         mock_embase_repo.get_by_uuid.return_value = embase
-        mock_etalonnage_repository.create.return_value = EtalonnageBean(
-            embase_uuid="embase-uuid", voie=1
-        )
+        mock_etalonnage_repository.create.return_value = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=1, date=date(2025, 1, 1))
@@ -344,13 +296,9 @@ class TestEtalonnageServiceCreateExtra:
     def test_create_voie2_on_2voie_embase_succeeds(self, mock_etalonnage_repository):
         """Voie 2 is valid when embase has 2 voies."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="hp", nombre_voies=2
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="hp", nombre_voies=2)
         mock_embase_repo.get_by_uuid.return_value = embase
-        mock_etalonnage_repository.create.return_value = EtalonnageBean(
-            embase_uuid="embase-uuid", voie=2
-        )
+        mock_etalonnage_repository.create.return_value = EtalonnageBean(embase_uuid="embase-uuid", voie=2)
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=2)
@@ -359,18 +307,12 @@ class TestEtalonnageServiceCreateExtra:
         assert result.voie == 2
 
     @pytest.mark.unit
-    def test_create_without_date_skips_duplicate_check(
-        self, mock_etalonnage_repository
-    ):
+    def test_create_without_date_skips_duplicate_check(self, mock_etalonnage_repository):
         """If bean.date is None, no duplicate check is performed."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
-        mock_etalonnage_repository.create.return_value = EtalonnageBean(
-            embase_uuid="embase-uuid", voie=1
-        )
+        mock_etalonnage_repository.create.return_value = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=1, date=None)
@@ -393,9 +335,7 @@ class TestEtalonnageServiceCreateExtra:
     @pytest.mark.unit
     def test_create_invalid_data_message_for_voie2(self, mock_etalonnage_repository):
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G42", type="bp", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G42", type="bp", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=2)
@@ -408,9 +348,7 @@ class TestEtalonnageServiceCreateExtra:
     @pytest.mark.unit
     def test_create_conflict_exception_details(self, mock_etalonnage_repository):
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
         mock_etalonnage_repository.exists_by_embase_voie_date.return_value = True
 
@@ -427,13 +365,9 @@ class TestEtalonnageServiceCreateExtra:
     def test_create_calls_sync_after_create(self, mock_etalonnage_repository):
         """Verify sync_embase_mesures is called after successful creation."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
-        mock_etalonnage_repository.create.return_value = EtalonnageBean(
-            embase_uuid="embase-uuid", voie=1
-        )
+        mock_etalonnage_repository.create.return_value = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
@@ -494,9 +428,7 @@ class TestEtalonnageServiceDeleteExtra:
         mock_etalonnage_repository.delete.return_value = True
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
-        result = delete_etalonnage(
-            mock_etalonnage_repository, mock_embase_repo, "etal-uuid"
-        )
+        result = delete_etalonnage(mock_etalonnage_repository, mock_embase_repo, "etal-uuid")
 
         assert result is True
 
@@ -512,9 +444,7 @@ class TestEtalonnageServiceDeleteExtra:
         assert exc_info.value.identifier == "uuid-xyz"
 
     @pytest.mark.unit
-    def test_delete_repo_returns_false_raises_not_found(
-        self, mock_etalonnage_repository
-    ):
+    def test_delete_repo_returns_false_raises_not_found(self, mock_etalonnage_repository):
         """If repo.delete returns False, a second NotFoundException is raised."""
         mock_embase_repo = MagicMock()
         mock_etalonnage_repository.get_by_uuid.return_value = EtalonnageBean(
@@ -540,15 +470,11 @@ class TestEtalonnageServiceDeleteExtra:
         delete_etalonnage(mock_etalonnage_repository, mock_embase_repo, "etal-uuid")
 
         # sync called with voie=2
-        mock_etalonnage_repository.get_latest_by_embase_voie.assert_called_once_with(
-            "embase-uuid", 2
-        )
+        mock_etalonnage_repository.get_latest_by_embase_voie.assert_called_once_with("embase-uuid", 2)
         mock_embase_repo.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_delete_sync_clears_v2_fields_when_no_latest(
-        self, mock_etalonnage_repository
-    ):
+    def test_delete_sync_clears_v2_fields_when_no_latest(self, mock_etalonnage_repository):
         """After deleting last etal for voie 2, V2 fields should be None."""
         mock_embase_repo = MagicMock()
         embase = EmbaseBean(
@@ -577,9 +503,7 @@ class TestEtalonnageServiceDeleteExtra:
     @pytest.mark.unit
     def test_delete_calls_repo_delete_with_uuid(self, mock_etalonnage_repository):
         mock_embase_repo = MagicMock()
-        mock_embase_repo.get_by_uuid.return_value = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz"
-        )
+        mock_embase_repo.get_by_uuid.return_value = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz")
         mock_etalonnage_repository.get_by_uuid.return_value = EtalonnageBean(
             uuid="target-uuid", embase_uuid="embase-uuid", voie=1
         )
@@ -600,14 +524,10 @@ class TestEtalonnageServiceMutationKilling:
     """Kill mutants on error message content and logger messages."""
 
     @pytest.mark.unit
-    def test_create_voie2_error_contains_voie_2_non_disponible(
-        self, mock_etalonnage_repository
-    ):
+    def test_create_voie2_error_contains_voie_2_non_disponible(self, mock_etalonnage_repository):
         """Verify InvalidDataException message contains 'Voie 2 non disponible'."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="bp", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="bp", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=2)
@@ -623,20 +543,14 @@ class TestEtalonnageServiceMutationKilling:
         from unittest.mock import patch
 
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
-        mock_etalonnage_repository.create.return_value = EtalonnageBean(
-            embase_uuid="embase-uuid", voie=1
-        )
+        mock_etalonnage_repository.create.return_value = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
         bean = EtalonnageBean(embase_uuid="embase-uuid", voie=1)
 
-        with patch(
-            "app.domain.embase.services.etalonnage_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.embase.services.etalonnage_service.logger") as mock_logger:
             create_etalonnage(mock_etalonnage_repository, mock_embase_repo, bean)
             mock_logger.info.assert_called()
             log_msg = mock_logger.info.call_args[0][0]
@@ -656,23 +570,17 @@ class TestEtalonnageServiceMutationKilling:
         mock_etalonnage_repository.delete.return_value = True
         mock_etalonnage_repository.get_latest_by_embase_voie.return_value = None
 
-        with patch(
-            "app.domain.embase.services.etalonnage_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.embase.services.etalonnage_service.logger") as mock_logger:
             delete_etalonnage(mock_etalonnage_repository, mock_embase_repo, "etal-uuid")
             mock_logger.info.assert_called()
             log_msg = mock_logger.info.call_args[0][0]
             assert "supprimé" in log_msg
 
     @pytest.mark.unit
-    def test_create_conflict_field_is_embase_voie_date(
-        self, mock_etalonnage_repository
-    ):
+    def test_create_conflict_field_is_embase_voie_date(self, mock_etalonnage_repository):
         """Verify ConflictException field is 'embase/voie/date'."""
         mock_embase_repo = MagicMock()
-        embase = EmbaseBean(
-            uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1
-        )
+        embase = EmbaseBean(uuid="embase-uuid", identifier="G01", type="jet_de_gaz", nombre_voies=1)
         mock_embase_repo.get_by_uuid.return_value = embase
         mock_etalonnage_repository.exists_by_embase_voie_date.return_value = True
 

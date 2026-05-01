@@ -235,7 +235,7 @@ describe('FaCreateSchema', () => {
     it('should validate valid create data', () => {
         const createData = {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie détectée',
             quickAnalysis: 'Analyse rapide',
@@ -250,7 +250,7 @@ describe('FaCreateSchema', () => {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
             fsecStepId: 1,
             fsecStepOther: 'Autre précision',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie détectée',
             locationEquipment: 'Banc 1',
@@ -264,7 +264,7 @@ describe('FaCreateSchema', () => {
 
     it('should reject missing required fsecVersionId', () => {
         const createData = {
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie',
             quickAnalysis: 'Analyse',
@@ -277,7 +277,7 @@ describe('FaCreateSchema', () => {
     it('should reject invalid fsecVersionId format', () => {
         const createData = {
             fsecVersionId: 'not-a-uuid',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie',
             quickAnalysis: 'Analyse',
@@ -318,7 +318,7 @@ describe('FaCreateSchema', () => {
     it('should reject empty observation', () => {
         const createData = {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: '',
             quickAnalysis: 'Analyse',
@@ -331,7 +331,7 @@ describe('FaCreateSchema', () => {
     it('should reject empty quickAnalysis', () => {
         const createData = {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie',
             quickAnalysis: '',
@@ -404,7 +404,7 @@ describe('faCreateToApi', () => {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
             fsecStepId: 1,
             fsecStepOther: null,
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie détectée',
             locationEquipment: 'Banc 1',
@@ -417,7 +417,7 @@ describe('faCreateToApi', () => {
         expect(apiData.fsec_version_id).toBe('123e4567-e89b-12d3-a456-426614174000');
         expect(apiData.fsec_step_id).toBe(1);
         expect(apiData.fsec_step_other).toBeNull();
-        expect(apiData.discoverer).toBe('John Doe');
+        expect(apiData.discoverer_user_uuid).toBe('11111111-1111-1111-1111-111111111111');
         expect(apiData.event_date).toBe('2024-01-15');
         expect(apiData.observation).toBe('Anomalie détectée');
         expect(apiData.location_equipment).toBe('Banc 1');
@@ -428,7 +428,7 @@ describe('faCreateToApi', () => {
     it('should handle undefined optional fields', () => {
         const createData = {
             fsecVersionId: '123e4567-e89b-12d3-a456-426614174000',
-            discoverer: 'John Doe',
+            discovererUserUuid: '11111111-1111-1111-1111-111111111111',
             eventDate: new Date('2024-01-15'),
             observation: 'Anomalie',
             quickAnalysis: 'Analyse',

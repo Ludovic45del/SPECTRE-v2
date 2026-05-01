@@ -9,6 +9,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getStatusInfo, getCategoryInfo } from '@entities/fsec';
 import { DataChip } from '@widgets/data-chip';
 import type { FsecWithCampaign } from '../fsec-list-utils';
+import { motion } from '@shared/ui/motion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -42,7 +43,7 @@ export const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate, onNav
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 },
@@ -65,7 +66,7 @@ export const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate, onNav
                             py: 0.25,
                             mx: -1,
                             borderRadius: 0.5,
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            transition: `all ${motion.base}`,
                             '&:hover': {
                                 color: 'primary.dark',
                                 backgroundColor: alpha(theme.palette.primary.main, 0.08),

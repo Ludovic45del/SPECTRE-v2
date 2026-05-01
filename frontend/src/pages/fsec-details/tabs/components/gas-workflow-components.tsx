@@ -10,11 +10,11 @@
 
 import { Box, Button, Chip, Divider, Grid, IconButton, Stack, Typography } from '@mui/material';
 import ScienceIcon from '@mui/icons-material/Science';
-import AirIcon from '@mui/icons-material/Air';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import dayjs from 'dayjs';
 import type { AirtightnessStep, CommonGasData, GasFillingBpStep } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 
 // ─── Date formatters ────────────────────────────────────────────────────
 
@@ -151,15 +151,11 @@ export function BpRubriqueItem({
             <Box mb={2}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                        <ScienceIcon
-                            fontSize="small"
-                            color={airtightnessStep?.dateOfFulfilment ? 'success' : 'primary'}
-                        />
                         <Typography variant="subtitle1" fontWeight={600}>
                             Test d&apos;étanchéité
                         </Typography>
                         {airtightnessStep?.dateOfFulfilment && (
-                            <Chip label="Fait" size="small" color="success" variant="filled" sx={{ height: 20 }} />
+                            <Chip label="Fait" color="success" />
                         )}
                     </Stack>
                     <IconButton
@@ -188,8 +184,19 @@ export function BpRubriqueItem({
                             <Typography variant="caption" color="text.secondary">
                                 Opérateur
                             </Typography>
+                            <Box>
+                                <UserChip
+                                    userUuid={airtightnessStep.operatorUserUuid}
+                                    fallbackText={airtightnessStep.operator}
+                                />
+                            </Box>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                            <Typography variant="caption" color="text.secondary">
+                                Embase
+                            </Typography>
                             <Typography variant="body2" fontWeight="medium">
-                                {airtightnessStep.operator || '-'}
+                                {airtightnessStep.embaseIdentifier ?? '-'}
                             </Typography>
                         </Grid>
                     </Grid>
@@ -206,12 +213,11 @@ export function BpRubriqueItem({
             <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                        <AirIcon fontSize="small" color={fillingStep?.dateOfFulfilment ? 'success' : 'action'} />
                         <Typography variant="subtitle1" fontWeight={600}>
                             Remplissage
                         </Typography>
                         {fillingStep?.dateOfFulfilment && (
-                            <Chip label="Fait" size="small" color="success" variant="filled" sx={{ height: 20 }} />
+                            <Chip label="Fait" color="success" />
                         )}
                     </Stack>
                     <IconButton
@@ -240,9 +246,12 @@ export function BpRubriqueItem({
                             <Typography variant="caption" color="text.secondary">
                                 Opérateur
                             </Typography>
-                            <Typography variant="body2" fontWeight="medium">
-                                {fillingStep.operator || '-'}
-                            </Typography>
+                            <Box>
+                                <UserChip
+                                    userUuid={fillingStep.operatorUserUuid}
+                                    fallbackText={fillingStep.operator}
+                                />
+                            </Box>
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="caption" color="text.secondary">
@@ -258,6 +267,14 @@ export function BpRubriqueItem({
                             </Typography>
                             <Typography variant="body2" fontWeight="medium">
                                 {fillingStep.gasContainer ?? '-'}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                            <Typography variant="caption" color="text.secondary">
+                                Embase
+                            </Typography>
+                            <Typography variant="body2" fontWeight="medium">
+                                {fillingStep.embaseIdentifier ?? '-'}
                             </Typography>
                         </Grid>
                         {fillingStep.observations && (

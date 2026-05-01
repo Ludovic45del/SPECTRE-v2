@@ -26,6 +26,7 @@ import {
     METROLOGY_MACHINES_LIST,
     FSEC_RACKS_LIST,
 } from '@entities/fsec/steps';
+import { UserSelect } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -40,7 +41,7 @@ interface MetrologyStepModalProps {
 const MetrologyStepFormSchema = z.object({
     machineId: z.number().nullable().optional(),
     rackId: z.number().nullable().optional(),
-    metrologistName: z.string().min(1, 'Champ requis'),
+    metrologistUserUuid: z.string().uuid('Métrologue requis'),
     date: z.date({ required_error: 'Date requise' }),
     comments: z.string().nullable().optional(),
 });
@@ -62,7 +63,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
         defaultValues: {
             machineId: null,
             rackId: null,
-            metrologistName: '',
+            metrologistUserUuid: '',
             date: undefined,
             comments: '',
         },
@@ -74,7 +75,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                 reset({
                     machineId: step.machineId,
                     rackId: step.rackId,
-                    metrologistName: step.metrologistName ?? '',
+                    metrologistUserUuid: step.metrologistUserUuid ?? '',
                     date: step.date ?? undefined,
                     comments: step.comments ?? '',
                 });
@@ -82,7 +83,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                 reset({
                     machineId: null,
                     rackId: null,
-                    metrologistName: '',
+                    metrologistUserUuid: '',
                     date: undefined,
                     comments: '',
                 });
@@ -104,7 +105,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                         fsecVersionId,
                         machineId: data.machineId,
                         rackId: data.rackId,
-                        metrologistName: data.metrologistName,
+                        metrologistUserUuid: data.metrologistUserUuid,
                         date: data.date,
                         comments: data.comments,
                     });
@@ -114,7 +115,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                         fsecVersionId,
                         machineId: data.machineId,
                         rackId: data.rackId,
-                        metrologistName: data.metrologistName,
+                        metrologistUserUuid: data.metrologistUserUuid,
                         date: data.date,
                         comments: data.comments,
                     });
@@ -181,18 +182,19 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                     )}
                 />
 
-                {/* Nom du métrologue */}
+                {/* Métrologue (dropdown connecté à la base users) */}
                 <Controller
-                    name="metrologistName"
+                    name="metrologistUserUuid"
                     control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
-                            label="Nom du métrologue"
-                            size="small"
-                            fullWidth
-                            inputProps={{ 'aria-label': 'Nom du métrologue' }}
+                    render={({ field, fieldState }) => (
+                        <UserSelect
+                            value={field.value || null}
+                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                            roles={['metrologue']}
+                            label="Métrologue"
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
                         />
                     )}
                 />

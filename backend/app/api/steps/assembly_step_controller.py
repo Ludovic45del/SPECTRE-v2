@@ -7,13 +7,8 @@ from rest_framework.decorators import action
 from app.api.shared.base_step_controller import BaseStepController
 from app.api.steps.serializers import AssemblyStepSerializer
 from app.domain.steps.services.steps_service import get_steps_by_fsec_version_id
-from app.mapper.steps.assembly_step_mapper import (
-    assembly_step_mapper_api_to_bean,
-    assembly_step_mapper_bean_to_api,
-)
-from app.repository.steps.repositories.assembly_step_repository import (
-    AssemblyStepRepository,
-)
+from app.mapper.steps.assembly_step_mapper import assembly_step_mapper_api_to_bean, assembly_step_mapper_bean_to_api
+from app.repository.steps.repositories.assembly_step_repository import AssemblyStepRepository
 
 
 class AssemblyStepController(BaseStepController):

@@ -7,6 +7,7 @@ import { useCallback, memo } from 'react';
 import { Typography, TableCell, TableRow, IconButton, Tooltip, alpha, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import type { EmbaseFsecHistoryItem } from '@entities/embase';
+import { motion } from '@shared/ui/motion';
 
 interface FsecHistoryRowProps {
     item: EmbaseFsecHistoryItem;
@@ -29,7 +30,7 @@ export const FsecHistoryRow = memo(function FsecHistoryRow({ item, onNavigate }:
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 },

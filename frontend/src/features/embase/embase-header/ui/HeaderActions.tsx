@@ -9,6 +9,7 @@ import { Stack, IconButton, Tooltip, Menu, MenuItem, ListItemText } from '@mui/m
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import { motion } from '@shared/ui/motion';
 
 /* ── Module-level constants (R-PERF-05) ─────────────────────────── */
 
@@ -20,7 +21,7 @@ const actionButtonBaseSx = {
     borderRadius: '50%',
     bgcolor: 'background.paper',
     color: 'text.secondary',
-    transition: 'all 0.2s',
+    transition: `all ${motion.base}`,
 } as const;
 
 /* ── ActionButton sub-component ─────────────────────────────────── */

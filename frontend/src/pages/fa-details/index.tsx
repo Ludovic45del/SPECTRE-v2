@@ -10,6 +10,7 @@ import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { useParams, useLocation } from 'react-router-dom';
 import { useFa } from '@entities/fa';
 import { FaHeader } from '@features/fa';
+import { RouteTransition } from '@shared/ui/RouteTransition';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
 import { Phase1Tab } from './tabs/Phase1Tab';
 import { Phase23Tab } from './tabs/Phase23Tab';
@@ -67,12 +68,14 @@ export default function FaDetailsPage() {
             {/* Tab content */}
             <QueryErrorResetBoundary>
                 {({ reset }) => (
-                    <Box sx={{ mt: 3 }}>
-                        {(location.pathname.includes('/phase1') || location.pathname.endsWith(uuid)) && (
-                            <Phase1Tab fa={fa} onReset={reset} />
-                        )}
-                        {location.pathname.includes('/phase23') && <Phase23Tab fa={fa} onReset={reset} />}
-                    </Box>
+                    <RouteTransition>
+                        <Box sx={{ mt: 3 }}>
+                            {(location.pathname.includes('/phase1') || location.pathname.endsWith(uuid)) && (
+                                <Phase1Tab fa={fa} onReset={reset} />
+                            )}
+                            {location.pathname.includes('/phase23') && <Phase23Tab fa={fa} onReset={reset} />}
+                        </Box>
+                    </RouteTransition>
                 )}
             </QueryErrorResetBoundary>
         </Container>

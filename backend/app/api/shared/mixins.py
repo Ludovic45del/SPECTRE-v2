@@ -33,9 +33,7 @@ class PaginatedControllerMixin:
     Requires self.paginator to be set (a PageNumberPagination instance).
     """
 
-    def paginate_or_json(
-        self, request, source_data, mapper=lambda x: x
-    ) -> JsonResponse:
+    def paginate_or_json(self, request, source_data, mapper=lambda x: x) -> JsonResponse:
         """Return paginated response if ?page= is present, else full list.
 
         Args:

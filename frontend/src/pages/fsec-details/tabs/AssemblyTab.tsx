@@ -8,16 +8,28 @@
 import { useState } from 'react';
 import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material';
 import { AssemblyStep, useAssemblyStepsByFsec } from '@entities/fsec/steps';
+import { UserChip } from '@entities/user';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import dayjs from 'dayjs';
 import { AssemblyStepModal } from '@features/fsec/edit-assembly';
+import { AssemblyItemsSection } from '@features/fsec/link-stock-elements';
 import { WorkflowMiniStepper } from './components/MiniStepper';
+
+/**
+ * ID du statut FSEC "Tirée" (cf. backend `FSEC_STATUS_ID_TIREE`, CDC §4.3).
+ * Quand la FSEC atteint ce statut, le tableau récap des éléments est verrouillé.
+ */
+const FSEC_STATUS_ID_TIREE = 7;
 
 interface AssemblyTabProps {
     fsecVersionId: string;
+    /** UUID logique partagé entre versions FSEC (utilisé par le tableau récap stock). */
+    fsecUuid: string;
+    /** ID du statut FSEC courant — verrouille le tableau récap si === 7 (Tirée). */
+    fsecStatusId: number;
 }
 
 // Referential - Assembly benches
@@ -62,7 +74,7 @@ function AssemblyStepCard({ step, index, onEdit }: { step: AssemblyStep; index: 
                     <Typography variant="h6" fontWeight={600}>
                         Assemblage n°{index + 1}
                     </Typography>
-                    {isEndComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isEndComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <WorkflowMiniStepper activeStep={activeStep} steps={ASSEMBLY_WORKFLOW_STEPS} />
@@ -100,11 +112,9 @@ function AssemblyStepCard({ step, index, onEdit }: { step: AssemblyStep; index: 
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary">
-                                Température hydrométrique
+                                Assembleur
                             </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.hydrometricTemperature !== null ? `${step.hydrometricTemperature}°C` : '-'}
-                            </Typography>
+                            <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary">
@@ -148,7 +158,7 @@ function EmptyAssemblyCard({ onAdd }: { onAdd: () => void }) {
     );
 }
 
-export function AssemblyTab({ fsecVersionId }: AssemblyTabProps) {
+export function AssemblyTab({ fsecVersionId, fsecUuid, fsecStatusId }: AssemblyTabProps) {
     const { data: assemblySteps } = useAssemblyStepsByFsec(fsecVersionId);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedStep, setSelectedStep] = useState<AssemblyStep | null>(null);
@@ -168,9 +178,13 @@ export function AssemblyTab({ fsecVersionId }: AssemblyTabProps) {
         setSelectedStep(null);
     };
 
+    const isFsecLocked = fsecStatusId === FSEC_STATUS_ID_TIREE;
+
     return (
         <Box>
             <Stack spacing={3}>
+                <AssemblyItemsSection fsecUuid={fsecUuid} isLocked={isFsecLocked} />
+
                 {assemblySteps?.length ? (
                     <>
                         {assemblySteps.map((step, index) => (

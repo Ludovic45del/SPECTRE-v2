@@ -4,7 +4,7 @@
  *
  * Fields from backend:
  * - fsec_version_id (required)
- * - hydrometric_temperature
+ * - operator / operator_user_uuid (Assembleur)
  * - start_date
  * - end_date
  * - comments
@@ -24,6 +24,7 @@ import {
     useUpdateAssemblyStep,
     useDeleteAssemblyStep,
 } from '@entities/fsec/steps';
+import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -36,7 +37,7 @@ interface AssemblyStepModalProps {
 }
 
 const AssemblyStepFormSchema = z.object({
-    hydrometricTemperature: z.number().finite().nullable().optional(),
+    operatorUserUuid: z.string().uuid('Assembleur requis'),
     startDate: z.date({ required_error: 'Date requise' }),
     endDate: z.date().nullable().optional(),
     comments: z.string().nullable().optional(),
@@ -65,7 +66,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
         mode: 'onBlur',
         resolver: zodResolver(AssemblyStepFormSchema),
         defaultValues: {
-            hydrometricTemperature: null,
+            operatorUserUuid: '',
             startDate: undefined,
             endDate: null,
             comments: '',
@@ -79,7 +80,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
         if (open) {
             if (step) {
                 reset({
-                    hydrometricTemperature: step.hydrometricTemperature,
+                    operatorUserUuid: step.operatorUserUuid ?? '',
                     startDate: step.startDate ?? undefined,
                     endDate: step.endDate,
                     comments: step.comments ?? '',
@@ -87,7 +88,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                 });
             } else {
                 reset({
-                    hydrometricTemperature: null,
+                    operatorUserUuid: '',
                     startDate: undefined,
                     endDate: null,
                     comments: '',
@@ -124,7 +125,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     await updateMutation.mutateAsync({
                         uuid: step.uuid,
                         fsecVersionId,
-                        hydrometricTemperature: data.hydrometricTemperature,
+                        operatorUserUuid: data.operatorUserUuid,
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
@@ -134,7 +135,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                 } else {
                     await createMutation.mutateAsync({
                         fsecVersionId,
-                        hydrometricTemperature: data.hydrometricTemperature,
+                        operatorUserUuid: data.operatorUserUuid,
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
@@ -228,23 +229,19 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     </Grid2>
                 </Grid2>
 
-                {/* Temperature */}
+                {/* Assembleur */}
                 <Controller
-                    name="hydrometricTemperature"
+                    name="operatorUserUuid"
                     control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                field.onChange(val === '' ? null : parseFloat(val));
-                            }}
-                            label="Température hydrométrique (°C)"
-                            type="number"
-                            size="small"
-                            fullWidth
-                            inputProps={{ step: 0.1, 'aria-label': 'Température hydrométrique en degrés Celsius' }}
+                    render={({ field, fieldState }) => (
+                        <UserSelect
+                            value={field.value || null}
+                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                            roles={[...SPECTRE_OPERATOR_ROLES]}
+                            label="Assembleur"
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
                         />
                     )}
                 />

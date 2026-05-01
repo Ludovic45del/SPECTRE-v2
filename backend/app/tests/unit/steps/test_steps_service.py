@@ -171,9 +171,7 @@ class TestStepsServiceGet:
         mock_repo = MagicMock()
         mock_repo.get_by_uuid.return_value = sample_assembly_step_bean
 
-        result = get_step_by_uuid(
-            mock_repo, sample_assembly_step_bean.uuid, "AssemblyStep"
-        )
+        result = get_step_by_uuid(mock_repo, sample_assembly_step_bean.uuid, "AssemblyStep")
 
         assert result is sample_assembly_step_bean
         mock_repo.get_by_uuid.assert_called_once_with(sample_assembly_step_bean.uuid)
@@ -207,15 +205,11 @@ class TestStepsServiceGet:
         mock_repo = MagicMock()
         mock_repo.get_by_fsec_version_id.return_value = [sample_assembly_step_bean]
 
-        result = get_steps_by_fsec_version_id(
-            mock_repo, sample_assembly_step_bean.fsec_version_id
-        )
+        result = get_steps_by_fsec_version_id(mock_repo, sample_assembly_step_bean.fsec_version_id)
 
         assert len(result) == 1
         assert result[0] is sample_assembly_step_bean
-        mock_repo.get_by_fsec_version_id.assert_called_once_with(
-            sample_assembly_step_bean.fsec_version_id
-        )
+        mock_repo.get_by_fsec_version_id.assert_called_once_with(sample_assembly_step_bean.fsec_version_id)
 
     def test_get_steps_by_fsec_version_id_empty(self):
         mock_repo = MagicMock()
@@ -238,9 +232,7 @@ class TestStepsServiceUpdate:
     def test_update_step_success(self, sample_assembly_step_bean):
         mock_repo = MagicMock()
         mock_repo.get_by_uuid.return_value = sample_assembly_step_bean
-        updated_bean = _FakeStepBean(
-            uuid=sample_assembly_step_bean.uuid, comments="Modifie"
-        )
+        updated_bean = _FakeStepBean(uuid=sample_assembly_step_bean.uuid, comments="Modifie")
         mock_repo.update.return_value = updated_bean
 
         result = update_step(mock_repo, updated_bean, "AssemblyStep")
@@ -378,19 +370,14 @@ class TestGetAllGasStepsByFsec:
         bean_a = _FakeStepBean(uuid="a1")
         bean_b = _FakeStepBean(uuid="b1")
 
-        mock_repos["airtightness_test_lp"].get_by_fsec_version_id.return_value = [
-            bean_a
-        ]
+        mock_repos["airtightness_test_lp"].get_by_fsec_version_id.return_value = [bean_a]
         mock_repos["gas_filling_bp"].get_by_fsec_version_id.return_value = [bean_b]
         mock_repos["gas_filling_hp"].get_by_fsec_version_id.return_value = []
         mock_repos["permeation"].get_by_fsec_version_id.return_value = []
         mock_repos["depressurization"].get_by_fsec_version_id.return_value = []
         mock_repos["repressurization"].get_by_fsec_version_id.return_value = []
 
-        mock_mappers = {
-            key: MagicMock(side_effect=lambda b: {"uuid": b.uuid})
-            for key in mock_repos.keys()
-        }
+        mock_mappers = {key: MagicMock(side_effect=lambda b: {"uuid": b.uuid}) for key in mock_repos.keys()}
 
         result = get_all_gas_steps_by_fsec(mock_repos, mock_mappers, "fsec-v1")
 
@@ -425,9 +412,7 @@ class TestGetAllGasStepsByFsec:
         mock_repo.get_by_fsec_version_id.return_value = [bean1, bean2]
         mock_mapper = MagicMock(side_effect=lambda b: {"uuid": b.uuid})
 
-        result = get_all_gas_steps_by_fsec(
-            {"step_type": mock_repo}, {"step_type": mock_mapper}, "fsec-v1"
-        )
+        result = get_all_gas_steps_by_fsec({"step_type": mock_repo}, {"step_type": mock_mapper}, "fsec-v1")
 
         assert mock_mapper.call_count == 2
         assert len(result["step_type"]) == 2

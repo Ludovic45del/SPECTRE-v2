@@ -23,7 +23,14 @@ const FAKE_TOKENS = {
 };
 
 export const lighthouseHandlers = [
-    http.post('*/auth/token/', () => HttpResponse.json(FAKE_TOKENS)),
+    http.post('*/auth/token/', () =>
+        HttpResponse.json({
+            ...FAKE_TOKENS,
+            role: FAKE_USER.role,
+            force_password_change: FAKE_USER.must_change_password,
+            first_name: FAKE_USER.first_name,
+        }),
+    ),
     http.post('*/auth/token/refresh/', () => HttpResponse.json({ access: FAKE_TOKENS.access })),
     http.get('*/auth/me/', () => HttpResponse.json(FAKE_USER)),
     http.get('*/auth/dashboard-preferences/', () => HttpResponse.json({})),

@@ -42,6 +42,7 @@ interface CreatePermeationStepInput {
     gasType?: string | null;
     targetPressure?: number | null;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     startDate?: Date | null;
     estimatedEndDate?: Date | null;
     sensorPressure?: number | null;
@@ -52,27 +53,37 @@ interface UpdatePermeationStepInput extends CreatePermeationStepInput {
     uuid: string;
 }
 
+function permeationStepToApi(input: CreatePermeationStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        gas_type: input.gasType ?? null,
+        target_pressure: input.targetPressure ?? null,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        start_date: input.startDate?.toISOString().split('T')[0] ?? null,
+        estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
+        sensor_pressure: input.sensorPressure ?? null,
+        computed_shot_pressure: input.computedShotPressure ?? null,
+    };
+}
+
 export function useCreatePermeationStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreatePermeationStepInput): Promise<PermeationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                gas_type: input.gasType ?? null,
-                target_pressure: input.targetPressure ?? null,
-                operator: input.operator ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
-                sensor_pressure: input.sensorPressure ?? null,
-                computed_shot_pressure: input.computedShotPressure ?? null,
-            };
-            const response = await api.post('/permeation-steps/', apiData);
+            const response = await api.post(
+                '/permeation-steps/',
+                permeationStepToApi(input),
+            );
             return PermeationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.permeation.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -83,17 +94,10 @@ export function useUpdatePermeationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdatePermeationStepInput): Promise<PermeationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                gas_type: input.gasType ?? null,
-                target_pressure: input.targetPressure ?? null,
-                operator: input.operator ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
-                sensor_pressure: input.sensorPressure ?? null,
-                computed_shot_pressure: input.computedShotPressure ?? null,
-            };
-            const response = await api.put(`/permeation-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/permeation-steps/${input.uuid}/`,
+                permeationStepToApi(input),
+            );
             return PermeationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -102,6 +106,9 @@ export function useUpdatePermeationStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.permeation.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -117,6 +124,9 @@ export function useDeletePermeationStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.permeation.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

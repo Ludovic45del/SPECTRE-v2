@@ -1,22 +1,51 @@
 """Service FSEC - Logique métier pure."""
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.domain.exceptions import ConflictException, NotFoundException
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.fsec.models.fsec_bean import FsecBean
+from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
+from app.domain.stock.interface.fsec_assembly_repository import IFsecAssemblyItemRepository
+from app.domain.stock.services.element_lifecycle_service import sync_element_statuses_for_fsec
 
 logger = logging.getLogger(__name__)
+
+
+def _maybe_sync_stock_after_status_change(
+    fsec_uuid: str,
+    old_status_id: Optional[int],
+    new_status_id: Optional[int],
+    stock_catalog_repository: Optional[IStockCatalogRepository],
+    stock_assembly_repository: Optional[IFsecAssemblyItemRepository],
+) -> None:
+    """Déclenche le couplage Stock ↔ FSEC si le statut a effectivement changé.
+
+    Voir CDC §4.2. Aucun effet si l'un des deux repositories Stock est absent
+    (compatibilité avec les appels qui ne fournissent pas l'orchestration Stock,
+    ex. tests unitaires FSEC purs).
+    """
+    if (
+        stock_catalog_repository is None
+        or stock_assembly_repository is None
+        or new_status_id is None
+        or old_status_id == new_status_id
+    ):
+        return
+    sync_element_statuses_for_fsec(
+        stock_catalog_repository,
+        stock_assembly_repository,
+        fsec_uuid,
+        new_status_id,
+    )
 
 
 def create_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
     """Crée un nouveau FSEC après validation."""
     if bean.campaign_id:
         if repository.exists_by_campaign_and_name(bean.campaign_id, bean.name):
-            raise ConflictException(
-                "campaign_id/name", f"{bean.campaign_id}/{bean.name}"
-            )
+            raise ConflictException("campaign_id/name", f"{bean.campaign_id}/{bean.name}")
     else:
         if repository.exists_by_name(bean.name):
             raise ConflictException("name", bean.name)
@@ -25,9 +54,7 @@ def create_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
     return result
 
 
-def get_fsec_by_version_uuid(
-    repository: IFsecRepository, version_uuid: str
-) -> FsecBean:
+def get_fsec_by_version_uuid(repository: IFsecRepository, version_uuid: str) -> FsecBean:
     """Récupère un FSEC par son version_uuid (PK)."""
     bean = repository.get_by_version_uuid(version_uuid)
     if bean is None:
@@ -48,9 +75,7 @@ def get_active_fsec(repository: IFsecRepository, fsec_uuid: str) -> FsecBean:
     return bean
 
 
-def get_all_fsecs(
-    repository: IFsecRepository, limit: int = None, offset: int = 0
-) -> List[FsecBean]:
+def get_all_fsecs(repository: IFsecRepository, limit: int = None, offset: int = 0) -> List[FsecBean]:
     """Récupère tous les FSECs."""
     return repository.get_all(limit=limit, offset=offset)
 
@@ -65,35 +90,55 @@ def get_all_active_fsecs(repository: IFsecRepository) -> List[FsecBean]:
     return repository.get_all_active()
 
 
-def get_fsecs_by_campaign(
-    repository: IFsecRepository, campaign_id: str
-) -> List[FsecBean]:
+def get_fsecs_by_campaign(repository: IFsecRepository, campaign_id: str) -> List[FsecBean]:
     """Récupère tous les FSECs d'une campagne."""
     return repository.get_by_campaign_id(campaign_id)
 
 
-def update_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
-    """Met à jour un FSEC."""
+def update_fsec(
+    repository: IFsecRepository,
+    bean: FsecBean,
+    stock_catalog_repository: Optional[IStockCatalogRepository] = None,
+    stock_assembly_repository: Optional[IFsecAssemblyItemRepository] = None,
+) -> FsecBean:
+    """Met à jour un FSEC.
+
+    Les paramètres `stock_*_repository` permettent au controller d'injecter le
+    couplage Stock ↔ FSEC (CDC §4.2) ; ils sont optionnels pour préserver la
+    rétro-compatibilité des appels existants (ex. tests unitaires FSEC purs).
+    """
     existing = repository.get_by_version_uuid(bean.version_uuid)
     if existing is None:
         raise NotFoundException("FSEC", bean.version_uuid)
+
+    old_status_id = existing.status_id
 
     # Vérifier les doublons nom/campagne si le nom ou la campagne a changé
     name_changed = bean.name != existing.name
     campaign_changed = bean.campaign_id != existing.campaign_id
     if (name_changed or campaign_changed) and bean.campaign_id:
         if repository.exists_by_campaign_and_name(bean.campaign_id, bean.name):
-            raise ConflictException(
-                "campaign_id/name", f"{bean.campaign_id}/{bean.name}"
-            )
+            raise ConflictException("campaign_id/name", f"{bean.campaign_id}/{bean.name}")
 
     result = repository.update(bean)
     logger.info(f"Updated FSEC version_uuid={bean.version_uuid}")
+
+    _maybe_sync_stock_after_status_change(
+        fsec_uuid=result.fsec_uuid,
+        old_status_id=old_status_id,
+        new_status_id=result.status_id,
+        stock_catalog_repository=stock_catalog_repository,
+        stock_assembly_repository=stock_assembly_repository,
+    )
     return result
 
 
 def patch_fsec(
-    repository: IFsecRepository, version_uuid: str, partial_data: Dict[str, Any]
+    repository: IFsecRepository,
+    version_uuid: str,
+    partial_data: Dict[str, Any],
+    stock_catalog_repository: Optional[IStockCatalogRepository] = None,
+    stock_assembly_repository: Optional[IFsecAssemblyItemRepository] = None,
 ) -> FsecBean:
     """Met à jour partiellement un FSEC (PATCH).
 
@@ -101,6 +146,8 @@ def patch_fsec(
         repository: Le repository FSEC
         version_uuid: Version UUID du FSEC
         partial_data: Dictionnaire des champs à mettre à jour
+        stock_catalog_repository: Optionnel — déclenche le couplage Stock (CDC §4.2)
+        stock_assembly_repository: Optionnel — idem
 
     Returns:
         Le bean FSEC mis à jour
@@ -122,9 +169,10 @@ def patch_fsec(
         "is_active",
     }
 
-    # Sauvegarde des anciennes valeurs pour vérification de conflit
+    # Sauvegarde des anciennes valeurs pour vérification de conflit / couplage stock
     old_name = existing.name
     old_campaign_id = existing.campaign_id
+    old_status_id = existing.status_id
 
     # Fusion des données
     for key, value in partial_data.items():
@@ -138,11 +186,18 @@ def patch_fsec(
     campaign_changed = existing.campaign_id != old_campaign_id
     if (name_changed or campaign_changed) and existing.campaign_id:
         if repository.exists_by_campaign_and_name(existing.campaign_id, existing.name):
-            raise ConflictException(
-                "campaign_id/name", f"{existing.campaign_id}/{existing.name}"
-            )
+            raise ConflictException("campaign_id/name", f"{existing.campaign_id}/{existing.name}")
 
-    return repository.update(existing)
+    result = repository.update(existing)
+
+    _maybe_sync_stock_after_status_change(
+        fsec_uuid=result.fsec_uuid,
+        old_status_id=old_status_id,
+        new_status_id=result.status_id,
+        stock_catalog_repository=stock_catalog_repository,
+        stock_assembly_repository=stock_assembly_repository,
+    )
+    return result
 
 
 def delete_fsec(repository: IFsecRepository, version_uuid: str) -> bool:
@@ -153,16 +208,12 @@ def delete_fsec(repository: IFsecRepository, version_uuid: str) -> bool:
     return True
 
 
-def create_new_version(
-    repository: IFsecRepository, fsec_uuid: str, new_bean: FsecBean
-) -> FsecBean:
+def create_new_version(repository: IFsecRepository, fsec_uuid: str, new_bean: FsecBean) -> FsecBean:
     """Crée une nouvelle version d'un FSEC existant.
 
     Désactive toutes les versions existantes et crée la nouvelle version active.
     L'atomicité est garantie par le repository (select_for_update + transaction unique).
     """
     result = repository.create_version_atomic(fsec_uuid, new_bean)
-    logger.info(
-        f"Created new version for fsec_uuid={fsec_uuid}, new version_uuid={result.version_uuid}"
-    )
+    logger.info(f"Created new version for fsec_uuid={fsec_uuid}, new version_uuid={result.version_uuid}")
     return result

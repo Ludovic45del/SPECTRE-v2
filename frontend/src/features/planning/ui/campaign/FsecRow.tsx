@@ -28,6 +28,7 @@ import { FsecStepPopover } from './FsecStepPopover';
 import { AssemblageInfoPopover } from '../AssemblageInfoPopover';
 import { useCampaignContext } from './CampaignContext';
 import type { FsecInfo } from './types';
+import { motion } from '@shared/ui/motion';
 
 // ── Stable sx constants ──
 
@@ -245,7 +246,7 @@ export const FsecRow = memo(function FsecRow({ etape, fsec }: FsecRowProps) {
                                 px: 0.3,
                                 opacity: isResizedStep ? 0.3 : 1,
                                 pointerEvents: 'none',
-                                transition: 'opacity 0.15s ease',
+                                transition: `opacity ${motion.fast}`,
                             }}
                         >
                             {/* Done check on start cell */}

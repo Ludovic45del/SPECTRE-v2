@@ -73,27 +73,18 @@ export default memo<UserAvatarSectionProps>(function UserAvatarSection({
                             <Chip
                                 icon={<BadgeIcon sx={{ fontSize: 14 }} />}
                                 label={roleLabel}
-                                size="small"
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem', height: 24 }}
                             />
                         )}
                         {user.service && (
                             <Chip
                                 icon={<BusinessIcon sx={{ fontSize: 14 }} />}
                                 label={user.service}
-                                size="small"
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem', height: 24 }}
                             />
                         )}
                         {user.bureau && (
                             <Chip
                                 icon={<MeetingRoomIcon sx={{ fontSize: 14 }} />}
                                 label={`Bureau ${user.bureau}`}
-                                size="small"
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem', height: 24 }}
                             />
                         )}
                     </Box>

@@ -13,6 +13,7 @@ import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 
 import type { CampaignWithRelations } from '@entities/campaign';
 import type { Fsec } from '@entities/fsec';
+import { UserSelect } from '@entities/user';
 import type { CreateFaForm } from '../model';
 import { CampaignFsecSelector } from './CampaignFsecSelector';
 
@@ -51,16 +52,16 @@ export const CreateFaFormFields = memo(function CreateFaFormFields({
             </Typography>
 
             <Controller
-                name="discoverer"
+                name="discovererUserUuid"
                 control={control}
-                render={({ field }) => (
-                    <TextField
-                        {...field}
+                render={({ field, fieldState }) => (
+                    <UserSelect
+                        value={field.value || null}
+                        onChange={(uuid) => field.onChange(uuid ?? '')}
                         label="Découvreur"
                         required
-                        error={Boolean(errors.discoverer)}
-                        helperText={errors.discoverer?.message}
-                        fullWidth
+                        error={Boolean(fieldState.error)}
+                        helperText={fieldState.error?.message}
                     />
                 )}
             />

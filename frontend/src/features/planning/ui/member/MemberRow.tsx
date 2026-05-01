@@ -27,6 +27,7 @@ import { HoverTd, StickyLabelCell } from '../PlanningCell';
 import type { PlanningMemberPeriod } from '@entities/planning/core/model/planning.schema';
 import { useUpdateMemberPeriod } from '@entities/planning/core/api/planning.queries';
 import { MemberPeriodPopover } from './MemberPeriodPopover';
+import { motion } from '@shared/ui/motion';
 
 // ── Stable sx constants ──
 
@@ -268,7 +269,7 @@ export const MemberRow = memo(function MemberRow({
                                 overflow: 'hidden',
                                 opacity: isResizedPeriod ? 0.3 : 0.85,
                                 pointerEvents: 'none',
-                                transition: 'opacity 0.15s ease',
+                                transition: `opacity ${motion.fast}`,
                             }}
                         >
                             {/* Resize handles */}

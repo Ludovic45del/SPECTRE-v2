@@ -12,11 +12,12 @@ import {
 } from '../lib/planning.constants';
 import { getBarBorderRadius } from '../lib/planning.bar-utils';
 import { useIsCellInRange, usePlanningColors } from '../lib/planning.hooks';
+import { motion } from '@shared/ui/motion';
 
 // ====================== Hover-enabled td for timeline cells ======================
 
 export const HoverTd = styled('td')({
-    transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
+    transition: motion.transition(['background-color', 'box-shadow'], 'fast'),
     '&:hover': {
         boxShadow: 'inset 0 0 0 100px rgba(25, 118, 210, 0.06)',
     },

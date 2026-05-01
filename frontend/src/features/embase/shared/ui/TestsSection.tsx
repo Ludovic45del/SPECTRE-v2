@@ -42,12 +42,7 @@ export const TestsSection = memo(function TestsSection({
                                         {opt.color === 'default' ? (
                                             '-'
                                         ) : (
-                                            <Chip
-                                                label={opt.label}
-                                                color={opt.color}
-                                                size="small"
-                                                sx={{ fontWeight: 600 }}
-                                            />
+                                            <Chip label={opt.label} color={opt.color} />
                                         )}
                                     </MenuItem>
                                 ))}

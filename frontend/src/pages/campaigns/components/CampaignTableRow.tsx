@@ -8,7 +8,7 @@ import { TableRow, TableCell, Typography, IconButton, Tooltip, alpha, useTheme }
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { CampaignWithRelations } from '@entities/campaign';
 import { DataChip } from '@widgets/data-chip';
-import { formatCampaignName } from '../lib/campaigns.helpers';
+import { motion } from '@shared/ui/motion';
 
 interface CampaignTableRowProps {
     campaign: CampaignWithRelations;
@@ -31,7 +31,7 @@ export const CampaignTableRow = memo(function CampaignTableRow({ campaign, onNav
             hover
             sx={{
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease',
+                transition: `background-color ${motion.fast}`,
                 '&:hover': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.08),
                 },
@@ -39,10 +39,20 @@ export const CampaignTableRow = memo(function CampaignTableRow({ campaign, onNav
             onDoubleClick={handleDoubleClick}
         >
             <TableCell>
+                <Typography fontWeight={500}>{campaign.year}</Typography>
+            </TableCell>
+            <TableCell>
                 <DataChip label={campaign.semester} color="#6B7280" />
             </TableCell>
             <TableCell>
-                <Typography fontWeight={500}>{formatCampaignName(campaign)}</Typography>
+                <Typography fontWeight={500}>{campaign.name}</Typography>
+            </TableCell>
+            <TableCell>
+                {campaign.installation ? (
+                    <DataChip label={campaign.installation.label} color={campaign.installation.color} />
+                ) : (
+                    <Typography color="text.secondary">-</Typography>
+                )}
             </TableCell>
             <TableCell>
                 {campaign.type ? (

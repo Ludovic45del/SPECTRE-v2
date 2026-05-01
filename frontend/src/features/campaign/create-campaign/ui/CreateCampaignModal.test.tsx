@@ -432,10 +432,16 @@ describe('CreateCampaignModal', () => {
             // Fill required fields
             await fillRequiredFields(user);
 
-            // Fill team members
-            await user.type(screen.getByLabelText(/moe/i), 'John Doe');
-            await user.type(screen.getByLabelText(/rce/i), 'Jane Smith');
-            await user.type(screen.getByLabelText(/iec/i), 'Bob Wilson');
+            // Fill MOE (texte libre, exterieur au labo)
+            await user.type(screen.getByLabelText('MOE'), 'John Doe');
+
+            // Fill RCE via UserSelect (filtre rôle 'rce' + 'chef_labo')
+            await user.click(screen.getByLabelText('RCE'));
+            await user.click(await screen.findByRole('option', { name: /Marc Durand/ }));
+
+            // Fill IEC via UserSelect (filtre rôle 'iec' + 'chef_labo')
+            await user.click(screen.getByLabelText('IEC'));
+            await user.click(await screen.findByRole('option', { name: /Jean Bernard/ }));
 
             // Submit
             await user.click(screen.getByRole('button', { name: /créer/i }));

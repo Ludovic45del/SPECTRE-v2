@@ -24,9 +24,7 @@ class FsecEntity(models.Model):
         ]
 
     # Clé primaire - ID unique de la version
-    version_uuid = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False
-    )
+    version_uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # ID FSEC partagé entre toutes les versions
     fsec_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
 

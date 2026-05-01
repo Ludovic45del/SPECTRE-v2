@@ -6,6 +6,8 @@
  */
 import { http, HttpResponse } from 'msw';
 
+import { stockHandlers } from './stock-handlers';
+
 // ============================================================================
 // MOCK DATA FACTORIES
 // ============================================================================
@@ -79,7 +81,8 @@ export const createMockFa = (overrides = {}) => ({
 export const createMockAssemblyStep = (overrides = {}) => ({
     uuid: crypto.randomUUID(),
     fsec_version_id: crypto.randomUUID(),
-    hydrometric_temperature: 22.5,
+    operator: 'Assembleur Test',
+    operator_user_uuid: null,
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Assemblage de test',
@@ -425,10 +428,119 @@ const mockFaCriticalities = [
 ];
 
 // ============================================================================
+// USER LOOKUP MOCKS (dropdowns d'opérateurs)
+// ============================================================================
+
+export const mockUserLookup = [
+    {
+        uuid: '11111111-1111-1111-1111-111111111111',
+        username: 'chef',
+        first_name: 'Pierre',
+        last_name: 'Dupont',
+        role: 'chef_labo',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'SEPI',
+        numero: '01 23 45 67 01',
+        bureau: 'B-101',
+    },
+    {
+        uuid: '22222222-2222-2222-2222-222222222222',
+        username: 'amartin',
+        first_name: 'Alice',
+        last_name: 'Martin',
+        role: 'metrologue',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'Métrologie',
+        numero: '01 23 45 67 02',
+        bureau: 'B-202',
+    },
+    {
+        uuid: '33333333-3333-3333-3333-333333333333',
+        username: 'jbernard',
+        first_name: 'Jean',
+        last_name: 'Bernard',
+        role: 'iec',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'IEC',
+        numero: '',
+        bureau: 'B-303',
+    },
+    {
+        uuid: '44444444-4444-4444-4444-444444444444',
+        username: 'lpetit',
+        first_name: 'Lucie',
+        last_name: 'Petit',
+        role: 'assembleur',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'Assemblage',
+        numero: '01 23 45 67 04',
+        bureau: '',
+    },
+    {
+        uuid: '55555555-5555-5555-5555-555555555555',
+        username: 'mdurand',
+        first_name: 'Marc',
+        last_name: 'Durand',
+        role: 'rce',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'RCE',
+        numero: '01 23 45 67 05',
+        bureau: 'B-505',
+    },
+    {
+        uuid: '66666666-6666-6666-6666-666666666666',
+        username: 'cgarcia',
+        first_name: 'Camille',
+        last_name: 'Garcia',
+        role: 'cryogenie',
+        is_active: true,
+        laboratoire: 'LMJ',
+        service: 'Cryogénie',
+        numero: '01 23 45 67 06',
+        bureau: 'B-606',
+    },
+    {
+        uuid: '77777777-7777-7777-7777-777777777777',
+        username: 'sstagiaire',
+        first_name: 'Sophie',
+        last_name: 'Lefevre',
+        role: 'stagiaire',
+        is_active: true,
+        laboratoire: '',
+        service: '',
+        numero: '',
+        bureau: '',
+    },
+];
+
+// ============================================================================
 // API HANDLERS
 // ============================================================================
 
 export const handlers = [
+    // ========================================
+    // USER LOOKUP HANDLER (dropdowns d'opérateurs)
+    // ========================================
+
+    http.get('/api/v1/users/lookup/', ({ request }) => {
+        const url = new URL(request.url);
+        const roles = url.searchParams.getAll('role');
+        const isActiveParam = url.searchParams.get('is_active');
+        const isActive = isActiveParam === null ? true : isActiveParam === 'true';
+
+        const filtered = mockUserLookup.filter((u) => {
+            if (u.is_active !== isActive) return false;
+            if (roles.length > 0 && !roles.includes(u.role)) return false;
+            return true;
+        });
+        return HttpResponse.json(filtered);
+    }),
+
     // ========================================
     // CAMPAIGN HANDLERS
     // ========================================
@@ -1063,6 +1175,11 @@ export const handlers = [
         const body = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(createMockGasStep('gas_filling_hp', { uuid: params.uuid, ...body }));
     }),
+
+    // ========================================
+    // STOCK HANDLERS (cf. CDC §5)
+    // ========================================
+    ...stockHandlers,
 ];
 
 // ============================================================================

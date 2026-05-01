@@ -6,14 +6,14 @@
 import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { Link, useLocation, matchPath } from 'react-router-dom';
+import { motion } from '@shared/ui/motion';
 
 // ============================================================================
 // Constants
 // ============================================================================
 
 const TAB_HEIGHT = 48;
-const TRANSITION_SPRING = '0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
-const TRANSITION = '0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+const TRANSITION_SPRING = motion.spring;
 const GLOW_COLOR = 'rgba(25, 118, 210, 0.4)';
 
 // ============================================================================
@@ -54,7 +54,7 @@ const SlidingIndicator = memo(function SlidingIndicator({ left, width, mounted }
                 width,
                 borderRadius: '3px 3px 0 0',
                 bgcolor: 'primary.main',
-                transition: mounted ? `all ${TRANSITION_SPRING}` : 'none',
+                transition: mounted ? `left ${TRANSITION_SPRING}, width ${TRANSITION_SPRING}` : 'none',
                 boxShadow: `0 0 12px ${GLOW_COLOR}`,
                 '&::before': {
                     content: '""',
@@ -116,7 +116,7 @@ const TabItemComponent = memo(function TabItemComponent({ tab, isActive, onMeasu
                 textDecoration: 'none',
                 color: isActive ? 'primary.main' : 'text.secondary',
                 position: 'relative',
-                transition: `all ${TRANSITION}`,
+                transition: motion.transition(['color', 'background-color'], 'base'),
                 '&:hover': {
                     color: isActive ? 'primary.main' : 'text.primary',
                     bgcolor: isActive ? 'transparent' : 'action.hover',
@@ -127,7 +127,7 @@ const TabItemComponent = memo(function TabItemComponent({ tab, isActive, onMeasu
                 <Box
                     sx={{
                         display: 'flex',
-                        transition: `all ${TRANSITION_SPRING}`,
+                        transition: `transform ${TRANSITION_SPRING}`,
                         transform: isActive ? 'scale(1.1)' : 'scale(1)',
                     }}
                 >
@@ -139,7 +139,7 @@ const TabItemComponent = memo(function TabItemComponent({ tab, isActive, onMeasu
                 sx={{
                     fontWeight: isActive ? 600 : 500,
                     fontSize: '0.95rem',
-                    transition: `all ${TRANSITION}`,
+                    transition: motion.transition(['transform', 'font-weight'], 'base'),
                     transform: isActive ? 'translateY(-1px)' : 'none',
                 }}
             >

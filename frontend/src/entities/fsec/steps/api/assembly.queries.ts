@@ -43,7 +43,8 @@ export function useAssemblyStep(uuid: string) {
 
 interface CreateAssemblyStepInput {
     fsecVersionId: string;
-    hydrometricTemperature?: number | null;
+    operator?: string | null;
+    operatorUserUuid?: string | null;
     startDate?: Date | null;
     endDate?: Date | null;
     comments?: string | null;
@@ -64,7 +65,8 @@ export function useCreateAssemblyStep() {
         mutationFn: async (input: CreateAssemblyStepInput): Promise<AssemblyStep> => {
             const apiData = {
                 fsec_version_id: input.fsecVersionId,
-                hydrometric_temperature: input.hydrometricTemperature ?? null,
+                operator: input.operator ?? null,
+                operator_user_uuid: input.operatorUserUuid ?? null,
                 start_date: input.startDate?.toISOString().split('T')[0] ?? null,
                 end_date: input.endDate?.toISOString().split('T')[0] ?? null,
                 comments: input.comments ?? null,
@@ -91,7 +93,8 @@ export function useUpdateAssemblyStep() {
         mutationFn: async (input: UpdateAssemblyStepInput): Promise<AssemblyStep> => {
             const apiData = {
                 fsec_version_id: input.fsecVersionId,
-                hydrometric_temperature: input.hydrometricTemperature ?? null,
+                operator: input.operator ?? null,
+                operator_user_uuid: input.operatorUserUuid ?? null,
                 start_date: input.startDate?.toISOString().split('T')[0] ?? null,
                 end_date: input.endDate?.toISOString().split('T')[0] ?? null,
                 comments: input.comments ?? null,

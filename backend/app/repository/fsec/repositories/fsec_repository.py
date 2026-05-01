@@ -6,10 +6,7 @@ from django.db import transaction
 
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.fsec.models.fsec_bean import FsecBean
-from app.mapper.fsec.fsec_mapper import (
-    fsec_mapper_bean_to_entity,
-    fsec_mapper_entity_to_bean,
-)
+from app.mapper.fsec.fsec_mapper import fsec_mapper_bean_to_entity, fsec_mapper_entity_to_bean
 from app.repository.fsec.models.fsec_entity import FsecEntity
 
 
@@ -109,9 +106,7 @@ class FsecRepository(IFsecRepository):
 
     def exists_by_name(self, name: str) -> bool:
         """Vérifie si un FSEC existe avec ce nom (sans campagne)."""
-        return FsecEntity.objects.filter(
-            name=name, campaign_id_id__isnull=True
-        ).exists()
+        return FsecEntity.objects.filter(name=name, campaign_id_id__isnull=True).exists()
 
     @transaction.atomic
     def deactivate_all_versions(self, fsec_uuid: str) -> bool:
@@ -131,9 +126,7 @@ class FsecRepository(IFsecRepository):
         Exécuté dans une seule transaction atomique avec select_for_update()
         pour garantir qu'une seule version active existe à tout moment.
         """
-        FsecEntity.objects.select_for_update().filter(fsec_uuid=fsec_uuid).update(
-            is_active=False
-        )
+        FsecEntity.objects.select_for_update().filter(fsec_uuid=fsec_uuid).update(is_active=False)
         bean.fsec_uuid = fsec_uuid
         bean.is_active = True
         entity = fsec_mapper_bean_to_entity(bean)

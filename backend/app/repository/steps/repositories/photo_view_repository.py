@@ -7,10 +7,7 @@ from django.db import transaction
 
 from app.domain.steps.interface.steps_repository import IPhotoViewRepository
 from app.domain.steps.models.photo_view_bean import PhotoViewBean
-from app.mapper.steps.photo_view_mapper import (
-    photo_view_mapper_bean_to_entity,
-    photo_view_mapper_entity_to_bean,
-)
+from app.mapper.steps.photo_view_mapper import photo_view_mapper_bean_to_entity, photo_view_mapper_entity_to_bean
 from app.repository.steps.models.photo_view_entity import PhotoViewEntity
 
 
@@ -25,9 +22,7 @@ class PhotoViewRepository(IPhotoViewRepository):
 
     def get_by_fsec_version_id(self, fsec_version_id: str) -> List[PhotoViewBean]:
         """Récupère toutes les vues/photos d'un FSEC (via PicturesStep)."""
-        entities = self._base_queryset().filter(
-            pictures_step_id__fsec_version_id=fsec_version_id
-        )
+        entities = self._base_queryset().filter(pictures_step_id__fsec_version_id=fsec_version_id)
         return [photo_view_mapper_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
@@ -50,20 +45,16 @@ class PhotoViewRepository(IPhotoViewRepository):
 
     def get_by_pictures_step_id(self, pictures_step_id: str) -> List[PhotoViewBean]:
         """Récupère toutes les vues/photos d'un PicturesStep."""
-        entities = self._base_queryset().filter(
-            pictures_step_id_id=uuid_module.UUID(pictures_step_id)
-        )
+        entities = self._base_queryset().filter(pictures_step_id_id=uuid_module.UUID(pictures_step_id))
         return [photo_view_mapper_entity_to_bean(entity) for entity in entities]
 
     @transaction.atomic
     def update(self, bean: PhotoViewBean) -> PhotoViewBean:
         """Met à jour une vue/photo."""
-        uuid_value = (
-            uuid_module.UUID(bean.uuid) if isinstance(bean.uuid, str) else bean.uuid
-        )
+        uuid_value = uuid_module.UUID(bean.uuid) if isinstance(bean.uuid, str) else bean.uuid
         entity = PhotoViewEntity.objects.get(uuid=uuid_value)
         if bean.pictures_step_id:
-            entity.pictures_step_id_id = uuid_module.UUID(bean.pictures_step_id)
+            entity.pictures_step_id_id = bean.pictures_step_id
         entity.name = bean.name
         entity.link = bean.link
         entity.save()

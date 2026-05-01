@@ -9,6 +9,8 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
+import { CAMPAIGN_INSTALLATIONS } from '@entities/campaign';
+import { softChipSx } from '@shared/lib';
 import {
     useCampaignSteps,
     useLabEvents,
@@ -410,19 +412,12 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
                                                         </Typography>
                                                         {camp.installation && (
                                                             <Chip
-                                                                size="small"
                                                                 label={camp.installation}
-                                                                sx={{
-                                                                    bgcolor:
-                                                                        camp.installation === 'LMJ'
-                                                                            ? '#1976d2'
-                                                                            : '#ff9800',
-                                                                    color: '#fff',
-                                                                    fontWeight: 700,
-                                                                    fontSize: 9,
-                                                                    height: 16,
-                                                                    '& .MuiChip-label': { px: 0.5 },
-                                                                }}
+                                                                sx={softChipSx(
+                                                                    Object.values(CAMPAIGN_INSTALLATIONS).find(
+                                                                        (i) => i.label === camp.installation,
+                                                                    )?.color ?? '#666',
+                                                                )}
                                                             />
                                                         )}
                                                     </Box>

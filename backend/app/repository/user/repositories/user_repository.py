@@ -62,10 +62,19 @@ class UserRepository(IUserRepository):
         except UserProfileEntity.DoesNotExist:
             return None
 
-    def get_all(self, offset: int = 0, limit: int = 50):
-        profiles = self._base_queryset().order_by(
-            "user__last_name", "user__first_name"
-        )[offset : offset + limit]
+    def get_all(
+        self,
+        offset: int = 0,
+        limit: int = 50,
+        roles=None,
+        is_active=None,
+    ):
+        qs = self._base_queryset()
+        if roles:
+            qs = qs.filter(role__in=roles)
+        if is_active is not None:
+            qs = qs.filter(user__is_active=is_active)
+        profiles = qs.order_by("user__last_name", "user__first_name")[offset : offset + limit]
         return [user_mapper_entity_to_bean(p.user, p) for p in profiles]
 
     @transaction.atomic
@@ -78,15 +87,11 @@ class UserRepository(IUserRepository):
 
         old_role = profile.role
         profile.role = bean.role
-        profile.laboratoire = (
-            bean.laboratoire if bean.laboratoire is not None else profile.laboratoire
-        )
+        profile.laboratoire = bean.laboratoire if bean.laboratoire is not None else profile.laboratoire
         profile.service = bean.service if bean.service is not None else profile.service
         profile.numero = bean.numero if bean.numero is not None else profile.numero
         profile.bureau = bean.bureau if bean.bureau is not None else profile.bureau
-        profile.save(
-            update_fields=["role", "laboratoire", "service", "numero", "bureau"]
-        )
+        profile.save(update_fields=["role", "laboratoire", "service", "numero", "bureau"])
 
         if old_role != bean.role:
             group_name = ROLE_TO_PERMISSION_GROUP.get(bean.role)
@@ -146,9 +151,7 @@ class UserRepository(IUserRepository):
         return dashboard_preferences_dict_to_bean(data)
 
     @transaction.atomic
-    def update_dashboard_preferences(
-        self, uuid, preferences: DashboardPreferencesBean
-    ) -> DashboardPreferencesBean:
+    def update_dashboard_preferences(self, uuid, preferences: DashboardPreferencesBean) -> DashboardPreferencesBean:
         UserProfileEntity.objects.filter(uuid=uuid).update(
             dashboard_preferences=dashboard_preferences_bean_to_dict(preferences)
         )

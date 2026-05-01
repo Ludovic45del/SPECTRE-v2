@@ -23,9 +23,7 @@ class ICampaignRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_all(
-        self, limit: Optional[int] = None, offset: int = 0
-    ) -> List[CampaignBean]:
+    def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[CampaignBean]:
         """Récupère toutes les campagnes avec pagination optionnelle."""
         raise NotImplementedError
 
@@ -50,9 +48,7 @@ class ICampaignRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def exists_duplicate(
-        self, exclude_uuid: str, name: str, year: int, semester: str
-    ) -> bool:
+    def exists_duplicate(self, exclude_uuid: str, name: str, year: int, semester: str) -> bool:
         """Vérifie si une AUTRE campagne existe avec ce triplet (exclut l'UUID donné)."""
         raise NotImplementedError
 

@@ -382,10 +382,7 @@ class TestCleanShortcuts:
         assert len(result[0]["category"]) == 50
 
     def test_limits_to_max_shortcuts(self):
-        raw = [
-            {"label": f"L{i}", "url": f"https://ex.com/{i}"}
-            for i in range(MAX_SHORTCUTS + 10)
-        ]
+        raw = [{"label": f"L{i}", "url": f"https://ex.com/{i}"} for i in range(MAX_SHORTCUTS + 10)]
         result = _clean_shortcuts(raw)
         assert len(result) == MAX_SHORTCUTS
 
@@ -533,9 +530,7 @@ class TestValidateDashboardPreferences:
         assert result["layout"][1]["minW"] == 4
 
     def test_skips_layout_items_without_id(self):
-        data = {
-            "layout": [{"x": 0, "y": 0}, {"i": "kpis", "x": 0, "y": 0, "w": 12, "h": 2}]
-        }
+        data = {"layout": [{"x": 0, "y": 0}, {"i": "kpis", "x": 0, "y": 0, "w": 12, "h": 2}]}
         result = validate_dashboard_preferences(data)
         assert len(result["layout"]) == 1
         assert result["layout"][0]["i"] == "kpis"
@@ -548,20 +543,13 @@ class TestValidateDashboardPreferences:
 
     def test_truncates_shortcuts_to_max(self):
         data = {
-            "shortcuts": [
-                {"label": f"Lien {i}", "url": f"https://example.com/{i}"}
-                for i in range(MAX_SHORTCUTS + 10)
-            ]
+            "shortcuts": [{"label": f"Lien {i}", "url": f"https://example.com/{i}"} for i in range(MAX_SHORTCUTS + 10)]
         }
         result = validate_dashboard_preferences(data)
         assert len(result["shortcuts"]) == MAX_SHORTCUTS
 
     def test_truncates_shortcut_fields(self):
-        data = {
-            "shortcuts": [
-                {"label": "x" * 200, "url": "https://" + "y" * 600, "icon": "z" * 100}
-            ]
-        }
+        data = {"shortcuts": [{"label": "x" * 200, "url": "https://" + "y" * 600, "icon": "z" * 100}]}
         result = validate_dashboard_preferences(data)
         assert len(result["shortcuts"][0]["label"]) == 100
         assert len(result["shortcuts"][0]["url"]) == 500
@@ -657,11 +645,7 @@ class TestDictToBean:
         assert bean.todos == []
 
     def test_converts_layout(self):
-        data = {
-            "layout": [
-                {"i": "kpis", "x": 1, "y": 2, "w": 10, "h": 3, "minW": 5, "minH": 2}
-            ]
-        }
+        data = {"layout": [{"i": "kpis", "x": 1, "y": 2, "w": 10, "h": 3, "minW": 5, "minH": 2}]}
         bean = _dict_to_bean(data)
         assert len(bean.layout) == 1
         item = bean.layout[0]
@@ -775,9 +759,7 @@ class TestDictToBean:
 @pytest.mark.unit
 class TestGetPreferences:
 
-    def test_returns_saved_preferences_with_non_empty_layout(
-        self, mock_user_repository, sample_user_uuid
-    ):
+    def test_returns_saved_preferences_with_non_empty_layout(self, mock_user_repository, sample_user_uuid):
         saved = DashboardPreferencesBean(
             layout=[LayoutItemBean(i="kpis", x=0, y=0, w=12, h=2)],
             widgets={},
@@ -787,16 +769,10 @@ class TestGetPreferences:
         result = get_preferences(mock_user_repository, sample_user_uuid)
 
         assert result is saved
-        mock_user_repository.get_dashboard_preferences.assert_called_once_with(
-            sample_user_uuid
-        )
+        mock_user_repository.get_dashboard_preferences.assert_called_once_with(sample_user_uuid)
 
-    def test_returns_defaults_when_empty_layout(
-        self, mock_user_repository, sample_user_uuid
-    ):
-        mock_user_repository.get_dashboard_preferences.return_value = (
-            DashboardPreferencesBean()
-        )
+    def test_returns_defaults_when_empty_layout(self, mock_user_repository, sample_user_uuid):
+        mock_user_repository.get_dashboard_preferences.return_value = DashboardPreferencesBean()
 
         result = get_preferences(mock_user_repository, sample_user_uuid)
 
@@ -804,9 +780,7 @@ class TestGetPreferences:
         assert result == defaults
         assert result is not defaults  # new instance
 
-    def test_returns_defaults_when_layout_is_none(
-        self, mock_user_repository, sample_user_uuid
-    ):
+    def test_returns_defaults_when_layout_is_none(self, mock_user_repository, sample_user_uuid):
         bean = DashboardPreferencesBean(layout=[])
         mock_user_repository.get_dashboard_preferences.return_value = bean
 
@@ -814,18 +788,12 @@ class TestGetPreferences:
 
         assert result == get_default_preferences()
 
-    def test_calls_repository_with_correct_uuid(
-        self, mock_user_repository, sample_user_uuid
-    ):
-        mock_user_repository.get_dashboard_preferences.return_value = (
-            DashboardPreferencesBean(
-                layout=[LayoutItemBean(i="kpis")],
-            )
+    def test_calls_repository_with_correct_uuid(self, mock_user_repository, sample_user_uuid):
+        mock_user_repository.get_dashboard_preferences.return_value = DashboardPreferencesBean(
+            layout=[LayoutItemBean(i="kpis")],
         )
         get_preferences(mock_user_repository, sample_user_uuid)
-        mock_user_repository.get_dashboard_preferences.assert_called_once_with(
-            sample_user_uuid
-        )
+        mock_user_repository.get_dashboard_preferences.assert_called_once_with(sample_user_uuid)
 
 
 # ============================================================================
@@ -843,9 +811,7 @@ class TestUpdatePreferences:
             "shortcuts": [],
             "todos": [],
         }
-        mock_user_repository.update_dashboard_preferences.return_value = _dict_to_bean(
-            data
-        )
+        mock_user_repository.update_dashboard_preferences.return_value = _dict_to_bean(data)
 
         result = update_preferences(mock_user_repository, sample_user_uuid, data)
 
@@ -862,9 +828,7 @@ class TestUpdatePreferences:
             "layout": [{"not_valid": True}],
             "shortcuts": [{"label": "", "url": ""}],
         }
-        mock_user_repository.update_dashboard_preferences.return_value = (
-            DashboardPreferencesBean()
-        )
+        mock_user_repository.update_dashboard_preferences.return_value = DashboardPreferencesBean()
 
         update_preferences(mock_user_repository, sample_user_uuid, data)
 
@@ -874,9 +838,7 @@ class TestUpdatePreferences:
         assert bean.layout == []
         assert bean.shortcuts == []
 
-    def test_passes_cleaned_bean_to_repository(
-        self, mock_user_repository, sample_user_uuid
-    ):
+    def test_passes_cleaned_bean_to_repository(self, mock_user_repository, sample_user_uuid):
         data = {
             "layout": [{"i": "kpis", "x": 1, "y": 2, "w": 10, "h": 5}],
             "shortcuts": [{"label": "Test", "url": "https://test.com", "icon": "Star"}],
@@ -919,22 +881,14 @@ class TestUpdatePreferences:
 @pytest.mark.unit
 class TestDashboardPreferencesErrors:
 
-    def test_get_preferences_propagates_repository_exception(
-        self, mock_user_repository, sample_user_uuid
-    ):
-        mock_user_repository.get_dashboard_preferences.side_effect = Exception(
-            "DB error"
-        )
+    def test_get_preferences_propagates_repository_exception(self, mock_user_repository, sample_user_uuid):
+        mock_user_repository.get_dashboard_preferences.side_effect = Exception("DB error")
 
         with pytest.raises(Exception, match="DB error"):
             get_preferences(mock_user_repository, sample_user_uuid)
 
-    def test_update_preferences_propagates_repository_exception(
-        self, mock_user_repository, sample_user_uuid
-    ):
-        mock_user_repository.update_dashboard_preferences.side_effect = Exception(
-            "DB error"
-        )
+    def test_update_preferences_propagates_repository_exception(self, mock_user_repository, sample_user_uuid):
+        mock_user_repository.update_dashboard_preferences.side_effect = Exception("DB error")
 
         with pytest.raises(Exception, match="DB error"):
             update_preferences(
@@ -1018,19 +972,13 @@ class TestDashboardPreferencesMutationKilling:
         bean = _dict_to_bean(data)
         assert bean.layout[0].w == 6
 
-    def test_update_preferences_logs_message(
-        self, mock_user_repository, sample_user_uuid
-    ):
+    def test_update_preferences_logs_message(self, mock_user_repository, sample_user_uuid):
         """Verify logger.info is called with 'Preferences dashboard mises a jour'."""
         from unittest.mock import patch
 
-        mock_user_repository.update_dashboard_preferences.return_value = (
-            DashboardPreferencesBean()
-        )
+        mock_user_repository.update_dashboard_preferences.return_value = DashboardPreferencesBean()
 
-        with patch(
-            "app.domain.user.services.dashboard_preferences_service.logger"
-        ) as mock_logger:
+        with patch("app.domain.user.services.dashboard_preferences_service.logger") as mock_logger:
             update_preferences(
                 mock_user_repository,
                 sample_user_uuid,

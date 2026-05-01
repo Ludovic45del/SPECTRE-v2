@@ -6,18 +6,54 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
-from app.domain.exceptions import (
-    ConflictException,
-    InvalidDataException,
-    NotFoundException,
-)
+from app.domain.exceptions import ConflictException, InvalidDataException, NotFoundException, ValidationException
 from app.domain.fa.interface.fa_repository import IFaRepository
 from app.domain.fa.models.fa_bean import FaBean
 from app.domain.fa.models.fa_constants import FaStatus
 from app.domain.fa.models.fa_creation_context_bean import FaCreationContextBean
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
+from app.domain.user.interface.user_repository import IUserRepository
+from app.domain.user.models.user_bean import ROLE_CHEF_LABO, ROLE_IEC
 
 logger = logging.getLogger(__name__)
+
+
+# Roles autorises a valider une phase FA (open / in_progress / close).
+# chef_labo est inclus en super-utilisateur conformement aux choix metier.
+_FA_VALIDATOR_ROLES = (ROLE_IEC, ROLE_CHEF_LABO)
+
+
+def _resolve_validator_user(user_repository: IUserRepository, validator_user_uuid: str):
+    """Retourne le UserBean si role autorise a valider une FA, sinon leve 400.
+
+    Strategie :
+    - user inconnu -> ValidationException("validator_user_uuid", "USER_NOT_FOUND")
+    - role != iec/chef_labo -> ValidationException("validator_user_uuid", "VALIDATOR_ROLE_INVALID")
+
+    Renvoie le bean (utile pour propager le nom legacy en complement de la FK
+    pendant la phase de coexistence).
+    """
+    user = user_repository.get_by_uuid(validator_user_uuid)
+    if user is None:
+        raise ValidationException(
+            "validator_user_uuid",
+            f"Utilisateur introuvable : {validator_user_uuid}",
+        )
+    if user.role not in _FA_VALIDATOR_ROLES:
+        raise ValidationException(
+            "validator_user_uuid",
+            (
+                f"Le role '{user.role}' ne peut pas valider une FA. "
+                f"Roles autorises : {', '.join(_FA_VALIDATOR_ROLES)}"
+            ),
+        )
+    return user
+
+
+def _format_validator_legacy_name(user) -> str:
+    """Construit le 'validator_name' texte a stocker en complement de la FK."""
+    full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+    return full or user.username
 
 
 def generate_fa_identifier(campaign_name: str, fsec_name: str, year: int) -> str:
@@ -132,9 +168,7 @@ def get_fa_by_uuid(repository: IFaRepository, uuid: str) -> FaBean:
     return bean
 
 
-def get_all_fas(
-    repository: IFaRepository, limit: Optional[int] = None, offset: int = 0
-) -> List[FaBean]:
+def get_all_fas(repository: IFaRepository, limit: Optional[int] = None, offset: int = 0) -> List[FaBean]:
     """Récupère toutes les FA."""
     return repository.get_all(limit=limit, offset=offset)
 
@@ -144,9 +178,7 @@ def count_all_fas(repository: IFaRepository) -> int:
     return repository.count_all()
 
 
-def get_fa_by_fsec_version_id(
-    repository: IFaRepository, fsec_version_id: str
-) -> FaBean:
+def get_fa_by_fsec_version_id(repository: IFaRepository, fsec_version_id: str) -> FaBean:
     """Récupère la FA associée à une FSEC."""
     bean = repository.get_by_fsec_version_id(fsec_version_id)
     if bean is None:
@@ -162,12 +194,15 @@ _PROTECTED_MERGE_FIELDS = {
     "iec_validation_open",
     "iec_validation_open_date",
     "iec_validation_open_name",
+    "iec_validation_open_user_uuid",
     "iec_validation_progress",
     "iec_validation_progress_date",
     "iec_validation_progress_name",
+    "iec_validation_progress_user_uuid",
     "closure_validation",
     "closure_date",
     "closure_validator_name",
+    "closure_validator_user_uuid",
     "created_at",
     "last_updated",
     "is_active",
@@ -187,7 +222,12 @@ def _merge_fa_beans(existing: FaBean, updated: FaBean) -> FaBean:
     protected = set(_PROTECTED_MERGE_FIELDS)
     # Permettre la modification des champs de clôture si la FA est déjà fermée
     if existing.status_id == FaStatus.CLOSED:
-        protected -= {"closure_validation", "closure_date", "closure_validator_name"}
+        protected -= {
+            "closure_validation",
+            "closure_date",
+            "closure_validator_name",
+            "closure_validator_user_uuid",
+        }
 
     merged_kwargs = {}
     for field in fields(existing):
@@ -196,9 +236,7 @@ def _merge_fa_beans(existing: FaBean, updated: FaBean) -> FaBean:
             merged_kwargs[name] = getattr(existing, name)
         else:
             updated_val = getattr(updated, name)
-            merged_kwargs[name] = (
-                updated_val if updated_val is not None else getattr(existing, name)
-            )
+            merged_kwargs[name] = updated_val if updated_val is not None else getattr(existing, name)
     return FaBean(**merged_kwargs)
 
 
@@ -224,9 +262,7 @@ def delete_fa(repository: IFaRepository, uuid: str) -> bool:
     return True
 
 
-def patch_fa(
-    repository: IFaRepository, uuid: str, partial_data: Dict[str, Any]
-) -> FaBean:
+def patch_fa(repository: IFaRepository, uuid: str, partial_data: Dict[str, Any]) -> FaBean:
     """Met à jour partiellement une FA (PATCH).
 
     Args:
@@ -258,14 +294,11 @@ def patch_fa(
             "closure_validation",
             "closure_date",
             "closure_validator_name",
+            "closure_validator_user_uuid",
         }
 
     new_status = partial_data.get("status_id")
-    if (
-        "status_id" in partial_data
-        and new_status is not None
-        and new_status != existing.status_id
-    ):
+    if "status_id" in partial_data and new_status is not None and new_status != existing.status_id:
         logger.info(
             "FA %s: status_id modifié via PATCH (bypass workflow strict) %s -> %s",
             uuid,
@@ -296,29 +329,75 @@ def patch_fa(
     return repository.update(existing)
 
 
+def _resolve_validator_inputs(
+    user_repository: Optional[IUserRepository],
+    validator_user_uuid: Optional[str],
+    validator_name: Optional[str],
+) -> tuple[Optional[str], str]:
+    """Centralise la resolution validator_user_uuid + validator_name.
+
+    Strategie pendant la phase de coexistence FK + nom legacy :
+    - validator_user_uuid fourni : valider role + reconstruire le nom legacy
+      depuis le UserBean (source de verite). Le validator_name explicite est
+      ignore (la FK gagne).
+    - validator_user_uuid absent : exiger validator_name non vide (legacy).
+
+    Returns:
+        (validator_user_uuid_resolved, validator_name_resolved)
+
+    Raises:
+        ValidationException: si role invalide ou aucun input fourni.
+    """
+    if validator_user_uuid:
+        if user_repository is None:
+            # Defense en profondeur : un appelant qui passe une FK doit aussi
+            # fournir le repository (le controller le fait toujours).
+            raise ValidationException(
+                "validator_user_uuid",
+                "user_repository requis pour valider le role du validateur",
+            )
+        user = _resolve_validator_user(user_repository, validator_user_uuid)
+        return validator_user_uuid, _format_validator_legacy_name(user)
+
+    if not validator_name or not validator_name.strip():
+        raise ValidationException(
+            "validator_name",
+            "validator_name ou validator_user_uuid est requis",
+        )
+    return None, validator_name
+
+
 def validate_open_phase(
     repository: IFaRepository,
     uuid: str,
-    validator_name: str,
+    validator_name: Optional[str] = None,
     validation_date: Optional[date] = None,
+    validator_user_uuid: Optional[str] = None,
+    user_repository: Optional[IUserRepository] = None,
 ) -> FaBean:
     """Valide la phase Ouvert et passe à En cours.
 
     Args:
-        repository: Le repository FA
-        uuid: UUID de la FA
-        validator_name: Nom du valideur IEC
-        validation_date: Date de validation (défaut: aujourd'hui)
+        repository: Le repository FA.
+        uuid: UUID de la FA.
+        validator_name: Nom legacy du valideur IEC (transition).
+        validation_date: Date de validation (défaut: aujourd'hui).
+        validator_user_uuid: UUID UserProfile du validateur (source de vérité).
+        user_repository: Repository user (requis si validator_user_uuid fourni).
 
     Returns:
-        Le bean FA mis à jour
+        Le bean FA mis à jour.
 
     Raises:
-        NotFoundException: Si la FA n'existe pas
-        ConflictException: Si la FA n'est pas au statut Ouvert
+        NotFoundException: Si la FA n'existe pas.
+        ConflictException: Si la FA n'est pas au statut Ouvert.
+        ValidationException: Si le role du validateur n'est pas iec/chef_labo
+            ou si ni validator_user_uuid ni validator_name n'est fourni.
     """
     if validation_date is None:
         validation_date = date.today()
+
+    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -339,36 +418,30 @@ def validate_open_phase(
 
     bean.iec_validation_open = True
     bean.iec_validation_open_date = validation_date
-    bean.iec_validation_open_name = validator_name
+    bean.iec_validation_open_name = name
+    bean.iec_validation_open_user_uuid = user_uuid
     bean.status_id = FaStatus.IN_PROGRESS
 
-    logger.info("FA %s: validation phase Ouvert par %s", uuid, validator_name)
+    logger.info("FA %s: validation phase Ouvert par %s", uuid, name)
     return repository.update(bean)
 
 
 def validate_progress_phase(
     repository: IFaRepository,
     uuid: str,
-    validator_name: str,
+    validator_name: Optional[str] = None,
     validation_date: Optional[date] = None,
+    validator_user_uuid: Optional[str] = None,
+    user_repository: Optional[IUserRepository] = None,
 ) -> FaBean:
     """Valide la phase En cours et passe à Clos.
 
-    Args:
-        repository: Le repository FA
-        uuid: UUID de la FA
-        validator_name: Nom du valideur IEC
-        validation_date: Date de validation (défaut: aujourd'hui)
-
-    Returns:
-        Le bean FA mis à jour
-
-    Raises:
-        NotFoundException: Si la FA n'existe pas
-        ConflictException: Si la FA n'est pas au statut En cours
+    Voir validate_open_phase pour la sémantique des paramètres et exceptions.
     """
     if validation_date is None:
         validation_date = date.today()
+
+    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -381,10 +454,7 @@ def validate_progress_phase(
         )
 
     # Vérifier la cohérence chronologique avec la validation de la phase Ouvert
-    if (
-        bean.iec_validation_open_date
-        and validation_date < bean.iec_validation_open_date
-    ):
+    if bean.iec_validation_open_date and validation_date < bean.iec_validation_open_date:
         raise InvalidDataException(
             f"La date de validation 'En cours' ({validation_date}) ne peut pas être antérieure "
             f"à la date de validation 'Ouvert' ({bean.iec_validation_open_date})"
@@ -392,39 +462,35 @@ def validate_progress_phase(
 
     bean.iec_validation_progress = True
     bean.iec_validation_progress_date = validation_date
-    bean.iec_validation_progress_name = validator_name
+    bean.iec_validation_progress_name = name
+    bean.iec_validation_progress_user_uuid = user_uuid
 
-    logger.info("FA %s: validation phase En cours par %s", uuid, validator_name)
+    logger.info("FA %s: validation phase En cours par %s", uuid, name)
     return repository.update(bean)
 
 
 def close_fa(
     repository: IFaRepository,
     uuid: str,
-    validator_name: str,
-    closure_validation: str,
+    validator_name: Optional[str] = None,
+    closure_validation: str = "",
     closure_date: Optional[date] = None,
+    validator_user_uuid: Optional[str] = None,
+    user_repository: Optional[IUserRepository] = None,
 ) -> FaBean:
     """Ferme définitivement une FA.
 
-    Requiert que la phase En cours ait été validée par l'IEC (validate_progress_phase).
+    Voir validate_open_phase pour la sémantique des paramètres validateur.
+    Requiert que la phase En cours ait été validée par l'IEC.
 
-    Args:
-        repository: Le repository FA
-        uuid: UUID de la FA
-        validator_name: Nom du valideur (Chef labo + IEC)
-        closure_validation: Texte de validation de fermeture
-        closure_date: Date de fermeture (défaut: aujourd'hui)
-
-    Returns:
-        Le bean FA mis à jour
-
-    Raises:
-        NotFoundException: Si la FA n'existe pas
-        ConflictException: Si la FA n'est pas au statut En cours ou si la validation IEC n'a pas été faite
+    Note: l'ordre des arguments positionnels (validator_name avant
+    closure_validation) est conservé pour la compatibilité avec les appels
+    historiques.
     """
     if closure_date is None:
         closure_date = date.today()
+
+    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -443,10 +509,7 @@ def close_fa(
         )
 
     # Vérifier la cohérence chronologique avec la validation de la phase En cours
-    if (
-        bean.iec_validation_progress_date
-        and closure_date < bean.iec_validation_progress_date
-    ):
+    if bean.iec_validation_progress_date and closure_date < bean.iec_validation_progress_date:
         raise InvalidDataException(
             f"La date de fermeture ({closure_date}) ne peut pas être antérieure "
             f"à la date de validation 'En cours' ({bean.iec_validation_progress_date})"
@@ -454,8 +517,9 @@ def close_fa(
 
     bean.closure_validation = closure_validation
     bean.closure_date = closure_date
-    bean.closure_validator_name = validator_name
+    bean.closure_validator_name = name
+    bean.closure_validator_user_uuid = user_uuid
     bean.status_id = FaStatus.CLOSED
 
-    logger.info("FA %s: fermeture par %s", uuid, validator_name)
+    logger.info("FA %s: fermeture par %s", uuid, name)
     return repository.update(bean)

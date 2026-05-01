@@ -7,9 +7,7 @@ aliases rétro-compatibles pour chaque type de step.
 import abc
 from typing import Generic, List, Optional, TypeVar
 
-from app.domain.steps.models.airtightness_test_lp_step_bean import (
-    AirtightnessTestLpStepBean,
-)
+from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
 from app.domain.steps.models.assembly_step_bean import AssemblyStepBean
 from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean
 from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
@@ -106,9 +104,7 @@ class ISealingStepRepository(IStepRepository[SealingStepBean]):
     """Interface pour le repository SealingStep avec méthode spécifique."""
 
     @abc.abstractmethod
-    def get_by_metrology_step_id(
-        self, metrology_step_id: str
-    ) -> Optional[SealingStepBean]:
+    def get_by_metrology_step_id(self, metrology_step_id: str) -> Optional[SealingStepBean]:
         """Récupère le step de scellement associé à un step métrologie.
 
         Args:

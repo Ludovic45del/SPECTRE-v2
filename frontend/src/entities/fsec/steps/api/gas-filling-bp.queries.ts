@@ -39,11 +39,13 @@ export function useGasFillingBpStep(uuid: string) {
 
 interface CreateGasFillingBpStepInput {
     fsecVersionId: string;
+    embaseId?: string | null;
     leakRateDtri?: string | null;
     gasType?: string | null;
     experimentPressure?: number | null;
     leakTestDuration?: number | null;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     dateOfFulfilment?: Date | null;
     gasBase?: number | null;
     gasContainer?: number | null;
@@ -54,29 +56,40 @@ interface UpdateGasFillingBpStepInput extends CreateGasFillingBpStepInput {
     uuid: string;
 }
 
+function gasFillingBpStepToApi(input: CreateGasFillingBpStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        embase_id: input.embaseId ?? null,
+        leak_rate_dtri: input.leakRateDtri ?? null,
+        gas_type: input.gasType ?? null,
+        experiment_pressure: input.experimentPressure ?? null,
+        leak_test_duration: input.leakTestDuration ?? null,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
+        gas_base: input.gasBase ?? null,
+        gas_container: input.gasContainer ?? null,
+        observations: input.observations ?? null,
+    };
+}
+
 export function useCreateGasFillingBpStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateGasFillingBpStepInput): Promise<GasFillingBpStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                leak_test_duration: input.leakTestDuration ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                gas_base: input.gasBase ?? null,
-                gas_container: input.gasContainer ?? null,
-                observations: input.observations ?? null,
-            };
-            const response = await api.post('/gas-filling-bp-steps/', apiData);
+            const response = await api.post(
+                '/gas-filling-bp-steps/',
+                gasFillingBpStepToApi(input),
+            );
             return GasFillingBpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingBp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -87,19 +100,10 @@ export function useUpdateGasFillingBpStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateGasFillingBpStepInput): Promise<GasFillingBpStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                leak_rate_dtri: input.leakRateDtri ?? null,
-                gas_type: input.gasType ?? null,
-                experiment_pressure: input.experimentPressure ?? null,
-                leak_test_duration: input.leakTestDuration ?? null,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                gas_base: input.gasBase ?? null,
-                gas_container: input.gasContainer ?? null,
-                observations: input.observations ?? null,
-            };
-            const response = await api.put(`/gas-filling-bp-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/gas-filling-bp-steps/${input.uuid}/`,
+                gasFillingBpStepToApi(input),
+            );
             return GasFillingBpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -108,6 +112,9 @@ export function useUpdateGasFillingBpStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingBp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -123,6 +130,9 @@ export function useDeleteGasFillingBpStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.gasFillingBp.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

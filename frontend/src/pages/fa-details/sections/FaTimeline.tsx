@@ -10,6 +10,7 @@ import { Box, Paper, Typography, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { Fa } from '@entities/fa';
+import { UserChip } from '@entities/user';
 import { formatDateShort } from '@shared/lib';
 import { FaSectionHeader, PAPER_BASE_SX } from '../components';
 
@@ -25,6 +26,7 @@ interface TimelineEvent {
     label: string;
     date: string | Date | null | undefined;
     validatorName: string | null | undefined;
+    validatorUserUuid: string | null | undefined;
     isCompleted: boolean;
     color: string;
 }
@@ -40,6 +42,7 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                 label: 'Création de la FA',
                 date: fa.createdAt,
                 validatorName: null,
+                validatorUserUuid: null,
                 isCompleted: true,
                 color: '#FFA726',
             },
@@ -47,6 +50,7 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                 label: 'Validation IEC - Phase Ouvert',
                 date: fa.iecValidationOpenDate,
                 validatorName: fa.iecValidationOpenName,
+                validatorUserUuid: fa.iecValidationOpenUserUuid,
                 isCompleted: fa.iecValidationOpen === true,
                 color: '#FFA726',
             },
@@ -54,6 +58,7 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                 label: 'Validation IEC - Phase En cours',
                 date: fa.iecValidationProgressDate,
                 validatorName: fa.iecValidationProgressName,
+                validatorUserUuid: fa.iecValidationProgressUserUuid,
                 isCompleted: fa.iecValidationProgress === true,
                 color: '#42A5F5',
             },
@@ -61,6 +66,7 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                 label: 'Clôture',
                 date: fa.closureDate,
                 validatorName: fa.closureValidatorName,
+                validatorUserUuid: fa.closureValidatorUserUuid,
                 isCompleted: fa.statusId === 2,
                 color: '#66BB6A',
             },
@@ -70,7 +76,7 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
 
     return (
         <Paper variant="outlined" sx={PAPER_BASE_SX} component="section" aria-label="Historique de la FA">
-            <FaSectionHeader label="Historique" chipColor="grey.600" />
+            <FaSectionHeader label="Historique" chipColor="default" />
 
             <Stack spacing={0}>
                 {events.map((event, index) => (
@@ -116,10 +122,16 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                                     <Typography variant="caption" color="text.secondary">
                                         {formatDateShort(event.date)}
                                     </Typography>
-                                    {event.validatorName && (
-                                        <Typography variant="caption" color="text.secondary">
-                                            — {event.validatorName}
-                                        </Typography>
+                                    {(event.validatorUserUuid || event.validatorName) && (
+                                        <>
+                                            <Typography variant="caption" color="text.secondary">
+                                                —
+                                            </Typography>
+                                            <UserChip
+                                                userUuid={event.validatorUserUuid}
+                                                fallbackText={event.validatorName}
+                                            />
+                                        </>
                                     )}
                                 </Stack>
                             )}

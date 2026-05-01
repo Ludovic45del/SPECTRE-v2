@@ -2,20 +2,33 @@
  * General Info Section for FSEC Overview Tab
  * @module pages/fsec-details/tabs/components
  *
- * Inline editing for general FSEC fields (dates, localisation, comments).
- * DTRI number is read-only (inherited from campaign).
+ * Affiche les champs de la modale de création (Campagne, Nom, Catégorie, Remarques)
+ * + Localisation.
  */
 
 import { useState, useCallback } from 'react';
-import { Box, Button, Divider, Grid, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Fsec, useUpdateFsec } from '@entities/fsec';
-import { FsecGeneralFormSchema } from '@entities/fsec/core/model/fsec.schema';
+import {
+    Autocomplete,
+    Box,
+    Button,
+    Divider,
+    Grid,
+    IconButton,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
-import dayjs, { Dayjs } from 'dayjs';
+import { Fsec, useUpdateFsec } from '@entities/fsec';
+import { FSEC_CATEGORY_LIST, getCategoryInfo } from '@entities/fsec/core/model/fsec.constants';
+import { FsecGeneralFormSchema } from '@entities/fsec/core/model/fsec.schema';
+import { useCampaigns, CampaignWithRelations } from '@entities/campaign';
 import { useNotification } from '@shared/ui';
+import { DataChip } from '@widgets/data-chip';
+import { ChipSelect } from '@widgets/chip-select';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -23,41 +36,50 @@ import { useNotification } from '@shared/ui';
 
 interface GeneralInfoSectionProps {
     fsec: Fsec;
-    dtriNumber?: number | null;
+    campaign?: CampaignWithRelations | null;
     paperSx: Record<string, unknown>;
     editButtonSx: Record<string, unknown>;
 }
 
 interface GeneralInfoForm {
-    shootingDate: Dayjs | null;
-    deliveryDate: Dayjs | null;
+    campaignId: string;
+    name: string;
+    categoryId: number;
     localisation: string;
     comments: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const formatCampaignLabel = (campaign: CampaignWithRelations) =>
+    `${campaign.year}-${campaign.installation?.label ?? 'N/A'}_${campaign.name}`;
+
+const buildInitialForm = (fsec: Fsec): GeneralInfoForm => ({
+    campaignId: fsec.campaignId ?? '',
+    name: fsec.name,
+    categoryId: fsec.categoryId ?? 0,
+    localisation: fsec.localisation ?? '',
+    comments: fsec.comments ?? '',
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: GeneralInfoSectionProps) {
+export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: GeneralInfoSectionProps) {
     const { showNotification } = useNotification();
     const updateMutation = useUpdateFsec();
+    const { data: campaigns } = useCampaigns();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [form, setForm] = useState<GeneralInfoForm>({
-        shootingDate: fsec.shootingDate ? dayjs(fsec.shootingDate) : null,
-        deliveryDate: fsec.deliveryDate ? dayjs(fsec.deliveryDate) : null,
-        localisation: fsec.localisation ?? '',
-        comments: fsec.comments ?? '',
-    });
+    const [form, setForm] = useState<GeneralInfoForm>(() => buildInitialForm(fsec));
+
+    const categoryInfo = getCategoryInfo(fsec.categoryId);
 
     const handleEdit = useCallback(() => {
-        setForm({
-            shootingDate: fsec.shootingDate ? dayjs(fsec.shootingDate) : null,
-            deliveryDate: fsec.deliveryDate ? dayjs(fsec.deliveryDate) : null,
-            localisation: fsec.localisation ?? '',
-            comments: fsec.comments ?? '',
-        });
+        setForm(buildInitialForm(fsec));
         setIsEditing(true);
     }, [fsec]);
 
@@ -66,6 +88,14 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
     }, []);
 
     const handleSave = useCallback(async () => {
+        if (!form.name.trim()) {
+            showNotification('Le nom est requis', 'error');
+            return;
+        }
+        if (!form.campaignId) {
+            showNotification('La campagne est requise', 'error');
+            return;
+        }
         const validation = FsecGeneralFormSchema.safeParse({
             localisation: form.localisation,
             comments: form.comments,
@@ -79,16 +109,16 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
             await updateMutation.mutateAsync({
                 versionUuid: fsec.versionUuid,
                 data: {
-                    name: fsec.name,
-                    campaignId: fsec.campaignId,
+                    name: form.name.trim(),
+                    campaignId: form.campaignId,
                     statusId: fsec.statusId,
-                    categoryId: fsec.categoryId,
+                    categoryId: form.categoryId,
                     rackId: fsec.rackId,
                     preshootingPressure: fsec.preshootingPressure,
                     experienceSrxx: fsec.experienceSrxx,
                     depressurizationFailed: fsec.depressurizationFailed,
-                    shootingDate: form.shootingDate?.toDate() ?? null,
-                    deliveryDate: form.deliveryDate?.toDate() ?? null,
+                    shootingDate: fsec.shootingDate,
+                    deliveryDate: fsec.deliveryDate,
                     localisation: form.localisation || null,
                     comments: form.comments || null,
                 },
@@ -99,6 +129,8 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
             showNotification('Erreur lors de la mise à jour', 'error');
         }
     }, [fsec, form, updateMutation, showNotification]);
+
+    const selectedCampaign = campaigns?.find((c) => c.uuid === form.campaignId) ?? null;
 
     return (
         <Paper variant="outlined" sx={paperSx}>
@@ -115,62 +147,73 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
 
             {isEditing ? (
                 <Box>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                N° DTRI
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium" color="text.secondary">
-                                {dtriNumber ?? '-'}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <DatePicker
-                                label="Date du tir"
-                                value={form.shootingDate}
-                                onChange={(date) => setForm((prev) => ({ ...prev, shootingDate: date }))}
-                                slotProps={{ textField: { size: 'small', fullWidth: true } }}
-                            />
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <DatePicker
-                                label="Date de livraison"
-                                value={form.deliveryDate}
-                                onChange={(date) => setForm((prev) => ({ ...prev, deliveryDate: date }))}
-                                slotProps={{ textField: { size: 'small', fullWidth: true } }}
-                            />
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <TextField
-                                label="Localisation"
-                                value={form.localisation}
-                                onChange={(e) =>
-                                    setForm((prev) => ({
-                                        ...prev,
-                                        localisation: e.target.value,
-                                    }))
-                                }
-                                size="small"
-                                fullWidth
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Remarques"
-                                value={form.comments}
-                                onChange={(e) =>
-                                    setForm((prev) => ({
-                                        ...prev,
-                                        comments: e.target.value,
-                                    }))
-                                }
-                                multiline
-                                rows={2}
-                                size="small"
-                                fullWidth
-                            />
-                        </Grid>
-                    </Grid>
+                    <Stack spacing={3}>
+                        <Autocomplete
+                            options={campaigns ?? []}
+                            value={selectedCampaign}
+                            onChange={(_, value) =>
+                                setForm((prev) => ({ ...prev, campaignId: value?.uuid ?? '' }))
+                            }
+                            getOptionLabel={formatCampaignLabel}
+                            isOptionEqualToValue={(option, value) => option.uuid === value?.uuid}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Campagne" required size="small" />
+                            )}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.uuid}>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <DataChip
+                                            label={option.installation?.label ?? 'N/A'}
+                                            color={option.installation?.color ?? '#666'}
+                                        />
+                                        <Typography>{formatCampaignLabel(option)}</Typography>
+                                    </Stack>
+                                </li>
+                            )}
+                        />
+
+                        <TextField
+                            label="Nom de la FSEC"
+                            value={form.name}
+                            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                            required
+                            size="small"
+                            fullWidth
+                        />
+
+                        <ChipSelect
+                            label="Catégorie"
+                            options={FSEC_CATEGORY_LIST.map((cat) => ({
+                                value: cat.id,
+                                label: cat.label,
+                                color: cat.color,
+                            }))}
+                            required
+                            size="small"
+                            value={form.categoryId}
+                            onChange={(e) =>
+                                setForm((prev) => ({ ...prev, categoryId: Number(e.target.value) }))
+                            }
+                        />
+
+                        <TextField
+                            label="Localisation"
+                            value={form.localisation}
+                            onChange={(e) => setForm((prev) => ({ ...prev, localisation: e.target.value }))}
+                            size="small"
+                            fullWidth
+                        />
+
+                        <TextField
+                            label="Remarques"
+                            value={form.comments}
+                            onChange={(e) => setForm((prev) => ({ ...prev, comments: e.target.value }))}
+                            multiline
+                            rows={3}
+                            size="small"
+                            fullWidth
+                        />
+                    </Stack>
                     <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
                         <Button size="small" onClick={handleCancel} startIcon={<CloseIcon />} color="inherit">
                             Annuler
@@ -188,32 +231,42 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
                 </Box>
             ) : (
                 <Grid container spacing={2}>
-                    <Grid item xs={6} md={3}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                            N° DTRI
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Campagne
+                        </Typography>
+                        {campaign ? (
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <DataChip
+                                    label={campaign.installation?.label ?? 'N/A'}
+                                    color={campaign.installation?.color ?? '#666'}
+                                />
+                                <Typography variant="body1" fontWeight="medium">
+                                    {formatCampaignLabel(campaign)}
+                                </Typography>
+                            </Stack>
+                        ) : (
+                            <Typography variant="body1" fontWeight="medium">
+                                -
+                            </Typography>
+                        )}
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Nom de la FSEC
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
-                            {dtriNumber ?? '-'}
+                            {fsec.name || '-'}
                         </Typography>
                     </Grid>
-                    <Grid item xs={6} md={3}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                            Date du tir
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Catégorie
                         </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                            {fsec.shootingDate ? dayjs(fsec.shootingDate).format('DD/MM/YYYY') : '-'}
-                        </Typography>
+                        <DataChip label={categoryInfo.label} color={categoryInfo.color} />
                     </Grid>
-                    <Grid item xs={6} md={3}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                            Date de livraison
-                        </Typography>
-                        <Typography variant="body1" fontWeight="medium">
-                            {fsec.deliveryDate ? dayjs(fsec.deliveryDate).format('DD/MM/YYYY') : '-'}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={6} md={3}>
-                        <Typography variant="subtitle2" color="text.secondary">
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
                             Localisation
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
@@ -221,7 +274,7 @@ export function GeneralInfoSection({ fsec, dtriNumber, paperSx, editButtonSx }: 
                         </Typography>
                     </Grid>
                     <Grid item xs={12}>
-                        <Typography variant="subtitle2" color="text.secondary">
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
                             Remarques
                         </Typography>
                         <Typography variant="body1">{fsec.comments || 'Aucune remarque'}</Typography>

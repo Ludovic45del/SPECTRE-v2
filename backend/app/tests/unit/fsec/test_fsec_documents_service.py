@@ -47,22 +47,16 @@ class TestFsecDocumentsServiceCreate:
     """Tests pour la création de document FSEC."""
 
     @pytest.mark.unit
-    def test_create_fsec_document_success(
-        self, sample_fsec_document_bean, mock_fsec_documents_repository
-    ):
+    def test_create_fsec_document_success(self, sample_fsec_document_bean, mock_fsec_documents_repository):
         """Test création réussie d'un document FSEC."""
         mock_fsec_documents_repository.create.return_value = sample_fsec_document_bean
 
-        result = create_fsec_document(
-            mock_fsec_documents_repository, sample_fsec_document_bean
-        )
+        result = create_fsec_document(mock_fsec_documents_repository, sample_fsec_document_bean)
 
         assert result.uuid == sample_fsec_document_bean.uuid
         assert result.name == sample_fsec_document_bean.name
         assert result.fsec_id == sample_fsec_document_bean.fsec_id
-        mock_fsec_documents_repository.create.assert_called_once_with(
-            sample_fsec_document_bean
-        )
+        mock_fsec_documents_repository.create.assert_called_once_with(sample_fsec_document_bean)
 
     @pytest.mark.unit
     def test_create_fsec_document_with_parent_validation_success(
@@ -80,17 +74,11 @@ class TestFsecDocumentsServiceCreate:
         )
 
         assert result.uuid == sample_fsec_document_bean.uuid
-        mock_fsec_repo.get_by_version_uuid.assert_called_once_with(
-            sample_fsec_document_bean.fsec_id
-        )
-        mock_fsec_documents_repository.create.assert_called_once_with(
-            sample_fsec_document_bean
-        )
+        mock_fsec_repo.get_by_version_uuid.assert_called_once_with(sample_fsec_document_bean.fsec_id)
+        mock_fsec_documents_repository.create.assert_called_once_with(sample_fsec_document_bean)
 
     @pytest.mark.unit
-    def test_create_fsec_document_parent_not_found(
-        self, sample_fsec_document_bean, mock_fsec_documents_repository
-    ):
+    def test_create_fsec_document_parent_not_found(self, sample_fsec_document_bean, mock_fsec_documents_repository):
         """Test NotFoundException quand le FSEC parent n'existe pas."""
         mock_fsec_repo = MagicMock()
         mock_fsec_repo.get_by_version_uuid.return_value = None  # parent absent
@@ -111,22 +99,14 @@ class TestFsecDocumentsServiceGet:
     """Tests pour la récupération de document FSEC."""
 
     @pytest.mark.unit
-    def test_get_fsec_document_by_uuid_success(
-        self, sample_fsec_document_bean, mock_fsec_documents_repository
-    ):
+    def test_get_fsec_document_by_uuid_success(self, sample_fsec_document_bean, mock_fsec_documents_repository):
         """Test récupération réussie par UUID."""
-        mock_fsec_documents_repository.get_by_uuid.return_value = (
-            sample_fsec_document_bean
-        )
+        mock_fsec_documents_repository.get_by_uuid.return_value = sample_fsec_document_bean
 
-        result = get_fsec_document_by_uuid(
-            mock_fsec_documents_repository, sample_fsec_document_bean.uuid
-        )
+        result = get_fsec_document_by_uuid(mock_fsec_documents_repository, sample_fsec_document_bean.uuid)
 
         assert result.uuid == sample_fsec_document_bean.uuid
-        mock_fsec_documents_repository.get_by_uuid.assert_called_once_with(
-            sample_fsec_document_bean.uuid
-        )
+        mock_fsec_documents_repository.get_by_uuid.assert_called_once_with(sample_fsec_document_bean.uuid)
 
     @pytest.mark.unit
     def test_get_fsec_document_by_uuid_not_found(self, mock_fsec_documents_repository):
@@ -153,14 +133,10 @@ class TestFsecDocumentsServiceGet:
             sample_fsec_document_bean,
         ]
 
-        result = get_fsec_documents(
-            mock_fsec_documents_repository, sample_fsec_version_uuid
-        )
+        result = get_fsec_documents(mock_fsec_documents_repository, sample_fsec_version_uuid)
 
         assert len(result) == 2
-        mock_fsec_documents_repository.get_by_fsec_id.assert_called_once_with(
-            sample_fsec_version_uuid
-        )
+        mock_fsec_documents_repository.get_by_fsec_id.assert_called_once_with(sample_fsec_version_uuid)
 
     @pytest.mark.unit
     def test_get_fsec_documents_empty(self, mock_fsec_documents_repository):
@@ -177,13 +153,9 @@ class TestFsecDocumentsServiceUpdate:
     """Tests pour la mise à jour de document FSEC."""
 
     @pytest.mark.unit
-    def test_update_fsec_document_success(
-        self, sample_fsec_document_bean, mock_fsec_documents_repository
-    ):
+    def test_update_fsec_document_success(self, sample_fsec_document_bean, mock_fsec_documents_repository):
         """Test mise à jour réussie."""
-        mock_fsec_documents_repository.get_by_uuid.return_value = (
-            sample_fsec_document_bean
-        )
+        mock_fsec_documents_repository.get_by_uuid.return_value = sample_fsec_document_bean
         updated_bean = FsecDocumentsBean(
             uuid=sample_fsec_document_bean.uuid,
             fsec_id=sample_fsec_document_bean.fsec_id,
@@ -259,10 +231,7 @@ class TestFsecDocumentsModuleLogger:
     @pytest.mark.unit
     def test_logger_name(self):
         """Vérifie que le logger porte le bon nom de module."""
-        assert (
-            fsec_documents_service.logger.name
-            == "app.domain.fsec.services.fsec_documents_service"
-        )
+        assert fsec_documents_service.logger.name == "app.domain.fsec.services.fsec_documents_service"
 
 
 class TestCreateFsecDocumentAndOrMutants:

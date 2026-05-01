@@ -23,9 +23,9 @@ class AssemblyStepRepository(IAssemblyStepRepository):
 
     def _base_queryset(self):
         """Returns queryset with select_related and prefetch_related applied."""
-        return AssemblyStepEntity.objects.select_related(
-            *self.select_related_fields
-        ).prefetch_related(*self.prefetch_related_fields)
+        return AssemblyStepEntity.objects.select_related(*self.select_related_fields).prefetch_related(
+            *self.prefetch_related_fields
+        )
 
     def _get_valid_bench_ids(self) -> set:
         """Récupère les IDs valides depuis la base de données."""
@@ -79,7 +79,8 @@ class AssemblyStepRepository(IAssemblyStepRepository):
 
         entity = AssemblyStepEntity.objects.get(uuid=bean.uuid)
         entity.fsec_version_id_id = bean.fsec_version_id
-        entity.hydrometric_temperature = bean.hydrometric_temperature
+        entity.operator = bean.operator
+        entity.operator_user_id = bean.operator_user_uuid
         entity.start_date = bean.start_date
         entity.end_date = bean.end_date
         entity.comments = bean.comments

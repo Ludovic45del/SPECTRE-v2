@@ -25,6 +25,7 @@ import {
     useDeleteSealingStep,
     FSEC_RACKS_LIST,
 } from '@entities/fsec/steps';
+import { UserSelect } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -38,7 +39,7 @@ interface SealingStepModalProps {
 
 const SealingStepFormSchema = z.object({
     date: z.date({ required_error: 'Date requise' }),
-    metrologistName: z.string().min(1, 'Champ requis'),
+    metrologistUserUuid: z.string().uuid('Métrologue requis'),
     rackId: z.number().nullable().optional(),
     interfaceIo: z.string().nullable().optional(),
     comments: z.string().nullable().optional(),
@@ -60,7 +61,7 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
         resolver: zodResolver(SealingStepFormSchema),
         defaultValues: {
             date: undefined,
-            metrologistName: '',
+            metrologistUserUuid: '',
             rackId: null,
             interfaceIo: '',
             comments: '',
@@ -72,7 +73,7 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
             if (step) {
                 reset({
                     date: step.date ?? undefined,
-                    metrologistName: step.metrologistName ?? '',
+                    metrologistUserUuid: step.metrologistUserUuid ?? '',
                     rackId: step.rackId,
                     interfaceIo: step.interfaceIo ?? '',
                     comments: step.comments ?? '',
@@ -80,7 +81,7 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
             } else {
                 reset({
                     date: undefined,
-                    metrologistName: '',
+                    metrologistUserUuid: '',
                     rackId: null,
                     interfaceIo: '',
                     comments: '',
@@ -102,7 +103,7 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                         uuid: step.uuid,
                         metrologyStepId,
                         date: data.date,
-                        metrologistName: data.metrologistName,
+                        metrologistUserUuid: data.metrologistUserUuid,
                         rackId: data.rackId,
                         interfaceIo: data.interfaceIo,
                         comments: data.comments,
@@ -112,7 +113,7 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                     await createMutation.mutateAsync({
                         metrologyStepId,
                         date: data.date,
-                        metrologistName: data.metrologistName,
+                        metrologistUserUuid: data.metrologistUserUuid,
                         rackId: data.rackId,
                         interfaceIo: data.interfaceIo,
                         comments: data.comments,
@@ -180,18 +181,19 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                     )}
                 />
 
-                {/* Nom du métrologue */}
+                {/* Métrologue (dropdown connecté à la base users) */}
                 <Controller
-                    name="metrologistName"
+                    name="metrologistUserUuid"
                     control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
-                            label="Nom du métrologue"
-                            size="small"
-                            fullWidth
-                            inputProps={{ 'aria-label': 'Nom du métrologue' }}
+                    render={({ field, fieldState }) => (
+                        <UserSelect
+                            value={field.value || null}
+                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                            roles={['metrologue']}
+                            label="Métrologue"
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
                         />
                     )}
                 />

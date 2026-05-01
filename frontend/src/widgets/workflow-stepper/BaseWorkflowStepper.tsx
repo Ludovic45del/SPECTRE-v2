@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { stepPop } from '@shared/lib';
+import { motion, motionEasing, motionDuration } from '@shared/ui/motion';
 
 export interface WorkflowStep {
     label: string;
@@ -44,7 +45,7 @@ const AnimatedStepper = styled(Stepper, {
         '& .MuiStepConnector-line': {
             borderTopWidth: 3,
             borderColor: theme.palette.grey[300],
-            transition: 'border-color 0.5s ease',
+            transition: `border-color ${motionDuration.slow}ms ${motionEasing.standard}`,
         },
         '& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line': {
             borderColor: color,
@@ -54,14 +55,14 @@ const AnimatedStepper = styled(Stepper, {
         },
         '& .MuiStepIcon-root': {
             fontSize: '1.4rem',
-            transition: 'color 0.4s ease',
+            transition: `color ${motionDuration.medium}ms ${motionEasing.standard}, transform ${motionDuration.fast}ms ${motionEasing.standard}, filter ${motionDuration.fast}ms ${motionEasing.standard}`,
         },
         '& .MuiStepIcon-root.Mui-completed': { color },
         '& .MuiStepIcon-root.Mui-active': { color },
         '& .MuiStepLabel-label': {
             fontSize: '0.75rem',
             marginTop: theme.spacing(0.5),
-            transition: 'all 0.3s ease',
+            transition: `color ${motionDuration.medium}ms ${motionEasing.standard}, font-weight ${motionDuration.medium}ms ${motionEasing.standard}`,
         },
         '& .MuiStepLabel-label.Mui-active': {
             fontWeight: 600,
@@ -131,7 +132,7 @@ export function BaseWorkflowStepper({
 
     return (
         <>
-            <Box sx={{ width: '100%', mt: 1, opacity: isPending ? 0.7 : 1, transition: 'opacity 0.3s ease' }}>
+            <Box sx={{ width: '100%', mt: 1, opacity: isPending ? 0.7 : 1, transition: `opacity ${motion.medium}` }}>
                 <AnimatedStepper activeStep={activeStep} alternativeLabel isComplete={isWorkflowComplete}>
                     {steps.map((step, index) => (
                         <Step

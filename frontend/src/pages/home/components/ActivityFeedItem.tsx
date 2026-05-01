@@ -4,12 +4,16 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Box, Chip, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Chip, Typography, useTheme } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { BRAND_COLORS, TRANSITION, formatDateRelative, type ActivityItem, type EntityType } from '../constants';
+import { softChipSx } from '@shared/lib';
 import CircleLetterIcon from './CircleLetterIcon';
+
+// Densité home feed : on conserve un format plus compact que la chip standard.
+const denseChipSx = { height: 18, fontSize: '0.6rem' } as const;
 
 const ENTITY_LABEL: Record<EntityType, string> = {
     campaign: 'Campagne',
@@ -62,18 +66,7 @@ export default function ActivityFeedItem({ item }: { readonly item: ActivityItem
                     <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.88rem' }} noWrap>
                         {item.name}
                     </Typography>
-                    <Chip
-                        label={ENTITY_LABEL[item.type]}
-                        size="small"
-                        sx={{
-                            height: 18,
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            bgcolor: alpha(typeColor, isDark ? 0.15 : 0.08),
-                            color: typeColor,
-                            letterSpacing: '0.02em',
-                        }}
-                    />
+                    <Chip label={ENTITY_LABEL[item.type]} sx={[softChipSx(typeColor), denseChipSx]} />
                 </Box>
 
                 {/* Detail line */}
@@ -90,17 +83,7 @@ export default function ActivityFeedItem({ item }: { readonly item: ActivityItem
 
                 {/* Status chip + relative date */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip
-                        label={item.statusLabel}
-                        size="small"
-                        sx={{
-                            height: 18,
-                            fontSize: '0.6rem',
-                            fontWeight: 600,
-                            bgcolor: alpha(item.statusColor, isDark ? 0.2 : 0.12),
-                            color: isDark ? alpha(item.statusColor, 0.9) : item.statusColor,
-                        }}
-                    />
+                    <Chip label={item.statusLabel} sx={[softChipSx(item.statusColor), denseChipSx]} />
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
                         <AccessTimeIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
                         <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.7rem' }}>

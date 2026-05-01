@@ -8,9 +8,7 @@ from app.mapper.steps.gas_filling_hp_step_mapper import (
     gas_filling_hp_step_mapper_bean_to_entity,
     gas_filling_hp_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.gas_filling_hp_step_entity import (
-    GasFillingHpStepEntity,
-)
+from app.repository.steps.models.gas_filling_hp_step_entity import GasFillingHpStepEntity
 from app.repository.steps.repositories.base_step_repository import BaseStepRepository
 
 
@@ -35,6 +33,7 @@ class GasFillingHpStepRepository(
         entity.gas_type = bean.gas_type
         entity.experiment_pressure = bean.experiment_pressure
         entity.operator = bean.operator
+        entity.operator_user_id = bean.operator_user_uuid
         entity.date_of_fulfilment = bean.date_of_fulfilment
         entity.gas_base = bean.gas_base
         entity.gas_container = bean.gas_container

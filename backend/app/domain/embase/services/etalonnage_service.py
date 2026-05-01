@@ -7,11 +7,7 @@ from app.domain.embase.interface.embase_repository import IEmbaseRepository
 from app.domain.embase.interface.etalonnage_repository import IEtalonnageRepository
 from app.domain.embase.models.etalonnage_bean import EtalonnageBean
 from app.domain.embase.services.embase_sync import sync_embase_mesures
-from app.domain.exceptions import (
-    ConflictException,
-    InvalidDataException,
-    NotFoundException,
-)
+from app.domain.exceptions import ConflictException, InvalidDataException, NotFoundException
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +31,7 @@ def get_etalonnages_by_embase(
     offset: int = 0,
 ) -> List[EtalonnageBean]:
     """Récupère les étalonnages d'une embase, optionnellement filtrés par voie."""
-    return repository.get_by_embase_uuid_paginated(
-        embase_uuid, voie=voie, limit=limit, offset=offset
-    )
+    return repository.get_by_embase_uuid_paginated(embase_uuid, voie=voie, limit=limit, offset=offset)
 
 
 def count_etalonnages_by_embase(
@@ -62,14 +56,10 @@ def create_etalonnage(
 
     # Valider voie vs nombre_voies
     if bean.voie == 2 and embase.nombre_voies == 1:
-        raise InvalidDataException(
-            f"Voie 2 non disponible pour embase '{embase.identifier}' (1 voie)"
-        )
+        raise InvalidDataException(f"Voie 2 non disponible pour embase '{embase.identifier}' (1 voie)")
 
     # Vérifier doublon (embase + voie + date)
-    if bean.date and etalonnage_repository.exists_by_embase_voie_date(
-        bean.embase_uuid, bean.voie, bean.date
-    ):
+    if bean.date and etalonnage_repository.exists_by_embase_voie_date(bean.embase_uuid, bean.voie, bean.date):
         raise ConflictException(
             "embase/voie/date",
             f"{embase.identifier}/V{bean.voie}/{bean.date}",
@@ -84,9 +74,7 @@ def create_etalonnage(
     )
 
     # Synchroniser les mesures de l'embase depuis le dernier étalonnage
-    sync_embase_mesures(
-        etalonnage_repository, embase_repository, bean.embase_uuid, bean.voie
-    )
+    sync_embase_mesures(etalonnage_repository, embase_repository, bean.embase_uuid, bean.voie)
 
     return result
 
@@ -108,8 +96,6 @@ def delete_etalonnage(
     logger.info("Étalonnage supprimé: %s", uuid)
 
     # Synchroniser les mesures depuis le nouvel étalonnage le plus récent
-    sync_embase_mesures(
-        etalonnage_repository, embase_repository, etal.embase_uuid, etal.voie
-    )
+    sync_embase_mesures(etalonnage_repository, embase_repository, etal.embase_uuid, etal.voie)
 
     return True

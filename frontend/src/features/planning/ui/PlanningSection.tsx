@@ -7,6 +7,7 @@ import { Add, ExpandMore } from '@mui/icons-material';
 import { type SectionId } from '../lib/planning.constants';
 import { usePlanningColors } from '../lib/planning.hooks';
 import { usePlanningStore } from '../lib/planning.store';
+import { motion } from '@shared/ui/motion';
 
 interface PlanningSectionProps {
     sectionId: SectionId;
@@ -55,7 +56,7 @@ export function PlanningSection({ sectionId, label, totalColumns, onAdd, childre
                                         fontSize: 20,
                                         color: colors.accent,
                                         transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.2s ease',
+                                        transition: `transform ${motion.base}`,
                                     }}
                                 />
                                 <Typography variant="subtitle2" fontWeight={700} color={colors.accent}>

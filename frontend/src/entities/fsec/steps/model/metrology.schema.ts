@@ -13,6 +13,7 @@ export const MetrologyStepApiSchema = z.object({
     machine_id: z.number().int().nullable(),
     rack_id: z.number().int().nullable(),
     metrologist_name: z.string().nullable(),
+    metrologist_user_uuid: z.string().uuid().nullable().optional(),
     date: z.string().nullable(),
     comments: z.string().nullable(),
 });
@@ -23,6 +24,7 @@ export const MetrologyStepSchema = MetrologyStepApiSchema.transform((api) => ({
     machineId: api.machine_id,
     rackId: api.rack_id,
     metrologistName: api.metrologist_name,
+    metrologistUserUuid: api.metrologist_user_uuid ?? null,
     date: api.date ? new Date(api.date) : null,
     comments: api.comments,
 }));

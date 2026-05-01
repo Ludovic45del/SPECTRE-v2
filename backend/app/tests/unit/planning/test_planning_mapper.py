@@ -13,12 +13,8 @@ import pytest
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import (
-    PlanningCampaignStepBean,
-)
-from app.domain.planning.models.planning_member_period_bean import (
-    PlanningMemberPeriodBean,
-)
+from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
+from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.mapper.planning.planning_mapper import (
     lab_event_api_to_bean,
@@ -53,9 +49,7 @@ class TestWeekStateMapper:
     @pytest.mark.unit
     def test_bean_to_api(self):
         uid = uuid.uuid4()
-        bean = PlanningWeekStateBean(
-            uuid=uid, year=2025, week_num=12, state="fermeture"
-        )
+        bean = PlanningWeekStateBean(uuid=uid, year=2025, week_num=12, state="fermeture")
         result = planning_week_state_bean_to_api(bean)
         assert result["uuid"] == uid
         assert result["year"] == 2025
@@ -65,9 +59,7 @@ class TestWeekStateMapper:
     @pytest.mark.unit
     def test_roundtrip_api(self):
         """bean -> api -> bean preserves data."""
-        bean = PlanningWeekStateBean(
-            uuid=uuid.uuid4(), year=2025, week_num=1, state="vacances"
-        )
+        bean = PlanningWeekStateBean(uuid=uuid.uuid4(), year=2025, week_num=1, state="vacances")
         api = planning_week_state_bean_to_api(bean)
         restored = planning_week_state_api_to_bean(api)
         assert restored.year == bean.year

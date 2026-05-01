@@ -19,9 +19,7 @@ class IEtalonnageRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_embase_uuid(
-        self, embase_uuid: str, voie: Optional[int] = None
-    ) -> List[EtalonnageBean]:
+    def get_by_embase_uuid(self, embase_uuid: str, voie: Optional[int] = None) -> List[EtalonnageBean]:
         """Récupère les étalonnages d'une embase, optionnellement filtrés par voie."""
         raise NotImplementedError
 
@@ -30,16 +28,12 @@ class IEtalonnageRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_latest_by_embase_voie(
-        self, embase_uuid: str, voie: int
-    ) -> Optional[EtalonnageBean]:
+    def get_latest_by_embase_voie(self, embase_uuid: str, voie: int) -> Optional[EtalonnageBean]:
         """Récupère l'étalonnage le plus récent pour une embase/voie."""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def exists_by_embase_voie_date(
-        self, embase_uuid: str, voie: int, date: datetime.date
-    ) -> bool:
+    def exists_by_embase_voie_date(self, embase_uuid: str, voie: int, date: datetime.date) -> bool:
         """Vérifie si un étalonnage existe pour cette embase/voie/date."""
         raise NotImplementedError
 

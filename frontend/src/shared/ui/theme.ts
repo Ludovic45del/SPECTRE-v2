@@ -11,6 +11,7 @@
  */
 
 import { createTheme, alpha } from '@mui/material/styles';
+import { motion, motionDuration, motionEasing } from './motion';
 
 // ============================================================================
 // Shared palette (mode-independent)
@@ -191,6 +192,30 @@ export function createAppTheme(mode: ThemeMode) {
         spacing: 8,
         shape: { borderRadius: 12 },
 
+        // ----------------------------------------------------------------
+        // Motion : aligne les valeurs MUI (transitions internes des
+        // composants) sur nos tokens. Toutes les Fade/Grow/Slide/Collapse
+        // ainsi que les Tabs/Menu/Tooltip/Snackbar utilisent ces durées
+        // et cet easing par défaut.
+        // ----------------------------------------------------------------
+        transitions: {
+            duration: {
+                shortest: motionDuration.instant,
+                shorter: motionDuration.fast,
+                short: motionDuration.base,
+                standard: motionDuration.medium,
+                complex: motionDuration.slow,
+                enteringScreen: motionDuration.medium,
+                leavingScreen: motionDuration.base,
+            },
+            easing: {
+                easeInOut: motionEasing.standard,
+                easeOut: motionEasing.decelerate,
+                easeIn: motionEasing.accelerate,
+                sharp: motionEasing.standard,
+            },
+        },
+
         components: {
             MuiButton: {
                 styleOverrides: {
@@ -198,12 +223,26 @@ export function createAppTheme(mode: ThemeMode) {
                         borderRadius: 8,
                         padding: '10px 20px',
                         boxShadow: 'none',
+                        // NOTE : pas de `transform: scale()` au `:active` — réduire
+                        // l'élément au mousedown peut faire sortir la souris de la
+                        // zone cliquable et annuler l'événement `click` (constaté
+                        // sur les petits boutons type IconButton). Le feedback
+                        // tactile reste assuré par les transitions de bg/color/shadow.
+                        transition: `background-color ${motionDuration.base}ms ${motionEasing.standard}, box-shadow ${motionDuration.base}ms ${motionEasing.standard}, color ${motionDuration.fast}ms ${motionEasing.standard}`,
                         '&:hover': {
                             boxShadow: '0 4px 12px rgba(0, 122, 255, 0.3)',
                         },
                     },
                     containedPrimary: {
                         background: 'linear-gradient(135deg, #007AFF 0%, #0051D4 100%)',
+                    },
+                },
+            },
+            MuiIconButton: {
+                styleOverrides: {
+                    root: {
+                        // Idem MuiButton : pas de scale au `:active`.
+                        transition: `background-color ${motionDuration.fast}ms ${motionEasing.standard}, color ${motionDuration.fast}ms ${motionEasing.standard}`,
                     },
                 },
             },
@@ -215,6 +254,7 @@ export function createAppTheme(mode: ThemeMode) {
                         border: '1px solid',
                         borderColor: isDark ? grey[200] : grey[200],
                         backgroundColor: isDark ? grey[50] : '#fff',
+                        transition: `border-color ${motionDuration.base}ms ${motionEasing.standard}, box-shadow ${motionDuration.medium}ms ${motionEasing.standard}, transform ${motionDuration.medium}ms ${motionEasing.standard}`,
                     },
                 },
             },
@@ -228,6 +268,10 @@ export function createAppTheme(mode: ThemeMode) {
             MuiOutlinedInput: {
                 styleOverrides: {
                     root: {
+                        transition: `box-shadow ${motionDuration.fast}ms ${motionEasing.standard}`,
+                        '& .MuiOutlinedInput-notchedOutline': {
+                            transition: `border-color ${motionDuration.fast}ms ${motionEasing.standard}`,
+                        },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                             borderColor: grey[400],
                             borderWidth: 1,
@@ -253,6 +297,147 @@ export function createAppTheme(mode: ThemeMode) {
                     head: {
                         fontWeight: 600,
                         backgroundColor: isDark ? grey[100] : grey[50],
+                    },
+                },
+            },
+
+            // ----------------------------------------------------------------
+            // Surfaces flottantes : on accélère légèrement les sorties pour
+            // que la fermeture ne traîne pas, et on garde une entrée souple.
+            // ----------------------------------------------------------------
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        borderRadius: 16,
+                    },
+                },
+            },
+            MuiBackdrop: {
+                styleOverrides: {
+                    root: {
+                        // Léger flou pour donner un sentiment de profondeur
+                        // (équivalent du blur derrière les sheets iOS).
+                        backdropFilter: 'blur(2px)',
+                        WebkitBackdropFilter: 'blur(2px)',
+                    },
+                },
+            },
+            MuiTooltip: {
+                styleOverrides: {
+                    tooltip: {
+                        borderRadius: 6,
+                        fontSize: '0.75rem',
+                        padding: '6px 10px',
+                    },
+                },
+            },
+            MuiMenu: {
+                styleOverrides: {
+                    paper: {
+                        borderRadius: 10,
+                    },
+                },
+            },
+
+            // ----------------------------------------------------------------
+            // Chip : formalisme unifié "soft" (bg pâle de la couleur + texte
+            // foncé de la même couleur). Source unique pour tous les chips
+            // qui utilisent la palette MUI sémantique. Les chips qui passent
+            // un `sx` custom (couleur métier hex) priment sur ces overrides
+            // — utiliser `softChipSx(hex)` de @shared/lib pour garder le même
+            // formalisme avec une couleur arbitraire.
+            // ----------------------------------------------------------------
+            MuiChip: {
+                defaultProps: { size: 'small' },
+                styleOverrides: {
+                    root: ({ theme: t, ownerState }) => {
+                        const dark = t.palette.mode === 'dark';
+                        const variant = ownerState.variant ?? 'filled';
+                        const c = ownerState.color;
+                        const isSemantic =
+                            variant === 'filled' &&
+                            !!c &&
+                            c !== 'default' &&
+                            (c === 'primary' ||
+                                c === 'secondary' ||
+                                c === 'success' ||
+                                c === 'warning' ||
+                                c === 'error' ||
+                                c === 'info');
+                        const isDefault =
+                            variant === 'filled' && (c === 'default' || c === undefined);
+
+                        const semanticStyles = isSemantic
+                            ? {
+                                  backgroundColor: alpha(t.palette[c].main, dark ? 0.2 : 0.12),
+                                  color: dark ? t.palette[c].light : t.palette[c].dark,
+                                  '&.MuiChip-clickable:hover': {
+                                      backgroundColor: alpha(
+                                          t.palette[c].main,
+                                          dark ? 0.3 : 0.2,
+                                      ),
+                                  },
+                              }
+                            : {};
+
+                        const defaultStyles = isDefault
+                            ? {
+                                  backgroundColor: alpha(
+                                      t.palette.text.primary,
+                                      dark ? 0.1 : 0.06,
+                                  ),
+                                  color: t.palette.text.secondary,
+                              }
+                            : {};
+
+                        return {
+                            borderRadius: 6,
+                            height: 22,
+                            fontWeight: 600,
+                            fontSize: '0.72rem',
+                            letterSpacing: '0.01em',
+                            transition: motion.transition(
+                                ['background-color', 'color'],
+                                'fast',
+                            ),
+                            '& .MuiChip-label': {
+                                paddingLeft: 8,
+                                paddingRight: 8,
+                            },
+                            '& .MuiChip-deleteIcon': {
+                                color: 'inherit',
+                                opacity: 0.6,
+                                '&:hover': { opacity: 1, color: 'inherit' },
+                            },
+                            ...semanticStyles,
+                            ...defaultStyles,
+                        };
+                    },
+                },
+            },
+
+            MuiSnackbar: {
+                styleOverrides: {
+                    root: {
+                        // Garde la surface visible pendant la transition de
+                        // fermeture pour éviter un flash visuel.
+                    },
+                },
+            },
+
+            // ----------------------------------------------------------------
+            // Reduced motion : désactive globalement les animations MUI
+            // si l'utilisateur a activé la préférence système.
+            // ----------------------------------------------------------------
+            MuiCssBaseline: {
+                styleOverrides: {
+                    '@media (prefers-reduced-motion: reduce)': {
+                        '*, *::before, *::after': {
+                            animationDuration: '0.01ms !important',
+                            animationIterationCount: '1 !important',
+                            transitionDuration: '0.01ms !important',
+                            scrollBehavior: 'auto !important',
+                        },
                     },
                 },
             },

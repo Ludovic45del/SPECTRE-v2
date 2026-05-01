@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Box, Chip, Collapse, Divider, IconButton, Paper, Stack, Typography } from '@mui/material';
-import ScienceIcon from '@mui/icons-material/Science';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -79,11 +78,10 @@ export function CategoryBpWorkflowCard({
                 }}
             >
                 <Stack direction="row" alignItems="center" spacing={2}>
-                    <ScienceIcon color="primary" />
                     <Typography variant="h6" fontWeight={600}>
-                        Workflow Gaz BP{numRubriques > 1 ? ` n°${index + 1}` : ''}
+                        Gaz BP{numRubriques > 1 ? ` n°${index + 1}` : ''}
                     </Typography>
-                    {isComplete && <Chip label="Complet" size="small" color="success" variant="outlined" />}
+                    {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <WorkflowMiniStepper activeStep={activeStep} steps={WORKFLOW_STEPS} />

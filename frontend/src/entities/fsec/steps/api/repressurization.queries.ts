@@ -40,6 +40,7 @@ export function useRepressurizationStep(uuid: string) {
 interface CreateRepressurizationStepInput {
     fsecVersionId: string;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     gasType?: string | null;
     startDate?: Date | null;
     estimatedEndDate?: Date | null;
@@ -51,26 +52,36 @@ interface UpdateRepressurizationStepInput extends CreateRepressurizationStepInpu
     uuid: string;
 }
 
+function repressurizationStepToApi(input: CreateRepressurizationStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        gas_type: input.gasType ?? null,
+        start_date: input.startDate?.toISOString().split('T')[0] ?? null,
+        estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
+        sensor_pressure: input.sensorPressure ?? null,
+        computed_pressure: input.computedPressure ?? null,
+    };
+}
+
 export function useCreateRepressurizationStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateRepressurizationStepInput): Promise<RepressurizationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                gas_type: input.gasType ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
-                sensor_pressure: input.sensorPressure ?? null,
-                computed_pressure: input.computedPressure ?? null,
-            };
-            const response = await api.post('/repressurization-steps/', apiData);
+            const response = await api.post(
+                '/repressurization-steps/',
+                repressurizationStepToApi(input),
+            );
             return RepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.repressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -81,16 +92,10 @@ export function useUpdateRepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateRepressurizationStepInput): Promise<RepressurizationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                gas_type: input.gasType ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                estimated_end_date: input.estimatedEndDate?.toISOString().split('T')[0] ?? null,
-                sensor_pressure: input.sensorPressure ?? null,
-                computed_pressure: input.computedPressure ?? null,
-            };
-            const response = await api.put(`/repressurization-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/repressurization-steps/${input.uuid}/`,
+                repressurizationStepToApi(input),
+            );
             return RepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -99,6 +104,9 @@ export function useUpdateRepressurizationStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.repressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -114,6 +122,9 @@ export function useDeleteRepressurizationStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.repressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

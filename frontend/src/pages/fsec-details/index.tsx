@@ -10,7 +10,7 @@ import { Box, Container, CircularProgress, Alert } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { useParams, useLocation } from 'react-router-dom';
 import { useFsec, useUpdateFsec } from '@entities/fsec';
-import { useNotification, ErrorBoundary } from '@shared/ui';
+import { useNotification, ErrorBoundary, RouteTransition } from '@shared/ui';
 import { useCampaignTeam } from '@entities/campaign/team';
 import { useFsecDocumentsByFsec } from '@entities/fsec/document';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
@@ -133,43 +133,49 @@ export default function FsecDetailsPage() {
             {/* Content - EB-1 fix: each tab wrapped in ErrorBoundary */}
             <QueryErrorResetBoundary>
                 {({ reset }) => (
-                    <Box sx={{ mt: 3 }}>
-                        {(location.pathname.includes('/overview') || location.pathname.endsWith(versionUuid)) && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <OverviewTab fsec={fsec} campaignTeam={campaignTeam} documents={documents} />
-                            </ErrorBoundary>
-                        )}
-                        {location.pathname.includes('/assemblage') && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <AssemblyTab fsecVersionId={versionUuid} />
-                            </ErrorBoundary>
-                        )}
-                        {location.pathname.includes('/controle') && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <ControleTab fsecVersionId={versionUuid} />
-                            </ErrorBoundary>
-                        )}
-                        {location.pathname.includes('/photos') && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <PicturesTab fsecVersionId={versionUuid} />
-                            </ErrorBoundary>
-                        )}
-                        {hasGas && location.pathname.includes('/gaz') && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <GasStepsTab
-                                    fsecVersionId={versionUuid}
-                                    categoryId={fsec.categoryId}
-                                    depressurizationFailed={fsec.depressurizationFailed}
-                                    onDepressurizationValidationChange={handleDepressurizationValidationChange}
-                                />
-                            </ErrorBoundary>
-                        )}
-                        {location.pathname.includes('/resultats') && (
-                            <ErrorBoundary compact onReset={reset}>
-                                <PlaceholderTab label="Alignement/Livraison/Résultats" />
-                            </ErrorBoundary>
-                        )}
-                    </Box>
+                    <RouteTransition>
+                        <Box sx={{ mt: 3 }}>
+                            {(location.pathname.includes('/overview') || location.pathname.endsWith(versionUuid)) && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <OverviewTab fsec={fsec} campaignTeam={campaignTeam} documents={documents} />
+                                </ErrorBoundary>
+                            )}
+                            {location.pathname.includes('/assemblage') && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <AssemblyTab
+                                        fsecVersionId={versionUuid}
+                                        fsecUuid={fsec.fsecUuid}
+                                        fsecStatusId={fsec.statusId ?? 0}
+                                    />
+                                </ErrorBoundary>
+                            )}
+                            {location.pathname.includes('/controle') && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <ControleTab fsecVersionId={versionUuid} />
+                                </ErrorBoundary>
+                            )}
+                            {location.pathname.includes('/photos') && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <PicturesTab fsecVersionId={versionUuid} />
+                                </ErrorBoundary>
+                            )}
+                            {hasGas && location.pathname.includes('/gaz') && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <GasStepsTab
+                                        fsecVersionId={versionUuid}
+                                        categoryId={fsec.categoryId}
+                                        depressurizationFailed={fsec.depressurizationFailed}
+                                        onDepressurizationValidationChange={handleDepressurizationValidationChange}
+                                    />
+                                </ErrorBoundary>
+                            )}
+                            {location.pathname.includes('/resultats') && (
+                                <ErrorBoundary compact onReset={reset}>
+                                    <PlaceholderTab label="Alignement/Livraison/Résultats" />
+                                </ErrorBoundary>
+                            )}
+                        </Box>
+                    </RouteTransition>
                 )}
             </QueryErrorResetBoundary>
         </Container>

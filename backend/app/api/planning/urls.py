@@ -15,9 +15,7 @@ from app.api.planning.planning_controller import (
 )
 
 router = DefaultRouter()
-router.register(
-    r"week-states", PlanningWeekStateController, basename="planning-week-states"
-)
+router.register(r"week-states", PlanningWeekStateController, basename="planning-week-states")
 router.register(
     r"member-periods",
     PlanningMemberPeriodController,

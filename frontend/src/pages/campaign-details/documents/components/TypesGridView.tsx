@@ -9,6 +9,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { TYPE_COLORS } from '../lib/documents.types';
 import { CopyPathButton } from '../lib/documents.helpers';
+import { motion } from '@shared/ui/motion';
 
 interface TypesGridViewProps {
     types: { id: number; label: string }[];
@@ -43,7 +44,7 @@ export const TypesGridView = memo(function TypesGridView({
                                     justifyContent: 'center',
                                     cursor: 'pointer',
                                     borderRadius: 1,
-                                    transition: 'all 0.2s',
+                                    transition: `all ${motion.base}`,
                                     borderColor: 'divider',
                                     position: 'relative',
                                     '&:hover': {
@@ -116,7 +117,7 @@ export const TypesGridView = memo(function TypesGridView({
                             alignItems: 'center',
                             gap: 3,
                             borderRadius: 1,
-                            transition: 'all 0.2s',
+                            transition: `all ${motion.base}`,
                             borderColor: 'divider',
                             '&:hover': { borderColor: color, bgcolor: `${color}05` },
                         }}

@@ -6,7 +6,8 @@
  */
 
 import { memo } from 'react';
-import { Chip, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
+import { TestStatusChip } from '@features/embase/shared';
 import { V1_COLOR, V2_COLOR } from './voie-colors';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,15 +29,6 @@ interface TestsComparisonTableProps {
 // Sub-component
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TestComparisonChip = memo(function TestComparisonChip({ value }: { value: string }) {
-    if (value === 'OK') return <Chip label="OK" color="success" size="small" sx={{ fontWeight: 600 }} />;
-    if (value === 'KO') return <Chip label="KO" color="error" size="small" sx={{ fontWeight: 600 }} />;
-    return (
-        <Typography variant="body2" color="text.secondary">
-            -
-        </Typography>
-    );
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Styles
@@ -111,10 +103,10 @@ export const TestsComparisonTable = memo(function TestsComparisonTable({
                                 </Typography>
                             </td>
                             <td style={tdCenterStyle}>
-                                <TestComparisonChip value={row.v1} />
+                                <TestStatusChip value={row.v1} />
                             </td>
                             <td style={tdCenterStyle}>
-                                <TestComparisonChip value={row.v2} />
+                                <TestStatusChip value={row.v2} />
                             </td>
                         </tr>
                     ))}

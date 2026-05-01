@@ -12,6 +12,7 @@ class DepressurizationStepBean:
     uuid: str = ""
     fsec_version_id: str = ""
     operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     date_of_fulfilment: Optional[date] = None
     pressure_gauge: Optional[float] = None
     enclosure_pressure_measured: Optional[float] = None

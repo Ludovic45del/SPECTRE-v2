@@ -40,6 +40,7 @@ export function useDepressurizationStep(uuid: string) {
 interface CreateDepressurizationStepInput {
     fsecVersionId: string;
     operator?: string | null;
+    operatorUserUuid?: string | null;
     dateOfFulfilment?: Date | null;
     pressureGauge?: number | null;
     enclosurePressureMeasured?: number | null;
@@ -54,29 +55,39 @@ interface UpdateDepressurizationStepInput extends CreateDepressurizationStepInpu
     uuid: string;
 }
 
+function depressurizationStepToApi(input: CreateDepressurizationStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
+        pressure_gauge: input.pressureGauge ?? null,
+        enclosure_pressure_measured: input.enclosurePressureMeasured ?? null,
+        start_time: input.startTime?.toISOString() ?? null,
+        end_time: input.endTime?.toISOString() ?? null,
+        observations: input.observations ?? null,
+        depressurization_time_before_firing: input.depressurizationTimeBeforeFiring ?? null,
+        computed_pressure_before_firing: input.computedPressureBeforeFiring ?? null,
+    };
+}
+
 export function useCreateDepressurizationStep() {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (input: CreateDepressurizationStepInput): Promise<DepressurizationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                pressure_gauge: input.pressureGauge ?? null,
-                enclosure_pressure_measured: input.enclosurePressureMeasured ?? null,
-                start_time: input.startTime?.toISOString() ?? null,
-                end_time: input.endTime?.toISOString() ?? null,
-                observations: input.observations ?? null,
-                depressurization_time_before_firing: input.depressurizationTimeBeforeFiring ?? null,
-                computed_pressure_before_firing: input.computedPressureBeforeFiring ?? null,
-            };
-            const response = await api.post('/depressurization-steps/', apiData);
+            const response = await api.post(
+                '/depressurization-steps/',
+                depressurizationStepToApi(input),
+            );
             return DepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.depressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -87,19 +98,10 @@ export function useUpdateDepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateDepressurizationStepInput): Promise<DepressurizationStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
-                pressure_gauge: input.pressureGauge ?? null,
-                enclosure_pressure_measured: input.enclosurePressureMeasured ?? null,
-                start_time: input.startTime?.toISOString() ?? null,
-                end_time: input.endTime?.toISOString() ?? null,
-                observations: input.observations ?? null,
-                depressurization_time_before_firing: input.depressurizationTimeBeforeFiring ?? null,
-                computed_pressure_before_firing: input.computedPressureBeforeFiring ?? null,
-            };
-            const response = await api.put(`/depressurization-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/depressurization-steps/${input.uuid}/`,
+                depressurizationStepToApi(input),
+            );
             return DepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -108,6 +110,9 @@ export function useUpdateDepressurizationStep() {
             });
             queryClient.invalidateQueries({
                 queryKey: stepKeys.depressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });
@@ -123,6 +128,9 @@ export function useDeleteDepressurizationStep() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: stepKeys.depressurization.byFsec(variables.fsecVersionId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: stepKeys.allGasSteps.byFsec(variables.fsecVersionId),
             });
         },
     });

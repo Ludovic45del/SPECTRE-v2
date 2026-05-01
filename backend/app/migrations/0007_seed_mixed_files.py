@@ -6,9 +6,7 @@ from django.db import migrations
 
 
 def seed_mixed_files(apps, schema_editor):
-    CampaignDocumentSubtypesEntity = apps.get_model(
-        "app", "CampaignDocumentSubtypesEntity"
-    )
+    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
     CampaignDocumentsEntity = apps.get_model("app", "CampaignDocumentsEntity")
     CampaignEntity = apps.get_model("app", "CampaignEntity")
 

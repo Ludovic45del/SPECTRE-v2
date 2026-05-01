@@ -14,9 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 # Thread-safe context storage for request-scoped data
-_log_context: contextvars.ContextVar[dict] = contextvars.ContextVar(
-    "log_context", default={}
-)
+_log_context: contextvars.ContextVar[dict] = contextvars.ContextVar("log_context", default={})
 
 
 class StructuredFormatter(logging.Formatter):

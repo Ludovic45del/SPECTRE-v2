@@ -8,6 +8,7 @@
 import { memo } from 'react';
 import { Box, Paper, Typography, Stack, Grid } from '@mui/material';
 import { Fa, getFsecStepLabel, FSEC_STEP_ID } from '@entities/fa';
+import { UserChip } from '@entities/user';
 import { formatDateShort } from '@shared/lib';
 
 // ============================================================================
@@ -48,9 +49,7 @@ export const PhaseOuvertViewMode = memo(function PhaseOuvertViewMode({ fa }: Vie
                     <Typography variant="subtitle2" color="text.secondary">
                         Découvreur
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                        {fa.discoverer || '-'}
-                    </Typography>
+                    <UserChip userUuid={fa.discovererUserUuid} fallbackText={fa.discoverer} />
                 </Grid>
             </Grid>
 

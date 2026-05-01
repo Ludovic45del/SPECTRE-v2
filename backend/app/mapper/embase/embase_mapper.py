@@ -148,9 +148,7 @@ def embase_mapper_bean_to_entity(bean: EmbaseBean) -> EmbaseEntity:
     return entity
 
 
-def embase_mapper_update_entity_from_bean(
-    entity: EmbaseEntity, bean: EmbaseBean
-) -> None:
+def embase_mapper_update_entity_from_bean(entity: EmbaseEntity, bean: EmbaseBean) -> None:
     """Met a jour une EmbaseEntity existante depuis un EmbaseBean.
 
     Copie tous les champs modifiables du bean vers l'entity.

@@ -7,6 +7,7 @@
 
 import { Divider, Grid, Paper, Typography } from '@mui/material';
 import { CampaignTeamMember } from '@entities/campaign/team';
+import { UserChip } from '@entities/user';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -42,25 +43,19 @@ export function TeamSection({ campaignTeam, paperSx }: TeamSectionProps) {
                     <Typography variant="subtitle2" color="text.secondary">
                         RCE
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                        {rce?.name || '-'}
-                    </Typography>
+                    <UserChip userUuid={rce?.userUuid} fallbackText={rce?.name} />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="subtitle2" color="text.secondary">
                         MOE
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                        {moe?.name || '-'}
-                    </Typography>
+                    <UserChip fallbackText={moe?.name} />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="subtitle2" color="text.secondary">
                         IEC
                     </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                        {iec?.name || '-'}
-                    </Typography>
+                    <UserChip userUuid={iec?.userUuid} fallbackText={iec?.name} />
                 </Grid>
             </Grid>
         </Paper>

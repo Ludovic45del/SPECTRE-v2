@@ -21,6 +21,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import { motion } from '@shared/ui/motion';
 
 interface DocumentsToolbarProps {
     isRoot: boolean;
@@ -122,7 +123,7 @@ export const DocumentsToolbar = memo(function DocumentsToolbar({
                             },
                             height: 40,
                             width: 200,
-                            transition: 'all 0.2s',
+                            transition: `all ${motion.base}`,
                             '&:focus-within': { width: 300, bgcolor: 'background.paper' },
                         },
                     }}

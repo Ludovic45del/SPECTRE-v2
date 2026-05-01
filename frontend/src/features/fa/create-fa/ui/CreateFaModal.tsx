@@ -53,7 +53,7 @@ export function CreateFaModal() {
         defaultValues: {
             campaignId: '',
             fsecVersionId: '',
-            discoverer: '',
+            discovererUserUuid: '',
             eventDate: dayjs(),
             observation: '',
             locationEquipment: null,
@@ -99,7 +99,7 @@ export function CreateFaModal() {
             try {
                 const newFa = await createMutation.mutateAsync({
                     fsecVersionId: data.fsecVersionId,
-                    discoverer: data.discoverer,
+                    discovererUserUuid: data.discovererUserUuid,
                     eventDate: data.eventDate.toDate(),
                     observation: data.observation,
                     locationEquipment: data.locationEquipment ?? null,

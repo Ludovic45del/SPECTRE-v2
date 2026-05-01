@@ -249,10 +249,7 @@ class TestFaMapperBeanToApi:
 
         # event_date doit être en format ISO
         assert result["event_date"] == sample_fa_bean.event_date.isoformat()
-        assert (
-            result["iec_validation_open_date"]
-            == sample_fa_bean.iec_validation_open_date.isoformat()
-        )
+        assert result["iec_validation_open_date"] == sample_fa_bean.iec_validation_open_date.isoformat()
 
     @pytest.mark.unit
     def test_bean_to_api_null_dates(self):

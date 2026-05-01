@@ -7,11 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.domain.user.models.user_bean import UserBean
-from app.mapper.user.user_mapper import (
-    user_mapper_api_to_bean,
-    user_mapper_bean_to_api,
-    user_mapper_entity_to_bean,
-)
+from app.mapper.user.user_mapper import user_mapper_api_to_bean, user_mapper_bean_to_api, user_mapper_entity_to_bean
 
 # ============================================================================
 # entity_to_bean

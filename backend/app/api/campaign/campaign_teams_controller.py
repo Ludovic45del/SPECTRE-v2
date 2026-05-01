@@ -18,9 +18,7 @@ from app.mapper.campaign.campaign_teams_mapper import (
     campaign_teams_mapper_bean_to_api,
 )
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
-from app.repository.campaign.repositories.campaign_teams_repository import (
-    CampaignTeamsRepository,
-)
+from app.repository.campaign.repositories.campaign_teams_repository import CampaignTeamsRepository
 
 
 class CampaignTeamsController(BaseChildController):
@@ -38,16 +36,10 @@ class CampaignTeamsController(BaseChildController):
     def create(self, request) -> JsonResponse:
         validated = self._validate(request.data)
         bean = self.mapper_api_to_bean(validated)
-        result = self.service_create(
-            self.repository, bean, campaign_repository=CampaignRepository()
-        )
-        return JsonResponse(
-            self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
-        )
+        result = self.service_create(self.repository, bean, campaign_repository=CampaignRepository())
+        return JsonResponse(self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
 
-    @action(
-        detail=False, methods=["get"], url_path="campaign/(?P<campaign_uuid>[^/.]+)"
-    )
+    @action(detail=False, methods=["get"], url_path="campaign/(?P<campaign_uuid>[^/.]+)")
     def list_by_campaign(self, request, campaign_uuid=None):
         """Liste tous les membres d'une équipe de campagne."""
         beans = get_campaign_team_members(self.repository, campaign_uuid)

@@ -17,6 +17,7 @@ class GasFillingHpStepBean:
     gas_type: Optional[str] = None
     experiment_pressure: Optional[float] = None
     operator: Optional[str] = None
+    operator_user_uuid: Optional[str] = None
     date_of_fulfilment: Optional[date] = None
     gas_base: Optional[int] = None
     gas_container: Optional[int] = None

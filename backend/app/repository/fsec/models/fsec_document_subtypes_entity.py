@@ -2,9 +2,7 @@
 
 from django.db import models
 
-from app.repository.fsec.models.fsec_document_types_entity import (
-    FsecDocumentTypesEntity,
-)
+from app.repository.fsec.models.fsec_document_types_entity import FsecDocumentTypesEntity
 
 
 class FsecDocumentSubtypesEntity(models.Model):

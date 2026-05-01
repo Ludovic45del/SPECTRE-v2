@@ -188,7 +188,7 @@ function HistoriqueFsecTabComponent({ embase }: { embase: Embase }) {
         return (
             <Paper variant="outlined" sx={{ p: 4, borderColor: 'divider', borderRadius: 1 }}>
                 <Typography color="text.secondary" align="center">
-                    Aucun FSEC associé. Cette embase n'a pas encore été utilisée dans une étape de remplissage gaz HP.
+                    Aucun FSEC associé. Cette embase n&apos;a pas encore été utilisée dans une étape gaz.
                 </Typography>
             </Paper>
         );

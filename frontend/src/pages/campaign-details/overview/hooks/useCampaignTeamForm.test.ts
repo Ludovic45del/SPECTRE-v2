@@ -2,7 +2,8 @@
  * useCampaignTeamForm Hook Tests
  * @module pages/campaign-details/overview/hooks
  *
- * Tests for team form state and CRUD operations.
+ * Tests pour le state form + opérations CRUD.
+ * MOE = texte libre. RCE/IEC = FK UserProfile (uuid).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -11,18 +12,25 @@ import { z } from 'zod';
 import { useCampaignTeamForm } from './useCampaignTeamForm';
 import { CampaignWithRelations } from '@entities/campaign';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mocks
-// ─────────────────────────────────────────────────────────────────────────────
+const RCE_USER_UUID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
+const IEC_USER_UUID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2';
+const NEW_USER_UUID = 'cccccccc-cccc-cccc-cccc-ccccccccccc3';
 
 const mockShowNotification = vi.fn();
 const mockAddMutateAsync = vi.fn();
 const mockUpdateMutateAsync = vi.fn();
 const mockDeleteMutateAsync = vi.fn();
 
-const mockTeamMembers = [
-    { uuid: 'member-1', name: 'John Doe', roleId: 1 },
-    { uuid: 'member-2', name: 'Jane Smith', roleId: 2 },
+interface MockMember {
+    uuid: string;
+    name: string | null;
+    userUuid: string | null;
+    roleId: number;
+}
+
+const mockTeamMembers: MockMember[] = [
+    { uuid: 'member-1', name: 'John Doe', userUuid: null, roleId: 1 }, // MOE (texte)
+    { uuid: 'member-2', name: null, userUuid: RCE_USER_UUID, roleId: 2 }, // RCE (FK)
 ];
 
 vi.mock('@shared/ui', () => ({
@@ -35,17 +43,11 @@ vi.mock('@entities/campaign/team', () => ({
     useUpdateTeamMember: () => ({ mutateAsync: mockUpdateMutateAsync, isPending: false }),
     useDeleteTeamMember: () => ({ mutateAsync: mockDeleteMutateAsync, isPending: false }),
     CampaignTeamFormSchema: z.object({
-        moe: z.string().max(200),
-        rce: z.string().max(200),
-        iec: z.string().max(200),
+        moeName: z.string().max(50),
+        rceUserUuid: z.string().uuid().or(z.literal('')),
+        iecUserUuid: z.string().uuid().or(z.literal('')),
     }),
-    getMemberNameByRole: (members: typeof mockTeamMembers | undefined, role: string) => {
-        if (!members) return '';
-        const roleMap: Record<string, number> = { MOE: 1, RCE: 2, IEC: 3 };
-        const member = members.find((m) => m.roleId === roleMap[role]);
-        return member?.name ?? '';
-    },
-    getMemberByRole: (members: typeof mockTeamMembers | undefined, role: string) => {
+    getMemberByRole: (members: MockMember[] | undefined, role: string) => {
         if (!members) return undefined;
         const roleMap: Record<string, number> = { MOE: 1, RCE: 2, IEC: 3 };
         return members.find((m) => m.roleId === roleMap[role]);
@@ -54,16 +56,7 @@ vi.mock('@entities/campaign/team', () => ({
 
 vi.mock('@entities/campaign/core/lib', () => ({
     CAMPAIGN_ROLE_ID: { MOE: 1, RCE: 2, IEC: 3 },
-    CAMPAIGN_ROLES: [
-        { id: 1, label: 'MOE' },
-        { id: 2, label: 'RCE' },
-        { id: 3, label: 'IEC' },
-    ],
 }));
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Test Data
-// ─────────────────────────────────────────────────────────────────────────────
 
 const mockCampaign: CampaignWithRelations = {
     uuid: '123e4567-e89b-12d3-a456-426614174000',
@@ -80,10 +73,6 @@ const mockCampaign: CampaignWithRelations = {
     installation: { id: 3, label: 'Installation X', color: '#0000FF' },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe('useCampaignTeamForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -92,126 +81,64 @@ describe('useCampaignTeamForm', () => {
         mockDeleteMutateAsync.mockResolvedValue({});
     });
 
-    describe('Initialization', () => {
-        it('should initialize form with team member data', () => {
+    describe('Initialisation', () => {
+        it('initialise le form avec les données existantes (MOE name, RCE/IEC userUuid)', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
 
             expect(result.current.form).toEqual({
-                moe: 'John Doe',
-                rce: 'Jane Smith',
-                iec: '',
+                moeName: 'John Doe',
+                rceUserUuid: RCE_USER_UUID,
+                iecUserUuid: '',
             });
         });
 
-        it('should start in non-editing mode', () => {
+        it('démarre en mode lecture', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
             expect(result.current.isEditing).toBe(false);
-            expect(result.current.isSaving).toBe(false);
-        });
-
-        it('should provide team members data', () => {
-            const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            expect(result.current.teamMembers).toEqual(mockTeamMembers);
         });
     });
 
-    describe('Editing Mode', () => {
-        it('should enter editing mode when startEditing is called', () => {
+    describe('Édition', () => {
+        it('passe en mode édition', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.startEditing();
-            });
-
+            act(() => result.current.startEditing());
             expect(result.current.isEditing).toBe(true);
         });
 
-        it('should exit editing mode when cancelEditing is called', () => {
+        it('annule l’édition', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.startEditing();
-            });
-            act(() => {
-                result.current.cancelEditing();
-            });
-
+            act(() => result.current.startEditing());
+            act(() => result.current.cancelEditing());
             expect(result.current.isEditing).toBe(false);
-        });
-
-        it('should reset form when startEditing is called', () => {
-            const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.setField('moe', 'Changed Name');
-            });
-
-            act(() => {
-                result.current.startEditing();
-            });
-
-            expect(result.current.form.moe).toBe('John Doe');
         });
     });
 
-    describe('Field Updates', () => {
-        it('should update moe field', () => {
+    describe('setField', () => {
+        it('met à jour moeName', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.setField('moe', 'New MOE');
-            });
-
-            expect(result.current.form.moe).toBe('New MOE');
+            act(() => result.current.setField('moeName', 'New MOE'));
+            expect(result.current.form.moeName).toBe('New MOE');
         });
 
-        it('should update rce field', () => {
+        it('met à jour rceUserUuid', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.setField('rce', 'New RCE');
-            });
-
-            expect(result.current.form.rce).toBe('New RCE');
+            act(() => result.current.setField('rceUserUuid', NEW_USER_UUID));
+            expect(result.current.form.rceUserUuid).toBe(NEW_USER_UUID);
         });
 
-        it('should update iec field', () => {
+        it('met à jour iecUserUuid', () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.setField('iec', 'New IEC');
-            });
-
-            expect(result.current.form.iec).toBe('New IEC');
+            act(() => result.current.setField('iecUserUuid', NEW_USER_UUID));
+            expect(result.current.form.iecUserUuid).toBe(NEW_USER_UUID);
         });
     });
 
-    describe('Save Operation', () => {
-        it('should save successfully', async () => {
+    describe('Save', () => {
+        it('met à jour MOE quand le nom change', async () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
             act(() => {
                 result.current.startEditing();
-            });
-
-            let saveResult: boolean;
-            await act(async () => {
-                saveResult = await result.current.save();
-            });
-
-            expect(saveResult!).toBe(true);
-            expect(mockShowNotification).toHaveBeenCalledWith('Équipe mise à jour', 'success');
-            expect(result.current.isEditing).toBe(false);
-        });
-
-        it('should update existing member when name changed', async () => {
-            const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.startEditing();
-                result.current.setField('moe', 'Updated MOE Name');
+                result.current.setField('moeName', 'Updated MOE Name');
             });
 
             await act(async () => {
@@ -223,16 +150,16 @@ describe('useCampaignTeamForm', () => {
                     uuid: 'member-1',
                     campaign_uuid: mockCampaign.uuid,
                     name: 'Updated MOE Name',
+                    user_uuid: null,
                 }),
             );
         });
 
-        it('should delete member when name cleared', async () => {
+        it('supprime MOE quand le nom est vidé', async () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
             act(() => {
                 result.current.startEditing();
-                result.current.setField('moe', '');
+                result.current.setField('moeName', '');
             });
 
             await act(async () => {
@@ -247,12 +174,11 @@ describe('useCampaignTeamForm', () => {
             );
         });
 
-        it('should add new member when name provided for empty role', async () => {
+        it("ajoute IEC (FK) quand un nouvel uuid est fourni pour un rôle vide", async () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
             act(() => {
                 result.current.startEditing();
-                result.current.setField('iec', 'New IEC Member');
+                result.current.setField('iecUserUuid', IEC_USER_UUID);
             });
 
             await act(async () => {
@@ -263,46 +189,41 @@ describe('useCampaignTeamForm', () => {
                 expect.objectContaining({
                     campaign_uuid: mockCampaign.uuid,
                     role_id: 3,
-                    name: 'New IEC Member',
+                    name: null,
+                    user_uuid: IEC_USER_UUID,
                 }),
             );
         });
 
-        it('should handle save error', async () => {
+        it('reporte une erreur métier remontée par la mutation', async () => {
             mockUpdateMutateAsync.mockRejectedValueOnce(new Error('Network error'));
 
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
             act(() => {
                 result.current.startEditing();
-                result.current.setField('moe', 'Changed Name');
+                result.current.setField('moeName', 'Changed Name');
             });
 
-            let saveResult: boolean;
+            let saveResult: boolean = true;
             await act(async () => {
                 saveResult = await result.current.save();
             });
 
-            expect(saveResult!).toBe(false);
+            expect(saveResult).toBe(false);
             expect(mockShowNotification).toHaveBeenCalledWith('Network error', 'error');
         });
 
-        it('should not call any mutation if names unchanged', async () => {
+        it("ne déclenche aucune mutation si rien n'a changé", async () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
-
-            act(() => {
-                result.current.startEditing();
-            });
+            act(() => result.current.startEditing());
 
             await act(async () => {
                 await result.current.save();
             });
 
-            // No changes, so no mutations should be called
+            expect(mockAddMutateAsync).not.toHaveBeenCalled();
             expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
             expect(mockDeleteMutateAsync).not.toHaveBeenCalled();
-            // Add might be called for IEC which is empty
-            expect(mockAddMutateAsync).not.toHaveBeenCalled();
         });
     });
 });

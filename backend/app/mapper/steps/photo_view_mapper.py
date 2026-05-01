@@ -1,6 +1,5 @@
 """Mapper PhotoView - Conversion Entity ↔ Bean ↔ API."""
 
-import uuid as uuid_module
 from typing import Any, Dict
 
 from app.domain.steps.models.photo_view_bean import PhotoViewBean
@@ -11,9 +10,7 @@ def photo_view_mapper_entity_to_bean(entity: PhotoViewEntity) -> PhotoViewBean:
     """Convertit une PhotoViewEntity en PhotoViewBean."""
     return PhotoViewBean(
         uuid=str(entity.uuid),
-        pictures_step_id=(
-            str(entity.pictures_step_id_id) if entity.pictures_step_id_id else ""
-        ),
+        pictures_step_id=(str(entity.pictures_step_id_id) if entity.pictures_step_id_id else ""),
         name=entity.name,
         link=entity.link,
     )
@@ -25,7 +22,7 @@ def photo_view_mapper_bean_to_entity(bean: PhotoViewBean) -> PhotoViewEntity:
     if bean.uuid:
         entity.uuid = bean.uuid
     if bean.pictures_step_id:
-        entity.pictures_step_id_id = uuid_module.UUID(bean.pictures_step_id)
+        entity.pictures_step_id_id = bean.pictures_step_id
     entity.name = bean.name
     entity.link = bean.link
     return entity

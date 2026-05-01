@@ -25,9 +25,7 @@ class PlanningCampaignStepEntity(models.Model):
         indexes = [
             models.Index(fields=["year"], name="pln_campstep_year_idx"),
             models.Index(fields=["campaign"], name="pln_campstep_camp_idx"),
-            models.Index(
-                fields=["campaign", "year"], name="pln_campstep_camp_year_idx"
-            ),
+            models.Index(fields=["campaign", "year"], name="pln_campstep_camp_year_idx"),
             models.Index(fields=["fsec_uuid"], name="pln_campstep_fsec_idx"),
         ]
 

@@ -14,7 +14,8 @@ export const FsecTeamApiSchema = z.object({
     uuid: z.string().uuid(),
     fsec_id: z.string().uuid(),
     role_id: z.number().int().nullable(),
-    name: z.string(),
+    name: z.string().nullable(),
+    user_uuid: z.string().uuid().nullable().optional(),
 });
 
 /**
@@ -25,6 +26,7 @@ export const FsecTeamSchema = FsecTeamApiSchema.transform((api) => ({
     fsecId: api.fsec_id,
     roleId: api.role_id,
     name: api.name,
+    userUuid: api.user_uuid ?? null,
 }));
 
 export type FsecTeam = z.infer<typeof FsecTeamSchema>;

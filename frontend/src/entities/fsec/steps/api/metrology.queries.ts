@@ -46,12 +46,25 @@ interface CreateMetrologyStepInput {
     machineId?: number | null;
     rackId?: number | null;
     metrologistName?: string | null;
+    metrologistUserUuid?: string | null;
     date?: Date | null;
     comments?: string | null;
 }
 
 interface UpdateMetrologyStepInput extends CreateMetrologyStepInput {
     uuid: string;
+}
+
+function metrologyStepToApi(input: CreateMetrologyStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        machine_id: input.machineId ?? null,
+        rack_id: input.rackId ?? null,
+        metrologist_name: input.metrologistName ?? null,
+        metrologist_user_uuid: input.metrologistUserUuid ?? null,
+        date: input.date?.toISOString().split('T')[0] ?? null,
+        comments: input.comments ?? null,
+    };
 }
 
 /**
@@ -62,15 +75,7 @@ export function useCreateMetrologyStep() {
 
     return useMutation({
         mutationFn: async (input: CreateMetrologyStepInput): Promise<MetrologyStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                machine_id: input.machineId ?? null,
-                rack_id: input.rackId ?? null,
-                metrologist_name: input.metrologistName ?? null,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.post('/metrology-steps/', apiData);
+            const response = await api.post('/metrology-steps/', metrologyStepToApi(input));
             return MetrologyStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -89,15 +94,10 @@ export function useUpdateMetrologyStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateMetrologyStepInput): Promise<MetrologyStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                machine_id: input.machineId ?? null,
-                rack_id: input.rackId ?? null,
-                metrologist_name: input.metrologistName ?? null,
-                date: input.date?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-            };
-            const response = await api.put(`/metrology-steps/${input.uuid}/`, apiData);
+            const response = await api.put(
+                `/metrology-steps/${input.uuid}/`,
+                metrologyStepToApi(input),
+            );
             return MetrologyStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

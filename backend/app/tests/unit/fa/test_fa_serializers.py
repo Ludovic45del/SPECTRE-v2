@@ -6,12 +6,7 @@ Vérifie la validation des entrées pour les Fiches d'Anomalie.
 
 import pytest
 
-from app.api.fa.serializers import (
-    FaCloseSerializer,
-    FaPatchSerializer,
-    FaSerializer,
-    FaValidatePhaseSerializer,
-)
+from app.api.fa.serializers import FaCloseSerializer, FaPatchSerializer, FaSerializer, FaValidatePhaseSerializer
 
 SAMPLE_FSEC_VERSION_UUID = "00000000-0000-0000-0000-000000000001"
 
@@ -186,18 +181,19 @@ class TestFaValidatePhaseSerializer:
         serializer = FaValidatePhaseSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
 
-    def test_rejects_missing_validator_name(self):
-        """Test rejet sans nom de valideur."""
+    def test_accepts_empty_payload(self):
+        """Le serializer ne juge plus la presence du validateur : c'est le service
+        qui exige validator_name OU validator_user_uuid (avec validation role
+        stricte). Le serializer ne doit donc plus rejeter un payload vide.
+        """
         serializer = FaValidatePhaseSerializer(data={})
-        assert not serializer.is_valid()
-        assert "validator_name" in serializer.errors
+        assert serializer.is_valid(), serializer.errors
 
-    def test_rejects_empty_validator_name(self):
-        """Test rejet d'un nom vide."""
-        data = {"validator_name": ""}
+    def test_accepts_only_validator_user_uuid(self):
+        """Acceptation d'une validation par FK uniquement (cas standard apres bascule UI)."""
+        data = {"validator_user_uuid": "11111111-1111-1111-1111-111111111111"}
         serializer = FaValidatePhaseSerializer(data=data)
-        assert not serializer.is_valid()
-        assert "validator_name" in serializer.errors
+        assert serializer.is_valid(), serializer.errors
 
     def test_rejects_too_long_validator_name(self):
         """Test rejet si nom dépasse 100 chars."""
@@ -234,11 +230,10 @@ class TestFaCloseSerializer:
         serializer = FaCloseSerializer(data=data)
         assert serializer.is_valid(), serializer.errors
 
-    def test_rejects_missing_validator_name(self):
-        """Test rejet sans nom de valideur."""
+    def test_accepts_empty_payload(self):
+        """La verification 'au moins un validateur fourni' est faite cote service."""
         serializer = FaCloseSerializer(data={})
-        assert not serializer.is_valid()
-        assert "validator_name" in serializer.errors
+        assert serializer.is_valid(), serializer.errors
 
     def test_rejects_too_long_closure_validation(self):
         """Test rejet si closure_validation dépasse 4000 chars."""

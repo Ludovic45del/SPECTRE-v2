@@ -31,6 +31,7 @@ class PermeationStepRepository(
         entity.gas_type = bean.gas_type
         entity.target_pressure = bean.target_pressure
         entity.operator = bean.operator
+        entity.operator_user_id = bean.operator_user_uuid
         entity.start_date = bean.start_date
         entity.estimated_end_date = bean.estimated_end_date
         entity.sensor_pressure = bean.sensor_pressure
