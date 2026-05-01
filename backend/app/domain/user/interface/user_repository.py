@@ -61,7 +61,9 @@ class IUserRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_dashboard_preferences(self, uuid: uuid_lib.UUID) -> DashboardPreferencesBean:
+    def get_dashboard_preferences(
+        self, uuid: uuid_lib.UUID
+    ) -> DashboardPreferencesBean:
         pass
 
     @abc.abstractmethod

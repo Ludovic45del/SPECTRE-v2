@@ -189,9 +189,7 @@ interface NavItem {
 }
 
 /** Élément aplati pour le rendu (parent OU enfant), 1 ligne = 1 entrée. */
-type FlatNavItem =
-    | ({ kind: 'parent' } & NavItem)
-    | ({ kind: 'child' } & NavSubItem);
+type FlatNavItem = ({ kind: 'parent' } & NavItem) | ({ kind: 'child' } & NavSubItem);
 
 const BASE_NAV_ITEMS: NavItem[] = [
     { path: '/', label: 'Accueil', icon: (isActive) => <HomeCircleIcon isActive={isActive} /> },
@@ -471,9 +469,7 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
             if (item.children && isOpen && pathname.startsWith(item.path)) {
                 for (const child of item.children) {
                     const enriched: NavSubItem =
-                        child.path === '/stock/alertes'
-                            ? { ...child, badgeCount: stockAlertsCount }
-                            : child;
+                        child.path === '/stock/alertes' ? { ...child, badgeCount: stockAlertsCount } : child;
                     flat.push({ kind: 'child', ...enriched });
                 }
             }
@@ -526,12 +522,7 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
     );
 
     return (
-        <Box
-            component="nav"
-            role="navigation"
-            aria-label="Navigation principale"
-            sx={sidebarStyles}
-        >
+        <Box component="nav" role="navigation" aria-label="Navigation principale" sx={sidebarStyles}>
             {/* Header — clic sur le logo pour basculer le menu */}
             <Box
                 sx={{
@@ -545,11 +536,7 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                     minHeight: 56,
                 }}
             >
-                <Tooltip
-                    title={isOpen ? 'Réduire le menu' : 'Étendre le menu'}
-                    placement="right"
-                    arrow
-                >
+                <Tooltip title={isOpen ? 'Réduire le menu' : 'Étendre le menu'} placement="right" arrow>
                     <Box
                         component="button"
                         type="button"

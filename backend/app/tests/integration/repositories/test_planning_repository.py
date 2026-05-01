@@ -13,10 +13,18 @@ import pytest
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
-from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
-from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
-from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
+from app.domain.planning.models.planning_campaign_step_bean import (
+    PlanningCampaignStepBean,
+)
+from app.domain.planning.models.planning_cell_annotation_bean import (
+    PlanningCellAnnotationBean,
+)
+from app.domain.planning.models.planning_fsec_cell_link_bean import (
+    PlanningFsecCellLinkBean,
+)
+from app.domain.planning.models.planning_member_period_bean import (
+    PlanningMemberPeriodBean,
+)
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
@@ -95,9 +103,15 @@ class TestPlanningRepositoryWeekState:
 
     def test_get_week_states_by_year(self, planning_repository):
         """Test recuperation des etats par annee."""
-        planning_repository.upsert_week_state(PlanningWeekStateBean(year=2025, week_num=10, state="vacances"))
-        planning_repository.upsert_week_state(PlanningWeekStateBean(year=2025, week_num=20, state="fermeture"))
-        planning_repository.upsert_week_state(PlanningWeekStateBean(year=2026, week_num=5, state="vacances"))
+        planning_repository.upsert_week_state(
+            PlanningWeekStateBean(year=2025, week_num=10, state="vacances")
+        )
+        planning_repository.upsert_week_state(
+            PlanningWeekStateBean(year=2025, week_num=20, state="fermeture")
+        )
+        planning_repository.upsert_week_state(
+            PlanningWeekStateBean(year=2026, week_num=5, state="vacances")
+        )
 
         results = planning_repository.get_week_states_by_year(2025)
 
@@ -507,7 +521,9 @@ class TestPlanningRepositoryLabSalle:
         salle_bean = LabSalleBean(name="C3")
         created_salle = planning_repository.create_salle(salle_bean)
 
-        machine_bean = LabMachineBean(salle_uuid=created_salle.uuid, name="Machine Test")
+        machine_bean = LabMachineBean(
+            salle_uuid=created_salle.uuid, name="Machine Test"
+        )
         planning_repository.create_machine(machine_bean)
 
         results = planning_repository.get_all_salles()

@@ -12,7 +12,10 @@ from app.mapper.steps.assembly_step_mapper import (
     assembly_step_mapper_bean_to_entity,
     assembly_step_mapper_entity_to_bean,
 )
-from app.mapper.steps.base_step_mapper import parse_date_from_api, parse_datetime_from_api
+from app.mapper.steps.base_step_mapper import (
+    parse_date_from_api,
+    parse_datetime_from_api,
+)
 from app.mapper.steps.depressurization_step_mapper import (
     depressurization_step_mapper_api_to_bean,
     depressurization_step_mapper_bean_to_api,

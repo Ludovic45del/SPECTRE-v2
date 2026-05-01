@@ -89,12 +89,7 @@ export const PhaseEnCoursSection = memo(function PhaseEnCoursSection({ fa }: Pha
                 </>
             )}
 
-            <ValidatePhaseModal
-                open={validateOpen}
-                onClose={handleCloseValidate}
-                fa={fa}
-                phase="progress"
-            />
+            <ValidatePhaseModal open={validateOpen} onClose={handleCloseValidate} fa={fa} phase="progress" />
         </Paper>
     );
 });

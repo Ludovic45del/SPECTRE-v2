@@ -76,10 +76,7 @@ export function useCreateDepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: CreateDepressurizationStepInput): Promise<DepressurizationStep> => {
-            const response = await api.post(
-                '/depressurization-steps/',
-                depressurizationStepToApi(input),
-            );
+            const response = await api.post('/depressurization-steps/', depressurizationStepToApi(input));
             return DepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -98,10 +95,7 @@ export function useUpdateDepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateDepressurizationStepInput): Promise<DepressurizationStep> => {
-            const response = await api.put(
-                `/depressurization-steps/${input.uuid}/`,
-                depressurizationStepToApi(input),
-            );
+            const response = await api.put(`/depressurization-steps/${input.uuid}/`, depressurizationStepToApi(input));
             return DepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

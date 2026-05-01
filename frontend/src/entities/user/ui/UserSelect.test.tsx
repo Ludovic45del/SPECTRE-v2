@@ -58,9 +58,7 @@ describe('UserSelect', () => {
     });
 
     it('exclut chef_labo si alwaysIncludeChefLabo=false', async () => {
-        const { user } = setup(
-            <ControlledHarness roles={['metrologue']} alwaysIncludeChefLabo={false} />,
-        );
+        const { user } = setup(<ControlledHarness roles={['metrologue']} alwaysIncludeChefLabo={false} />);
 
         await user.click(screen.getByLabelText('Métrologue'));
 
@@ -98,18 +96,11 @@ describe('UserSelect', () => {
         const option = await screen.findByRole('option', { name: /Alice Martin/ });
         await user.click(option);
 
-        expect(screen.getByTestId('current-value')).toHaveTextContent(
-            '22222222-2222-2222-2222-222222222222',
-        );
+        expect(screen.getByTestId('current-value')).toHaveTextContent('22222222-2222-2222-2222-222222222222');
     });
 
     it('affiche la sélection initiale (controlled)', async () => {
-        setup(
-            <ControlledHarness
-                roles={['metrologue']}
-                initialValue="22222222-2222-2222-2222-222222222222"
-            />,
-        );
+        setup(<ControlledHarness roles={['metrologue']} initialValue="22222222-2222-2222-2222-222222222222" />);
 
         const input = await screen.findByLabelText('Métrologue');
         await waitFor(() => {

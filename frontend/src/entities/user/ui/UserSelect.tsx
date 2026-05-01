@@ -70,13 +70,9 @@ export const UserSelect = memo(function UserSelect({
 
     const options = useMemo(() => [...(users ?? [])].sort(sortByLastName), [users]);
 
-    const selected = useMemo(
-        () => options.find((u) => u.uuid === value) ?? null,
-        [options, value],
-    );
+    const selected = useMemo(() => options.find((u) => u.uuid === value) ?? null, [options, value]);
 
-    const computedHelperText =
-        helperText ?? (isError ? 'Erreur lors du chargement des utilisateurs' : undefined);
+    const computedHelperText = helperText ?? (isError ? 'Erreur lors du chargement des utilisateurs' : undefined);
 
     return (
         <Autocomplete<UserLookup, false, false, false>
@@ -104,9 +100,7 @@ export const UserSelect = memo(function UserSelect({
                         ...params.InputProps,
                         endAdornment: (
                             <>
-                                {isLoading ? (
-                                    <CircularProgress color="inherit" size={16} />
-                                ) : null}
+                                {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
                                 {params.InputProps.endAdornment}
                             </>
                         ),

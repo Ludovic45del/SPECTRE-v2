@@ -31,11 +31,21 @@ class EmbaseEntity(models.Model):
     # --- VOIE V1 ---
     soufflet_v1 = models.CharField(max_length=100, blank=True, default="")
     capteur_v1 = models.CharField(max_length=50, blank=True, default="")
-    offset_v1_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    mesurande_lie_v1_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    sensibilite_v1_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    signal_meteociel_v1_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    capteur_cible_pfeiffer_mbar = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    offset_v1_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    mesurande_lie_v1_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    sensibilite_v1_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    signal_meteociel_v1_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    capteur_cible_pfeiffer_mbar = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
     etendue_v1_mbar = models.IntegerField(null=True, blank=True)
     test_etancheite_he = models.CharField(max_length=200, blank=True, default="")
     test_capteur_mrg = models.CharField(max_length=200, blank=True, default="")
@@ -53,11 +63,21 @@ class EmbaseEntity(models.Model):
     # --- VOIE V2 ---
     soufflet_v2 = models.CharField(max_length=100, blank=True, default="")
     capteur_v2 = models.CharField(max_length=50, blank=True, default="")
-    offset_v2_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    mesurande_lie_v2_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    sensibilite_v2_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    signal_meteociel_v2_mv = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    capteur_cible_pfeiffer_v2_mbar = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    offset_v2_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    mesurande_lie_v2_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    sensibilite_v2_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    signal_meteociel_v2_mv = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    capteur_cible_pfeiffer_v2_mbar = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
     etendue_v2_mbar = models.IntegerField(null=True, blank=True)
     test_etancheite_he_v2 = models.CharField(max_length=200, blank=True, default="")
     test_capteur_mrg_v2 = models.CharField(max_length=200, blank=True, default="")

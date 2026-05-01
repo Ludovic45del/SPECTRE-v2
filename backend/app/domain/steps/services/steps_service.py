@@ -29,7 +29,9 @@ def create_step(repository: IStepRepository[StepBean], bean: StepBean) -> StepBe
     return repository.create(bean)
 
 
-def get_step_by_uuid(repository: IStepRepository[StepBean], uuid: str, step_name: str) -> StepBean:
+def get_step_by_uuid(
+    repository: IStepRepository[StepBean], uuid: str, step_name: str
+) -> StepBean:
     """Récupère une étape par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -37,12 +39,16 @@ def get_step_by_uuid(repository: IStepRepository[StepBean], uuid: str, step_name
     return bean
 
 
-def get_steps_by_fsec_version_id(repository: IStepRepository[StepBean], fsec_version_id: str) -> List[StepBean]:
+def get_steps_by_fsec_version_id(
+    repository: IStepRepository[StepBean], fsec_version_id: str
+) -> List[StepBean]:
     """Récupère les étapes d'un FSEC."""
     return repository.get_by_fsec_version_id(fsec_version_id)
 
 
-def update_step(repository: IStepRepository[StepBean], bean: StepBean, step_name: str) -> StepBean:
+def update_step(
+    repository: IStepRepository[StepBean], bean: StepBean, step_name: str
+) -> StepBean:
     """Met à jour une étape."""
     existing = repository.get_by_uuid(bean.uuid)  # type: ignore
     if existing is None:
@@ -50,7 +56,9 @@ def update_step(repository: IStepRepository[StepBean], bean: StepBean, step_name
     return repository.update(bean)
 
 
-def delete_step(repository: IStepRepository[StepBean], uuid: str, step_name: str) -> bool:
+def delete_step(
+    repository: IStepRepository[StepBean], uuid: str, step_name: str
+) -> bool:
     """Supprime une étape."""
     if not repository.delete(uuid):
         raise NotFoundException(step_name, uuid)

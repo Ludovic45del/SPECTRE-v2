@@ -6,13 +6,29 @@ Voir CAHIER_DES_CHARGES_STOCK.md §4.2, §4.3, §5.3.
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
-from app.domain.stock.interface.fsec_assembly_repository import IFsecAssemblyItemRepository
-from app.domain.stock.models.fsec_assembly_item_bean import FsecAssemblyItemBean, FsecAssemblyItemDetailBean
-from app.domain.stock.models.stock_constants import ELEMENT_STATUS_TIREE, ERROR_CODE_FSEC_LOCKED, FSEC_STATUS_ID_TIREE
-from app.domain.stock.services.element_lifecycle_service import release_element, reserve_element
+from app.domain.stock.interface.fsec_assembly_repository import (
+    IFsecAssemblyItemRepository,
+)
+from app.domain.stock.models.fsec_assembly_item_bean import (
+    FsecAssemblyItemBean,
+    FsecAssemblyItemDetailBean,
+)
+from app.domain.stock.models.stock_constants import (
+    ELEMENT_STATUS_TIREE,
+    ERROR_CODE_FSEC_LOCKED,
+    FSEC_STATUS_ID_TIREE,
+)
+from app.domain.stock.services.element_lifecycle_service import (
+    release_element,
+    reserve_element,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +56,9 @@ def list_assembly_items_by_fsec(
     return assembly_repository.list_by_fsec(fsec_uuid)
 
 
-def get_assembly_item(assembly_repository: IFsecAssemblyItemRepository, uuid: str) -> FsecAssemblyItemBean:
+def get_assembly_item(
+    assembly_repository: IFsecAssemblyItemRepository, uuid: str
+) -> FsecAssemblyItemBean:
     """Récupère une ligne par UUID."""
     bean = assembly_repository.get_by_uuid(uuid)
     if bean is None:
@@ -79,7 +97,9 @@ def add_assembly_item(
         )
 
     # Réservation (peut lever ELEMENT_ALREADY_USED si déjà sur une autre FSEC)
-    reserve_element(catalog_repository, assembly_repository, catalog_item_uuid, fsec_uuid)
+    reserve_element(
+        catalog_repository, assembly_repository, catalog_item_uuid, fsec_uuid
+    )
 
     bean = FsecAssemblyItemBean(
         fsec_uuid=fsec_uuid,

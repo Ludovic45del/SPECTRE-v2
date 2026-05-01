@@ -29,7 +29,9 @@ class TestNormalize:
 @pytest.mark.django_db
 class TestMatchUserProfile:
     def _create(self, username, first_name="", last_name=""):
-        user = User.objects.create(username=username, first_name=first_name, last_name=last_name)
+        user = User.objects.create(
+            username=username, first_name=first_name, last_name=last_name
+        )
         return UserProfileEntity.objects.create(user=user, role="metrologue")
 
     def test_returns_none_for_empty(self):

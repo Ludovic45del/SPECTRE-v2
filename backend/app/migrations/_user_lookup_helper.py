@@ -60,7 +60,11 @@ def match_user_profile(apps, raw_name):
 
     # 2) Match "first last" complet. Volume <100 users, operation ponctuelle :
     #    parcours en memoire, pas besoin d'index full-text.
-    matched = [u for u in User.objects.all() if _normalize(f"{u.first_name} {u.last_name}") == needle]
+    matched = [
+        u
+        for u in User.objects.all()
+        if _normalize(f"{u.first_name} {u.last_name}") == needle
+    ]
     if len(matched) == 1:
         uuid = _profile_uuid_for_user(UserProfile, matched[0].id)
         if uuid:

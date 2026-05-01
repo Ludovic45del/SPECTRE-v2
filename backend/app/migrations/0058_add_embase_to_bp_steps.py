@@ -7,18 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0057_remove_assembly_hydrometric_temperature'),
+        ("app", "0057_remove_assembly_hydrometric_temperature"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='airtightnesstestlpstepentity',
-            name='embase',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='airtightness_test_lp_steps_embase', to='app.embaseentity'),
+            model_name="airtightnesstestlpstepentity",
+            name="embase",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="airtightness_test_lp_steps_embase",
+                to="app.embaseentity",
+            ),
         ),
         migrations.AddField(
-            model_name='gasfillingbpstepentity',
-            name='embase',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='gas_filling_bp_steps_embase', to='app.embaseentity'),
+            model_name="gasfillingbpstepentity",
+            name="embase",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="gas_filling_bp_steps_embase",
+                to="app.embaseentity",
+            ),
         ),
     ]

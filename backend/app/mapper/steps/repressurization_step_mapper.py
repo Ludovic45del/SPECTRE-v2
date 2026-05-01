@@ -3,8 +3,14 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.repressurization_step_bean import RepressurizationStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid, parse_datetime_from_api, read_operator_user_uuid
-from app.repository.steps.models.repressurization_step_entity import RepressurizationStepEntity
+from app.mapper.steps.base_step_mapper import (
+    normalize_user_uuid,
+    parse_datetime_from_api,
+    read_operator_user_uuid,
+)
+from app.repository.steps.models.repressurization_step_entity import (
+    RepressurizationStepEntity,
+)
 
 
 def repressurization_step_mapper_entity_to_bean(
@@ -13,7 +19,9 @@ def repressurization_step_mapper_entity_to_bean(
     """Convertit une RepressurizationStepEntity en RepressurizationStepBean."""
     return RepressurizationStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         operator=entity.operator,
         operator_user_uuid=read_operator_user_uuid(entity),
         gas_type=entity.gas_type,
@@ -70,7 +78,9 @@ def repressurization_step_mapper_bean_to_api(
         "operator_user_uuid": bean.operator_user_uuid,
         "gas_type": bean.gas_type,
         "start_date": bean.start_date.isoformat() if bean.start_date else None,
-        "estimated_end_date": (bean.estimated_end_date.isoformat() if bean.estimated_end_date else None),
+        "estimated_end_date": (
+            bean.estimated_end_date.isoformat() if bean.estimated_end_date else None
+        ),
         "sensor_pressure": bean.sensor_pressure,
         "computed_pressure": bean.computed_pressure,
     }

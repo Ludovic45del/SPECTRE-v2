@@ -14,7 +14,9 @@ class TestGetAlerts:
         sample_low_stock_consumable_bean,
         mock_stock_catalog_repository,
     ):
-        mock_stock_catalog_repository.find_low_stock.return_value = [sample_low_stock_consumable_bean]
+        mock_stock_catalog_repository.find_low_stock.return_value = [
+            sample_low_stock_consumable_bean
+        ]
         mock_stock_catalog_repository.find_expired.return_value = []
         mock_stock_catalog_repository.find_expiring_soon.return_value = []
 
@@ -35,4 +37,6 @@ class TestGetAlerts:
         get_alerts(mock_stock_catalog_repository, today=ref_today, days_ahead=30)
 
         mock_stock_catalog_repository.find_expired.assert_called_once_with(ref_today)
-        mock_stock_catalog_repository.find_expiring_soon.assert_called_once_with(ref_today, 30)
+        mock_stock_catalog_repository.find_expiring_soon.assert_called_once_with(
+            ref_today, 30
+        )

@@ -6,8 +6,13 @@ from rest_framework.decorators import action
 
 from app.api.shared.base_step_controller import BaseStepController
 from app.api.steps.serializers import SealingStepSerializer
-from app.mapper.steps.sealing_step_mapper import sealing_step_mapper_api_to_bean, sealing_step_mapper_bean_to_api
-from app.repository.steps.repositories.sealing_step_repository import SealingStepRepository
+from app.mapper.steps.sealing_step_mapper import (
+    sealing_step_mapper_api_to_bean,
+    sealing_step_mapper_bean_to_api,
+)
+from app.repository.steps.repositories.sealing_step_repository import (
+    SealingStepRepository,
+)
 
 
 class SealingStepController(BaseStepController):

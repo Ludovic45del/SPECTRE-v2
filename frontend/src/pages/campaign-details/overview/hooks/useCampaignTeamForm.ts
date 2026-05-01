@@ -133,8 +133,7 @@ export function useCampaignTeamForm(campaign: CampaignWithRelations): UseCampaig
             for (const update of teamUpdates) {
                 const existing = getMemberByRole(teamMembers, update.roleLabel);
                 const hasNewValue = Boolean(update.name || update.userUuid);
-                const hasChanged =
-                    existing?.name !== update.name || existing?.userUuid !== update.userUuid;
+                const hasChanged = existing?.name !== update.name || existing?.userUuid !== update.userUuid;
 
                 if (existing && hasNewValue && hasChanged) {
                     await updateTeamMember.mutateAsync({

@@ -65,95 +65,95 @@ export default function LoginPage() {
 
     return (
         <>
-        <Container maxWidth="sm">
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
-                <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-                    {/* Logos */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 2,
-                            mb: 3,
-                        }}
-                    >
+            <Container maxWidth="sm">
+                <Box
+                    sx={{
+                        minHeight: '100vh',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+                        {/* Logos */}
                         <Box
-                            component="img"
-                            src={CEALogo}
-                            alt="CEA"
-                            sx={{ width: 64, height: 'auto', borderRadius: 1 }}
-                        />
-                        <Typography
-                            variant="h4"
-                            component="span"
                             sx={{
-                                fontWeight: 800,
-                                letterSpacing: '0.15em',
-                                textTransform: 'uppercase',
-                                color: BRAND_COLOR,
-                                lineHeight: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 2,
+                                mb: 3,
                             }}
                         >
-                            Spectre
-                        </Typography>
-                    </Box>
+                            <Box
+                                component="img"
+                                src={CEALogo}
+                                alt="CEA"
+                                sx={{ width: 64, height: 'auto', borderRadius: 1 }}
+                            />
+                            <Typography
+                                variant="h4"
+                                component="span"
+                                sx={{
+                                    fontWeight: 800,
+                                    letterSpacing: '0.15em',
+                                    textTransform: 'uppercase',
+                                    color: BRAND_COLOR,
+                                    lineHeight: 1,
+                                }}
+                            >
+                                Spectre
+                            </Typography>
+                        </Box>
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
 
-                    <Box component="form" onSubmit={handleSubmit}>
-                        <TextField
-                            fullWidth
-                            label="Matricule"
-                            value={username}
-                            onChange={handleUsernameChange}
-                            margin="normal"
-                            required
-                            autoFocus
-                            disabled={isLoading}
-                        />
-                        <TextField
-                            fullWidth
-                            label="Mot de passe"
-                            type="password"
-                            value={password}
-                            onChange={handlePasswordChange}
-                            margin="normal"
-                            required
-                            disabled={isLoading}
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            size="large"
-                            sx={{ mt: 3 }}
-                            disabled={isLoading || !username || !password}
-                        >
-                            {isLoading ? <CircularProgress size={24} /> : 'Se connecter'}
-                        </Button>
-                    </Box>
-                </Paper>
-            </Box>
-        </Container>
-        {phase === 'celebrating' && pendingAuth && (
-            <LoginSuccessAnimation
-                firstName={pendingAuth.firstName ?? undefined}
-                accentColor={BRAND_COLOR}
-                onComplete={commitLogin}
-            />
-        )}
+                        <Box component="form" onSubmit={handleSubmit}>
+                            <TextField
+                                fullWidth
+                                label="Matricule"
+                                value={username}
+                                onChange={handleUsernameChange}
+                                margin="normal"
+                                required
+                                autoFocus
+                                disabled={isLoading}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Mot de passe"
+                                type="password"
+                                value={password}
+                                onChange={handlePasswordChange}
+                                margin="normal"
+                                required
+                                disabled={isLoading}
+                            />
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                size="large"
+                                sx={{ mt: 3 }}
+                                disabled={isLoading || !username || !password}
+                            >
+                                {isLoading ? <CircularProgress size={24} /> : 'Se connecter'}
+                            </Button>
+                        </Box>
+                    </Paper>
+                </Box>
+            </Container>
+            {phase === 'celebrating' && pendingAuth && (
+                <LoginSuccessAnimation
+                    firstName={pendingAuth.firstName ?? undefined}
+                    accentColor={BRAND_COLOR}
+                    onComplete={commitLogin}
+                />
+            )}
         </>
     );
 }

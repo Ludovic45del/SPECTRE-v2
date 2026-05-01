@@ -4,7 +4,11 @@ import uuid
 
 import pytest
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.fsec.models.fsec_bean import FsecBean
 from app.domain.stock.models.fsec_assembly_item_bean import FsecAssemblyItemBean
 from app.domain.stock.models.stock_constants import (
@@ -14,7 +18,11 @@ from app.domain.stock.models.stock_constants import (
     ERROR_CODE_FSEC_LOCKED,
     FSEC_STATUS_ID_TIREE,
 )
-from app.domain.stock.services.fsec_assembly_service import add_assembly_item, patch_assembly_item, remove_assembly_item
+from app.domain.stock.services.fsec_assembly_service import (
+    add_assembly_item,
+    patch_assembly_item,
+    remove_assembly_item,
+)
 
 
 class TestAddAssemblyItem:

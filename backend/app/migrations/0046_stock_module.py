@@ -129,7 +129,9 @@ class Migration(migrations.Migration):
                     models.Index(fields=["category"], name="stock_item_category_idx"),
                     models.Index(fields=["status"], name="stock_item_status_idx"),
                     models.Index(fields=["is_active"], name="stock_item_active_idx"),
-                    models.Index(fields=["date_peremption"], name="stock_item_perem_idx"),
+                    models.Index(
+                        fields=["date_peremption"], name="stock_item_perem_idx"
+                    ),
                 ],
             },
         ),
@@ -234,7 +236,9 @@ class Migration(migrations.Migration):
                 "ordering": ["sort_order", "created_at"],
                 "indexes": [
                     models.Index(fields=["fsec_uuid"], name="fsec_asm_item_fsec_idx"),
-                    models.Index(fields=["catalog_item"], name="fsec_asm_item_catalog_idx"),
+                    models.Index(
+                        fields=["catalog_item"], name="fsec_asm_item_catalog_idx"
+                    ),
                 ],
                 "constraints": [
                     models.UniqueConstraint(

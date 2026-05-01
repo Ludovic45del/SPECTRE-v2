@@ -165,7 +165,9 @@ class TestCompleteWorkflow:
         assert created_assembly.fsec_version_id == fsec_version_uuid
         mock_assembly_repo.create.assert_called_once()
 
-        logger.info(f"✅ STEP 3: AssemblyStep créé - Assembleur: {created_assembly.operator}")
+        logger.info(
+            f"✅ STEP 3: AssemblyStep créé - Assembleur: {created_assembly.operator}"
+        )
 
         # ================================================================
         # STEP 4: METROLOGY STEP
@@ -216,7 +218,9 @@ class TestCompleteWorkflow:
         assert created_sealing.interface_io == "INTERFACE_01"
         mock_sealing_repo.create.assert_called_once()
 
-        logger.info(f"✅ STEP 5: SealingStep créé - Interface: {created_sealing.interface_io}")
+        logger.info(
+            f"✅ STEP 5: SealingStep créé - Interface: {created_sealing.interface_io}"
+        )
 
         # ================================================================
         # STEP 6: PICTURES STEP
@@ -259,8 +263,12 @@ class TestCompleteWorkflow:
         """
         Scénario service avec catégorie Gaz (Airtightness + Gas Filling).
         """
-        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
-        from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
+        from app.domain.steps.models.airtightness_test_lp_step_bean import (
+            AirtightnessTestLpStepBean,
+        )
+        from app.domain.steps.models.gas_filling_bp_step_bean import (
+            GasFillingBpStepBean,
+        )
         from app.domain.steps.services.steps_service import create_step
 
         fsec_version_uuid = str(uuid.uuid4())
@@ -285,7 +293,9 @@ class TestCompleteWorkflow:
 
         assert created_airtightness.gas_type == "Helium"
         assert created_airtightness.experiment_pressure == 1.5
-        logger.info(f"✅ GAS STEP 1: Airtightness Test - Leak Rate: {created_airtightness.leak_rate_dtri}")
+        logger.info(
+            f"✅ GAS STEP 1: Airtightness Test - Leak Rate: {created_airtightness.leak_rate_dtri}"
+        )
 
         # Gas Filling BP
         gas_filling_uuid = str(uuid.uuid4())
@@ -310,7 +320,9 @@ class TestCompleteWorkflow:
 
         assert created_gas_filling.gas_type == "Nitrogen"
         assert created_gas_filling.gas_base == 1
-        logger.info(f"✅ GAS STEP 2: Gas Filling BP - Pressure: {created_gas_filling.experiment_pressure} bar")
+        logger.info(
+            f"✅ GAS STEP 2: Gas Filling BP - Pressure: {created_gas_filling.experiment_pressure} bar"
+        )
 
         logger.info("\n🎉 WORKFLOW GAZ COMPLET RÉUSSI")
 
@@ -326,7 +338,10 @@ class TestMappersService:
     @pytest.mark.service
     def test_campaign_mapper_roundtrip(self, sample_campaign_bean):
         """Test conversion aller-retour Campaign."""
-        from app.mapper.campaign.campaign_mapper import campaign_mapper_api_to_bean, campaign_mapper_bean_to_api
+        from app.mapper.campaign.campaign_mapper import (
+            campaign_mapper_api_to_bean,
+            campaign_mapper_bean_to_api,
+        )
 
         # Bean → API
         api_data = campaign_mapper_bean_to_api(sample_campaign_bean)
@@ -346,7 +361,10 @@ class TestMappersService:
     @pytest.mark.service
     def test_fsec_mapper_roundtrip(self, sample_fsec_bean):
         """Test conversion aller-retour FSEC."""
-        from app.mapper.fsec.fsec_mapper import fsec_mapper_api_to_bean, fsec_mapper_bean_to_api
+        from app.mapper.fsec.fsec_mapper import (
+            fsec_mapper_api_to_bean,
+            fsec_mapper_bean_to_api,
+        )
 
         # Bean → API
         api_data = fsec_mapper_bean_to_api(sample_fsec_bean)

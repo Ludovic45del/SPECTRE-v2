@@ -91,10 +91,7 @@ export function useUpdatePicturesStep() {
 
     return useMutation({
         mutationFn: async (input: UpdatePicturesStepInput): Promise<PicturesStep> => {
-            const response = await api.put(
-                `/pictures-steps/${input.uuid}/`,
-                picturesStepToApi(input),
-            );
+            const response = await api.put(`/pictures-steps/${input.uuid}/`, picturesStepToApi(input));
             return PicturesStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

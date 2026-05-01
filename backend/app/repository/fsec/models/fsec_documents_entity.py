@@ -4,7 +4,9 @@ import uuid
 
 from django.db import models
 
-from app.repository.fsec.models.fsec_document_subtypes_entity import FsecDocumentSubtypesEntity
+from app.repository.fsec.models.fsec_document_subtypes_entity import (
+    FsecDocumentSubtypesEntity,
+)
 from app.repository.fsec.models.fsec_entity import FsecEntity
 
 

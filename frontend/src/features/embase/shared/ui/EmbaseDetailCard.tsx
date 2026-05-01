@@ -8,15 +8,7 @@
  */
 
 import { useState } from 'react';
-import {
-    Box,
-    Chip,
-    Grid2,
-    Paper,
-    ToggleButton,
-    ToggleButtonGroup,
-    Typography,
-} from '@mui/material';
+import { Box, Chip, Grid2, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { getEtalonnageStatus, type Embase } from '@entities/embase';
 import { softChipSx } from '@shared/lib';
 import { TestStatusChip } from './StatusChip';
@@ -32,15 +24,7 @@ function StatusChipDetail({ value }: { value: string }) {
     );
 }
 
-function EmbaseInfoRow({
-    label,
-    value,
-    isStatus,
-}: {
-    label: string;
-    value: React.ReactNode;
-    isStatus?: boolean;
-}) {
+function EmbaseInfoRow({ label, value, isStatus }: { label: string; value: React.ReactNode; isStatus?: boolean }) {
     if (value === null || value === undefined || value === '') return null;
     return (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.25 }}>

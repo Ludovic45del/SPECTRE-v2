@@ -345,7 +345,9 @@ export default memo(function TodosWidget() {
                                 Tout fait
                             </>
                         ) : (
-                            <>{remaining} restante{remaining > 1 ? 's' : ''}</>
+                            <>
+                                {remaining} restante{remaining > 1 ? 's' : ''}
+                            </>
                         )}
                     </Box>
                 )

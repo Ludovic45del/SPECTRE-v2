@@ -6,7 +6,12 @@ Vérifie la validation des entrées pour les Fiches d'Anomalie.
 
 import pytest
 
-from app.api.fa.serializers import FaCloseSerializer, FaPatchSerializer, FaSerializer, FaValidatePhaseSerializer
+from app.api.fa.serializers import (
+    FaCloseSerializer,
+    FaPatchSerializer,
+    FaSerializer,
+    FaValidatePhaseSerializer,
+)
 
 SAMPLE_FSEC_VERSION_UUID = "00000000-0000-0000-0000-000000000001"
 

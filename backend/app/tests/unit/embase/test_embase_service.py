@@ -20,7 +20,11 @@ from app.domain.embase.services.embase_service import (
     patch_embase,
     update_embase,
 )
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 
 # ============================================================================
 # CREATE
@@ -54,7 +58,9 @@ class TestEmbaseServiceCreate:
         mock_repo.create.assert_not_called()
 
     @pytest.mark.unit
-    def test_create_embase_invalid_type_raises_validation(self, sample_embase_bean, mock_embase_repository):
+    def test_create_embase_invalid_type_raises_validation(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test qu'un type invalide lève ValidationException."""
         sample_embase_bean.type = "invalid_type"
 
@@ -73,14 +79,18 @@ class TestEmbaseServiceGet:
     """Tests récupération d'Embase."""
 
     @pytest.mark.unit
-    def test_get_embase_by_uuid_success(self, sample_embase_bean, mock_embase_repository):
+    def test_get_embase_by_uuid_success(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test récupération par UUID."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
 
         result = get_embase_by_uuid(mock_embase_repository, sample_embase_bean.uuid)
 
         assert result.identifier == "G01"
-        mock_embase_repository.get_by_uuid.assert_called_once_with(sample_embase_bean.uuid)
+        mock_embase_repository.get_by_uuid.assert_called_once_with(
+            sample_embase_bean.uuid
+        )
 
     @pytest.mark.unit
     def test_get_embase_by_uuid_not_found(self, mock_embase_repository):
@@ -142,8 +152,12 @@ class TestGetFsecHistory:
 
         assert len(result) == 1
         assert result[0].fsec_name == "FSEC-001"
-        mock_embase_repository.get_by_uuid.assert_called_once_with(sample_embase_bean.uuid)
-        mock_embase_repository.get_fsec_history.assert_called_once_with(sample_embase_bean.uuid)
+        mock_embase_repository.get_by_uuid.assert_called_once_with(
+            sample_embase_bean.uuid
+        )
+        mock_embase_repository.get_fsec_history.assert_called_once_with(
+            sample_embase_bean.uuid
+        )
 
     @pytest.mark.unit
     def test_get_fsec_history_embase_not_found(self, mock_embase_repository):
@@ -165,7 +179,9 @@ class TestEmbaseServiceUpdate:
     """Tests mise à jour d'Embase."""
 
     @pytest.mark.unit
-    def test_update_embase_success_same_identifier(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_success_same_identifier(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test update sans changement d'identifiant."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -177,7 +193,9 @@ class TestEmbaseServiceUpdate:
         mock_embase_repository.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_update_embase_success_changed_identifier(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_success_changed_identifier(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test update avec changement d'identifiant, pas de conflit."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
 
@@ -191,11 +209,15 @@ class TestEmbaseServiceUpdate:
         result = update_embase(mock_embase_repository, updated_bean)
 
         assert result.identifier == "G99"
-        mock_embase_repository.exists_duplicate.assert_called_once_with(updated_bean.uuid, "G99")
+        mock_embase_repository.exists_duplicate.assert_called_once_with(
+            updated_bean.uuid, "G99"
+        )
         mock_embase_repository.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_update_embase_conflict_on_identifier_change(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_conflict_on_identifier_change(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test ConflictException si identifiant déjà pris."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.exists_duplicate.return_value = True
@@ -245,7 +267,9 @@ class TestEmbaseServicePatch:
         mock_embase_repository.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_patch_embase_conflict_on_identifier_change(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_embase_conflict_on_identifier_change(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test ConflictException si patch change l'identifiant vers un existant."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.exists_duplicate.return_value = True
@@ -268,7 +292,9 @@ class TestEmbaseServicePatch:
             patch_embase(mock_embase_repository, "fake-uuid", {"type": "hp"})
 
     @pytest.mark.unit
-    def test_patch_embase_ignores_protected_fields(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_embase_ignores_protected_fields(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test que les champs protégés sont ignorés."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -406,7 +432,9 @@ class TestEmbaseServiceCreateExtra:
         assert result is expected
 
     @pytest.mark.unit
-    def test_create_validates_type_before_checking_duplicate(self, mock_embase_repository):
+    def test_create_validates_type_before_checking_duplicate(
+        self, mock_embase_repository
+    ):
         """If type is invalid, ConflictException check is not reached."""
         bean = EmbaseBean(identifier="G01", type="invalid")
 
@@ -438,7 +466,9 @@ class TestEmbaseServiceGetExtra:
     """Tests supplémentaires pour les fonctions de récupération."""
 
     @pytest.mark.unit
-    def test_get_embase_by_uuid_returns_bean(self, sample_embase_bean, mock_embase_repository):
+    def test_get_embase_by_uuid_returns_bean(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify returned value is the exact bean from repository."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
 
@@ -511,7 +541,9 @@ class TestGetFsecHistoryExtra:
     """Tests supplémentaires pour get_fsec_history."""
 
     @pytest.mark.unit
-    def test_get_fsec_history_returns_empty_list(self, sample_embase_bean, mock_embase_repository):
+    def test_get_fsec_history_returns_empty_list(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test returned list can be empty."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.get_fsec_history.return_value = []
@@ -532,7 +564,9 @@ class TestGetFsecHistoryExtra:
         assert exc_info.value.identifier == "test-uuid"
 
     @pytest.mark.unit
-    def test_get_fsec_history_returns_repository_result(self, sample_embase_bean, mock_embase_repository):
+    def test_get_fsec_history_returns_repository_result(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         expected = [
             FsecHistoryEntryBean(
@@ -559,10 +593,14 @@ class TestEmbaseServiceUpdateExtra:
     """Tests supplémentaires pour update_embase."""
 
     @pytest.mark.unit
-    def test_update_embase_invalid_type_raises_validation(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_invalid_type_raises_validation(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Test that invalid type on update raises ValidationException."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
-        updated = EmbaseBean(uuid=sample_embase_bean.uuid, identifier="G01", type="bad_type")
+        updated = EmbaseBean(
+            uuid=sample_embase_bean.uuid, identifier="G01", type="bad_type"
+        )
 
         with pytest.raises(ValidationException):
             update_embase(mock_embase_repository, updated)
@@ -581,9 +619,13 @@ class TestEmbaseServiceUpdateExtra:
         assert exc_info.value.identifier == "uuid-xyz"
 
     @pytest.mark.unit
-    def test_update_embase_returns_repository_result(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_returns_repository_result(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
-        expected = EmbaseBean(uuid=sample_embase_bean.uuid, identifier="G01", type="jet_de_gaz")
+        expected = EmbaseBean(
+            uuid=sample_embase_bean.uuid, identifier="G01", type="jet_de_gaz"
+        )
         mock_embase_repository.update.return_value = expected
 
         result = update_embase(mock_embase_repository, sample_embase_bean)
@@ -591,21 +633,31 @@ class TestEmbaseServiceUpdateExtra:
         assert result is expected
 
     @pytest.mark.unit
-    def test_update_embase_duplicate_check_with_correct_args(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_duplicate_check_with_correct_args(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Duplicate check passes correct uuid and new identifier."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
-        updated = EmbaseBean(uuid=sample_embase_bean.uuid, identifier="G_NEW", type="hp")
+        updated = EmbaseBean(
+            uuid=sample_embase_bean.uuid, identifier="G_NEW", type="hp"
+        )
         mock_embase_repository.update.return_value = updated
 
         update_embase(mock_embase_repository, updated)
 
-        mock_embase_repository.exists_duplicate.assert_called_once_with(sample_embase_bean.uuid, "G_NEW")
+        mock_embase_repository.exists_duplicate.assert_called_once_with(
+            sample_embase_bean.uuid, "G_NEW"
+        )
 
     @pytest.mark.unit
-    def test_update_embase_conflict_exception_details(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_conflict_exception_details(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.exists_duplicate.return_value = True
-        updated = EmbaseBean(uuid=sample_embase_bean.uuid, identifier="TAKEN", type="jet_de_gaz")
+        updated = EmbaseBean(
+            uuid=sample_embase_bean.uuid, identifier="TAKEN", type="jet_de_gaz"
+        )
 
         with pytest.raises(ConflictException) as exc_info:
             update_embase(mock_embase_repository, updated)
@@ -623,7 +675,9 @@ class TestEmbaseServicePatchExtra:
     """Tests supplémentaires pour patch_embase."""
 
     @pytest.mark.unit
-    def test_patch_updates_localisation(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_updates_localisation(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify the field is actually set on the bean."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -653,7 +707,9 @@ class TestEmbaseServicePatchExtra:
         assert call_args.type == "hp"
 
     @pytest.mark.unit
-    def test_patch_invalid_type_raises_validation(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_invalid_type_raises_validation(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Patching with invalid type raises ValidationException."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
 
@@ -667,7 +723,9 @@ class TestEmbaseServicePatchExtra:
         mock_embase_repository.update.assert_not_called()
 
     @pytest.mark.unit
-    def test_patch_ignores_fields_not_in_allowed(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_ignores_fields_not_in_allowed(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Fields not in ALLOWED_PATCH_FIELDS are silently ignored."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -702,7 +760,9 @@ class TestEmbaseServicePatchExtra:
         assert call_args.capteur_v1 == "New Capteur"
 
     @pytest.mark.unit
-    def test_patch_identifier_no_conflict(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_identifier_no_conflict(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Patch identifier when no conflict exists."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -718,7 +778,9 @@ class TestEmbaseServicePatchExtra:
         mock_embase_repository.exists_duplicate.assert_called_once()
 
     @pytest.mark.unit
-    def test_patch_identifier_unchanged_no_duplicate_check(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_identifier_unchanged_no_duplicate_check(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """If identifier is patched to the same value, no duplicate check."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.update.return_value = sample_embase_bean
@@ -732,7 +794,9 @@ class TestEmbaseServicePatchExtra:
         mock_embase_repository.exists_duplicate.assert_not_called()
 
     @pytest.mark.unit
-    def test_patch_returns_repository_result(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_returns_repository_result(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify patch returns the result from repository.update."""
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         expected = EmbaseBean(identifier="G01", type="hp")
@@ -757,7 +821,9 @@ class TestEmbaseServicePatchExtra:
         assert exc_info.value.identifier == "uuid-abc"
 
     @pytest.mark.unit
-    def test_patch_conflict_exception_details(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_conflict_exception_details(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
         mock_embase_repository.exists_duplicate.return_value = True
 
@@ -888,7 +954,9 @@ class TestEmbaseServiceDeleteExtra:
         assert exc_info.value.identifier == "uuid-del"
 
     @pytest.mark.unit
-    def test_delete_calls_repo_delete_with_uuid(self, sample_embase_bean, mock_embase_repository):
+    def test_delete_calls_repo_delete_with_uuid(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         mock_embase_repository.get_by_uuid.return_value = sample_embase_bean
 
         delete_embase(mock_embase_repository, "test-uuid")
@@ -950,7 +1018,9 @@ class TestEmbaseServiceMutationKilling:
             assert "Embase créée" in log_msg
 
     @pytest.mark.unit
-    def test_update_embase_logger_message(self, sample_embase_bean, mock_embase_repository):
+    def test_update_embase_logger_message(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify logger.info is called with 'Embase mise à jour'."""
         from unittest.mock import patch
 
@@ -964,7 +1034,9 @@ class TestEmbaseServiceMutationKilling:
             assert "mise à jour" in log_msg
 
     @pytest.mark.unit
-    def test_patch_embase_logger_message(self, sample_embase_bean, mock_embase_repository):
+    def test_patch_embase_logger_message(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify logger.info is called with 'Embase patchée'."""
         from unittest.mock import patch
 
@@ -982,7 +1054,9 @@ class TestEmbaseServiceMutationKilling:
             assert "patchée" in log_msg
 
     @pytest.mark.unit
-    def test_delete_embase_logger_message(self, sample_embase_bean, mock_embase_repository):
+    def test_delete_embase_logger_message(
+        self, sample_embase_bean, mock_embase_repository
+    ):
         """Verify logger.info is called with 'Embase supprimée'."""
         from unittest.mock import patch
 

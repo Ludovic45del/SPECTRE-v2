@@ -118,6 +118,8 @@ class IStockCatalogRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def find_expiring_soon(self, today: date, days_ahead: int) -> List[StockCatalogItemBean]:
+    def find_expiring_soon(
+        self, today: date, days_ahead: int
+    ) -> List[StockCatalogItemBean]:
         """Consommables périmant sous `days_ahead` jours (today < date_peremption <= today + days_ahead)."""
         raise NotImplementedError

@@ -22,7 +22,9 @@ class StockMovementEntity(models.Model):
         app_label = "app"
         db_table = "STOCK_MOVEMENT"
         indexes = [
-            models.Index(fields=["catalog_item", "-date"], name="stock_mvmt_item_date_idx"),
+            models.Index(
+                fields=["catalog_item", "-date"], name="stock_mvmt_item_date_idx"
+            ),
             models.Index(fields=["movement_type"], name="stock_mvmt_type_idx"),
         ]
         ordering = ["-date", "-created_at"]

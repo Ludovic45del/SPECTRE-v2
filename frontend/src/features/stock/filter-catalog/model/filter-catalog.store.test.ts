@@ -12,7 +12,7 @@ describe('useFilterCatalogStore', () => {
         useFilterCatalogStore.getState().reset();
     });
 
-    it("démarre avec tous les filtres à vide", () => {
+    it('démarre avec tous les filtres à vide', () => {
         const { filters } = useFilterCatalogStore.getState();
         expect(filters.search).toBe('');
         expect(filters.kind).toBeNull();

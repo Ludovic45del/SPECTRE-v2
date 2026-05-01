@@ -2,7 +2,10 @@
 
 from typing import Any, Dict
 
-from app.domain.stock.models.fsec_assembly_item_bean import FsecAssemblyItemBean, FsecAssemblyItemDetailBean
+from app.domain.stock.models.fsec_assembly_item_bean import (
+    FsecAssemblyItemBean,
+    FsecAssemblyItemDetailBean,
+)
 from app.mapper.stock.catalog_mapper import stock_catalog_mapper_bean_to_api
 from app.repository.stock.models.fsec_assembly_item_entity import FsecAssemblyItemEntity
 

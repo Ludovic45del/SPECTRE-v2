@@ -79,12 +79,7 @@ export function ElementFormShell({ onBack, onCancel, onSuccess }: ElementFormShe
                 alignItems="center"
                 sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}
             >
-                <Button
-                    onClick={onBack}
-                    startIcon={<ChevronLeftIcon />}
-                    color="inherit"
-                    disabled={isSubmitting}
-                >
+                <Button onClick={onBack} startIcon={<ChevronLeftIcon />} color="inherit" disabled={isSubmitting}>
                     Retour
                 </Button>
                 <Stack direction="row" spacing={1.5}>

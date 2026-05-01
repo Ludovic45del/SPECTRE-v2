@@ -10,7 +10,11 @@ import pytest
 
 from app.domain.campaign.models.campaign_bean import CampaignBean
 from app.domain.campaign.services.campaign_service import patch_campaign
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 
 
 class TestCampaignServicePatch:
@@ -45,7 +49,9 @@ class TestCampaignServicePatch:
 
         assert updated_bean.name == "New Name"  # Modifié
         assert updated_bean.year == 2024  # Conservé
-        assert updated_bean.description == "Important Description"  # CONSERVÉ ! (Bug fixé)
+        assert (
+            updated_bean.description == "Important Description"
+        )  # CONSERVÉ ! (Bug fixé)
 
     @pytest.mark.unit
     def test_patch_campaign_not_found(self):

@@ -12,7 +12,9 @@ Idempotente : skip les lignes ou la FK est deja renseignee.
 
 from django.db import migrations
 
-from app.domain.campaign.models.campaign_team_constants import CAMPAIGN_FREE_TEXT_ROLE_IDS
+from app.domain.campaign.models.campaign_team_constants import (
+    CAMPAIGN_FREE_TEXT_ROLE_IDS,
+)
 from app.domain.fsec.models.fsec_team_constants import FSEC_FREE_TEXT_ROLE_IDS
 from app.migrations._user_lookup_helper import match_user_profile
 

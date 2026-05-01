@@ -6,7 +6,11 @@ Voir CAHIER_DES_CHARGES_STOCK.md §3.1 (validations) et §5.1 (API).
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
 from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
 from app.domain.stock.models.stock_constants import (
@@ -98,14 +102,18 @@ def _validate_kind_specific_fields(bean: StockCatalogItemBean) -> None:
     elif bean.kind == ITEM_KIND_CONSUMABLE:
         # Champs requis pour consumable
         if not bean.unite:
-            raise ValidationException("unite", "Le champ 'unite' est requis pour un consommable.")
+            raise ValidationException(
+                "unite", "Le champ 'unite' est requis pour un consommable."
+            )
         if bean.quantite is None:
             raise ValidationException(
                 "quantite",
                 "Le champ 'quantite' est requis pour un consommable (peut valoir 0).",
             )
         if bean.quantite < 0:
-            raise ValidationException("quantite", "La quantité ne peut pas être négative.")
+            raise ValidationException(
+                "quantite", "La quantité ne peut pas être négative."
+            )
         # Champs interdits pour consumable
         for forbidden in ("status", "installation", "materiaux_mat"):
             if getattr(bean, forbidden) is not None:
@@ -138,7 +146,9 @@ def _validate_unicity(
 # ---------------------------------------------------------------------------
 
 
-def create_item(repository: IStockCatalogRepository, bean: StockCatalogItemBean) -> StockCatalogItemBean:
+def create_item(
+    repository: IStockCatalogRepository, bean: StockCatalogItemBean
+) -> StockCatalogItemBean:
     """Crée un nouvel item du catalogue après validation (cf. CDC §5.1)."""
     _validate_kind(bean)
     _validate_kind_category_consistency(bean)
@@ -208,7 +218,9 @@ def count_items(
     )
 
 
-def update_item(repository: IStockCatalogRepository, bean: StockCatalogItemBean) -> StockCatalogItemBean:
+def update_item(
+    repository: IStockCatalogRepository, bean: StockCatalogItemBean
+) -> StockCatalogItemBean:
     """Met à jour complètement un item (PUT). `kind` est conservé tel qu'en base."""
     existing = repository.get_by_uuid(bean.uuid)
     if existing is None:

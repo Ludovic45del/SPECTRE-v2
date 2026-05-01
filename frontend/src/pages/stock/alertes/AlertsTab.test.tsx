@@ -88,9 +88,7 @@ describe('AlertsTab', () => {
 
     it("affiche un message d'erreur quand l'API échoue", async () => {
         server.use(
-            http.get('/api/v1/stock/alerts/', () =>
-                HttpResponse.json({ detail: 'Internal Error' }, { status: 500 }),
-            ),
+            http.get('/api/v1/stock/alerts/', () => HttpResponse.json({ detail: 'Internal Error' }, { status: 500 })),
         );
 
         renderWithProviders(<AlertsTab />);

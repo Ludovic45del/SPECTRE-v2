@@ -120,7 +120,9 @@ class Migration(migrations.Migration):
             ],
             options={
                 "db_table": "PLANNING_FSEC_CELL_LINK",
-                "unique_together": {("campaign", "step_label", "year", "week_num", "fsec_uuid")},
+                "unique_together": {
+                    ("campaign", "step_label", "year", "week_num", "fsec_uuid")
+                },
             },
         ),
     ]

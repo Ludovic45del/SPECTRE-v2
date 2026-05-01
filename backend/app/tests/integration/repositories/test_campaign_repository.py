@@ -58,7 +58,9 @@ class TestCampaignRepositoryCreate:
         assert result.year == 2025
         assert result.semester == "S1"
 
-    def test_create_campaign_generates_uuid(self, campaign_repository, sample_campaign_data):
+    def test_create_campaign_generates_uuid(
+        self, campaign_repository, sample_campaign_data
+    ):
         """Test que l'UUID est généré automatiquement."""
         bean = CampaignBean(**sample_campaign_data)
 
@@ -210,7 +212,9 @@ class TestCampaignRepositoryDelete:
 class TestCampaignRepositoryDuplicateCheck:
     """Tests vérification de doublons."""
 
-    def test_exists_by_name_year_semester_true(self, campaign_repository, sample_campaign_data):
+    def test_exists_by_name_year_semester_true(
+        self, campaign_repository, sample_campaign_data
+    ):
         """Test détection de doublon existant."""
         bean = CampaignBean(**sample_campaign_data)
         campaign_repository.create(bean)
@@ -233,7 +237,9 @@ class TestCampaignRepositoryDuplicateCheck:
 
         assert result is False
 
-    def test_exists_duplicate_excludes_self(self, campaign_repository, sample_campaign_data):
+    def test_exists_duplicate_excludes_self(
+        self, campaign_repository, sample_campaign_data
+    ):
         """Test exists_duplicate exclut l'UUID courant."""
         bean = CampaignBean(**sample_campaign_data)
         created = campaign_repository.create(bean)

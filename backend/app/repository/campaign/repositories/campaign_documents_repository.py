@@ -2,13 +2,17 @@
 
 from typing import List
 
-from app.domain.campaign.interface.campaign_repository import ICampaignDocumentsRepository
+from app.domain.campaign.interface.campaign_repository import (
+    ICampaignDocumentsRepository,
+)
 from app.domain.campaign.models.campaign_documents_bean import CampaignDocumentsBean
 from app.mapper.campaign.campaign_documents_mapper import (
     campaign_documents_mapper_bean_to_entity,
     campaign_documents_mapper_entity_to_bean,
 )
-from app.repository.campaign.models.campaign_documents_entity import CampaignDocumentsEntity
+from app.repository.campaign.models.campaign_documents_entity import (
+    CampaignDocumentsEntity,
+)
 from app.repository.shared.base_child_repository import BaseChildRepository
 
 

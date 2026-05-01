@@ -7,8 +7,13 @@ from rest_framework.decorators import action
 from app.api.shared.base_step_controller import BaseStepController
 from app.api.steps.serializers import MetrologyStepSerializer
 from app.domain.steps.services.steps_service import get_steps_by_fsec_version_id
-from app.mapper.steps.metrology_step_mapper import metrology_step_mapper_api_to_bean, metrology_step_mapper_bean_to_api
-from app.repository.steps.repositories.metrology_step_repository import MetrologyStepRepository
+from app.mapper.steps.metrology_step_mapper import (
+    metrology_step_mapper_api_to_bean,
+    metrology_step_mapper_bean_to_api,
+)
+from app.repository.steps.repositories.metrology_step_repository import (
+    MetrologyStepRepository,
+)
 
 
 class MetrologyStepController(BaseStepController):

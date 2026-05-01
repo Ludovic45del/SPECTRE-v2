@@ -32,7 +32,9 @@ TARGETS = [
 
 def _backfill_one(apps, entity_label, text_field, fk_field):
     Model = apps.get_model("app", entity_label)
-    rows = Model.objects.exclude(**{f"{text_field}__isnull": True}).exclude(**{text_field: ""})
+    rows = Model.objects.exclude(**{f"{text_field}__isnull": True}).exclude(
+        **{text_field: ""}
+    )
     rows = rows.filter(**{f"{fk_field}__isnull": True})
     for row in rows.iterator(chunk_size=500):
         raw = getattr(row, text_field)
@@ -54,7 +56,9 @@ def reverse(apps, schema_editor):
     """
     for entity_label, _text_field, fk_field in TARGETS:
         Model = apps.get_model("app", entity_label)
-        Model.objects.exclude(**{f"{fk_field}__isnull": True}).update(**{fk_field: None})
+        Model.objects.exclude(**{f"{fk_field}__isnull": True}).update(
+            **{fk_field: None}
+        )
 
 
 class Migration(migrations.Migration):

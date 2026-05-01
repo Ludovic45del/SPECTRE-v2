@@ -2,13 +2,19 @@
 
 from django.db import transaction
 
-from app.domain.steps.interface.steps_repository import IAirtightnessTestLpStepRepository
-from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
+from app.domain.steps.interface.steps_repository import (
+    IAirtightnessTestLpStepRepository,
+)
+from app.domain.steps.models.airtightness_test_lp_step_bean import (
+    AirtightnessTestLpStepBean,
+)
 from app.mapper.steps.airtightness_test_lp_step_mapper import (
     airtightness_test_lp_step_mapper_bean_to_entity,
     airtightness_test_lp_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.airtightness_test_lp_step_entity import AirtightnessTestLpStepEntity
+from app.repository.steps.models.airtightness_test_lp_step_entity import (
+    AirtightnessTestLpStepEntity,
+)
 from app.repository.steps.repositories.base_step_repository import BaseStepRepository
 
 

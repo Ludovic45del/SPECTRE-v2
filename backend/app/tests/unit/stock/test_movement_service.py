@@ -22,7 +22,9 @@ class TestCreateMovement:
         mock_stock_movement_repository,
     ):
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_consumable_bean
-        mock_stock_movement_repository.create_with_quantity_update.return_value = sample_movement_bean
+        mock_stock_movement_repository.create_with_quantity_update.return_value = (
+            sample_movement_bean
+        )
         result = create_movement(
             mock_stock_movement_repository,
             mock_stock_catalog_repository,
@@ -67,7 +69,9 @@ class TestCreateMovement:
 
 class TestGetMovement:
     @pytest.mark.unit
-    def test_get_movement_found(self, sample_movement_bean, mock_stock_movement_repository):
+    def test_get_movement_found(
+        self, sample_movement_bean, mock_stock_movement_repository
+    ):
         mock_stock_movement_repository.get_by_uuid.return_value = sample_movement_bean
         result = get_movement(mock_stock_movement_repository, sample_movement_bean.uuid)
         assert result.uuid == sample_movement_bean.uuid
@@ -94,11 +98,17 @@ class TestListMovements:
 
 class TestDeleteMovementAdmin:
     @pytest.mark.unit
-    def test_delete_recomputes_quantity(self, sample_movement_bean, mock_stock_movement_repository):
+    def test_delete_recomputes_quantity(
+        self, sample_movement_bean, mock_stock_movement_repository
+    ):
         mock_stock_movement_repository.get_by_uuid.return_value = sample_movement_bean
         mock_stock_movement_repository.delete_and_recompute.return_value = True
-        assert delete_movement_admin(mock_stock_movement_repository, sample_movement_bean.uuid)
-        mock_stock_movement_repository.delete_and_recompute.assert_called_once_with(sample_movement_bean.uuid)
+        assert delete_movement_admin(
+            mock_stock_movement_repository, sample_movement_bean.uuid
+        )
+        mock_stock_movement_repository.delete_and_recompute.assert_called_once_with(
+            sample_movement_bean.uuid
+        )
 
     @pytest.mark.unit
     def test_delete_not_found(self, mock_stock_movement_repository):

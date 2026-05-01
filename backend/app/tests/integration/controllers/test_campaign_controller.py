@@ -88,7 +88,9 @@ class TestCampaignControllerCreate:
         # Devrait retourner une erreur 400 ou 500 selon l'implémentation
         assert response.status_code in [400, 500]
 
-    def test_create_campaign_duplicate_conflict(self, api_client, sample_campaign_payload):
+    def test_create_campaign_duplicate_conflict(
+        self, api_client, sample_campaign_payload
+    ):
         """Test erreur de conflit pour doublon."""
         # Créer une première campagne
         api_client.post(
@@ -262,7 +264,9 @@ class TestCampaignControllerPatch:
 class TestCampaignControllerDelete:
     """Tests endpoint DELETE /api/v1/campaigns/{uuid}/"""
 
-    def test_delete_campaign_success(self, api_client, admin_api_client, sample_campaign_payload):
+    def test_delete_campaign_success(
+        self, api_client, admin_api_client, sample_campaign_payload
+    ):
         """Test suppression réussie (requiert rôle admin)."""
         # Créer une campagne
         create_response = api_client.post(

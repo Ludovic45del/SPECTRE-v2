@@ -30,7 +30,9 @@ class StockMovementRepository(IStockMovementRepository):
         3. Création du mouvement avec `quantite_apres` calculé.
         4. Mise à jour de `catalog_item.quantite`.
         """
-        catalog_item = StockCatalogItemEntity.objects.select_for_update().get(uuid=bean.catalog_item_uuid)
+        catalog_item = StockCatalogItemEntity.objects.select_for_update().get(
+            uuid=bean.catalog_item_uuid
+        )
 
         current_qty = catalog_item.quantite if catalog_item.quantite is not None else 0
         new_qty = current_qty + bean.quantite_delta
@@ -89,7 +91,9 @@ class StockMovementRepository(IStockMovementRepository):
         offset: int = 0,
     ) -> List[StockMovementBean]:
         """Liste paginée selon filtres (cf. CDC §5.2)."""
-        qs = self._build_filter_queryset(catalog_item_uuid, movement_type, date_from, date_to)
+        qs = self._build_filter_queryset(
+            catalog_item_uuid, movement_type, date_from, date_to
+        )
         if limit is not None:
             entities = qs[offset : offset + limit]
         else:
@@ -103,7 +107,9 @@ class StockMovementRepository(IStockMovementRepository):
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
     ) -> int:
-        return self._build_filter_queryset(catalog_item_uuid, movement_type, date_from, date_to).count()
+        return self._build_filter_queryset(
+            catalog_item_uuid, movement_type, date_from, date_to
+        ).count()
 
     @transaction.atomic
     def delete_and_recompute(self, uuid: str) -> bool:
@@ -117,14 +123,18 @@ class StockMovementRepository(IStockMovementRepository):
             return False
 
         catalog_item_id = movement.catalog_item_id
-        catalog_item = StockCatalogItemEntity.objects.select_for_update().get(uuid=catalog_item_id)
+        catalog_item = StockCatalogItemEntity.objects.select_for_update().get(
+            uuid=catalog_item_id
+        )
 
         movement.delete()
 
         # Recalcul de la quantité courante = somme des deltas restants.
         from django.db.models import Sum
 
-        agg = StockMovementEntity.objects.filter(catalog_item_id=catalog_item_id).aggregate(total=Sum("quantite_delta"))
+        agg = StockMovementEntity.objects.filter(
+            catalog_item_id=catalog_item_id
+        ).aggregate(total=Sum("quantite_delta"))
         new_qty = agg["total"] or 0
         catalog_item.quantite = new_qty
         catalog_item.save(update_fields=["quantite", "updated_at"])

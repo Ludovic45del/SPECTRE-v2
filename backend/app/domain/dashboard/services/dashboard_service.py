@@ -6,7 +6,10 @@ from typing import List, Tuple
 from django.core.cache import cache
 
 from app.domain.dashboard.interface.dashboard_repository import IDashboardRepository
-from app.domain.dashboard.models.dashboard_bean import DashboardCountsBean, RecentActivityItemBean
+from app.domain.dashboard.models.dashboard_bean import (
+    DashboardCountsBean,
+    RecentActivityItemBean,
+)
 
 logger = logging.getLogger(__name__)
 

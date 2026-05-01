@@ -4,8 +4,13 @@ from typing import List, Optional
 
 from django.db import transaction
 
-from app.domain.stock.interface.fsec_assembly_repository import IFsecAssemblyItemRepository
-from app.domain.stock.models.fsec_assembly_item_bean import FsecAssemblyItemBean, FsecAssemblyItemDetailBean
+from app.domain.stock.interface.fsec_assembly_repository import (
+    IFsecAssemblyItemRepository,
+)
+from app.domain.stock.models.fsec_assembly_item_bean import (
+    FsecAssemblyItemBean,
+    FsecAssemblyItemDetailBean,
+)
 from app.domain.stock.models.stock_constants import ITEM_KIND_ELEMENT
 from app.mapper.stock.catalog_mapper import stock_catalog_mapper_entity_to_bean
 from app.mapper.stock.fsec_assembly_mapper import (
@@ -79,14 +84,16 @@ class FsecAssemblyItemRepository(IFsecAssemblyItemRepository):
         """UUIDs des catalog_items associés à une FSEC."""
         return [
             str(uuid)
-            for uuid in FsecAssemblyItemEntity.objects.filter(fsec_uuid=fsec_uuid).values_list(
-                "catalog_item_id", flat=True
-            )
+            for uuid in FsecAssemblyItemEntity.objects.filter(
+                fsec_uuid=fsec_uuid
+            ).values_list("catalog_item_id", flat=True)
         ]
 
     # ---------------------------------------------------------------- Specific queries
 
-    def find_active_assignment_for_element(self, catalog_item_uuid: str) -> Optional[FsecAssemblyItemBean]:
+    def find_active_assignment_for_element(
+        self, catalog_item_uuid: str
+    ) -> Optional[FsecAssemblyItemBean]:
         """Cherche une assignation pour un élément sérialisé (au plus une — cf. CDC §3.3)."""
         try:
             entity = FsecAssemblyItemEntity.objects.select_related("catalog_item").get(
@@ -109,6 +116,10 @@ class FsecAssemblyItemRepository(IFsecAssemblyItemRepository):
             )
             return fsec_assembly_mapper_entity_to_bean(entity) if entity else None
 
-    def exists_by_fsec_and_catalog(self, fsec_uuid: str, catalog_item_uuid: str) -> bool:
+    def exists_by_fsec_and_catalog(
+        self, fsec_uuid: str, catalog_item_uuid: str
+    ) -> bool:
         """Vrai si une ligne (fsec_uuid, catalog_item) existe déjà."""
-        return FsecAssemblyItemEntity.objects.filter(fsec_uuid=fsec_uuid, catalog_item_id=catalog_item_uuid).exists()
+        return FsecAssemblyItemEntity.objects.filter(
+            fsec_uuid=fsec_uuid, catalog_item_id=catalog_item_uuid
+        ).exists()

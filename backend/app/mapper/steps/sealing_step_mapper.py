@@ -16,7 +16,9 @@ def sealing_step_mapper_entity_to_bean(entity: SealingStepEntity) -> SealingStep
     """Convertit une SealingStepEntity en SealingStepBean."""
     return SealingStepBean(
         uuid=str(entity.uuid),
-        metrology_step_id=(str(entity.metrology_step_id_id) if entity.metrology_step_id_id else ""),
+        metrology_step_id=(
+            str(entity.metrology_step_id_id) if entity.metrology_step_id_id else ""
+        ),
         date=entity.date,
         metrologist_name=entity.metrologist_name,
         metrologist_user_uuid=_metrologist_user_uuid(entity),

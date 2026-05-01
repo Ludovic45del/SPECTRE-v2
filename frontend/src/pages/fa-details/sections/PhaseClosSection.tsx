@@ -56,10 +56,7 @@ export const PhaseClosSection = memo(function PhaseClosSection({ fa }: PhaseClos
                             <Typography variant="subtitle2" color="text.secondary">
                                 Validé par
                             </Typography>
-                            <UserChip
-                                userUuid={fa.closureValidatorUserUuid}
-                                fallbackText={fa.closureValidatorName}
-                            />
+                            <UserChip userUuid={fa.closureValidatorUserUuid} fallbackText={fa.closureValidatorName} />
                         </Grid>
                     </Grid>
 

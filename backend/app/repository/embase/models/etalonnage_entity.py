@@ -24,7 +24,9 @@ class EtalonnageEntity(models.Model):
             )
         ]
         indexes = [
-            models.Index(fields=["embase", "voie", "-date"], name="etal_embase_voie_date_idx"),
+            models.Index(
+                fields=["embase", "voie", "-date"], name="etal_embase_voie_date_idx"
+            ),
         ]
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -37,10 +39,18 @@ class EtalonnageEntity(models.Model):
     voie = models.IntegerField(choices=VOIE_CHOICES, default=1)
 
     # Données de calibration
-    offset_0_bar_mv = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
-    mesurande_0_bar_lie = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
-    signal_etendue_mv = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
-    signal_pa_meteociel = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    offset_0_bar_mv = models.DecimalField(
+        max_digits=12, decimal_places=4, null=True, blank=True
+    )
+    mesurande_0_bar_lie = models.DecimalField(
+        max_digits=12, decimal_places=4, null=True, blank=True
+    )
+    signal_etendue_mv = models.DecimalField(
+        max_digits=12, decimal_places=4, null=True, blank=True
+    )
+    signal_pa_meteociel = models.DecimalField(
+        max_digits=12, decimal_places=4, null=True, blank=True
+    )
 
     # Metadata étalonnage
     date = models.DateField(null=True, blank=True)

@@ -154,9 +154,7 @@ export function BpRubriqueItem({
                         <Typography variant="subtitle1" fontWeight={600}>
                             Test d&apos;étanchéité
                         </Typography>
-                        {airtightnessStep?.dateOfFulfilment && (
-                            <Chip label="Fait" color="success" />
-                        )}
+                        {airtightnessStep?.dateOfFulfilment && <Chip label="Fait" color="success" />}
                     </Stack>
                     <IconButton
                         size="small"
@@ -216,9 +214,7 @@ export function BpRubriqueItem({
                         <Typography variant="subtitle1" fontWeight={600}>
                             Remplissage
                         </Typography>
-                        {fillingStep?.dateOfFulfilment && (
-                            <Chip label="Fait" color="success" />
-                        )}
+                        {fillingStep?.dateOfFulfilment && <Chip label="Fait" color="success" />}
                     </Stack>
                     <IconButton
                         size="small"
@@ -247,10 +243,7 @@ export function BpRubriqueItem({
                                 Opérateur
                             </Typography>
                             <Box>
-                                <UserChip
-                                    userUuid={fillingStep.operatorUserUuid}
-                                    fallbackText={fillingStep.operator}
-                                />
+                                <UserChip userUuid={fillingStep.operatorUserUuid} fallbackText={fillingStep.operator} />
                             </Box>
                         </Grid>
                         <Grid item xs={6} md={3}>

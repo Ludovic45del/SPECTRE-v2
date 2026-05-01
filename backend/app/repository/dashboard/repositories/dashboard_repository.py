@@ -15,7 +15,9 @@ from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.fa.models.fa_entity import FaEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.planning.models.planning_campaign_step_entity import PlanningCampaignStepEntity
+from app.repository.planning.models.planning_campaign_step_entity import (
+    PlanningCampaignStepEntity,
+)
 
 
 class DashboardRepository(IDashboardRepository):
@@ -48,7 +50,9 @@ class DashboardRepository(IDashboardRepository):
     def _get_campaign_counts(self) -> CountsByStatusBean:
         """Compteurs campagnes par statut."""
         by_status = dict(
-            CampaignEntity.objects.values("status_id").annotate(count=Count("uuid")).values_list("status_id", "count")
+            CampaignEntity.objects.values("status_id")
+            .annotate(count=Count("uuid"))
+            .values_list("status_id", "count")
         )
         total = sum(by_status.values())
         return CountsByStatusBean(
@@ -73,7 +77,9 @@ class DashboardRepository(IDashboardRepository):
     def _get_fa_counts(self) -> FaCountsBean:
         """Compteurs FAs par statut et par criticité."""
         by_status = dict(
-            FaEntity.objects.values("status_id").annotate(count=Count("uuid")).values_list("status_id", "count")
+            FaEntity.objects.values("status_id")
+            .annotate(count=Count("uuid"))
+            .values_list("status_id", "count")
         )
         total = sum(by_status.values())
 
@@ -95,7 +101,9 @@ class DashboardRepository(IDashboardRepository):
     def _get_recent_campaigns(self, limit: int) -> List[RecentActivityItemBean]:
         """Récupère les campagnes récentes."""
         items = []
-        for c in CampaignEntity.objects.select_related(*self.CAMPAIGN_RELATIONS).order_by("-last_updated")[:limit]:
+        for c in CampaignEntity.objects.select_related(
+            *self.CAMPAIGN_RELATIONS
+        ).order_by("-last_updated")[:limit]:
             items.append(
                 RecentActivityItemBean(
                     id=str(c.uuid),
@@ -115,7 +123,9 @@ class DashboardRepository(IDashboardRepository):
         """Récupère les FSECs récents (uniquement versions actives)."""
         items = []
         for f in (
-            FsecEntity.objects.filter(is_active=True).select_related("campaign_id").order_by("-last_updated")[:limit]
+            FsecEntity.objects.filter(is_active=True)
+            .select_related("campaign_id")
+            .order_by("-last_updated")[:limit]
         ):
             items.append(
                 RecentActivityItemBean(
@@ -133,14 +143,18 @@ class DashboardRepository(IDashboardRepository):
     def _get_recent_fas(self, limit: int) -> List[RecentActivityItemBean]:
         """Récupère les FAs récentes."""
         items = []
-        for fa in FaEntity.objects.select_related(*self.FA_RELATIONS).order_by("-last_updated")[:limit]:
+        for fa in FaEntity.objects.select_related(*self.FA_RELATIONS).order_by(
+            "-last_updated"
+        )[:limit]:
             items.append(
                 RecentActivityItemBean(
                     id=str(fa.uuid),
                     type="fa",
                     name=fa.identifier or "FA sans identifiant",
                     status_id=fa.status_id_id,
-                    last_updated=(fa.last_updated.isoformat() if fa.last_updated else None),
+                    last_updated=(
+                        fa.last_updated.isoformat() if fa.last_updated else None
+                    ),
                     type_id=fa.type_id_id,
                     criticality_id=fa.criticality_id_id,
                 )
@@ -166,9 +180,9 @@ class DashboardRepository(IDashboardRepository):
     def _get_recent_planning_steps(self, limit: int) -> List[RecentActivityItemBean]:
         """Récupère les étapes de planning récemment modifiées."""
         items = []
-        for s in PlanningCampaignStepEntity.objects.select_related(*self.PLANNING_RELATIONS).order_by("-updated_at")[
-            :limit
-        ]:
+        for s in PlanningCampaignStepEntity.objects.select_related(
+            *self.PLANNING_RELATIONS
+        ).order_by("-updated_at")[:limit]:
             items.append(
                 RecentActivityItemBean(
                     id=str(s.uuid),

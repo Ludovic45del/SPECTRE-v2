@@ -3,7 +3,11 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.permeation_step_bean import PermeationStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid, parse_datetime_from_api, read_operator_user_uuid
+from app.mapper.steps.base_step_mapper import (
+    normalize_user_uuid,
+    parse_datetime_from_api,
+    read_operator_user_uuid,
+)
 from app.repository.steps.models.permeation_step_entity import PermeationStepEntity
 
 
@@ -13,7 +17,9 @@ def permeation_step_mapper_entity_to_bean(
     """Convertit une PermeationStepEntity en PermeationStepBean."""
     return PermeationStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         gas_type=entity.gas_type,
         target_pressure=entity.target_pressure,
         operator=entity.operator,
@@ -70,7 +76,9 @@ def permeation_step_mapper_bean_to_api(bean: PermeationStepBean) -> Dict[str, An
         "operator": bean.operator,
         "operator_user_uuid": bean.operator_user_uuid,
         "start_date": bean.start_date.isoformat() if bean.start_date else None,
-        "estimated_end_date": (bean.estimated_end_date.isoformat() if bean.estimated_end_date else None),
+        "estimated_end_date": (
+            bean.estimated_end_date.isoformat() if bean.estimated_end_date else None
+        ),
         "sensor_pressure": bean.sensor_pressure,
         "computed_shot_pressure": bean.computed_shot_pressure,
     }

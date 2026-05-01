@@ -67,7 +67,12 @@ export function AlertRow({ item, metadata, onClick }: AlertRowProps) {
                 </Stack>
             </Box>
             {onClick && (
-                <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: 'primary.main', fontSize: '0.8rem' }}>
+                <Stack
+                    direction="row"
+                    spacing={0.5}
+                    alignItems="center"
+                    sx={{ color: 'primary.main', fontSize: '0.8rem' }}
+                >
                     <Typography variant="body2" sx={{ color: 'inherit', fontWeight: 500 }}>
                         Gérer
                     </Typography>

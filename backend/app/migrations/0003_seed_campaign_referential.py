@@ -6,7 +6,9 @@ def seed_campaign_referential(apps, schema_editor):
     CampaignStatusEntity = apps.get_model("app", "CampaignStatusEntity")
     CampaignInstallationsEntity = apps.get_model("app", "CampaignInstallationsEntity")
     CampaignDocumentTypesEntity = apps.get_model("app", "CampaignDocumentTypesEntity")
-    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
+    CampaignDocumentSubtypesEntity = apps.get_model(
+        "app", "CampaignDocumentSubtypesEntity"
+    )
 
     # Types
     types = [
@@ -15,7 +17,9 @@ def seed_campaign_referential(apps, schema_editor):
         {"id": 2, "label": "Campagne d'ouverture", "color": "#fcc6b6"},
     ]
     for t in types:
-        CampaignTypesEntity.objects.get_or_create(id=t["id"], defaults={"label": t["label"], "color": t["color"]})
+        CampaignTypesEntity.objects.get_or_create(
+            id=t["id"], defaults={"label": t["label"], "color": t["color"]}
+        )
 
     # Statuses
     statuses = [
@@ -25,7 +29,9 @@ def seed_campaign_referential(apps, schema_editor):
         {"id": 3, "label": "Terminée", "color": "#a2d82b"},
     ]
     for s in statuses:
-        CampaignStatusEntity.objects.get_or_create(id=s["id"], defaults={"label": s["label"], "color": s["color"]})
+        CampaignStatusEntity.objects.get_or_create(
+            id=s["id"], defaults={"label": s["label"], "color": s["color"]}
+        )
 
     # Installations
     installations = [
@@ -33,7 +39,9 @@ def seed_campaign_referential(apps, schema_editor):
         {"id": 1, "label": "OMEGA"},
     ]
     for i in installations:
-        CampaignInstallationsEntity.objects.get_or_create(id=i["id"], defaults={"label": i["label"]})
+        CampaignInstallationsEntity.objects.get_or_create(
+            id=i["id"], defaults={"label": i["label"]}
+        )
 
     # Document Types
     doc_types = [
@@ -45,7 +53,9 @@ def seed_campaign_referential(apps, schema_editor):
         {"id": 5, "label": "Fichiers PALS"},
     ]
     for dt in doc_types:
-        CampaignDocumentTypesEntity.objects.get_or_create(id=dt["id"], defaults={"label": dt["label"]})
+        CampaignDocumentTypesEntity.objects.get_or_create(
+            id=dt["id"], defaults={"label": dt["label"]}
+        )
 
     # Document Subtypes
     subtypes = [
@@ -89,7 +99,9 @@ def reverse_seed_campaign_referential(apps, schema_editor):
     CampaignStatusEntity = apps.get_model("app", "CampaignStatusEntity")
     CampaignInstallationsEntity = apps.get_model("app", "CampaignInstallationsEntity")
     CampaignDocumentTypesEntity = apps.get_model("app", "CampaignDocumentTypesEntity")
-    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
+    CampaignDocumentSubtypesEntity = apps.get_model(
+        "app", "CampaignDocumentSubtypesEntity"
+    )
 
     # Subtypes référencent Types via type_id → supprimer les enfants avant les parents.
     CampaignDocumentSubtypesEntity.objects.filter(id__in=list(range(23))).delete()
@@ -106,5 +118,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(seed_campaign_referential, reverse_seed_campaign_referential),
+        migrations.RunPython(
+            seed_campaign_referential, reverse_seed_campaign_referential
+        ),
     ]

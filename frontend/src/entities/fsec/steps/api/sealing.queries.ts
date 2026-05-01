@@ -96,10 +96,7 @@ export function useUpdateSealingStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateSealingStepInput): Promise<SealingStep> => {
-            const response = await api.put(
-                `/sealing-steps/${input.uuid}/`,
-                sealingStepToApi(input),
-            );
+            const response = await api.put(`/sealing-steps/${input.uuid}/`, sealingStepToApi(input));
             return SealingStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

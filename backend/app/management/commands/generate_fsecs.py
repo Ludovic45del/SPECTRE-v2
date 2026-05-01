@@ -38,7 +38,9 @@ class Command(BaseCommand):
         campaigns = list(CampaignEntity.objects.all())
 
         if not statuses or not categories:
-            self.stdout.write(self.style.ERROR("Missing status or category referential data"))
+            self.stdout.write(
+                self.style.ERROR("Missing status or category referential data")
+            )
             return
 
         # Generate 100 FSECs

@@ -2,7 +2,9 @@
 
 from django.db import models
 
-from app.repository.campaign.models.campaign_document_subtypes_entity import CampaignDocumentSubtypesEntity
+from app.repository.campaign.models.campaign_document_subtypes_entity import (
+    CampaignDocumentSubtypesEntity,
+)
 
 
 class CampaignFileTypesEntity(models.Model):

@@ -132,7 +132,9 @@ class TestEtalonnageControllerDelete:
         )
         return response.json()["uuid"]
 
-    def test_delete_with_admin_returns_204(self, api_client, admin_api_client, created_embase):
+    def test_delete_with_admin_returns_204(
+        self, api_client, admin_api_client, created_embase
+    ):
         """DELETE /api/v1/etalonnages/{uuid}/ avec admin retourne 204."""
         etalonnage_uuid = self._create_etalonnage(api_client, created_embase.uuid)
 

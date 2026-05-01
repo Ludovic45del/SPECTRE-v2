@@ -18,15 +18,21 @@ class FsecSerializer(serializers.Serializer):
 
     # Champs de base
     name = serializers.CharField(max_length=50, required=True)
-    comments = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
+    comments = serializers.CharField(
+        max_length=4000, required=False, allow_blank=True, allow_null=True
+    )
     is_active = serializers.BooleanField(required=False, default=True)
 
     # Champs workflow
     delivery_date = serializers.DateField(required=False, allow_null=True)
     shooting_date = serializers.DateField(required=False, allow_null=True)
     preshooting_pressure = serializers.FloatField(required=False, allow_null=True)
-    experience_srxx = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
-    localisation = serializers.CharField(max_length=20, required=False, allow_blank=True, allow_null=True)
+    experience_srxx = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, allow_null=True
+    )
+    localisation = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, allow_null=True
+    )
     depressurization_failed = serializers.BooleanField(required=False, allow_null=True)
 
 
@@ -55,7 +61,9 @@ class FsecTeamsSerializer(serializers.Serializer):
     # Les rôles FSEC sont seedés à partir de l'id 0
     # (cf. data/fsec/fsec_roles.csv, ex: "RCE" id=0).
     role_id = serializers.IntegerField(required=True, min_value=0)
-    name = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
+    name = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, allow_null=True
+    )
     user_uuid = serializers.UUIDField(required=False, allow_null=True)
 
 

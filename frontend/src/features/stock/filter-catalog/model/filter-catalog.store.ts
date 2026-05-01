@@ -6,12 +6,7 @@
  */
 
 import { create } from 'zustand';
-import type {
-    CategoryCode,
-    ElementStatus,
-    Installation,
-    ItemKind,
-} from '@entities/stock-item';
+import type { CategoryCode, ElementStatus, Installation, ItemKind } from '@entities/stock-item';
 
 export interface CatalogFilters {
     search: string;

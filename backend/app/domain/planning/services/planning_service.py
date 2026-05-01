@@ -13,11 +13,19 @@ from app.domain.planning.interface.planning_repository import IPlanningRepositor
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
-from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
+from app.domain.planning.models.planning_campaign_step_bean import (
+    PlanningCampaignStepBean,
+)
+from app.domain.planning.models.planning_cell_annotation_bean import (
+    PlanningCellAnnotationBean,
+)
 from app.domain.planning.models.planning_constants import WEEK_STATE_CHOICES
-from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
-from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
+from app.domain.planning.models.planning_fsec_cell_link_bean import (
+    PlanningFsecCellLinkBean,
+)
+from app.domain.planning.models.planning_member_period_bean import (
+    PlanningMemberPeriodBean,
+)
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 
 logger = logging.getLogger(__name__)
@@ -55,11 +63,15 @@ def _update_or_raise(
 # ====================== WEEK STATE ======================
 
 
-def get_week_states_by_year(repository: IPlanningRepository, year: int) -> list[PlanningWeekStateBean]:
+def get_week_states_by_year(
+    repository: IPlanningRepository, year: int
+) -> list[PlanningWeekStateBean]:
     return repository.get_week_states_by_year(year)
 
 
-def upsert_week_state(repository: IPlanningRepository, bean: PlanningWeekStateBean) -> PlanningWeekStateBean:
+def upsert_week_state(
+    repository: IPlanningRepository, bean: PlanningWeekStateBean
+) -> PlanningWeekStateBean:
     if bean.year < 2000 or bean.year > 2100:
         raise ValidationException("year", "L'annee doit etre entre 2000 et 2100.")
     if bean.week_num < 1 or bean.week_num > 53:
@@ -79,11 +91,15 @@ def delete_week_state(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> b
 # ====================== MEMBER PERIOD ======================
 
 
-def get_member_periods_by_year(repository: IPlanningRepository, year: int) -> list[PlanningMemberPeriodBean]:
+def get_member_periods_by_year(
+    repository: IPlanningRepository, year: int
+) -> list[PlanningMemberPeriodBean]:
     return repository.get_member_periods_by_year(year)
 
 
-def create_member_period(repository: IPlanningRepository, bean: PlanningMemberPeriodBean) -> PlanningMemberPeriodBean:
+def create_member_period(
+    repository: IPlanningRepository, bean: PlanningMemberPeriodBean
+) -> PlanningMemberPeriodBean:
     if bean.start_date and bean.end_date and bean.start_date > bean.end_date:
         raise ValidationException(
             "start_date/end_date",
@@ -95,17 +111,23 @@ def create_member_period(repository: IPlanningRepository, bean: PlanningMemberPe
 def update_member_period(
     repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: PlanningMemberPeriodBean
 ) -> PlanningMemberPeriodBean:
-    return _update_or_raise(repository.update_member_period, uuid, bean, "PlanningMemberPeriod")
+    return _update_or_raise(
+        repository.update_member_period, uuid, bean, "PlanningMemberPeriod"
+    )
 
 
 def delete_member_period(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_member_period, uuid, "PlanningMemberPeriod")
+    return _delete_or_raise(
+        repository.delete_member_period, uuid, "PlanningMemberPeriod"
+    )
 
 
 # ====================== CELL ANNOTATION ======================
 
 
-def get_cell_annotations_by_year(repository: IPlanningRepository, year: int) -> list[PlanningCellAnnotationBean]:
+def get_cell_annotations_by_year(
+    repository: IPlanningRepository, year: int
+) -> list[PlanningCellAnnotationBean]:
     return repository.get_cell_annotations_by_year(year)
 
 
@@ -115,33 +137,47 @@ def upsert_cell_annotation(
     return repository.upsert_cell_annotation(bean)
 
 
-def delete_cell_annotation(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_cell_annotation, uuid, "PlanningCellAnnotation")
+def delete_cell_annotation(
+    repository: IPlanningRepository, uuid: uuid_mod.UUID
+) -> bool:
+    return _delete_or_raise(
+        repository.delete_cell_annotation, uuid, "PlanningCellAnnotation"
+    )
 
 
 # ====================== FSEC CELL LINK ======================
 
 
-def get_fsec_cell_links_by_year(repository: IPlanningRepository, year: int) -> list[PlanningFsecCellLinkBean]:
+def get_fsec_cell_links_by_year(
+    repository: IPlanningRepository, year: int
+) -> list[PlanningFsecCellLinkBean]:
     return repository.get_fsec_cell_links_by_year(year)
 
 
-def create_fsec_cell_link(repository: IPlanningRepository, bean: PlanningFsecCellLinkBean) -> PlanningFsecCellLinkBean:
+def create_fsec_cell_link(
+    repository: IPlanningRepository, bean: PlanningFsecCellLinkBean
+) -> PlanningFsecCellLinkBean:
     return repository.create_fsec_cell_link(bean)
 
 
 def delete_fsec_cell_link(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_fsec_cell_link, uuid, "PlanningFsecCellLink")
+    return _delete_or_raise(
+        repository.delete_fsec_cell_link, uuid, "PlanningFsecCellLink"
+    )
 
 
 # ====================== CAMPAIGN STEP ======================
 
 
-def get_campaign_steps_by_year(repository: IPlanningRepository, year: int) -> list[PlanningCampaignStepBean]:
+def get_campaign_steps_by_year(
+    repository: IPlanningRepository, year: int
+) -> list[PlanningCampaignStepBean]:
     return repository.get_campaign_steps_by_year(year)
 
 
-def create_campaign_step(repository: IPlanningRepository, bean: PlanningCampaignStepBean) -> PlanningCampaignStepBean:
+def create_campaign_step(
+    repository: IPlanningRepository, bean: PlanningCampaignStepBean
+) -> PlanningCampaignStepBean:
     if bean.start_date and bean.end_date and bean.start_date > bean.end_date:
         raise ValidationException(
             "start_date/end_date",
@@ -158,11 +194,15 @@ def update_campaign_step(
             "start_date/end_date",
             "La date de début doit être antérieure ou égale à la date de fin.",
         )
-    return _update_or_raise(repository.update_campaign_step, uuid, bean, "PlanningCampaignStep")
+    return _update_or_raise(
+        repository.update_campaign_step, uuid, bean, "PlanningCampaignStep"
+    )
 
 
 def delete_campaign_step(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_campaign_step, uuid, "PlanningCampaignStep")
+    return _delete_or_raise(
+        repository.delete_campaign_step, uuid, "PlanningCampaignStep"
+    )
 
 
 # ====================== LAB SALLE ======================
@@ -176,7 +216,9 @@ def create_salle(repository: IPlanningRepository, bean: LabSalleBean) -> LabSall
     return repository.create_salle(bean)
 
 
-def update_salle(repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabSalleBean) -> LabSalleBean:
+def update_salle(
+    repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabSalleBean
+) -> LabSalleBean:
     return _update_or_raise(repository.update_salle, uuid, bean, "LabSalle")
 
 
@@ -187,11 +229,15 @@ def delete_salle(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
 # ====================== LAB MACHINE ======================
 
 
-def create_machine(repository: IPlanningRepository, bean: LabMachineBean) -> LabMachineBean:
+def create_machine(
+    repository: IPlanningRepository, bean: LabMachineBean
+) -> LabMachineBean:
     return repository.create_machine(bean)
 
 
-def update_machine(repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabMachineBean) -> LabMachineBean:
+def update_machine(
+    repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabMachineBean
+) -> LabMachineBean:
     return _update_or_raise(repository.update_machine, uuid, bean, "LabMachine")
 
 
@@ -206,11 +252,15 @@ def get_all_lab_events(repository: IPlanningRepository) -> list[LabEventBean]:
     return repository.get_all_lab_events()
 
 
-def create_lab_event(repository: IPlanningRepository, bean: LabEventBean) -> LabEventBean:
+def create_lab_event(
+    repository: IPlanningRepository, bean: LabEventBean
+) -> LabEventBean:
     return repository.create_lab_event(bean)
 
 
-def update_lab_event(repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabEventBean) -> LabEventBean:
+def update_lab_event(
+    repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabEventBean
+) -> LabEventBean:
     return _update_or_raise(repository.update_lab_event, uuid, bean, "LabEvent")
 
 

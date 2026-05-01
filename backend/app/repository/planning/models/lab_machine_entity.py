@@ -22,7 +22,9 @@ class LabMachineEntity(models.Model):
         ]
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    salle = models.ForeignKey(LabSalleEntity, on_delete=models.CASCADE, db_column="salle_id")
+    salle = models.ForeignKey(
+        LabSalleEntity, on_delete=models.CASCADE, db_column="salle_id"
+    )
     name = models.CharField(max_length=100)
     sort_order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

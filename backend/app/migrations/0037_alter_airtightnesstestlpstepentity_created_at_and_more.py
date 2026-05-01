@@ -196,7 +196,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="etalonnageentity",
-            index=models.Index(fields=["embase", "voie", "-date"], name="etal_embase_voie_date_idx"),
+            index=models.Index(
+                fields=["embase", "voie", "-date"], name="etal_embase_voie_date_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="faentity",
@@ -208,7 +210,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="planningcampaignstepentity",
-            index=models.Index(fields=["campaign", "year"], name="pln_campstep_camp_year_idx"),
+            index=models.Index(
+                fields=["campaign", "year"], name="pln_campstep_camp_year_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="planningcampaignstepentity",

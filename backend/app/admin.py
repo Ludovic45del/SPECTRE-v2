@@ -1,12 +1,20 @@
 from django.contrib import admin
 
-from app.repository.campaign.models.campaign_document_subtypes_entity import CampaignDocumentSubtypesEntity
-from app.repository.campaign.models.campaign_document_types_entity import CampaignDocumentTypesEntity
-from app.repository.campaign.models.campaign_documents_entity import CampaignDocumentsEntity
+from app.repository.campaign.models.campaign_document_subtypes_entity import (
+    CampaignDocumentSubtypesEntity,
+)
+from app.repository.campaign.models.campaign_document_types_entity import (
+    CampaignDocumentTypesEntity,
+)
+from app.repository.campaign.models.campaign_documents_entity import (
+    CampaignDocumentsEntity,
+)
 
 # Campaign Entities
 from app.repository.campaign.models.campaign_entity import CampaignEntity
-from app.repository.campaign.models.campaign_installations_entity import CampaignInstallationsEntity
+from app.repository.campaign.models.campaign_installations_entity import (
+    CampaignInstallationsEntity,
+)
 from app.repository.campaign.models.campaign_roles_entity import CampaignRolesEntity
 from app.repository.campaign.models.campaign_status_entity import CampaignStatusEntity
 from app.repository.campaign.models.campaign_teams_entity import CampaignTeamsEntity
@@ -16,8 +24,12 @@ from app.repository.campaign.models.campaign_types_entity import CampaignTypesEn
 from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.embase.models.etalonnage_entity import EtalonnageEntity
 from app.repository.fsec.models.fsec_category_entity import FsecCategoryEntity
-from app.repository.fsec.models.fsec_document_subtypes_entity import FsecDocumentSubtypesEntity
-from app.repository.fsec.models.fsec_document_types_entity import FsecDocumentTypesEntity
+from app.repository.fsec.models.fsec_document_subtypes_entity import (
+    FsecDocumentSubtypesEntity,
+)
+from app.repository.fsec.models.fsec_document_types_entity import (
+    FsecDocumentTypesEntity,
+)
 from app.repository.fsec.models.fsec_documents_entity import FsecDocumentsEntity
 
 # FSEC Entities
@@ -26,20 +38,30 @@ from app.repository.fsec.models.fsec_rack_entity import FsecRackEntity
 from app.repository.fsec.models.fsec_roles_entity import FsecRolesEntity
 from app.repository.fsec.models.fsec_status_entity import FsecStatusEntity
 from app.repository.fsec.models.fsec_teams_entity import FsecTeamsEntity
-from app.repository.steps.models.airtightness_test_lp_step_entity import AirtightnessTestLpStepEntity
+from app.repository.steps.models.airtightness_test_lp_step_entity import (
+    AirtightnessTestLpStepEntity,
+)
 
 # Steps Entities
 from app.repository.steps.models.assembly_bench_entity import AssemblyBenchEntity
 from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
-from app.repository.steps.models.depressurization_step_entity import DepressurizationStepEntity
-from app.repository.steps.models.gas_filling_bp_step_entity import GasFillingBpStepEntity
-from app.repository.steps.models.gas_filling_hp_step_entity import GasFillingHpStepEntity
+from app.repository.steps.models.depressurization_step_entity import (
+    DepressurizationStepEntity,
+)
+from app.repository.steps.models.gas_filling_bp_step_entity import (
+    GasFillingBpStepEntity,
+)
+from app.repository.steps.models.gas_filling_hp_step_entity import (
+    GasFillingHpStepEntity,
+)
 from app.repository.steps.models.metrology_machine_entity import MetrologyMachineEntity
 from app.repository.steps.models.metrology_step_entity import MetrologyStepEntity
 from app.repository.steps.models.permeation_step_entity import PermeationStepEntity
 from app.repository.steps.models.photo_view_entity import PhotoViewEntity
 from app.repository.steps.models.pictures_step_entity import PicturesStepEntity
-from app.repository.steps.models.repressurization_step_entity import RepressurizationStepEntity
+from app.repository.steps.models.repressurization_step_entity import (
+    RepressurizationStepEntity,
+)
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
 
 

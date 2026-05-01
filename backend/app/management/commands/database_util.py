@@ -39,7 +39,13 @@ def insert_csv_into_table(self, table_name, csv_path):
         # Re-raise so the caller can decide whether to abort or tolerate the
         # failure. Previously this was swallowed, hiding duplicate-PK errors on
         # demo re-runs and leaving subsequent dependent inserts to cascade fail.
-        self.stderr.write(self.style.ERROR(f"Unexpected error during insertion into table '{table_name}' => {e}"))
+        self.stderr.write(
+            self.style.ERROR(
+                f"Unexpected error during insertion into table '{table_name}' => {e}"
+            )
+        )
         raise
 
-    self.stdout.write(self.style.SUCCESS(f"Successfully inserted {csv_path} in {table_name} table"))
+    self.stdout.write(
+        self.style.SUCCESS(f"Successfully inserted {csv_path} in {table_name} table")
+    )

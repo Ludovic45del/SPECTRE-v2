@@ -18,7 +18,10 @@ from app.domain.campaign.services.campaign_service import (
     update_campaign,
 )
 from app.domain.exceptions import InvalidDataException
-from app.mapper.campaign.campaign_mapper import campaign_mapper_api_to_bean, campaign_mapper_bean_to_api
+from app.mapper.campaign.campaign_mapper import (
+    campaign_mapper_api_to_bean,
+    campaign_mapper_bean_to_api,
+)
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
 
@@ -44,7 +47,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
     def list(self, request) -> JsonResponse:
         """Liste toutes les campagnes avec pagination (GET /)."""
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: get_all_campaigns(self.repository, limit=limit, offset=offset),
+            fetch_func=lambda limit, offset: get_all_campaigns(
+                self.repository, limit=limit, offset=offset
+            ),
             count_func=lambda: count_all_campaigns(self.repository),
         )
         return self.paginate_or_json(request, source, campaign_mapper_bean_to_api)
@@ -52,7 +57,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """Récupère une campagne par UUID (GET /:uuid/)."""
         bean = get_campaign_by_uuid(self.repository, uuid)
-        return JsonResponse(campaign_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            campaign_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder
+        )
 
     def create(self, request) -> JsonResponse:
         """Crée une nouvelle campagne (POST /)."""
@@ -65,7 +72,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
 
         bean = campaign_mapper_api_to_bean(serializer.validated_data)
         result = create_campaign(self.repository, bean)
-        return JsonResponse(campaign_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            campaign_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, uuid=None) -> JsonResponse:
         """Met à jour une campagne (PUT /:uuid/)."""
@@ -79,7 +88,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
 
         bean = campaign_mapper_api_to_bean(serializer.validated_data)
         result = update_campaign(self.repository, bean)
-        return JsonResponse(campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     def partial_update(self, request, uuid=None) -> JsonResponse:
         """Met à jour partiellement une campagne (PATCH /:uuid/)."""
@@ -92,7 +103,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
 
         validated = serializer.validated_data
         result = patch_campaign(self.repository, uuid, validated)
-        return JsonResponse(campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     def get_permissions(self):
         """Admin-only pour la suppression."""

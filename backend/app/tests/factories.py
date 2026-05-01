@@ -67,7 +67,9 @@ class CampaignDocumentsBeanFactory(Factory):
     """Factory for CampaignDocumentsBean."""
 
     class Meta:
-        model = "app.domain.campaign.models.campaign_documents_bean.CampaignDocumentsBean"
+        model = (
+            "app.domain.campaign.models.campaign_documents_bean.CampaignDocumentsBean"
+        )
 
     uuid = LazyFunction(lambda: str(uuid.uuid4()))
     campaign_id = LazyFunction(lambda: str(uuid.uuid4()))
@@ -78,7 +80,9 @@ class CampaignDocumentsBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.campaign.models.campaign_documents_bean import CampaignDocumentsBean
+        from app.domain.campaign.models.campaign_documents_bean import (
+            CampaignDocumentsBean,
+        )
 
         return CampaignDocumentsBean(**kwargs)
 
@@ -311,7 +315,9 @@ class AirtightnessTestLpStepBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
+        from app.domain.steps.models.airtightness_test_lp_step_bean import (
+            AirtightnessTestLpStepBean,
+        )
 
         return AirtightnessTestLpStepBean(**kwargs)
 
@@ -338,7 +344,9 @@ class GasFillingBpStepBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
+        from app.domain.steps.models.gas_filling_bp_step_bean import (
+            GasFillingBpStepBean,
+        )
 
         return GasFillingBpStepBean(**kwargs)
 
@@ -365,7 +373,9 @@ class GasFillingHpStepBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.steps.models.gas_filling_hp_step_bean import GasFillingHpStepBean
+        from app.domain.steps.models.gas_filling_hp_step_bean import (
+            GasFillingHpStepBean,
+        )
 
         return GasFillingHpStepBean(**kwargs)
 
@@ -413,7 +423,9 @@ class DepressurizationStepBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean
+        from app.domain.steps.models.depressurization_step_bean import (
+            DepressurizationStepBean,
+        )
 
         return DepressurizationStepBean(**kwargs)
 
@@ -437,7 +449,9 @@ class RepressurizationStepBeanFactory(Factory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        from app.domain.steps.models.repressurization_step_bean import RepressurizationStepBean
+        from app.domain.steps.models.repressurization_step_bean import (
+            RepressurizationStepBean,
+        )
 
         return RepressurizationStepBean(**kwargs)
 

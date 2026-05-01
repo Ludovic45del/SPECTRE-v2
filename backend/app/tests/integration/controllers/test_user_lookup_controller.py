@@ -23,7 +23,9 @@ def _make_profile(username, role, is_active=True, first_name="", last_name=""):
     user.last_name = last_name
     user.is_active = is_active
     user.save()
-    profile, _ = UserProfileEntity.objects.get_or_create(user=user, defaults={"role": role})
+    profile, _ = UserProfileEntity.objects.get_or_create(
+        user=user, defaults={"role": role}
+    )
     profile.role = role
     profile.save(update_fields=["role"])
     return profile
@@ -43,7 +45,9 @@ class TestUserLookupEndpoint:
 
     def test_returns_active_users_by_default(self, api_client):
         _make_profile("alice", "metrologue", first_name="Alice", last_name="Martin")
-        _make_profile("bob", "iec", is_active=False, first_name="Bob", last_name="Petit")
+        _make_profile(
+            "bob", "iec", is_active=False, first_name="Bob", last_name="Petit"
+        )
 
         response = api_client.get("/api/v1/users/lookup/")
 
@@ -69,7 +73,9 @@ class TestUserLookupEndpoint:
         _make_profile("chef1", "chef_labo")
         _make_profile("iec1", "iec")
 
-        response = api_client.get("/api/v1/users/lookup/?role=metrologue&role=chef_labo")
+        response = api_client.get(
+            "/api/v1/users/lookup/?role=metrologue&role=chef_labo"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -116,7 +122,9 @@ class TestUserLookupEndpoint:
         _make_profile("met1", "metrologue", is_active=True)
         _make_profile("met2", "metrologue", is_active=False)
 
-        response = api_client.get("/api/v1/users/lookup/?role=metrologue&is_active=false")
+        response = api_client.get(
+            "/api/v1/users/lookup/?role=metrologue&is_active=false"
+        )
         data = response.json()
         usernames = [u["username"] for u in data]
         # is_active=false retourne uniquement les inactifs

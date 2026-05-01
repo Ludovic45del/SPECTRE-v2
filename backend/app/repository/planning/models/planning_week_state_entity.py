@@ -14,7 +14,9 @@ class PlanningWeekStateEntity(models.Model):
         app_label = "app"
         db_table = "PLANNING_WEEK_STATE"
         constraints = [
-            models.UniqueConstraint(fields=["year", "week_num"], name="uq_planning_week_state_year_week"),
+            models.UniqueConstraint(
+                fields=["year", "week_num"], name="uq_planning_week_state_year_week"
+            ),
         ]
         indexes = [models.Index(fields=["year"], name="planning_week_state_year_idx")]
 

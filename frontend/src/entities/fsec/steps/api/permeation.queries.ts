@@ -72,10 +72,7 @@ export function useCreatePermeationStep() {
 
     return useMutation({
         mutationFn: async (input: CreatePermeationStepInput): Promise<PermeationStep> => {
-            const response = await api.post(
-                '/permeation-steps/',
-                permeationStepToApi(input),
-            );
+            const response = await api.post('/permeation-steps/', permeationStepToApi(input));
             return PermeationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -94,10 +91,7 @@ export function useUpdatePermeationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdatePermeationStepInput): Promise<PermeationStep> => {
-            const response = await api.put(
-                `/permeation-steps/${input.uuid}/`,
-                permeationStepToApi(input),
-            );
+            const response = await api.put(`/permeation-steps/${input.uuid}/`, permeationStepToApi(input));
             return PermeationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

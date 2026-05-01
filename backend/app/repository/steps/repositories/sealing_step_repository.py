@@ -6,7 +6,10 @@ from django.db import transaction
 
 from app.domain.steps.interface.steps_repository import ISealingStepRepository
 from app.domain.steps.models.sealing_step_bean import SealingStepBean
-from app.mapper.steps.sealing_step_mapper import sealing_step_mapper_bean_to_entity, sealing_step_mapper_entity_to_bean
+from app.mapper.steps.sealing_step_mapper import (
+    sealing_step_mapper_bean_to_entity,
+    sealing_step_mapper_entity_to_bean,
+)
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
 
 
@@ -21,7 +24,9 @@ class SealingStepRepository(ISealingStepRepository):
 
     def get_by_fsec_version_id(self, fsec_version_id: str) -> List[SealingStepBean]:
         """Récupère toutes les étapes de scellement d'un FSEC (via MetrologyStep)."""
-        entities = self._base_queryset().filter(metrology_step_id__fsec_version_id=fsec_version_id)
+        entities = self._base_queryset().filter(
+            metrology_step_id__fsec_version_id=fsec_version_id
+        )
         return [sealing_step_mapper_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
@@ -39,7 +44,9 @@ class SealingStepRepository(ISealingStepRepository):
         except SealingStepEntity.DoesNotExist:
             return None
 
-    def get_by_metrology_step_id(self, metrology_step_id: str) -> Optional[SealingStepBean]:
+    def get_by_metrology_step_id(
+        self, metrology_step_id: str
+    ) -> Optional[SealingStepBean]:
         """Récupère l'étape de scellement liée à une métrologie."""
         try:
             entity = self._base_queryset().get(metrology_step_id_id=metrology_step_id)

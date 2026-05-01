@@ -34,14 +34,20 @@ class FaRepository(IFaRepository):
     def get_by_uuid(self, uuid: str) -> Optional[FaBean]:
         """Récupère une FA par son UUID."""
         try:
-            entity = FaEntity.objects.select_related(*self.SELECT_RELATED).get(uuid=uuid, is_active=True)
+            entity = FaEntity.objects.select_related(*self.SELECT_RELATED).get(
+                uuid=uuid, is_active=True
+            )
             return fa_mapper_entity_to_bean(entity)
         except FaEntity.DoesNotExist:
             return None
 
     def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[FaBean]:
         """Récupère toutes les FA actives."""
-        query = FaEntity.objects.select_related(*self.SELECT_RELATED).filter(is_active=True).order_by("-created_at")
+        query = (
+            FaEntity.objects.select_related(*self.SELECT_RELATED)
+            .filter(is_active=True)
+            .order_by("-created_at")
+        )
         if limit is not None:
             entities = query[offset : offset + limit]
         else:
@@ -70,7 +76,9 @@ class FaRepository(IFaRepository):
         On a besoin de l'entité avec select_related pour retourner un bean complet.
         Pour ~2000 FA max, le surcoût est négligeable (~1ms par requête supplémentaire).
         """
-        entity = FaEntity.objects.select_related(*self.SELECT_RELATED).get(uuid=bean.uuid, is_active=True)
+        entity = FaEntity.objects.select_related(*self.SELECT_RELATED).get(
+            uuid=bean.uuid, is_active=True
+        )
         # FK
         entity.status_id_id = bean.status_id
         entity.type_id_id = bean.type_id
@@ -117,4 +125,6 @@ class FaRepository(IFaRepository):
 
     def exists_by_fsec_version_id(self, fsec_version_id: str) -> bool:
         """Vérifie si une FA active existe déjà pour cette FSEC."""
-        return FaEntity.objects.filter(fsec_version_id_id=fsec_version_id, is_active=True).exists()
+        return FaEntity.objects.filter(
+            fsec_version_id_id=fsec_version_id, is_active=True
+        ).exists()

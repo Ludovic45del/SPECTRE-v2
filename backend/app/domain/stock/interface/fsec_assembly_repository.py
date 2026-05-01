@@ -3,7 +3,10 @@
 import abc
 from typing import List, Optional
 
-from app.domain.stock.models.fsec_assembly_item_bean import FsecAssemblyItemBean, FsecAssemblyItemDetailBean
+from app.domain.stock.models.fsec_assembly_item_bean import (
+    FsecAssemblyItemBean,
+    FsecAssemblyItemDetailBean,
+)
 
 
 class IFsecAssemblyItemRepository(abc.ABC):
@@ -54,7 +57,9 @@ class IFsecAssemblyItemRepository(abc.ABC):
     # ---------------------------------------------------------------- Specific queries
 
     @abc.abstractmethod
-    def find_active_assignment_for_element(self, catalog_item_uuid: str) -> Optional[FsecAssemblyItemBean]:
+    def find_active_assignment_for_element(
+        self, catalog_item_uuid: str
+    ) -> Optional[FsecAssemblyItemBean]:
         """Cherche une assignation active pour un élément sérialisé (un seul max — cf. CDC §3.3).
 
         Retourne le FsecAssemblyItemBean si trouvé, None sinon.
@@ -62,6 +67,8 @@ class IFsecAssemblyItemRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def exists_by_fsec_and_catalog(self, fsec_uuid: str, catalog_item_uuid: str) -> bool:
+    def exists_by_fsec_and_catalog(
+        self, fsec_uuid: str, catalog_item_uuid: str
+    ) -> bool:
         """Vérifie qu'une paire (fsec_uuid, catalog_item) n'existe pas déjà (anti-doublon)."""
         raise NotImplementedError

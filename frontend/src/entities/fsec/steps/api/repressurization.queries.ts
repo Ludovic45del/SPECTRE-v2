@@ -70,10 +70,7 @@ export function useCreateRepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: CreateRepressurizationStepInput): Promise<RepressurizationStep> => {
-            const response = await api.post(
-                '/repressurization-steps/',
-                repressurizationStepToApi(input),
-            );
+            const response = await api.post('/repressurization-steps/', repressurizationStepToApi(input));
             return RepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -92,10 +89,7 @@ export function useUpdateRepressurizationStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateRepressurizationStepInput): Promise<RepressurizationStep> => {
-            const response = await api.put(
-                `/repressurization-steps/${input.uuid}/`,
-                repressurizationStepToApi(input),
-            );
+            const response = await api.put(`/repressurization-steps/${input.uuid}/`, repressurizationStepToApi(input));
             return RepressurizationStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

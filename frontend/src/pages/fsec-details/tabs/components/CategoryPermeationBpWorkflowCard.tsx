@@ -292,9 +292,7 @@ export function CategoryPermeationBpWorkflowCard({
                                     <Typography variant="subtitle1" fontWeight={600}>
                                         Perméation
                                     </Typography>
-                                    {permeationStep?.startDate && (
-                                        <Chip label="Fait" color="success" />
-                                    )}
+                                    {permeationStep?.startDate && <Chip label="Fait" color="success" />}
                                 </Stack>
                                 <IconButton
                                     size="small"
@@ -387,9 +385,7 @@ export function CategoryPermeationBpWorkflowCard({
                                     <Typography variant="subtitle1" fontWeight={600}>
                                         Dépressurisation
                                     </Typography>
-                                    {depressurizationStep?.dateOfFulfilment && (
-                                        <Chip label="Fait" color="success" />
-                                    )}
+                                    {depressurizationStep?.dateOfFulfilment && <Chip label="Fait" color="success" />}
                                 </Stack>
                                 <IconButton
                                     size="small"
@@ -650,9 +646,7 @@ export function CategoryPermeationBpWorkflowCard({
                                         <Typography variant="subtitle1" fontWeight={600}>
                                             Repressurisation
                                         </Typography>
-                                        {repressurizationStep?.startDate && (
-                                            <Chip label="Fait" color="success" />
-                                        )}
+                                        {repressurizationStep?.startDate && <Chip label="Fait" color="success" />}
                                     </Stack>
                                     <IconButton
                                         size="small"

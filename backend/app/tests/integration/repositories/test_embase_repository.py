@@ -8,7 +8,9 @@ import pytest
 from app.domain.embase.models.embase_bean import EmbaseBean
 from app.domain.embase.models.etalonnage_bean import EtalonnageBean
 from app.repository.embase.repositories.embase_repository import EmbaseRepository
-from app.repository.embase.repositories.etalonnage_repository import EtalonnageRepository
+from app.repository.embase.repositories.etalonnage_repository import (
+    EtalonnageRepository,
+)
 
 
 @pytest.fixture
@@ -130,8 +132,12 @@ class TestEmbaseRepositoryRead:
 
     def test_get_all_returns_list(self, embase_repository):
         """Test récupération de la liste."""
-        embase_repository.create(EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="jet_de_gaz"))
-        embase_repository.create(EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="hp"))
+        embase_repository.create(
+            EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="jet_de_gaz")
+        )
+        embase_repository.create(
+            EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="hp")
+        )
 
         result = embase_repository.get_all()
 
@@ -243,7 +249,9 @@ class TestEmbaseRepositoryDuplicateCheck:
         """Test détection d'identifiant existant."""
         embase_repository.create(EmbaseBean(**sample_embase_data))
 
-        result = embase_repository.exists_by_identifier(sample_embase_data["identifier"])
+        result = embase_repository.exists_by_identifier(
+            sample_embase_data["identifier"]
+        )
         assert result is True
 
     def test_exists_by_identifier_false(self, embase_repository):
@@ -251,7 +259,9 @@ class TestEmbaseRepositoryDuplicateCheck:
         result = embase_repository.exists_by_identifier("GZZZZ")
         assert result is False
 
-    def test_exists_duplicate_excludes_self(self, embase_repository, sample_embase_data):
+    def test_exists_duplicate_excludes_self(
+        self, embase_repository, sample_embase_data
+    ):
         """Test que exists_duplicate exclut l'embase elle-même."""
         created = embase_repository.create(EmbaseBean(**sample_embase_data))
 
@@ -260,8 +270,12 @@ class TestEmbaseRepositoryDuplicateCheck:
 
     def test_exists_duplicate_detects_other(self, embase_repository):
         """Test que exists_duplicate détecte un autre enregistrement."""
-        e1 = embase_repository.create(EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="jet_de_gaz"))
-        e2 = embase_repository.create(EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="hp"))
+        e1 = embase_repository.create(
+            EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="jet_de_gaz")
+        )
+        e2 = embase_repository.create(
+            EmbaseBean(identifier=f"G{uuid.uuid4().hex[:4]}", type="hp")
+        )
 
         # e2 essaie de prendre l'identifiant de e1
         result = embase_repository.exists_duplicate(e2.uuid, e1.identifier)

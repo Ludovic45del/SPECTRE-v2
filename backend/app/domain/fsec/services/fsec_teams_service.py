@@ -3,8 +3,15 @@
 import logging
 from typing import List
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
-from app.domain.fsec.interface.fsec_repository import IFsecRepository, IFsecTeamsRepository
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
+from app.domain.fsec.interface.fsec_repository import (
+    IFsecRepository,
+    IFsecTeamsRepository,
+)
 from app.domain.fsec.models.fsec_team_constants import is_free_text_role
 from app.domain.fsec.models.fsec_teams_bean import FsecTeamsBean
 
@@ -97,7 +104,9 @@ def create_fsec_team_member(
     return result
 
 
-def get_fsec_team_member_by_uuid(repository: IFsecTeamsRepository, uuid: str) -> FsecTeamsBean:
+def get_fsec_team_member_by_uuid(
+    repository: IFsecTeamsRepository, uuid: str
+) -> FsecTeamsBean:
     """Récupère un membre d'équipe par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -105,12 +114,16 @@ def get_fsec_team_member_by_uuid(repository: IFsecTeamsRepository, uuid: str) ->
     return bean
 
 
-def get_fsec_team_members(repository: IFsecTeamsRepository, fsec_id: str) -> List[FsecTeamsBean]:
+def get_fsec_team_members(
+    repository: IFsecTeamsRepository, fsec_id: str
+) -> List[FsecTeamsBean]:
     """Récupère tous les membres d'une équipe FSEC."""
     return repository.get_by_fsec_id(fsec_id)
 
 
-def update_fsec_team_member(repository: IFsecTeamsRepository, bean: FsecTeamsBean) -> FsecTeamsBean:
+def update_fsec_team_member(
+    repository: IFsecTeamsRepository, bean: FsecTeamsBean
+) -> FsecTeamsBean:
     """Met à jour un membre d'équipe."""
     logger.info(f"Updating fsec team member uuid={bean.uuid}")
     existing = repository.get_by_uuid(bean.uuid)

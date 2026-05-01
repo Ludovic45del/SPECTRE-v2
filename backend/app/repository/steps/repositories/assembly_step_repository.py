@@ -23,9 +23,9 @@ class AssemblyStepRepository(IAssemblyStepRepository):
 
     def _base_queryset(self):
         """Returns queryset with select_related and prefetch_related applied."""
-        return AssemblyStepEntity.objects.select_related(*self.select_related_fields).prefetch_related(
-            *self.prefetch_related_fields
-        )
+        return AssemblyStepEntity.objects.select_related(
+            *self.select_related_fields
+        ).prefetch_related(*self.prefetch_related_fields)
 
     def _get_valid_bench_ids(self) -> set:
         """Récupère les IDs valides depuis la base de données."""

@@ -6,7 +6,11 @@ import os
 
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import (
+    TokenBlacklistView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
 
 from app.core.jwt import SpectreTokenObtainPairView
 

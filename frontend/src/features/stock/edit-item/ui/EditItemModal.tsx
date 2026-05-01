@@ -21,12 +21,7 @@ import {
     Stack,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-    ITEM_KIND,
-    ITEM_KIND_COLORS,
-    useCatalogItem,
-    useDeleteCatalogItem,
-} from '@entities/stock-item';
+import { ITEM_KIND, ITEM_KIND_COLORS, useCatalogItem, useDeleteCatalogItem } from '@entities/stock-item';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage, softChipSx } from '@shared/lib';
 import { useEditItemStore } from '../model';
@@ -59,13 +54,7 @@ export function EditItemModal() {
 
     return (
         <>
-            <Dialog
-                open={isOpen}
-                onClose={close}
-                maxWidth="md"
-                fullWidth
-                aria-labelledby="edit-stock-item-title"
-            >
+            <Dialog open={isOpen} onClose={close} maxWidth="md" fullWidth aria-labelledby="edit-stock-item-title">
                 <DialogTitle
                     id="edit-stock-item-title"
                     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1.5 }}
@@ -95,8 +84,10 @@ export function EditItemModal() {
                             Impossible de charger l'item : {error instanceof Error ? error.message : 'erreur inconnue'}
                         </Alert>
                     )}
-                    {item && !isLoading && !error && (
-                        item.kind === ITEM_KIND.ELEMENT ? (
+                    {item &&
+                        !isLoading &&
+                        !error &&
+                        (item.kind === ITEM_KIND.ELEMENT ? (
                             <EditElementShell
                                 item={item}
                                 onCancel={close}
@@ -110,8 +101,7 @@ export function EditItemModal() {
                                 onSuccess={close}
                                 onDelete={() => setConfirmDeleteOpen(true)}
                             />
-                        )
-                    )}
+                        ))}
                 </DialogContent>
             </Dialog>
 

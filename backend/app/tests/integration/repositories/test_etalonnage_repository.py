@@ -8,7 +8,9 @@ import pytest
 from app.domain.embase.models.embase_bean import EmbaseBean
 from app.domain.embase.models.etalonnage_bean import EtalonnageBean
 from app.repository.embase.repositories.embase_repository import EmbaseRepository
-from app.repository.embase.repositories.etalonnage_repository import EtalonnageRepository
+from app.repository.embase.repositories.etalonnage_repository import (
+    EtalonnageRepository,
+)
 
 
 @pytest.fixture
@@ -109,7 +111,9 @@ class TestEtalonnageRepositoryGetByUuid:
 class TestEtalonnageRepositoryGetByEmbaseUuid:
     """Tests récupération par embase UUID."""
 
-    def test_get_by_embase_uuid_returns_list(self, etalonnage_repository, created_embase):
+    def test_get_by_embase_uuid_returns_list(
+        self, etalonnage_repository, created_embase
+    ):
         """Test récupération de la liste d'étalonnages d'une embase."""
         etalonnage_repository.create(
             EtalonnageBean(
@@ -137,7 +141,9 @@ class TestEtalonnageRepositoryGetByEmbaseUuid:
         result = etalonnage_repository.get_by_embase_uuid(created_embase.uuid)
         assert result == []
 
-    def test_get_by_embase_uuid_filters_by_voie(self, etalonnage_repository, created_embase):
+    def test_get_by_embase_uuid_filters_by_voie(
+        self, etalonnage_repository, created_embase
+    ):
         """Test filtrage par voie."""
         etalonnage_repository.create(
             EtalonnageBean(
@@ -172,7 +178,9 @@ class TestEtalonnageRepositoryGetByEmbaseUuid:
 class TestEtalonnageRepositoryGetLatest:
     """Tests récupération du dernier étalonnage par embase/voie."""
 
-    def test_get_latest_by_embase_voie_returns_latest(self, etalonnage_repository, created_embase):
+    def test_get_latest_by_embase_voie_returns_latest(
+        self, etalonnage_repository, created_embase
+    ):
         """Test que le dernier étalonnage (date la plus récente) est retourné."""
         etalonnage_repository.create(
             EtalonnageBean(
@@ -191,15 +199,21 @@ class TestEtalonnageRepositoryGetLatest:
             )
         )
 
-        result = etalonnage_repository.get_latest_by_embase_voie(created_embase.uuid, voie=1)
+        result = etalonnage_repository.get_latest_by_embase_voie(
+            created_embase.uuid, voie=1
+        )
 
         assert result is not None
         assert result.date == date(2025, 6, 15)
         assert result.operateur == "Op2"
 
-    def test_get_latest_by_embase_voie_none_when_empty(self, etalonnage_repository, created_embase):
+    def test_get_latest_by_embase_voie_none_when_empty(
+        self, etalonnage_repository, created_embase
+    ):
         """Test retourne None si aucun étalonnage pour cette voie."""
-        result = etalonnage_repository.get_latest_by_embase_voie(created_embase.uuid, voie=1)
+        result = etalonnage_repository.get_latest_by_embase_voie(
+            created_embase.uuid, voie=1
+        )
         assert result is None
 
 
@@ -213,7 +227,9 @@ class TestEtalonnageRepositoryGetLatest:
 class TestEtalonnageRepositoryExistsByEmbaseVoieDate:
     """Tests vérification d'existence par embase/voie/date."""
 
-    def test_exists_by_embase_voie_date_true(self, etalonnage_repository, created_embase):
+    def test_exists_by_embase_voie_date_true(
+        self, etalonnage_repository, created_embase
+    ):
         """Test détection d'un étalonnage existant."""
         etalonnage_repository.create(
             EtalonnageBean(
@@ -224,17 +240,25 @@ class TestEtalonnageRepositoryExistsByEmbaseVoieDate:
             )
         )
 
-        result = etalonnage_repository.exists_by_embase_voie_date(created_embase.uuid, voie=1, date=date(2025, 5, 10))
+        result = etalonnage_repository.exists_by_embase_voie_date(
+            created_embase.uuid, voie=1, date=date(2025, 5, 10)
+        )
 
         assert result is True
 
-    def test_exists_by_embase_voie_date_false(self, etalonnage_repository, created_embase):
+    def test_exists_by_embase_voie_date_false(
+        self, etalonnage_repository, created_embase
+    ):
         """Test retourne False si combinaison inexistante."""
-        result = etalonnage_repository.exists_by_embase_voie_date(created_embase.uuid, voie=1, date=date(2025, 12, 25))
+        result = etalonnage_repository.exists_by_embase_voie_date(
+            created_embase.uuid, voie=1, date=date(2025, 12, 25)
+        )
 
         assert result is False
 
-    def test_exists_by_embase_voie_date_different_voie(self, etalonnage_repository, created_embase):
+    def test_exists_by_embase_voie_date_different_voie(
+        self, etalonnage_repository, created_embase
+    ):
         """Test retourne False si même embase/date mais voie différente."""
         etalonnage_repository.create(
             EtalonnageBean(
@@ -245,7 +269,9 @@ class TestEtalonnageRepositoryExistsByEmbaseVoieDate:
             )
         )
 
-        result = etalonnage_repository.exists_by_embase_voie_date(created_embase.uuid, voie=2, date=date(2025, 5, 10))
+        result = etalonnage_repository.exists_by_embase_voie_date(
+            created_embase.uuid, voie=2, date=date(2025, 5, 10)
+        )
 
         assert result is False
 

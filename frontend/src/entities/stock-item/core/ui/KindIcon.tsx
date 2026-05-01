@@ -9,12 +9,7 @@
 import { Box, Tooltip, type SxProps, type Theme } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
-import {
-    ITEM_KIND,
-    ITEM_KIND_COLORS,
-    ITEM_KIND_LABELS,
-    type ItemKind,
-} from '../model/stock.constants';
+import { ITEM_KIND, ITEM_KIND_COLORS, ITEM_KIND_LABELS, type ItemKind } from '../model/stock.constants';
 
 interface KindIconProps {
     kind: ItemKind;
@@ -42,10 +37,7 @@ export function KindIcon({ kind, size = 'medium', sx }: KindIconProps) {
                     ...sx,
                 }}
             >
-                <Icon
-                    sx={{ fontSize: size === 'small' ? 14 : 16 }}
-                    aria-label={ITEM_KIND_LABELS[kind]}
-                />
+                <Icon sx={{ fontSize: size === 'small' ? 14 : 16 }} aria-label={ITEM_KIND_LABELS[kind]} />
             </Box>
         </Tooltip>
     );

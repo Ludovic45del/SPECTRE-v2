@@ -193,7 +193,7 @@ describe('PhaseOuvertSection', () => {
         it('should show dash for empty fields', () => {
             const fa = createMockFa({
                 discoverer: '',
-    discovererUserUuid: null,
+                discovererUserUuid: null,
                 observation: '',
                 locationEquipment: '',
             });
@@ -237,7 +237,7 @@ describe('PhaseOuvertSection', () => {
             const user = userEvent.setup();
             const fa = createMockFa({
                 discoverer: 'Jean Dupont',
-    discovererUserUuid: null,
+                discovererUserUuid: null,
                 observation: 'Test observation',
             });
             renderWithProviders(<PhaseOuvertSection fa={fa} />);

@@ -56,9 +56,7 @@ describe('StockCatalogItemSchema', () => {
     });
 
     it('rejette une category hors enum', () => {
-        expect(() =>
-            StockCatalogItemSchema.parse({ ...baseApi, category: 'inconnu' }),
-        ).toThrow();
+        expect(() => StockCatalogItemSchema.parse({ ...baseApi, category: 'inconnu' })).toThrow();
     });
 
     it('rejette un kind invalide', () => {

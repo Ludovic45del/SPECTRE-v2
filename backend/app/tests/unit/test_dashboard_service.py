@@ -115,7 +115,9 @@ class TestModuleLevelAttributes:
 @pytest.mark.unit
 class TestGetDashboardCounts:
 
-    def test_returns_counts_from_repository(self, mock_dashboard_repository, sample_counts):
+    def test_returns_counts_from_repository(
+        self, mock_dashboard_repository, sample_counts
+    ):
         mock_dashboard_repository.get_counts.return_value = sample_counts
 
         result = get_dashboard_counts(mock_dashboard_repository)
@@ -153,8 +155,12 @@ class TestGetDashboardCounts:
 @pytest.mark.unit
 class TestGetRecentActivity:
 
-    def test_returns_sorted_items_by_date_desc(self, mock_dashboard_repository, sample_activity_items):
-        mock_dashboard_repository.get_recent_activity.return_value = sample_activity_items
+    def test_returns_sorted_items_by_date_desc(
+        self, mock_dashboard_repository, sample_activity_items
+    ):
+        mock_dashboard_repository.get_recent_activity.return_value = (
+            sample_activity_items
+        )
 
         result = get_recent_activity(mock_dashboard_repository, limit=10)
 
@@ -211,12 +217,18 @@ class TestGetRecentActivity:
 
         get_recent_activity(mock_dashboard_repository)
 
-        mock_dashboard_repository.get_recent_activity.assert_called_once_with(limit=RECENT_ACTIVITY_LIMIT)
+        mock_dashboard_repository.get_recent_activity.assert_called_once_with(
+            limit=RECENT_ACTIVITY_LIMIT
+        )
 
     def test_handles_null_dates(self, mock_dashboard_repository):
         items = [
-            RecentActivityItemBean(id="a", type="campaign", name="A", last_updated=None),
-            RecentActivityItemBean(id="b", type="fa", name="B", last_updated="2026-03-20T10:00:00"),
+            RecentActivityItemBean(
+                id="a", type="campaign", name="A", last_updated=None
+            ),
+            RecentActivityItemBean(
+                id="b", type="fa", name="B", last_updated="2026-03-20T10:00:00"
+            ),
         ]
         mock_dashboard_repository.get_recent_activity.return_value = items
 
@@ -234,8 +246,12 @@ class TestGetRecentActivity:
                 name="Old",
                 last_updated="2020-01-01T00:00:00",
             ),
-            RecentActivityItemBean(id="new", type="fsec", name="New", last_updated="2026-12-31T23:59:59"),
-            RecentActivityItemBean(id="mid", type="fa", name="Mid", last_updated="2023-06-15T12:00:00"),
+            RecentActivityItemBean(
+                id="new", type="fsec", name="New", last_updated="2026-12-31T23:59:59"
+            ),
+            RecentActivityItemBean(
+                id="mid", type="fa", name="Mid", last_updated="2023-06-15T12:00:00"
+            ),
         ]
         mock_dashboard_repository.get_recent_activity.return_value = items
 
@@ -265,14 +281,18 @@ class TestGetDashboardData:
         self, mock_dashboard_repository, sample_counts, sample_activity_items
     ):
         mock_dashboard_repository.get_counts.return_value = sample_counts
-        mock_dashboard_repository.get_recent_activity.return_value = sample_activity_items
+        mock_dashboard_repository.get_recent_activity.return_value = (
+            sample_activity_items
+        )
 
         counts, activity = get_dashboard_data(mock_dashboard_repository)
 
         assert counts is sample_counts
         assert len(activity) == 3
         mock_dashboard_repository.get_counts.assert_called_once()
-        mock_dashboard_repository.get_recent_activity.assert_called_once_with(limit=RECENT_ACTIVITY_LIMIT)
+        mock_dashboard_repository.get_recent_activity.assert_called_once_with(
+            limit=RECENT_ACTIVITY_LIMIT
+        )
 
     def test_uses_default_limit(self, mock_dashboard_repository, sample_counts):
         mock_dashboard_repository.get_counts.return_value = sample_counts
@@ -280,7 +300,9 @@ class TestGetDashboardData:
 
         get_dashboard_data(mock_dashboard_repository)
 
-        mock_dashboard_repository.get_recent_activity.assert_called_once_with(limit=RECENT_ACTIVITY_LIMIT)
+        mock_dashboard_repository.get_recent_activity.assert_called_once_with(
+            limit=RECENT_ACTIVITY_LIMIT
+        )
 
     def test_uses_custom_limit(self, mock_dashboard_repository, sample_counts):
         mock_dashboard_repository.get_counts.return_value = sample_counts
@@ -290,9 +312,13 @@ class TestGetDashboardData:
 
         mock_dashboard_repository.get_recent_activity.assert_called_once_with(limit=5)
 
-    def test_returns_sorted_activity(self, mock_dashboard_repository, sample_counts, sample_activity_items):
+    def test_returns_sorted_activity(
+        self, mock_dashboard_repository, sample_counts, sample_activity_items
+    ):
         mock_dashboard_repository.get_counts.return_value = sample_counts
-        mock_dashboard_repository.get_recent_activity.return_value = sample_activity_items
+        mock_dashboard_repository.get_recent_activity.return_value = (
+            sample_activity_items
+        )
 
         _, activity = get_dashboard_data(mock_dashboard_repository)
 
@@ -308,27 +334,39 @@ class TestGetDashboardData:
 @pytest.mark.unit
 class TestDashboardServiceErrors:
 
-    def test_get_counts_propagates_repository_exception(self, mock_dashboard_repository):
+    def test_get_counts_propagates_repository_exception(
+        self, mock_dashboard_repository
+    ):
         mock_dashboard_repository.get_counts.side_effect = Exception("DB error")
 
         with pytest.raises(Exception, match="DB error"):
             get_dashboard_counts(mock_dashboard_repository)
 
-    def test_get_recent_activity_propagates_repository_exception(self, mock_dashboard_repository):
-        mock_dashboard_repository.get_recent_activity.side_effect = Exception("DB error")
+    def test_get_recent_activity_propagates_repository_exception(
+        self, mock_dashboard_repository
+    ):
+        mock_dashboard_repository.get_recent_activity.side_effect = Exception(
+            "DB error"
+        )
 
         with pytest.raises(Exception, match="DB error"):
             get_recent_activity(mock_dashboard_repository)
 
-    def test_get_dashboard_data_propagates_counts_exception(self, mock_dashboard_repository):
+    def test_get_dashboard_data_propagates_counts_exception(
+        self, mock_dashboard_repository
+    ):
         mock_dashboard_repository.get_counts.side_effect = Exception("Counts error")
 
         with pytest.raises(Exception, match="Counts error"):
             get_dashboard_data(mock_dashboard_repository)
 
-    def test_get_dashboard_data_propagates_activity_exception(self, mock_dashboard_repository, sample_counts):
+    def test_get_dashboard_data_propagates_activity_exception(
+        self, mock_dashboard_repository, sample_counts
+    ):
         mock_dashboard_repository.get_counts.return_value = sample_counts
-        mock_dashboard_repository.get_recent_activity.side_effect = Exception("Activity error")
+        mock_dashboard_repository.get_recent_activity.side_effect = Exception(
+            "Activity error"
+        )
 
         with pytest.raises(Exception, match="Activity error"):
             get_dashboard_data(mock_dashboard_repository)
@@ -343,14 +381,18 @@ class TestDashboardServiceErrors:
 class TestDashboardServiceLoggerMessages:
     """Kill mutant on logger message in get_dashboard_data."""
 
-    def test_get_dashboard_data_logs_message(self, mock_dashboard_repository, sample_counts):
+    def test_get_dashboard_data_logs_message(
+        self, mock_dashboard_repository, sample_counts
+    ):
         """Verify logger.debug is called with 'Recuperation des donnees'."""
         from unittest.mock import patch
 
         mock_dashboard_repository.get_counts.return_value = sample_counts
         mock_dashboard_repository.get_recent_activity.return_value = []
 
-        with patch("app.domain.dashboard.services.dashboard_service.logger") as mock_logger:
+        with patch(
+            "app.domain.dashboard.services.dashboard_service.logger"
+        ) as mock_logger:
             get_dashboard_data(mock_dashboard_repository)
             mock_logger.debug.assert_called()
             log_msg = mock_logger.debug.call_args[0][0]

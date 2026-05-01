@@ -10,13 +10,18 @@ from typing import List, Optional
 from app.domain.exceptions import NotFoundException, ValidationException
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
 from app.domain.stock.interface.movement_repository import IStockMovementRepository
-from app.domain.stock.models.stock_constants import ERROR_CODE_INVALID_KIND_OPERATION, ITEM_KIND_CONSUMABLE
+from app.domain.stock.models.stock_constants import (
+    ERROR_CODE_INVALID_KIND_OPERATION,
+    ITEM_KIND_CONSUMABLE,
+)
 from app.domain.stock.models.stock_movement_bean import StockMovementBean
 
 logger = logging.getLogger(__name__)
 
 
-def _ensure_catalog_item_is_consumable(catalog_repository: IStockCatalogRepository, catalog_item_uuid: str) -> None:
+def _ensure_catalog_item_is_consumable(
+    catalog_repository: IStockCatalogRepository, catalog_item_uuid: str
+) -> None:
     """Garantit qu'un mouvement ne peut être créé que sur un consommable (CDC §3.2)."""
     item = catalog_repository.get_by_uuid(catalog_item_uuid)
     if item is None:
@@ -52,7 +57,9 @@ def create_movement(
     return result
 
 
-def get_movement(movement_repository: IStockMovementRepository, uuid: str) -> StockMovementBean:
+def get_movement(
+    movement_repository: IStockMovementRepository, uuid: str
+) -> StockMovementBean:
     """Récupère un mouvement par UUID."""
     bean = movement_repository.get_by_uuid(uuid)
     if bean is None:
@@ -96,7 +103,9 @@ def count_movements(
     )
 
 
-def delete_movement_admin(movement_repository: IStockMovementRepository, uuid: str) -> bool:
+def delete_movement_admin(
+    movement_repository: IStockMovementRepository, uuid: str
+) -> bool:
     """Supprime un mouvement (admin only) et recalcule la quantité de l'item."""
     existing = movement_repository.get_by_uuid(uuid)
     if existing is None:

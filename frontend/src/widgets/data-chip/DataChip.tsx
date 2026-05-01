@@ -17,11 +17,5 @@ interface DataChipProps extends Omit<ChipProps, 'color'> {
 export function DataChip({ label, color, sx, ...props }: DataChipProps) {
     const theme = useTheme();
     const hex = color ?? theme.palette.grey[300];
-    return (
-        <Chip
-            label={label}
-            sx={[softChipSx(hex), ...(Array.isArray(sx) ? sx : [sx])]}
-            {...props}
-        />
-    );
+    return <Chip label={label} sx={[softChipSx(hex), ...(Array.isArray(sx) ? sx : [sx])]} {...props} />;
 }

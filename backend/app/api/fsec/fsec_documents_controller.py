@@ -13,8 +13,13 @@ from app.domain.fsec.services.fsec_documents_service import (
     get_fsec_documents,
     update_fsec_document,
 )
-from app.mapper.fsec.fsec_documents_mapper import fsec_documents_mapper_api_to_bean, fsec_documents_mapper_bean_to_api
-from app.repository.fsec.repositories.fsec_documents_repository import FsecDocumentsRepository
+from app.mapper.fsec.fsec_documents_mapper import (
+    fsec_documents_mapper_api_to_bean,
+    fsec_documents_mapper_bean_to_api,
+)
+from app.repository.fsec.repositories.fsec_documents_repository import (
+    FsecDocumentsRepository,
+)
 
 
 class FsecDocumentsController(BaseChildController):

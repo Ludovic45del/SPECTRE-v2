@@ -151,14 +151,10 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
                         <Autocomplete
                             options={campaigns ?? []}
                             value={selectedCampaign}
-                            onChange={(_, value) =>
-                                setForm((prev) => ({ ...prev, campaignId: value?.uuid ?? '' }))
-                            }
+                            onChange={(_, value) => setForm((prev) => ({ ...prev, campaignId: value?.uuid ?? '' }))}
                             getOptionLabel={formatCampaignLabel}
                             isOptionEqualToValue={(option, value) => option.uuid === value?.uuid}
-                            renderInput={(params) => (
-                                <TextField {...params} label="Campagne" required size="small" />
-                            )}
+                            renderInput={(params) => <TextField {...params} label="Campagne" required size="small" />}
                             renderOption={(props, option) => (
                                 <li {...props} key={option.uuid}>
                                     <Stack direction="row" spacing={1} alignItems="center">
@@ -191,9 +187,7 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
                             required
                             size="small"
                             value={form.categoryId}
-                            onChange={(e) =>
-                                setForm((prev) => ({ ...prev, categoryId: Number(e.target.value) }))
-                            }
+                            onChange={(e) => setForm((prev) => ({ ...prev, categoryId: Number(e.target.value) }))}
                         />
 
                         <TextField

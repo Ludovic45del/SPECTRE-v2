@@ -5,7 +5,11 @@ Couverture des règles CDC §3.1 et §10.1.
 
 import pytest
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
 from app.domain.stock.models.stock_constants import (
     CATEGORY_COLLES,
@@ -29,14 +33,18 @@ from app.domain.stock.services.catalog_service import (
 
 class TestCreateItem:
     @pytest.mark.unit
-    def test_create_element_success(self, sample_element_bean, mock_stock_catalog_repository):
+    def test_create_element_success(
+        self, sample_element_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.create.return_value = sample_element_bean
         result = create_item(mock_stock_catalog_repository, sample_element_bean)
         assert result.uuid == sample_element_bean.uuid
         mock_stock_catalog_repository.create.assert_called_once()
 
     @pytest.mark.unit
-    def test_create_consumable_success(self, sample_consumable_bean, mock_stock_catalog_repository):
+    def test_create_consumable_success(
+        self, sample_consumable_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.create.return_value = sample_consumable_bean
         result = create_item(mock_stock_catalog_repository, sample_consumable_bean)
         assert result.uuid == sample_consumable_bean.uuid
@@ -75,7 +83,9 @@ class TestCreateItem:
         assert exc.value.field == "installation"
 
     @pytest.mark.unit
-    def test_create_element_rejects_consumable_fields(self, mock_stock_catalog_repository):
+    def test_create_element_rejects_consumable_fields(
+        self, mock_stock_catalog_repository
+    ):
         bean = StockCatalogItemBean(
             kind=ITEM_KIND_ELEMENT,
             category=CATEGORY_PIECES_ELEMENTAIRES,
@@ -114,7 +124,9 @@ class TestCreateItem:
         assert exc.value.field == "quantite"
 
     @pytest.mark.unit
-    def test_create_consumable_rejects_negative_qty(self, mock_stock_catalog_repository):
+    def test_create_consumable_rejects_negative_qty(
+        self, mock_stock_catalog_repository
+    ):
         bean = StockCatalogItemBean(
             kind=ITEM_KIND_CONSUMABLE,
             category=CATEGORY_COLLES,
@@ -127,7 +139,9 @@ class TestCreateItem:
         assert exc.value.field == "quantite"
 
     @pytest.mark.unit
-    def test_create_consumable_rejects_element_only_fields(self, mock_stock_catalog_repository):
+    def test_create_consumable_rejects_element_only_fields(
+        self, mock_stock_catalog_repository
+    ):
         bean = StockCatalogItemBean(
             kind=ITEM_KIND_CONSUMABLE,
             category=CATEGORY_COLLES,
@@ -141,14 +155,18 @@ class TestCreateItem:
         assert exc.value.field == "installation"
 
     @pytest.mark.unit
-    def test_create_rejects_duplicate(self, sample_element_bean, mock_stock_catalog_repository):
+    def test_create_rejects_duplicate(
+        self, sample_element_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.exists_by_kind_name_reference.return_value = True
         with pytest.raises(ConflictException):
             create_item(mock_stock_catalog_repository, sample_element_bean)
         mock_stock_catalog_repository.create.assert_not_called()
 
     @pytest.mark.unit
-    def test_create_element_defaults_status_to_dispo(self, mock_stock_catalog_repository):
+    def test_create_element_defaults_status_to_dispo(
+        self, mock_stock_catalog_repository
+    ):
         # status omis → service force `dispo`
         bean = StockCatalogItemBean(
             kind=ITEM_KIND_ELEMENT,
@@ -202,7 +220,9 @@ class TestListItems:
 
 class TestUpdateItem:
     @pytest.mark.unit
-    def test_update_preserves_kind(self, sample_element_bean, mock_stock_catalog_repository):
+    def test_update_preserves_kind(
+        self, sample_element_bean, mock_stock_catalog_repository
+    ):
         # Tentative de modifier kind via PUT — doit être ignoré.
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_element_bean
         mock_stock_catalog_repository.update.return_value = sample_element_bean
@@ -221,7 +241,9 @@ class TestUpdateItem:
 
 class TestPatchItem:
     @pytest.mark.unit
-    def test_patch_ignores_unknown_fields(self, sample_consumable_bean, mock_stock_catalog_repository):
+    def test_patch_ignores_unknown_fields(
+        self, sample_consumable_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_consumable_bean
         mock_stock_catalog_repository.update.return_value = sample_consumable_bean
 
@@ -234,7 +256,9 @@ class TestPatchItem:
         mock_stock_catalog_repository.update.assert_called_once()
 
     @pytest.mark.unit
-    def test_patch_kind_field_silently_ignored(self, sample_consumable_bean, mock_stock_catalog_repository):
+    def test_patch_kind_field_silently_ignored(
+        self, sample_consumable_bean, mock_stock_catalog_repository
+    ):
         # `kind` n'est pas dans ALLOWED_PATCH_FIELDS → ignoré silencieusement.
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_consumable_bean
         mock_stock_catalog_repository.update.return_value = sample_consumable_bean
@@ -250,15 +274,21 @@ class TestPatchItem:
 
 class TestSoftDelete:
     @pytest.mark.unit
-    def test_soft_delete_success(self, sample_consumable_bean, mock_stock_catalog_repository):
+    def test_soft_delete_success(
+        self, sample_consumable_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_consumable_bean
         mock_stock_catalog_repository.is_referenced_by_assembly.return_value = False
         mock_stock_catalog_repository.soft_delete.return_value = True
 
-        assert soft_delete_item(mock_stock_catalog_repository, sample_consumable_bean.uuid)
+        assert soft_delete_item(
+            mock_stock_catalog_repository, sample_consumable_bean.uuid
+        )
 
     @pytest.mark.unit
-    def test_soft_delete_rejected_if_referenced(self, sample_consumable_bean, mock_stock_catalog_repository):
+    def test_soft_delete_rejected_if_referenced(
+        self, sample_consumable_bean, mock_stock_catalog_repository
+    ):
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_consumable_bean
         mock_stock_catalog_repository.is_referenced_by_assembly.return_value = True
 

@@ -59,7 +59,9 @@ class BaseChildController(ViewSet):
         validated = self._validate(request.data)
         bean = self.mapper_api_to_bean(validated)
         result = self.service_create(self.repository, bean)
-        return JsonResponse(self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, uuid=None) -> JsonResponse:
         data = request.data.copy()

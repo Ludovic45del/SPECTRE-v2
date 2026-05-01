@@ -8,7 +8,9 @@ from rest_framework.viewsets import ViewSet
 
 from app.domain.stock.services.alert_service import get_alerts
 from app.mapper.stock.catalog_mapper import stock_catalog_mapper_bean_to_api
-from app.repository.stock.repositories.stock_catalog_repository import StockCatalogRepository
+from app.repository.stock.repositories.stock_catalog_repository import (
+    StockCatalogRepository,
+)
 
 
 class StockAlertController(ViewSet):
@@ -30,8 +32,12 @@ class StockAlertController(ViewSet):
         """GET /api/v1/stock/alerts/."""
         alerts = get_alerts(self.repository, today=date.today())
         payload = {
-            "low_stock": [stock_catalog_mapper_bean_to_api(b) for b in alerts.low_stock],
+            "low_stock": [
+                stock_catalog_mapper_bean_to_api(b) for b in alerts.low_stock
+            ],
             "expired": [stock_catalog_mapper_bean_to_api(b) for b in alerts.expired],
-            "expiring_soon": [stock_catalog_mapper_bean_to_api(b) for b in alerts.expiring_soon],
+            "expiring_soon": [
+                stock_catalog_mapper_bean_to_api(b) for b in alerts.expiring_soon
+            ],
         }
         return JsonResponse(payload, encoder=DjangoJSONEncoder)

@@ -1,6 +1,8 @@
 """Beans STEPS - Exports."""
 
-from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
+from app.domain.steps.models.airtightness_test_lp_step_bean import (
+    AirtightnessTestLpStepBean,
+)
 from app.domain.steps.models.assembly_bench_bean import AssemblyBenchBean
 from app.domain.steps.models.assembly_step_bean import AssemblyStepBean
 from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean

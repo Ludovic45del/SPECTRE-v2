@@ -5,14 +5,23 @@ from typing import Any, Dict, List, Optional
 
 from app.domain.embase.interface.embase_repository import IEmbaseRepository
 from app.domain.embase.models.embase_bean import EmbaseBean
-from app.domain.embase.models.embase_constants import PROTECTED_FIELDS, VALID_EMBASE_TYPES
+from app.domain.embase.models.embase_constants import (
+    PROTECTED_FIELDS,
+    VALID_EMBASE_TYPES,
+)
 from app.domain.embase.models.fsec_history_bean import FsecHistoryEntryBean
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def get_fsec_history(repository: IEmbaseRepository, embase_uuid: str) -> List[FsecHistoryEntryBean]:
+def get_fsec_history(
+    repository: IEmbaseRepository, embase_uuid: str
+) -> List[FsecHistoryEntryBean]:
     """Retourne l'historique des FSECs dans lesquels une embase a été utilisée.
 
     Raises:
@@ -32,7 +41,9 @@ def get_embase_by_uuid(repository: IEmbaseRepository, uuid: str) -> EmbaseBean:
     return bean
 
 
-def get_all_embases(repository: IEmbaseRepository, limit: Optional[int] = None, offset: int = 0) -> List[EmbaseBean]:
+def get_all_embases(
+    repository: IEmbaseRepository, limit: Optional[int] = None, offset: int = 0
+) -> List[EmbaseBean]:
     """Récupère toutes les Embases."""
     return repository.get_all(limit=limit, offset=offset)
 
@@ -125,7 +136,9 @@ ALLOWED_PATCH_FIELDS = {
 } - PROTECTED_FIELDS
 
 
-def patch_embase(repository: IEmbaseRepository, uuid: str, partial_data: Dict[str, Any]) -> EmbaseBean:
+def patch_embase(
+    repository: IEmbaseRepository, uuid: str, partial_data: Dict[str, Any]
+) -> EmbaseBean:
     """Met à jour partiellement une Embase (PATCH)."""
     existing_bean = repository.get_by_uuid(uuid)
     if existing_bean is None:

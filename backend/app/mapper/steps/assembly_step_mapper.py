@@ -3,7 +3,10 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.assembly_step_bean import AssemblyStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid, read_operator_user_uuid
+from app.mapper.steps.base_step_mapper import (
+    normalize_user_uuid,
+    read_operator_user_uuid,
+)
 from app.mapper.type_conversion import format_date_for_api
 from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
 
@@ -12,7 +15,9 @@ def assembly_step_mapper_entity_to_bean(entity: AssemblyStepEntity) -> AssemblyS
     """Convertit une AssemblyStepEntity en AssemblyStepBean."""
     return AssemblyStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         operator=entity.operator,
         operator_user_uuid=read_operator_user_uuid(entity),
         start_date=entity.start_date,

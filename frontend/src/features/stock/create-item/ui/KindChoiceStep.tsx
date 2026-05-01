@@ -24,14 +24,7 @@ interface ChoiceCardProps {
     onClick: () => void;
 }
 
-const ChoiceCard = memo(function ChoiceCard({
-    title,
-    description,
-    color,
-    icon,
-    isSelected,
-    onClick,
-}: ChoiceCardProps) {
+const ChoiceCard = memo(function ChoiceCard({ title, description, color, icon, isSelected, onClick }: ChoiceCardProps) {
     return (
         <Paper
             role="radio"

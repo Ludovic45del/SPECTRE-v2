@@ -14,16 +14,7 @@
  */
 
 import { memo, useCallback, useState } from 'react';
-import {
-    Box,
-    Chip,
-    CircularProgress,
-    Divider,
-    Link,
-    Popover,
-    Stack,
-    Typography,
-} from '@mui/material';
+import { Box, Chip, CircularProgress, Divider, Link, Popover, Stack, Typography } from '@mui/material';
 import { useUserLookup } from '../core/api/user.queries';
 import { formatUserDisplayName } from '../core/lib/format-user-display-name';
 import type { UserLookup } from '../core/model/user-lookup.schema';

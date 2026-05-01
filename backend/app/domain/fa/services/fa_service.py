@@ -6,7 +6,12 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
-from app.domain.exceptions import ConflictException, InvalidDataException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    InvalidDataException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.fa.interface.fa_repository import IFaRepository
 from app.domain.fa.models.fa_bean import FaBean
 from app.domain.fa.models.fa_constants import FaStatus
@@ -168,7 +173,9 @@ def get_fa_by_uuid(repository: IFaRepository, uuid: str) -> FaBean:
     return bean
 
 
-def get_all_fas(repository: IFaRepository, limit: Optional[int] = None, offset: int = 0) -> List[FaBean]:
+def get_all_fas(
+    repository: IFaRepository, limit: Optional[int] = None, offset: int = 0
+) -> List[FaBean]:
     """Récupère toutes les FA."""
     return repository.get_all(limit=limit, offset=offset)
 
@@ -178,7 +185,9 @@ def count_all_fas(repository: IFaRepository) -> int:
     return repository.count_all()
 
 
-def get_fa_by_fsec_version_id(repository: IFaRepository, fsec_version_id: str) -> FaBean:
+def get_fa_by_fsec_version_id(
+    repository: IFaRepository, fsec_version_id: str
+) -> FaBean:
     """Récupère la FA associée à une FSEC."""
     bean = repository.get_by_fsec_version_id(fsec_version_id)
     if bean is None:
@@ -236,7 +245,9 @@ def _merge_fa_beans(existing: FaBean, updated: FaBean) -> FaBean:
             merged_kwargs[name] = getattr(existing, name)
         else:
             updated_val = getattr(updated, name)
-            merged_kwargs[name] = updated_val if updated_val is not None else getattr(existing, name)
+            merged_kwargs[name] = (
+                updated_val if updated_val is not None else getattr(existing, name)
+            )
     return FaBean(**merged_kwargs)
 
 
@@ -262,7 +273,9 @@ def delete_fa(repository: IFaRepository, uuid: str) -> bool:
     return True
 
 
-def patch_fa(repository: IFaRepository, uuid: str, partial_data: Dict[str, Any]) -> FaBean:
+def patch_fa(
+    repository: IFaRepository, uuid: str, partial_data: Dict[str, Any]
+) -> FaBean:
     """Met à jour partiellement une FA (PATCH).
 
     Args:
@@ -298,7 +311,11 @@ def patch_fa(repository: IFaRepository, uuid: str, partial_data: Dict[str, Any])
         }
 
     new_status = partial_data.get("status_id")
-    if "status_id" in partial_data and new_status is not None and new_status != existing.status_id:
+    if (
+        "status_id" in partial_data
+        and new_status is not None
+        and new_status != existing.status_id
+    ):
         logger.info(
             "FA %s: status_id modifié via PATCH (bypass workflow strict) %s -> %s",
             uuid,
@@ -397,7 +414,9 @@ def validate_open_phase(
     if validation_date is None:
         validation_date = date.today()
 
-    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
+    user_uuid, name = _resolve_validator_inputs(
+        user_repository, validator_user_uuid, validator_name
+    )
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -441,7 +460,9 @@ def validate_progress_phase(
     if validation_date is None:
         validation_date = date.today()
 
-    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
+    user_uuid, name = _resolve_validator_inputs(
+        user_repository, validator_user_uuid, validator_name
+    )
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -454,7 +475,10 @@ def validate_progress_phase(
         )
 
     # Vérifier la cohérence chronologique avec la validation de la phase Ouvert
-    if bean.iec_validation_open_date and validation_date < bean.iec_validation_open_date:
+    if (
+        bean.iec_validation_open_date
+        and validation_date < bean.iec_validation_open_date
+    ):
         raise InvalidDataException(
             f"La date de validation 'En cours' ({validation_date}) ne peut pas être antérieure "
             f"à la date de validation 'Ouvert' ({bean.iec_validation_open_date})"
@@ -490,7 +514,9 @@ def close_fa(
     if closure_date is None:
         closure_date = date.today()
 
-    user_uuid, name = _resolve_validator_inputs(user_repository, validator_user_uuid, validator_name)
+    user_uuid, name = _resolve_validator_inputs(
+        user_repository, validator_user_uuid, validator_name
+    )
 
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -509,7 +535,10 @@ def close_fa(
         )
 
     # Vérifier la cohérence chronologique avec la validation de la phase En cours
-    if bean.iec_validation_progress_date and closure_date < bean.iec_validation_progress_date:
+    if (
+        bean.iec_validation_progress_date
+        and closure_date < bean.iec_validation_progress_date
+    ):
         raise InvalidDataException(
             f"La date de fermeture ({closure_date}) ne peut pas être antérieure "
             f"à la date de validation 'En cours' ({bean.iec_validation_progress_date})"

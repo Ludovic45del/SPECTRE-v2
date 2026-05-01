@@ -11,19 +11,37 @@ from typing import Any
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
-from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
-from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
-from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
+from app.domain.planning.models.planning_campaign_step_bean import (
+    PlanningCampaignStepBean,
+)
+from app.domain.planning.models.planning_cell_annotation_bean import (
+    PlanningCellAnnotationBean,
+)
+from app.domain.planning.models.planning_fsec_cell_link_bean import (
+    PlanningFsecCellLinkBean,
+)
+from app.domain.planning.models.planning_member_period_bean import (
+    PlanningMemberPeriodBean,
+)
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.repository.planning.models.lab_event_entity import LabEventEntity
 from app.repository.planning.models.lab_machine_entity import LabMachineEntity
 from app.repository.planning.models.lab_salle_entity import LabSalleEntity
-from app.repository.planning.models.planning_campaign_step_entity import PlanningCampaignStepEntity
-from app.repository.planning.models.planning_cell_annotation_entity import PlanningCellAnnotationEntity
-from app.repository.planning.models.planning_fsec_cell_link_entity import PlanningFsecCellLinkEntity
-from app.repository.planning.models.planning_member_period_entity import PlanningMemberPeriodEntity
-from app.repository.planning.models.planning_week_state_entity import PlanningWeekStateEntity
+from app.repository.planning.models.planning_campaign_step_entity import (
+    PlanningCampaignStepEntity,
+)
+from app.repository.planning.models.planning_cell_annotation_entity import (
+    PlanningCellAnnotationEntity,
+)
+from app.repository.planning.models.planning_fsec_cell_link_entity import (
+    PlanningFsecCellLinkEntity,
+)
+from app.repository.planning.models.planning_member_period_entity import (
+    PlanningMemberPeriodEntity,
+)
+from app.repository.planning.models.planning_week_state_entity import (
+    PlanningWeekStateEntity,
+)
 
 # ====================== WEEK STATE ======================
 
@@ -258,7 +276,9 @@ def lab_machine_entity_to_bean(entity: LabMachineEntity) -> LabMachineBean:
 
 
 def lab_salle_entity_to_bean(entity: LabSalleEntity) -> LabSalleBean:
-    machines = [lab_machine_entity_to_bean(m) for m in entity.labmachineentity_set.all()]
+    machines = [
+        lab_machine_entity_to_bean(m) for m in entity.labmachineentity_set.all()
+    ]
     return LabSalleBean(
         uuid=entity.uuid,
         name=entity.name,

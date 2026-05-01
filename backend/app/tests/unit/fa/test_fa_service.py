@@ -18,7 +18,11 @@ from unittest.mock import MagicMock, create_autospec, patch
 import pytest
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
-from app.domain.exceptions import ConflictException, InvalidDataException, NotFoundException
+from app.domain.exceptions import (
+    ConflictException,
+    InvalidDataException,
+    NotFoundException,
+)
 from app.domain.fa.interface.fa_repository import IFaRepository
 from app.domain.fa.models.fa_bean import FaBean
 from app.domain.fa.models.fa_constants import FaStatus
@@ -383,7 +387,9 @@ class TestCreateFa:
 
         repo.create.assert_not_called()
 
-    def test_create_calls_exists_by_fsec_version_id_with_bean_value(self, repo, sample_fa):
+    def test_create_calls_exists_by_fsec_version_id_with_bean_value(
+        self, repo, sample_fa
+    ):
         """Vérifie que exists_by_fsec_version_id est appelé avec le bon argument."""
         repo.exists_by_fsec_version_id.return_value = False
         repo.exists_by_identifier.return_value = False
@@ -391,7 +397,9 @@ class TestCreateFa:
 
         create_fa(repo, sample_fa, "C", "F", 2024)
 
-        repo.exists_by_fsec_version_id.assert_called_once_with(sample_fa.fsec_version_id)
+        repo.exists_by_fsec_version_id.assert_called_once_with(
+            sample_fa.fsec_version_id
+        )
 
     def test_create_return_value_is_from_repository(self, repo, sample_fa):
         """Kill mutant: return value changed — vérifie que le résultat vient bien de repo.create."""
@@ -436,7 +444,9 @@ class TestResolveFaCreationContext:
         assert result.fsec_name == "FSEC-Alpha"
         assert result.year == 2025
 
-    def test_context_missing_fsec_version_id_empty_string(self, fsec_repo, campaign_repo):
+    def test_context_missing_fsec_version_id_empty_string(
+        self, fsec_repo, campaign_repo
+    ):
         """InvalidDataException si fsec_version_id est une chaîne vide."""
         fa_bean = FaBean(fsec_version_id="")
 
@@ -464,7 +474,9 @@ class TestResolveFaCreationContext:
         assert exc_info.value.resource == "FSEC"
         assert "FSEC" in str(exc_info.value)
 
-    def test_context_fsec_not_found_exception_identifier(self, fsec_repo, campaign_repo):
+    def test_context_fsec_not_found_exception_identifier(
+        self, fsec_repo, campaign_repo
+    ):
         """Kill mutant: l'identifiant dans NotFoundException est bien le fsec_version_id."""
         fa_bean = FaBean(fsec_version_id="specific-fsec-id")
         fsec_repo.get_by_version_uuid.return_value = None
@@ -489,7 +501,9 @@ class TestResolveFaCreationContext:
         assert result.fsec_name == "FSEC-Beta"
         campaign_repo.get_by_uuid.assert_not_called()
 
-    def test_context_no_campaign_id_defaults_year_to_today(self, fsec_repo, campaign_repo):
+    def test_context_no_campaign_id_defaults_year_to_today(
+        self, fsec_repo, campaign_repo
+    ):
         """Si FSEC n'a pas de campaign_id, year = date.today().year."""
         fa_bean = FaBean(fsec_version_id="fsec-v-001")
 
@@ -568,7 +582,9 @@ class TestResolveFaCreationContext:
 
         assert result.campaign_name == "SpecificCampaignName"
 
-    def test_context_return_type_is_creation_context_bean(self, fsec_repo, campaign_repo):
+    def test_context_return_type_is_creation_context_bean(
+        self, fsec_repo, campaign_repo
+    ):
         """Kill mutant: le retour est un FaCreationContextBean, pas None ou autre."""
         fa_bean = FaBean(fsec_version_id="fsec-v-001")
 
@@ -1141,7 +1157,9 @@ class TestPatchFa:
 
         repo.update.side_effect = capture_update
 
-        patch_fa(repo, sample_fa.uuid, {"discoverer": "Jane Doe", "observation": "New obs"})
+        patch_fa(
+            repo, sample_fa.uuid, {"discoverer": "Jane Doe", "observation": "New obs"}
+        )
 
         assert captured["bean"].discoverer == "Jane Doe"
         assert captured["bean"].observation == "New obs"
@@ -1272,8 +1290,14 @@ class TestPatchFa:
         )
 
         assert captured["bean"].iec_validation_open == sample_fa.iec_validation_open
-        assert captured["bean"].iec_validation_open_date == sample_fa.iec_validation_open_date
-        assert captured["bean"].iec_validation_open_name == sample_fa.iec_validation_open_name
+        assert (
+            captured["bean"].iec_validation_open_date
+            == sample_fa.iec_validation_open_date
+        )
+        assert (
+            captured["bean"].iec_validation_open_name
+            == sample_fa.iec_validation_open_name
+        )
 
     def test_ignores_iec_validation_progress_fields(self, repo, sample_fa):
         """Les champs IEC validation progress sont protégés."""
@@ -1297,9 +1321,18 @@ class TestPatchFa:
             },
         )
 
-        assert captured["bean"].iec_validation_progress == sample_fa.iec_validation_progress
-        assert captured["bean"].iec_validation_progress_date == sample_fa.iec_validation_progress_date
-        assert captured["bean"].iec_validation_progress_name == sample_fa.iec_validation_progress_name
+        assert (
+            captured["bean"].iec_validation_progress
+            == sample_fa.iec_validation_progress
+        )
+        assert (
+            captured["bean"].iec_validation_progress_date
+            == sample_fa.iec_validation_progress_date
+        )
+        assert (
+            captured["bean"].iec_validation_progress_name
+            == sample_fa.iec_validation_progress_name
+        )
 
     def test_ignores_closure_fields(self, repo, sample_fa):
         """Les champs closure sont protégés."""
@@ -1325,7 +1358,9 @@ class TestPatchFa:
 
         assert captured["bean"].closure_validation == sample_fa.closure_validation
         assert captured["bean"].closure_date == sample_fa.closure_date
-        assert captured["bean"].closure_validator_name == sample_fa.closure_validator_name
+        assert (
+            captured["bean"].closure_validator_name == sample_fa.closure_validator_name
+        )
 
     def test_allows_status_id_change(self, repo, sample_fa):
         """Le champ 'status_id' est modifiable via PATCH (navigation libre stepper)."""
@@ -1360,7 +1395,9 @@ class TestPatchFa:
         assert captured["bean"].status_id == FaStatus.OPEN
 
     @patch("app.domain.fa.services.fa_service.logger")
-    def test_patch_logs_status_bypass_when_status_changes(self, mock_logger, repo, sample_fa):
+    def test_patch_logs_status_bypass_when_status_changes(
+        self, mock_logger, repo, sample_fa
+    ):
         """Un PATCH qui change status_id émet un log d'audit (fa_status_bypass)."""
         repo.get_by_uuid.return_value = sample_fa
         repo.update.side_effect = lambda b: b
@@ -1382,7 +1419,9 @@ class TestPatchFa:
         }
 
     @patch("app.domain.fa.services.fa_service.logger")
-    def test_patch_does_not_log_bypass_when_status_absent(self, mock_logger, repo, sample_fa):
+    def test_patch_does_not_log_bypass_when_status_absent(
+        self, mock_logger, repo, sample_fa
+    ):
         """Un PATCH sans status_id ne produit pas de log de bypass."""
         repo.get_by_uuid.return_value = sample_fa
         repo.update.side_effect = lambda b: b
@@ -1397,7 +1436,9 @@ class TestPatchFa:
         assert bypass_calls == []
 
     @patch("app.domain.fa.services.fa_service.logger")
-    def test_patch_does_not_log_bypass_when_status_unchanged(self, mock_logger, repo, sample_fa):
+    def test_patch_does_not_log_bypass_when_status_unchanged(
+        self, mock_logger, repo, sample_fa
+    ):
         """Un PATCH avec le même status_id ne produit pas de log de bypass."""
         repo.get_by_uuid.return_value = sample_fa
         repo.update.side_effect = lambda b: b
@@ -1753,7 +1794,9 @@ class TestValidateProgressPhase:
 
         repo.update.side_effect = capture_update
 
-        validate_progress_phase(repo, fa_en_cours.uuid, "Marie Curie", date(2024, 5, 15))
+        validate_progress_phase(
+            repo, fa_en_cours.uuid, "Marie Curie", date(2024, 5, 15)
+        )
 
         assert captured["bean"].iec_validation_progress_name == "Marie Curie"
 
@@ -1885,7 +1928,9 @@ class TestCloseFa:
 
         repo.update.side_effect = capture_update
 
-        close_fa(repo, fa_en_cours.uuid, "Chef", "Texte de validation", date(2024, 2, 1))
+        close_fa(
+            repo, fa_en_cours.uuid, "Chef", "Texte de validation", date(2024, 2, 1)
+        )
 
         assert captured["bean"].closure_validation == "Texte de validation"
 
@@ -1949,7 +1994,9 @@ class TestCloseFa:
 
         assert exc_info.value.field == "status"
 
-    def test_missing_iec_validation_progress_raises(self, repo, fa_en_cours_no_progress_validation):
+    def test_missing_iec_validation_progress_raises(
+        self, repo, fa_en_cours_no_progress_validation
+    ):
         """ConflictException si iec_validation_progress est False."""
         repo.get_by_uuid.return_value = fa_en_cours_no_progress_validation
 
@@ -2162,7 +2209,9 @@ class TestEdgeCases:
         result = delete_fa(repo, "uuid")
         assert result is True
 
-    def test_resolve_context_calls_fsec_repo_with_correct_id(self, fsec_repo, campaign_repo):
+    def test_resolve_context_calls_fsec_repo_with_correct_id(
+        self, fsec_repo, campaign_repo
+    ):
         """Vérifie que get_by_version_uuid est appelé avec le bon fsec_version_id."""
         fa_bean = FaBean(fsec_version_id="specific-fsec-vid")
         fsec_repo.get_by_version_uuid.return_value = None
@@ -2172,7 +2221,9 @@ class TestEdgeCases:
 
         fsec_repo.get_by_version_uuid.assert_called_once_with("specific-fsec-vid")
 
-    def test_resolve_context_calls_campaign_repo_with_correct_id(self, fsec_repo, campaign_repo):
+    def test_resolve_context_calls_campaign_repo_with_correct_id(
+        self, fsec_repo, campaign_repo
+    ):
         """Vérifie que get_by_uuid est appelé avec campaign_id de la FSEC."""
         fa_bean = FaBean(fsec_version_id="fsec-v-001")
 
@@ -2201,7 +2252,9 @@ class TestEdgeCases:
 
         # All fields from FaBean should be present on the merged result
         for field in fields(FaBean):
-            assert hasattr(merged, field.name), f"Field {field.name} missing from merged bean"
+            assert hasattr(
+                merged, field.name
+            ), f"Field {field.name} missing from merged bean"
 
     def test_close_fa_in_progress_with_validation_succeeds(self, repo):
         """Kill mutant: and ↔ or inversion on status + validation checks.
@@ -2391,7 +2444,9 @@ class TestFaServiceErrorMessages:
 
         assert exc_info.value.field == "identifier"
 
-    def test_resolve_context_missing_fsec_version_id(self, repo, fsec_repo, campaign_repo):
+    def test_resolve_context_missing_fsec_version_id(
+        self, repo, fsec_repo, campaign_repo
+    ):
         """Verify InvalidDataException message contains 'fsec_version_id'."""
         bean = FaBean(fsec_version_id="")
 

@@ -32,18 +32,8 @@ import {
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-import {
-    useFsecAssemblyItems,
-    useRemoveAssemblyItem,
-    type FsecAssemblyItemDetail,
-} from '@entities/fsec-assembly-item';
-import {
-    QuantityBadge,
-    RubricBadge,
-    StatusBadge,
-    formatLocation,
-    type StockCatalogItem,
-} from '@entities/stock-item';
+import { useFsecAssemblyItems, useRemoveAssemblyItem, type FsecAssemblyItemDetail } from '@entities/fsec-assembly-item';
+import { QuantityBadge, RubricBadge, StatusBadge, formatLocation, type StockCatalogItem } from '@entities/stock-item';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
 
@@ -64,16 +54,10 @@ export function AssemblyItemsTable({ fsecUuid, disabled = false }: AssemblyItems
         if (!deleteTarget) return;
         try {
             await removeMutation.mutateAsync(deleteTarget.uuid);
-            showNotification(
-                `« ${deleteTarget.catalogItem.name} » retiré du tableau récap`,
-                'success',
-            );
+            showNotification(`« ${deleteTarget.catalogItem.name} » retiré du tableau récap`, 'success');
             setDeleteTarget(null);
         } catch (err) {
-            showNotification(
-                getErrorMessage(err, 'Erreur lors de la suppression'),
-                'error',
-            );
+            showNotification(getErrorMessage(err, 'Erreur lors de la suppression'), 'error');
         }
     };
 
@@ -84,8 +68,7 @@ export function AssemblyItemsTable({ fsecUuid, disabled = false }: AssemblyItems
     if (error) {
         return (
             <MuiAlert severity="error" role="alert">
-                Erreur de chargement des éléments :{' '}
-                {error instanceof Error ? error.message : 'inconnue'}
+                Erreur de chargement des éléments : {error instanceof Error ? error.message : 'inconnue'}
             </MuiAlert>
         );
     }
@@ -136,11 +119,12 @@ export function AssemblyItemsTable({ fsecUuid, disabled = false }: AssemblyItems
                 <DialogTitle id="confirm-delete-assembly-item">Retirer cet élément ?</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Vous êtes sur le point de retirer{' '}
-                        <strong>{deleteTarget?.catalogItem.name}</strong> du tableau récap.
+                        Vous êtes sur le point de retirer <strong>{deleteTarget?.catalogItem.name}</strong> du tableau
+                        récap.
                         {deleteTarget?.catalogItem.kind === 'element' && (
                             <>
-                                {' '}L'élément redeviendra <em>disponible</em> dans le catalogue.
+                                {' '}
+                                L'élément redeviendra <em>disponible</em> dans le catalogue.
                             </>
                         )}
                     </DialogContentText>

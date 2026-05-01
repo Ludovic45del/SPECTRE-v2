@@ -73,7 +73,9 @@ export const DonutChart = memo(function DonutChart({ segments, total, size = 180
                             strokeDashoffset={arc.dashOffset}
                             strokeLinecap="round"
                             transform={`rotate(-90 ${CENTER} ${CENTER})`}
-                            style={{ transition: motion.transition(['stroke-dasharray', 'stroke-dashoffset'], 'dramatic') }}
+                            style={{
+                                transition: motion.transition(['stroke-dasharray', 'stroke-dashoffset'], 'dramatic'),
+                            }}
                         />
                     ))}
                 </svg>

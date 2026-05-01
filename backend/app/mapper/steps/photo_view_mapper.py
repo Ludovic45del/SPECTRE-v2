@@ -10,7 +10,9 @@ def photo_view_mapper_entity_to_bean(entity: PhotoViewEntity) -> PhotoViewBean:
     """Convertit une PhotoViewEntity en PhotoViewBean."""
     return PhotoViewBean(
         uuid=str(entity.uuid),
-        pictures_step_id=(str(entity.pictures_step_id_id) if entity.pictures_step_id_id else ""),
+        pictures_step_id=(
+            str(entity.pictures_step_id_id) if entity.pictures_step_id_id else ""
+        ),
         name=entity.name,
         link=entity.link,
     )

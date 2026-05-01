@@ -8,7 +8,9 @@ from app.mapper.steps.repressurization_step_mapper import (
     repressurization_step_mapper_bean_to_entity,
     repressurization_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.repressurization_step_entity import RepressurizationStepEntity
+from app.repository.steps.models.repressurization_step_entity import (
+    RepressurizationStepEntity,
+)
 from app.repository.steps.repositories.base_step_repository import BaseStepRepository
 
 

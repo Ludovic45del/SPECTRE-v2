@@ -27,19 +27,27 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "offset_0_bar_mv",
-                    models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
                 ),
                 (
                     "mesurande_0_bar_lie",
-                    models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
                 ),
                 (
                     "signal_etendue_mv",
-                    models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
                 ),
                 (
                     "signal_pa_meteociel",
-                    models.DecimalField(blank=True, decimal_places=4, max_digits=12, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=4, max_digits=12, null=True
+                    ),
                 ),
                 ("date", models.DateField(blank=True, null=True)),
                 ("operateur", models.CharField(blank=True, default="", max_length=100)),

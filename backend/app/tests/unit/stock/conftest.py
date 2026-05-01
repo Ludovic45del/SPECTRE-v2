@@ -109,7 +109,9 @@ def sample_low_stock_consumable_bean() -> StockCatalogItemBean:
 
 
 @pytest.fixture
-def sample_movement_bean(stock_consumable_uuid, stock_movement_uuid) -> StockMovementBean:
+def sample_movement_bean(
+    stock_consumable_uuid, stock_movement_uuid
+) -> StockMovementBean:
     """Mouvement d'entrée de 12 tubes."""
     return StockMovementBean(
         uuid=stock_movement_uuid,
@@ -124,7 +126,9 @@ def sample_movement_bean(stock_consumable_uuid, stock_movement_uuid) -> StockMov
 
 
 @pytest.fixture
-def sample_assembly_bean(stock_fsec_uuid, stock_element_uuid, stock_assembly_uuid) -> FsecAssemblyItemBean:
+def sample_assembly_bean(
+    stock_fsec_uuid, stock_element_uuid, stock_assembly_uuid
+) -> FsecAssemblyItemBean:
     """Ligne du tableau récap FSEC liant un élément."""
     return FsecAssemblyItemBean(
         uuid=stock_assembly_uuid,

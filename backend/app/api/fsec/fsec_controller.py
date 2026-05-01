@@ -25,8 +25,12 @@ from app.domain.fsec.services.fsec_service import (
 )
 from app.mapper.fsec.fsec_mapper import fsec_mapper_api_to_bean, fsec_mapper_bean_to_api
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
-from app.repository.stock.repositories.fsec_assembly_item_repository import FsecAssemblyItemRepository
-from app.repository.stock.repositories.stock_catalog_repository import StockCatalogRepository
+from app.repository.stock.repositories.fsec_assembly_item_repository import (
+    FsecAssemblyItemRepository,
+)
+from app.repository.stock.repositories.stock_catalog_repository import (
+    StockCatalogRepository,
+)
 
 
 class FsecPagination(PageNumberPagination):
@@ -54,7 +58,9 @@ class FsecController(PaginatedControllerMixin, ViewSet):
     def list(self, request) -> JsonResponse:
         """Liste tous les FSECs (GET /)."""
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: get_all_fsecs(self.repository, limit=limit, offset=offset),
+            fetch_func=lambda limit, offset: get_all_fsecs(
+                self.repository, limit=limit, offset=offset
+            ),
             count_func=lambda: count_all_fsecs(self.repository),
         )
         return self.paginate_or_json(request, source, fsec_mapper_bean_to_api)
@@ -75,7 +81,9 @@ class FsecController(PaginatedControllerMixin, ViewSet):
 
         bean = fsec_mapper_api_to_bean(serializer.validated_data)
         result = create_fsec(self.repository, bean)
-        return JsonResponse(fsec_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            fsec_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, version_uuid=None) -> JsonResponse:
         """Met à jour un FSEC (PUT /:version_uuid/)."""
@@ -144,4 +152,6 @@ class FsecController(PaginatedControllerMixin, ViewSet):
 
         bean = fsec_mapper_api_to_bean(serializer.validated_data)
         result = create_new_version(self.repository, fsec_uuid, bean)
-        return JsonResponse(fsec_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            fsec_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )

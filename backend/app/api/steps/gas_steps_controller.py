@@ -51,12 +51,24 @@ from app.mapper.steps.repressurization_step_mapper import (
     repressurization_step_mapper_bean_to_api,
 )
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
-from app.repository.steps.repositories.airtightness_test_lp_step_repository import AirtightnessTestLpStepRepository
-from app.repository.steps.repositories.depressurization_step_repository import DepressurizationStepRepository
-from app.repository.steps.repositories.gas_filling_bp_step_repository import GasFillingBpStepRepository
-from app.repository.steps.repositories.gas_filling_hp_step_repository import GasFillingHpStepRepository
-from app.repository.steps.repositories.permeation_step_repository import PermeationStepRepository
-from app.repository.steps.repositories.repressurization_step_repository import RepressurizationStepRepository
+from app.repository.steps.repositories.airtightness_test_lp_step_repository import (
+    AirtightnessTestLpStepRepository,
+)
+from app.repository.steps.repositories.depressurization_step_repository import (
+    DepressurizationStepRepository,
+)
+from app.repository.steps.repositories.gas_filling_bp_step_repository import (
+    GasFillingBpStepRepository,
+)
+from app.repository.steps.repositories.gas_filling_hp_step_repository import (
+    GasFillingHpStepRepository,
+)
+from app.repository.steps.repositories.permeation_step_repository import (
+    PermeationStepRepository,
+)
+from app.repository.steps.repositories.repressurization_step_repository import (
+    RepressurizationStepRepository,
+)
 
 
 class BaseGasStepController(ViewSet):
@@ -110,7 +122,9 @@ class BaseGasStepController(ViewSet):
                 safe=False,
                 encoder=DjangoJSONEncoder,
             )
-        return JsonResponse([self.mapper_bean_to_api(result)], safe=False, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            [self.mapper_bean_to_api(result)], safe=False, encoder=DjangoJSONEncoder
+        )
 
     def retrieve(self, request, uuid=None) -> JsonResponse:
         bean = get_step_by_uuid(self.repository, uuid, self.step_name)
@@ -123,7 +137,9 @@ class BaseGasStepController(ViewSet):
             self._validate_fsec_exists(str(fsec_version_id))
         bean = self.mapper_api_to_bean(validated)
         result = create_step(self.repository, bean)
-        return JsonResponse(self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, uuid=None) -> JsonResponse:
         data = request.data.copy()

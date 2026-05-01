@@ -27,7 +27,8 @@ def add_fk_constraint(apps, schema_editor):
 def drop_fk_constraint(apps, schema_editor):
     if connection.vendor != "sqlite":
         schema_editor.execute(
-            'ALTER TABLE "PLANNING_CAMPAIGN_STEP" ' 'DROP CONSTRAINT IF EXISTS "fk_campaign_step_campaign";'
+            'ALTER TABLE "PLANNING_CAMPAIGN_STEP" '
+            'DROP CONSTRAINT IF EXISTS "fk_campaign_step_campaign";'
         )
 
 

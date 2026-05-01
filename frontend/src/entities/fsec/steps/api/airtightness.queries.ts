@@ -72,10 +72,7 @@ export function useCreateAirtightnessStep() {
 
     return useMutation({
         mutationFn: async (input: CreateAirtightnessStepInput): Promise<AirtightnessStep> => {
-            const response = await api.post(
-                '/airtightness-test-lp-steps/',
-                airtightnessStepToApi(input),
-            );
+            const response = await api.post('/airtightness-test-lp-steps/', airtightnessStepToApi(input));
             return AirtightnessStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -94,10 +91,7 @@ export function useUpdateAirtightnessStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateAirtightnessStepInput): Promise<AirtightnessStep> => {
-            const response = await api.put(
-                `/airtightness-test-lp-steps/${input.uuid}/`,
-                airtightnessStepToApi(input),
-            );
+            const response = await api.put(`/airtightness-test-lp-steps/${input.uuid}/`, airtightnessStepToApi(input));
             return AirtightnessStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

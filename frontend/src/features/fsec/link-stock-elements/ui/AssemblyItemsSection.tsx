@@ -28,11 +28,7 @@ export function AssemblyItemsSection({ fsecUuid, isLocked }: AssemblyItemsSectio
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider', borderRadius: 1 }}>
             {!isLocked && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setModalOpen(true)}
-                    >
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setModalOpen(true)}>
                         Ajouter un élément
                     </Button>
                 </Box>
@@ -43,11 +39,7 @@ export function AssemblyItemsSection({ fsecUuid, isLocked }: AssemblyItemsSectio
             <AssemblyItemsTable fsecUuid={fsecUuid} disabled={isLocked} />
 
             {!isLocked && (
-                <AddAssemblyItemModal
-                    open={modalOpen}
-                    fsecUuid={fsecUuid}
-                    onClose={() => setModalOpen(false)}
-                />
+                <AddAssemblyItemModal open={modalOpen} fsecUuid={fsecUuid} onClose={() => setModalOpen(false)} />
             )}
         </Paper>
     );

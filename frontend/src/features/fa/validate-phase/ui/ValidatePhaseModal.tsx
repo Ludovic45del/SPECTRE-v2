@@ -121,8 +121,8 @@ export const ValidatePhaseModal = memo(function ValidatePhaseModal({
                 <DialogContent>
                     <Stack spacing={3} sx={{ mt: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                            Cette validation est réservée aux IEC et chefs de laboratoire. Le
-                            backend rejette toute autre selection.
+                            Cette validation est réservée aux IEC et chefs de laboratoire. Le backend rejette toute
+                            autre selection.
                         </Typography>
 
                         <Controller
@@ -170,11 +170,7 @@ export const ValidatePhaseModal = memo(function ValidatePhaseModal({
                                         control={
                                             <Checkbox
                                                 checked={Boolean(field.value)}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        e.target.checked ? true : undefined,
-                                                    )
-                                                }
+                                                onChange={(e) => field.onChange(e.target.checked ? true : undefined)}
                                                 inputProps={{
                                                     'aria-label': 'Confirmer la validation',
                                                 }}

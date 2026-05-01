@@ -8,7 +8,9 @@ from app.mapper.steps.gas_filling_bp_step_mapper import (
     gas_filling_bp_step_mapper_bean_to_entity,
     gas_filling_bp_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.gas_filling_bp_step_entity import GasFillingBpStepEntity
+from app.repository.steps.models.gas_filling_bp_step_entity import (
+    GasFillingBpStepEntity,
+)
 from app.repository.steps.repositories.base_step_repository import BaseStepRepository
 
 

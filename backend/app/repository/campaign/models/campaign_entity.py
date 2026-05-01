@@ -4,7 +4,9 @@ import uuid
 
 from django.db import models
 
-from app.repository.campaign.models.campaign_installations_entity import CampaignInstallationsEntity
+from app.repository.campaign.models.campaign_installations_entity import (
+    CampaignInstallationsEntity,
+)
 from app.repository.campaign.models.campaign_status_entity import CampaignStatusEntity
 from app.repository.campaign.models.campaign_types_entity import CampaignTypesEntity
 

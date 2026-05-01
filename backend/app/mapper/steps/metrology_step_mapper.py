@@ -18,7 +18,9 @@ def metrology_step_mapper_entity_to_bean(
     """Convertit une MetrologyStepEntity en MetrologyStepBean."""
     return MetrologyStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         machine_id=entity.machine_id_id if entity.machine_id_id is not None else None,
         rack_id=entity.rack_id_id if entity.rack_id_id is not None else None,
         metrologist_name=entity.metrologist_name,

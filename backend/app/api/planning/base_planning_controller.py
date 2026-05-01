@@ -25,7 +25,9 @@ def _get_year(request) -> int:
     try:
         year = int(year_param)
     except (ValueError, TypeError):
-        raise ValidationException("year", f"Valeur invalide: '{year_param}'. Un entier est attendu.")
+        raise ValidationException(
+            "year", f"Valeur invalide: '{year_param}'. Un entier est attendu."
+        )
     if year < 2000 or year > 2100:
         raise ValidationException("year", "L'annee doit etre entre 2000 et 2100.")
     return year
@@ -124,7 +126,9 @@ class BasePlanningController(ViewSet):
             raise InvalidDataException(str(serializer.errors))
         bean = self.mapper_api_to_bean(serializer.validated_data)
         result = self.service_create(self.repository, bean)
-        return JsonResponse(self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            self.mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def partial_update(self, request, pk=None) -> JsonResponse:
         if self.service_update is None:

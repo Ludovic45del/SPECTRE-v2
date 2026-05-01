@@ -6,7 +6,12 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ViewSet
 
-from app.api.fa.serializers import FaCloseSerializer, FaPatchSerializer, FaSerializer, FaValidatePhaseSerializer
+from app.api.fa.serializers import (
+    FaCloseSerializer,
+    FaPatchSerializer,
+    FaSerializer,
+    FaValidatePhaseSerializer,
+)
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.exceptions import InvalidDataException
@@ -67,7 +72,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
         acceptés pour ~2000 FA max sur 10 ans. Le frontend utilise toujours ?page=.
         """
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: get_all_fas(self.repository, limit=limit, offset=offset),
+            fetch_func=lambda limit, offset: get_all_fas(
+                self.repository, limit=limit, offset=offset
+            ),
             count_func=lambda: count_all_fas(self.repository),
         )
         return self.paginate_or_json(request, source, fa_mapper_bean_to_api)
@@ -88,7 +95,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
         bean = fa_mapper_api_to_bean(validated)
 
         # Résoudre le contexte de création via le service
-        context = resolve_fa_creation_context(bean, self.fsec_repository, self.campaign_repository)
+        context = resolve_fa_creation_context(
+            bean, self.fsec_repository, self.campaign_repository
+        )
 
         result = create_fa(
             self.repository,
@@ -97,7 +106,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
             fsec_name=context.fsec_name,
             year=context.year,
         )
-        return JsonResponse(fa_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            fa_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, uuid=None) -> JsonResponse:
         """Met à jour une FA (PUT /:uuid/)."""
@@ -158,7 +169,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
             uuid,
             validator_name=validator_name,
             validation_date=validation_date,
-            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            validator_user_uuid=(
+                str(validator_user_uuid) if validator_user_uuid else None
+            ),
             user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
@@ -180,7 +193,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
             uuid,
             validator_name=validator_name,
             validation_date=validation_date,
-            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            validator_user_uuid=(
+                str(validator_user_uuid) if validator_user_uuid else None
+            ),
             user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
@@ -204,7 +219,9 @@ class FaController(PaginatedControllerMixin, ViewSet):
             validator_name=validator_name,
             closure_validation=closure_validation,
             closure_date=closure_date,
-            validator_user_uuid=(str(validator_user_uuid) if validator_user_uuid else None),
+            validator_user_uuid=(
+                str(validator_user_uuid) if validator_user_uuid else None
+            ),
             user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)

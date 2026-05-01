@@ -8,7 +8,7 @@
                 "http://localhost:4173/planning"
             ],
             "numberOfRuns": 3,
-            "puppeteerScript": "./lighthouse-puppeteer.cjs",
+            "puppeteerScript": "./frontend/lighthouse-puppeteer.cjs",
             "settings": {
                 "preset": "desktop",
                 "throttlingMethod": "simulate",

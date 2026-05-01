@@ -7,7 +7,10 @@ import { Box, Paper, Stack, Typography } from '@mui/material';
 
 export type AlertSeverity = 'danger' | 'warning' | 'info';
 
-const PALETTES: Record<AlertSeverity, { headerBg: string; headerBorder: string; titleColor: string; countBg: string; countColor: string }> = {
+const PALETTES: Record<
+    AlertSeverity,
+    { headerBg: string; headerBorder: string; titleColor: string; countBg: string; countColor: string }
+> = {
     danger: {
         headerBg: '#fef2f2',
         headerBorder: '#fecaca',

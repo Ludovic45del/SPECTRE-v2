@@ -3,8 +3,14 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid, parse_date_from_api, read_operator_user_uuid
-from app.repository.steps.models.gas_filling_bp_step_entity import GasFillingBpStepEntity
+from app.mapper.steps.base_step_mapper import (
+    normalize_user_uuid,
+    parse_date_from_api,
+    read_operator_user_uuid,
+)
+from app.repository.steps.models.gas_filling_bp_step_entity import (
+    GasFillingBpStepEntity,
+)
 
 
 def gas_filling_bp_step_mapper_entity_to_bean(
@@ -13,9 +19,13 @@ def gas_filling_bp_step_mapper_entity_to_bean(
     """Convertit une GasFillingBpStepEntity en GasFillingBpStepBean."""
     return GasFillingBpStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         embase_id=str(entity.embase_id) if entity.embase_id else None,
-        embase_identifier=(entity.embase.identifier if entity.embase_id and entity.embase else None),
+        embase_identifier=(
+            entity.embase.identifier if entity.embase_id and entity.embase else None
+        ),
         leak_rate_dtri=entity.leak_rate_dtri,
         gas_type=entity.gas_type,
         experiment_pressure=entity.experiment_pressure,
@@ -87,7 +97,9 @@ def gas_filling_bp_step_mapper_bean_to_api(
         "leak_test_duration": bean.leak_test_duration,
         "operator": bean.operator,
         "operator_user_uuid": bean.operator_user_uuid,
-        "date_of_fulfilment": (bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None),
+        "date_of_fulfilment": (
+            bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None
+        ),
         "gas_base": bean.gas_base,
         "gas_container": bean.gas_container,
         "observations": bean.observations,

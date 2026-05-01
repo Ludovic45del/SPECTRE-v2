@@ -80,10 +80,7 @@ export function ElementForm({ control, errors, showMateriaux }: ElementFormProps
                                     label="Nom (FSEC)"
                                     required
                                     error={!!errors.name}
-                                    helperText={
-                                        errors.name?.message ??
-                                        'Sélectionnez une FSEC non tirée'
-                                    }
+                                    helperText={errors.name?.message ?? 'Sélectionnez une FSEC non tirée'}
                                 />
                             )}
                         />
@@ -196,7 +193,8 @@ export function ElementForm({ control, errors, showMateriaux }: ElementFormProps
                             placeholder="ex. Cu/Au"
                             error={!!errors.materiauxMat}
                             helperText={
-                                errors.materiauxMat?.message ?? `Spécifique à la rubrique ${CATEGORY_LABELS[CATEGORY.STRUCTURATION_SPECIALE]}`
+                                errors.materiauxMat?.message ??
+                                `Spécifique à la rubrique ${CATEGORY_LABELS[CATEGORY.STRUCTURATION_SPECIALE]}`
                             }
                         />
                     )}

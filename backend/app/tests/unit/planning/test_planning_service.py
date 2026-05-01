@@ -18,11 +18,19 @@ from app.domain.exceptions import NotFoundException, ValidationException
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
-from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
+from app.domain.planning.models.planning_campaign_step_bean import (
+    PlanningCampaignStepBean,
+)
+from app.domain.planning.models.planning_cell_annotation_bean import (
+    PlanningCellAnnotationBean,
+)
 from app.domain.planning.models.planning_constants import WEEK_STATE_CHOICES
-from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
-from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
+from app.domain.planning.models.planning_fsec_cell_link_bean import (
+    PlanningFsecCellLinkBean,
+)
+from app.domain.planning.models.planning_member_period_bean import (
+    PlanningMemberPeriodBean,
+)
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.domain.planning.services import planning_service as svc
 

@@ -7,7 +7,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ViewSet
 
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
-from app.api.stock.serializers import StockCatalogItemPatchSerializer, StockCatalogItemSerializer
+from app.api.stock.serializers import (
+    StockCatalogItemPatchSerializer,
+    StockCatalogItemSerializer,
+)
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.exceptions import InvalidDataException
 from app.domain.stock.services.catalog_service import (
@@ -19,8 +22,13 @@ from app.domain.stock.services.catalog_service import (
     soft_delete_item,
     update_item,
 )
-from app.mapper.stock.catalog_mapper import stock_catalog_mapper_api_to_bean, stock_catalog_mapper_bean_to_api
-from app.repository.stock.repositories.stock_catalog_repository import StockCatalogRepository
+from app.mapper.stock.catalog_mapper import (
+    stock_catalog_mapper_api_to_bean,
+    stock_catalog_mapper_bean_to_api,
+)
+from app.repository.stock.repositories.stock_catalog_repository import (
+    StockCatalogRepository,
+)
 
 
 def _parse_bool_query_param(value, default=None):
@@ -75,7 +83,9 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
         )
 
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: list_items(self.repository, limit=limit, offset=offset, **filters),
+            fetch_func=lambda limit, offset: list_items(
+                self.repository, limit=limit, offset=offset, **filters
+            ),
             count_func=lambda: count_items(self.repository, **filters),
         )
         return self.paginate_or_json(request, source, stock_catalog_mapper_bean_to_api)
@@ -85,7 +95,9 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """GET /api/v1/stock/catalog/:uuid/."""
         bean = get_item(self.repository, uuid)
-        return JsonResponse(stock_catalog_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            stock_catalog_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- create
 
@@ -113,7 +125,9 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
             raise InvalidDataException(str(serializer.errors))
         bean = stock_catalog_mapper_api_to_bean(serializer.validated_data)
         result = update_item(self.repository, bean)
-        return JsonResponse(stock_catalog_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            stock_catalog_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- partial_update (PATCH)
 
@@ -123,7 +137,9 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
         if not serializer.is_valid():
             raise InvalidDataException(str(serializer.errors))
         result = patch_item(self.repository, uuid, serializer.validated_data)
-        return JsonResponse(stock_catalog_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            stock_catalog_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- destroy
 
@@ -156,6 +172,8 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
         """
         kind = request.query_params.get("kind") or None
         category = request.query_params.get("category") or None
-        beans = self.repository.list_available_for_fsec(fsec_uuid, kind=kind, category=category)
+        beans = self.repository.list_available_for_fsec(
+            fsec_uuid, kind=kind, category=category
+        )
         payload = [stock_catalog_mapper_bean_to_api(b) for b in beans]
         return JsonResponse(payload, safe=False, encoder=DjangoJSONEncoder)

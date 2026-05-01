@@ -14,11 +14,7 @@
 import { memo, useCallback } from 'react';
 import { TextField } from '@mui/material';
 import { UserSelect } from '@entities/user';
-import {
-    type TeamRoleLabel,
-    getRolesForTeamLabel,
-    isFreeTextTeamRole,
-} from '../lib/role-mapping';
+import { type TeamRoleLabel, getRolesForTeamLabel, isFreeTextTeamRole } from '../lib/role-mapping';
 
 export interface TeamMemberValue {
     /** Nom saisi en texte libre (uniquement pour MOE / TCI). Null sinon. */
@@ -51,15 +47,11 @@ export const TeamMemberInput = memo(function TeamMemberInput({
     helperText,
 }: TeamMemberInputProps) {
     const handleTextChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) =>
-            onChange({ name: e.target.value, userUuid: null }),
+        (e: React.ChangeEvent<HTMLInputElement>) => onChange({ name: e.target.value, userUuid: null }),
         [onChange],
     );
 
-    const handleUserChange = useCallback(
-        (uuid: string | null) => onChange({ name: null, userUuid: uuid }),
-        [onChange],
-    );
+    const handleUserChange = useCallback((uuid: string | null) => onChange({ name: null, userUuid: uuid }), [onChange]);
 
     if (isFreeTextTeamRole(roleLabel)) {
         return (

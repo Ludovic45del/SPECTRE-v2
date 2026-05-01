@@ -20,17 +20,14 @@ import type { StockCatalogItem } from '../model/stock-item.schema';
 // Label getters
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const getKindLabel = (kind: ItemKind | null | undefined): string =>
-    kind ? ITEM_KIND_LABELS[kind] : '—';
+export const getKindLabel = (kind: ItemKind | null | undefined): string => (kind ? ITEM_KIND_LABELS[kind] : '—');
 
-export const getCategoryLabel = (code: CategoryCode | null | undefined): string =>
-    code ? CATEGORY_LABELS[code] : '—';
+export const getCategoryLabel = (code: CategoryCode | null | undefined): string => (code ? CATEGORY_LABELS[code] : '—');
 
 export const getElementStatusLabel = (status: ElementStatus | null | undefined): string =>
     status ? ELEMENT_STATUS_LABELS[status] : '—';
 
-export const getInstallationLabel = (i: Installation | null | undefined): string =>
-    i ? INSTALLATION_LABELS[i] : '—';
+export const getInstallationLabel = (i: Installation | null | undefined): string => (i ? INSTALLATION_LABELS[i] : '—');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Predicates
@@ -42,10 +39,7 @@ export const isConsumable = (item: StockCatalogItem): boolean => item.kind === I
 
 /** Stock bas : kind=consumable AND seuil_alerte défini AND quantite ≤ seuil. */
 export const isLowStock = (item: StockCatalogItem): boolean =>
-    isConsumable(item) &&
-    item.seuilAlerte !== null &&
-    item.quantite !== null &&
-    item.quantite <= item.seuilAlerte;
+    isConsumable(item) && item.seuilAlerte !== null && item.quantite !== null && item.quantite <= item.seuilAlerte;
 
 /** Périmé : date_peremption ≤ today. */
 export const isExpired = (item: StockCatalogItem, today: Date = new Date()): boolean => {

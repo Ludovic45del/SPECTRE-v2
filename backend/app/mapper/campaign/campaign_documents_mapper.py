@@ -3,7 +3,9 @@
 from typing import Any, Dict
 
 from app.domain.campaign.models.campaign_documents_bean import CampaignDocumentsBean
-from app.repository.campaign.models.campaign_documents_entity import CampaignDocumentsEntity
+from app.repository.campaign.models.campaign_documents_entity import (
+    CampaignDocumentsEntity,
+)
 
 
 def campaign_documents_mapper_entity_to_bean(

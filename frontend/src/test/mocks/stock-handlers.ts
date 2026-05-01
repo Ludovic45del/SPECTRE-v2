@@ -79,14 +79,10 @@ export const stockHandlers = [
     }),
     http.patch('/api/v1/stock/catalog/:uuid/', async ({ params, request }) => {
         const body = (await request.json()) as StockItemOverrides;
-        return HttpResponse.json(
-            createMockStockCatalogItem({ uuid: params.uuid as string, ...body }),
-        );
+        return HttpResponse.json(createMockStockCatalogItem({ uuid: params.uuid as string, ...body }));
     }),
     http.delete('/api/v1/stock/catalog/:uuid/', () => new HttpResponse(null, { status: 204 })),
-    http.get('/api/v1/stock/alerts/', () =>
-        HttpResponse.json({ low_stock: [], expired: [], expiring_soon: [] }),
-    ),
+    http.get('/api/v1/stock/alerts/', () => HttpResponse.json({ low_stock: [], expired: [], expiring_soon: [] })),
 ];
 
 /** Stock handlers avec données injectées (pour les tests qui veulent un jeu spécifique). */
@@ -111,9 +107,7 @@ export function stockHandlersWithData(data: {
         }),
         http.patch('/api/v1/stock/catalog/:uuid/', async ({ params, request }) => {
             const body = (await request.json()) as StockItemOverrides;
-            return HttpResponse.json(
-                createMockStockCatalogItem({ uuid: params.uuid as string, ...body }),
-            );
+            return HttpResponse.json(createMockStockCatalogItem({ uuid: params.uuid as string, ...body }));
         }),
         http.delete('/api/v1/stock/catalog/:uuid/', () => new HttpResponse(null, { status: 204 })),
         http.get('/api/v1/stock/alerts/', () =>

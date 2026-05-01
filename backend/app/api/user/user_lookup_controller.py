@@ -61,7 +61,9 @@ class UserLookupController(viewsets.ViewSet):
         self.repository = UserRepository()
 
     def list(self, request):
-        roles = [r for r in request.query_params.getlist("role") if r in ALL_SPECTRE_ROLES]
+        roles = [
+            r for r in request.query_params.getlist("role") if r in ALL_SPECTRE_ROLES
+        ]
         is_active = _parse_is_active(request.query_params.get("is_active"))
 
         beans = user_service.list_users(

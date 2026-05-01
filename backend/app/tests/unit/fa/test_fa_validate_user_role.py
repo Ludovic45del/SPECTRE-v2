@@ -14,8 +14,18 @@ import pytest
 from app.domain.exceptions import ValidationException
 from app.domain.fa.models.fa_bean import FaBean
 from app.domain.fa.models.fa_constants import FaStatus
-from app.domain.fa.services.fa_service import close_fa, validate_open_phase, validate_progress_phase
-from app.domain.user.models.user_bean import ROLE_ASSEMBLEUR, ROLE_CHEF_LABO, ROLE_IEC, ROLE_METROLOGUE, UserBean
+from app.domain.fa.services.fa_service import (
+    close_fa,
+    validate_open_phase,
+    validate_progress_phase,
+)
+from app.domain.user.models.user_bean import (
+    ROLE_ASSEMBLEUR,
+    ROLE_CHEF_LABO,
+    ROLE_IEC,
+    ROLE_METROLOGUE,
+    UserBean,
+)
 
 
 def _make_user(role: str, uuid: str = "u-1"):

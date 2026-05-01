@@ -15,7 +15,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
+from app.domain.steps.models.airtightness_test_lp_step_bean import (
+    AirtightnessTestLpStepBean,
+)
 from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean
 from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
 from app.domain.steps.models.gas_filling_hp_step_bean import GasFillingHpStepBean
@@ -125,7 +127,9 @@ class TestAirtightnessTestLpStepMapper:
     @pytest.mark.unit
     def test_roundtrip(self, sample_airtightness_bean):
         """Test aller-retour Bean → API → Bean."""
-        api_data = airtightness_test_lp_step_mapper_bean_to_api(sample_airtightness_bean)
+        api_data = airtightness_test_lp_step_mapper_bean_to_api(
+            sample_airtightness_bean
+        )
         restored = airtightness_test_lp_step_mapper_api_to_bean(api_data)
 
         assert restored.uuid == sample_airtightness_bean.uuid
@@ -398,8 +402,12 @@ class TestRepressurizationStepMapper:
     @pytest.mark.unit
     def test_roundtrip(self, sample_repressurization_bean):
         """Test aller-retour Bean → API → Bean."""
-        api_data = repressurization_step_mapper_bean_to_api(sample_repressurization_bean)
+        api_data = repressurization_step_mapper_bean_to_api(
+            sample_repressurization_bean
+        )
         restored = repressurization_step_mapper_api_to_bean(api_data)
 
         assert restored.sensor_pressure == sample_repressurization_bean.sensor_pressure
-        assert restored.computed_pressure == sample_repressurization_bean.computed_pressure
+        assert (
+            restored.computed_pressure == sample_repressurization_bean.computed_pressure
+        )

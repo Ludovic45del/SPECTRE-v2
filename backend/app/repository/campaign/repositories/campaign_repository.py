@@ -6,7 +6,10 @@ from django.db import transaction
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
 from app.domain.campaign.models.campaign_bean import CampaignBean
-from app.mapper.campaign.campaign_mapper import campaign_mapper_bean_to_entity, campaign_mapper_entity_to_bean
+from app.mapper.campaign.campaign_mapper import (
+    campaign_mapper_bean_to_entity,
+    campaign_mapper_entity_to_bean,
+)
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 
 
@@ -25,12 +28,16 @@ class CampaignRepository(ICampaignRepository):
     def get_by_uuid(self, uuid: str) -> Optional[CampaignBean]:
         """Récupère une campagne par son UUID."""
         try:
-            entity = CampaignEntity.objects.select_related(*self.SELECT_RELATED).get(uuid=uuid)
+            entity = CampaignEntity.objects.select_related(*self.SELECT_RELATED).get(
+                uuid=uuid
+            )
             return campaign_mapper_entity_to_bean(entity)
         except CampaignEntity.DoesNotExist:
             return None
 
-    def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[CampaignBean]:
+    def get_all(
+        self, limit: Optional[int] = None, offset: int = 0
+    ) -> List[CampaignBean]:
         """Récupère toutes les campagnes avec pagination optionnelle."""
         query = CampaignEntity.objects.select_related(*self.SELECT_RELATED).all()
 
@@ -78,10 +85,16 @@ class CampaignRepository(ICampaignRepository):
 
     def exists_by_name_year_semester(self, name: str, year: int, semester: str) -> bool:
         """Vérifie si une campagne existe avec ce triplet unique."""
-        return CampaignEntity.objects.filter(name=name, year=year, semester=semester).exists()
+        return CampaignEntity.objects.filter(
+            name=name, year=year, semester=semester
+        ).exists()
 
-    def exists_duplicate(self, exclude_uuid: str, name: str, year: int, semester: str) -> bool:
+    def exists_duplicate(
+        self, exclude_uuid: str, name: str, year: int, semester: str
+    ) -> bool:
         """Vérifie si une AUTRE campagne existe avec ce triplet (exclut l'UUID donné)."""
         return (
-            CampaignEntity.objects.filter(name=name, year=year, semester=semester).exclude(uuid=exclude_uuid).exists()
+            CampaignEntity.objects.filter(name=name, year=year, semester=semester)
+            .exclude(uuid=exclude_uuid)
+            .exists()
         )

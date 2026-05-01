@@ -167,7 +167,9 @@ def sample_pictures_step_bean(sample_fsec_version_uuid):
 @pytest.fixture
 def sample_airtightness_step_bean(sample_fsec_version_uuid):
     """Bean AirtightnessTestLpStep de test."""
-    from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
+    from app.domain.steps.models.airtightness_test_lp_step_bean import (
+        AirtightnessTestLpStepBean,
+    )
 
     return AirtightnessTestLpStepBean(
         uuid=str(uuid.uuid4()),

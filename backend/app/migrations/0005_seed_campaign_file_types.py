@@ -4,7 +4,9 @@ from django.db import migrations
 
 def seed_file_types(apps, schema_editor):
     CampaignFileTypesEntity = apps.get_model("app", "CampaignFileTypesEntity")
-    CampaignDocumentSubtypesEntity = apps.get_model("app", "CampaignDocumentSubtypesEntity")
+    CampaignDocumentSubtypesEntity = apps.get_model(
+        "app", "CampaignDocumentSubtypesEntity"
+    )
 
     # Data from frontend constant CAMPAIGN_FILE_TYPES
     # 0: { id: 0, label: 'Validé', subtypeId: 7 },
@@ -25,7 +27,9 @@ def seed_file_types(apps, schema_editor):
                 id=data["id"], defaults={"label": data["label"], "subtype_id": subtype}
             )
         except CampaignDocumentSubtypesEntity.DoesNotExist:
-            print(f"Skipping FileType {data['label']} because Subtype {data['subtype_id']} does not exist.")
+            print(
+                f"Skipping FileType {data['label']} because Subtype {data['subtype_id']} does not exist."
+            )
 
 
 def reverse_seed(apps, schema_editor):

@@ -9,10 +9,18 @@ from app.domain.planning.interface.planning_repository import IPlanningRepositor
 from app.domain.planning.models.lab_event_bean import LabEventBean
 from app.domain.planning.models.lab_machine_bean import LabMachineBean
 from app.domain.planning.models.lab_salle_bean import LabSalleBean
-from app.domain.planning.models.planning_campaign_step_bean import PlanningCampaignStepBean
-from app.domain.planning.models.planning_cell_annotation_bean import PlanningCellAnnotationBean
-from app.domain.planning.models.planning_fsec_cell_link_bean import PlanningFsecCellLinkBean
-from app.domain.planning.models.planning_member_period_bean import PlanningMemberPeriodBean
+from app.domain.planning.models.planning_campaign_step_bean import (
+    PlanningCampaignStepBean,
+)
+from app.domain.planning.models.planning_cell_annotation_bean import (
+    PlanningCellAnnotationBean,
+)
+from app.domain.planning.models.planning_fsec_cell_link_bean import (
+    PlanningFsecCellLinkBean,
+)
+from app.domain.planning.models.planning_member_period_bean import (
+    PlanningMemberPeriodBean,
+)
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.mapper.planning.planning_mapper import (
     lab_event_entity_to_bean,
@@ -27,11 +35,21 @@ from app.mapper.planning.planning_mapper import (
 from app.repository.planning.models.lab_event_entity import LabEventEntity
 from app.repository.planning.models.lab_machine_entity import LabMachineEntity
 from app.repository.planning.models.lab_salle_entity import LabSalleEntity
-from app.repository.planning.models.planning_campaign_step_entity import PlanningCampaignStepEntity
-from app.repository.planning.models.planning_cell_annotation_entity import PlanningCellAnnotationEntity
-from app.repository.planning.models.planning_fsec_cell_link_entity import PlanningFsecCellLinkEntity
-from app.repository.planning.models.planning_member_period_entity import PlanningMemberPeriodEntity
-from app.repository.planning.models.planning_week_state_entity import PlanningWeekStateEntity
+from app.repository.planning.models.planning_campaign_step_entity import (
+    PlanningCampaignStepEntity,
+)
+from app.repository.planning.models.planning_cell_annotation_entity import (
+    PlanningCellAnnotationEntity,
+)
+from app.repository.planning.models.planning_fsec_cell_link_entity import (
+    PlanningFsecCellLinkEntity,
+)
+from app.repository.planning.models.planning_member_period_entity import (
+    PlanningMemberPeriodEntity,
+)
+from app.repository.planning.models.planning_week_state_entity import (
+    PlanningWeekStateEntity,
+)
 
 
 class PlanningRepository(IPlanningRepository):
@@ -70,7 +88,9 @@ class PlanningRepository(IPlanningRepository):
         return [planning_member_period_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
-    def create_member_period(self, bean: PlanningMemberPeriodBean) -> PlanningMemberPeriodBean:
+    def create_member_period(
+        self, bean: PlanningMemberPeriodBean
+    ) -> PlanningMemberPeriodBean:
         entity = PlanningMemberPeriodEntity.objects.create(
             member_name=bean.member_name,
             member_role=bean.member_role,
@@ -116,12 +136,16 @@ class PlanningRepository(IPlanningRepository):
 
     # ====================== CELL ANNOTATION ======================
 
-    def get_cell_annotations_by_year(self, year: int) -> list[PlanningCellAnnotationBean]:
+    def get_cell_annotations_by_year(
+        self, year: int
+    ) -> list[PlanningCellAnnotationBean]:
         entities = PlanningCellAnnotationEntity.objects.filter(year=year)
         return [planning_cell_annotation_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
-    def upsert_cell_annotation(self, bean: PlanningCellAnnotationBean) -> PlanningCellAnnotationBean:
+    def upsert_cell_annotation(
+        self, bean: PlanningCellAnnotationBean
+    ) -> PlanningCellAnnotationBean:
         try:
             entity, _ = PlanningCellAnnotationEntity.objects.update_or_create(
                 campaign_id=bean.campaign_uuid,
@@ -131,7 +155,9 @@ class PlanningRepository(IPlanningRepository):
                 defaults={"text": bean.text},
             )
         except IntegrityError:
-            raise ValidationException("campaign_uuid", "La campagne referencee n'existe pas.")
+            raise ValidationException(
+                "campaign_uuid", "La campagne referencee n'existe pas."
+            )
         return planning_cell_annotation_entity_to_bean(entity)
 
     @transaction.atomic
@@ -145,7 +171,9 @@ class PlanningRepository(IPlanningRepository):
         return [planning_fsec_cell_link_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
-    def create_fsec_cell_link(self, bean: PlanningFsecCellLinkBean) -> PlanningFsecCellLinkBean:
+    def create_fsec_cell_link(
+        self, bean: PlanningFsecCellLinkBean
+    ) -> PlanningFsecCellLinkBean:
         try:
             entity, _ = PlanningFsecCellLinkEntity.objects.get_or_create(
                 campaign_id=bean.campaign_uuid,
@@ -155,7 +183,9 @@ class PlanningRepository(IPlanningRepository):
                 fsec_uuid_id=bean.fsec_uuid,
             )
         except IntegrityError:
-            raise ValidationException("campaign_uuid", "La campagne referencee n'existe pas.")
+            raise ValidationException(
+                "campaign_uuid", "La campagne referencee n'existe pas."
+            )
         return planning_fsec_cell_link_entity_to_bean(entity)
 
     @transaction.atomic
@@ -169,7 +199,9 @@ class PlanningRepository(IPlanningRepository):
         return [planning_campaign_step_entity_to_bean(e) for e in entities]
 
     @transaction.atomic
-    def create_campaign_step(self, bean: PlanningCampaignStepBean) -> PlanningCampaignStepBean:
+    def create_campaign_step(
+        self, bean: PlanningCampaignStepBean
+    ) -> PlanningCampaignStepBean:
         try:
             entity = PlanningCampaignStepEntity.objects.create(
                 campaign_id=bean.campaign_uuid,
@@ -182,9 +214,13 @@ class PlanningRepository(IPlanningRepository):
         except IntegrityError as e:
             error_msg = str(e).lower()
             if "campaign" in error_msg:
-                raise ValidationException("campaign_uuid", "La campagne referencee n'existe pas.")
+                raise ValidationException(
+                    "campaign_uuid", "La campagne referencee n'existe pas."
+                )
             if "fsec" in error_msg:
-                raise ValidationException("fsec_uuid", "La FSEC referencee n'existe pas.")
+                raise ValidationException(
+                    "fsec_uuid", "La FSEC referencee n'existe pas."
+                )
             raise ValidationException(
                 "campaign_step",
                 "Contrainte d'unicite violee (campagne/fsec/etape/annee).",
@@ -219,9 +255,13 @@ class PlanningRepository(IPlanningRepository):
         except IntegrityError as e:
             error_msg = str(e).lower()
             if "campaign" in error_msg:
-                raise ValidationException("campaign_uuid", "La campagne referencee n'existe pas.")
+                raise ValidationException(
+                    "campaign_uuid", "La campagne referencee n'existe pas."
+                )
             if "fsec" in error_msg:
-                raise ValidationException("fsec_uuid", "La FSEC referencee n'existe pas.")
+                raise ValidationException(
+                    "fsec_uuid", "La FSEC referencee n'existe pas."
+                )
             raise ValidationException(
                 "campaign_step",
                 "Contrainte d'unicite violee (campagne/fsec/etape/annee).",
@@ -247,9 +287,13 @@ class PlanningRepository(IPlanningRepository):
         return lab_salle_entity_to_bean(entity)
 
     @transaction.atomic
-    def update_salle(self, uuid: uuid_mod.UUID, bean: LabSalleBean) -> LabSalleBean | None:
+    def update_salle(
+        self, uuid: uuid_mod.UUID, bean: LabSalleBean
+    ) -> LabSalleBean | None:
         try:
-            entity = LabSalleEntity.objects.prefetch_related("labmachineentity_set").get(uuid=uuid)
+            entity = LabSalleEntity.objects.prefetch_related(
+                "labmachineentity_set"
+            ).get(uuid=uuid)
         except LabSalleEntity.DoesNotExist:
             return None
         update_fields = []
@@ -282,7 +326,9 @@ class PlanningRepository(IPlanningRepository):
         return lab_machine_entity_to_bean(entity)
 
     @transaction.atomic
-    def update_machine(self, uuid: uuid_mod.UUID, bean: LabMachineBean) -> LabMachineBean | None:
+    def update_machine(
+        self, uuid: uuid_mod.UUID, bean: LabMachineBean
+    ) -> LabMachineBean | None:
         try:
             entity = LabMachineEntity.objects.get(uuid=uuid)
         except LabMachineEntity.DoesNotExist:
@@ -319,11 +365,15 @@ class PlanningRepository(IPlanningRepository):
                 end_date=bean.end_date,
             )
         except IntegrityError:
-            raise ValidationException("machine_uuid", "La machine referencee n'existe pas.")
+            raise ValidationException(
+                "machine_uuid", "La machine referencee n'existe pas."
+            )
         return lab_event_entity_to_bean(entity)
 
     @transaction.atomic
-    def update_lab_event(self, uuid: uuid_mod.UUID, bean: LabEventBean) -> LabEventBean | None:
+    def update_lab_event(
+        self, uuid: uuid_mod.UUID, bean: LabEventBean
+    ) -> LabEventBean | None:
         try:
             entity = LabEventEntity.objects.get(uuid=uuid)
         except LabEventEntity.DoesNotExist:
@@ -344,7 +394,9 @@ class PlanningRepository(IPlanningRepository):
                 ]
             )
         except IntegrityError:
-            raise ValidationException("machine_uuid", "La machine referencee n'existe pas.")
+            raise ValidationException(
+                "machine_uuid", "La machine referencee n'existe pas."
+            )
         return lab_event_entity_to_bean(entity)
 
     @transaction.atomic

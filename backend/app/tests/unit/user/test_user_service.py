@@ -9,7 +9,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.user.models.user_bean import (
     ALL_SPECTRE_ROLES,
     ROLE_ALTERNANT,
@@ -139,7 +143,9 @@ class TestCreateUser:
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = sample_user_bean
 
-        created, password = user_service.create_user(mock_user_repository, sample_user_bean)
+        created, password = user_service.create_user(
+            mock_user_repository, sample_user_bean
+        )
 
         assert created == sample_user_bean
         assert created is sample_user_bean
@@ -147,16 +153,24 @@ class TestCreateUser:
         mock_user_repository.exists_by_username.assert_called_once_with("jean.dupont")
         mock_user_repository.create.assert_called_once()
 
-    def test_create_user_with_explicit_password(self, mock_user_repository, sample_user_bean):
+    def test_create_user_with_explicit_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = sample_user_bean
 
-        created, password = user_service.create_user(mock_user_repository, sample_user_bean, password="MyP@ssw0rd!")
+        created, password = user_service.create_user(
+            mock_user_repository, sample_user_bean, password="MyP@ssw0rd!"
+        )
 
         assert password == "MyP@ssw0rd!"
-        mock_user_repository.create.assert_called_once_with(sample_user_bean, "MyP@ssw0rd!")
+        mock_user_repository.create.assert_called_once_with(
+            sample_user_bean, "MyP@ssw0rd!"
+        )
 
-    def test_create_user_duplicate_username(self, mock_user_repository, sample_user_bean):
+    def test_create_user_duplicate_username(
+        self, mock_user_repository, sample_user_bean
+    ):
         mock_user_repository.exists_by_username.return_value = True
 
         with pytest.raises(ConflictException) as exc_info:
@@ -208,7 +222,9 @@ class TestCreateUser:
         # Username error should come first
         assert exc_info.value.field == "username"
 
-    def test_create_user_validates_role_before_duplicate_check(self, mock_user_repository):
+    def test_create_user_validates_role_before_duplicate_check(
+        self, mock_user_repository
+    ):
         """Role validation should happen before the duplicate check."""
         bean = UserBean(username="test.user", role="invalid_role")
         # exists_by_username shouldn't even be called
@@ -239,35 +255,47 @@ class TestCreateUser:
         assert isinstance(result, tuple)
         assert len(result) == 2
 
-    def test_create_user_rejects_common_password(self, mock_user_repository, sample_user_bean):
+    def test_create_user_rejects_common_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         """validate_password refuse un mot de passe trop commun."""
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = sample_user_bean
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.create_user(mock_user_repository, sample_user_bean, password="password")
+            user_service.create_user(
+                mock_user_repository, sample_user_bean, password="password"
+            )
 
         assert exc_info.value.field == "password"
         mock_user_repository.create.assert_not_called()
 
-    def test_create_user_rejects_numeric_only_password(self, mock_user_repository, sample_user_bean):
+    def test_create_user_rejects_numeric_only_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         """validate_password refuse un mot de passe purement numérique."""
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = sample_user_bean
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.create_user(mock_user_repository, sample_user_bean, password="12345678")
+            user_service.create_user(
+                mock_user_repository, sample_user_bean, password="12345678"
+            )
 
         assert exc_info.value.field == "password"
 
-    def test_create_user_rejects_password_similar_to_username(self, mock_user_repository):
+    def test_create_user_rejects_password_similar_to_username(
+        self, mock_user_repository
+    ):
         """validate_password refuse un mot de passe trop similaire au username."""
         bean = UserBean(username="jean.dupont.laboratoire", role=ROLE_IEC)
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = bean
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.create_user(mock_user_repository, bean, password="jean.dupont.labo")
+            user_service.create_user(
+                mock_user_repository, bean, password="jean.dupont.labo"
+            )
 
         assert exc_info.value.field == "password"
 
@@ -328,7 +356,9 @@ class TestListUsers:
 
         user_service.list_users(mock_user_repository)
 
-        mock_user_repository.get_all.assert_called_once_with(offset=0, limit=50, roles=None, is_active=None)
+        mock_user_repository.get_all.assert_called_once_with(
+            offset=0, limit=50, roles=None, is_active=None
+        )
 
     def test_list_users_with_pagination_params(self, mock_user_repository):
         beans = [UserBean(username=f"user{i}", role=ROLE_IEC) for i in range(3)]
@@ -337,7 +367,9 @@ class TestListUsers:
         result = user_service.list_users(mock_user_repository, offset=2, limit=5)
 
         assert result == beans
-        mock_user_repository.get_all.assert_called_once_with(offset=2, limit=5, roles=None, is_active=None)
+        mock_user_repository.get_all.assert_called_once_with(
+            offset=2, limit=5, roles=None, is_active=None
+        )
 
     def test_list_users_offset_exceeds_length(self, mock_user_repository):
         mock_user_repository.get_all.return_value = []
@@ -345,12 +377,16 @@ class TestListUsers:
         result = user_service.list_users(mock_user_repository, offset=100, limit=10)
 
         assert result == []
-        mock_user_repository.get_all.assert_called_once_with(offset=100, limit=10, roles=None, is_active=None)
+        mock_user_repository.get_all.assert_called_once_with(
+            offset=100, limit=10, roles=None, is_active=None
+        )
 
     def test_list_users_with_role_filter(self, mock_user_repository):
         mock_user_repository.get_all.return_value = []
 
-        user_service.list_users(mock_user_repository, roles=["metrologue", "chef_labo"], is_active=True)
+        user_service.list_users(
+            mock_user_repository, roles=["metrologue", "chef_labo"], is_active=True
+        )
 
         mock_user_repository.get_all.assert_called_once_with(
             offset=0, limit=50, roles=["metrologue", "chef_labo"], is_active=True
@@ -377,7 +413,9 @@ class TestUpdateUser:
         assert result is updated_bean
         mock_user_repository.get_by_uuid.assert_called_once_with(uid)
 
-    def test_update_user_sets_uuid_on_bean(self, mock_user_repository, sample_user_bean):
+    def test_update_user_sets_uuid_on_bean(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         bean = UserBean(role=ROLE_IEC)
@@ -457,7 +495,9 @@ class TestResetPassword:
         mock_user_repository.get_by_uuid.assert_called_once_with(uid)
         mock_user_repository.reset_password.assert_called_once()
 
-    def test_reset_password_invalidates_current_password(self, mock_user_repository, sample_user_bean):
+    def test_reset_password_invalidates_current_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         """Le mot de passe courant doit être remplacé par un secret jetable."""
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
@@ -491,38 +531,54 @@ class TestChangePassword:
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
-        user_service.change_password(mock_user_repository, uid, "OldPass123!", "NewPass456!")
+        user_service.change_password(
+            mock_user_repository, uid, "OldPass123!", "NewPass456!"
+        )
 
         mock_user_repository.set_password.assert_called_once_with(uid, "NewPass456!")
-        mock_user_repository.set_force_password_change.assert_called_once_with(uid, False)
+        mock_user_repository.set_force_password_change.assert_called_once_with(
+            uid, False
+        )
 
-    def test_change_password_calls_check_password(self, mock_user_repository, sample_user_bean):
+    def test_change_password_calls_check_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
-        user_service.change_password(mock_user_repository, uid, "OldPass123!", "NewPass456!")
+        user_service.change_password(
+            mock_user_repository, uid, "OldPass123!", "NewPass456!"
+        )
 
         mock_user_repository.check_password.assert_called_once_with(uid, "OldPass123!")
 
-    def test_change_password_wrong_current(self, mock_user_repository, sample_user_bean):
+    def test_change_password_wrong_current(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = False
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.change_password(mock_user_repository, uid, "wrong", "NewPass456!")
+            user_service.change_password(
+                mock_user_repository, uid, "wrong", "NewPass456!"
+            )
 
         assert exc_info.value.field == "current_password"
         mock_user_repository.set_password.assert_not_called()
 
-    def test_change_password_same_as_current(self, mock_user_repository, sample_user_bean):
+    def test_change_password_same_as_current(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.change_password(mock_user_repository, uid, "SamePass1!", "SamePass1!")
+            user_service.change_password(
+                mock_user_repository, uid, "SamePass1!", "SamePass1!"
+            )
 
         assert exc_info.value.field == "new_password"
         mock_user_repository.set_password.assert_not_called()
@@ -532,20 +588,26 @@ class TestChangePassword:
         mock_user_repository.get_by_uuid.return_value = None
 
         with pytest.raises(NotFoundException) as exc_info:
-            user_service.change_password(mock_user_repository, uid, "old", "NewPass456!")
+            user_service.change_password(
+                mock_user_repository, uid, "old", "NewPass456!"
+            )
 
         assert exc_info.value.resource == "USER"
         mock_user_repository.check_password.assert_not_called()
         mock_user_repository.set_password.assert_not_called()
 
-    def test_change_password_rejects_weak_new_password(self, mock_user_repository, sample_user_bean):
+    def test_change_password_rejects_weak_new_password(
+        self, mock_user_repository, sample_user_bean
+    ):
         """Le nouveau mot de passe doit passer validate_password."""
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
         with pytest.raises(ValidationException) as exc_info:
-            user_service.change_password(mock_user_repository, uid, "OldPass123!", "password")
+            user_service.change_password(
+                mock_user_repository, uid, "OldPass123!", "password"
+            )
 
         assert exc_info.value.field == "password"
         mock_user_repository.set_password.assert_not_called()
@@ -555,17 +617,23 @@ class TestChangePassword:
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
-        result = user_service.change_password(mock_user_repository, uid, "OldPass123!", "NewPass456!")
+        result = user_service.change_password(
+            mock_user_repository, uid, "OldPass123!", "NewPass456!"
+        )
 
         assert result is None
 
-    def test_change_password_set_force_change_false(self, mock_user_repository, sample_user_bean):
+    def test_change_password_set_force_change_false(
+        self, mock_user_repository, sample_user_bean
+    ):
         """Verify that set_force_password_change is called with False specifically."""
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
-        user_service.change_password(mock_user_repository, uid, "OldPass123!", "NewPass456!")
+        user_service.change_password(
+            mock_user_repository, uid, "OldPass123!", "NewPass456!"
+        )
 
         call_args = mock_user_repository.set_force_password_change.call_args
         assert call_args[0][1] is False
@@ -621,7 +689,9 @@ class TestUserServiceErrorMessages:
             user_service.create_user(mock_user_repository, bean)
         assert "requis" in str(exc_info.value)
 
-    def test_change_password_wrong_current_error_message(self, mock_user_repository, sample_user_bean):
+    def test_change_password_wrong_current_error_message(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = False
@@ -630,7 +700,9 @@ class TestUserServiceErrorMessages:
             user_service.change_password(mock_user_repository, uid, "wrong", "New1!")
         assert "incorrect" in str(exc_info.value)
 
-    def test_change_password_same_password_error_message(self, mock_user_repository, sample_user_bean):
+    def test_change_password_same_password_error_message(
+        self, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
@@ -661,7 +733,9 @@ class TestUserServiceLoggerMessages:
         )
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_create_user_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_create_user_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         mock_user_repository.exists_by_username.return_value = False
         mock_user_repository.create.return_value = sample_user_bean
 
@@ -672,7 +746,9 @@ class TestUserServiceLoggerMessages:
         assert "Utilisateur cree" in log_msg
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_update_user_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_update_user_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.update.return_value = sample_user_bean
@@ -684,7 +760,9 @@ class TestUserServiceLoggerMessages:
         assert "Utilisateur modifie" in log_msg
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_toggle_active_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_toggle_active_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.toggle_active.return_value = sample_user_bean
@@ -696,7 +774,9 @@ class TestUserServiceLoggerMessages:
         assert "is_active" in log_msg
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_reset_password_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_reset_password_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
 
@@ -707,7 +787,9 @@ class TestUserServiceLoggerMessages:
         assert "reinitialise" in log_msg
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_reset_password_no_plaintext_password_in_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_reset_password_no_plaintext_password_in_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         """Le log ne doit pas contenir le mot de passe jetable (anti-leak)."""
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
@@ -722,12 +804,16 @@ class TestUserServiceLoggerMessages:
         assert throwaway_password not in log_msg
 
     @patch("app.domain.user.services.user_service.logger")
-    def test_change_password_logs(self, mock_logger, mock_user_repository, sample_user_bean):
+    def test_change_password_logs(
+        self, mock_logger, mock_user_repository, sample_user_bean
+    ):
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
         mock_user_repository.check_password.return_value = True
 
-        user_service.change_password(mock_user_repository, uid, "OldPass1!", "NewPass2!")
+        user_service.change_password(
+            mock_user_repository, uid, "OldPass1!", "NewPass2!"
+        )
 
         mock_logger.debug.assert_called()
         log_msg = mock_logger.debug.call_args[0][0]

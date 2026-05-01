@@ -225,9 +225,15 @@ class TestFsecWorkflowCategory4:
         Design → Assemblage → Métrologie → Scellement → Étanchéité → Photos
         → Perméation → Dépressurisation → Remp. BP → Utilisable → Installation → Tirée
         """
-        from app.domain.steps.models.airtightness_test_lp_step_bean import AirtightnessTestLpStepBean
-        from app.domain.steps.models.depressurization_step_bean import DepressurizationStepBean
-        from app.domain.steps.models.gas_filling_bp_step_bean import GasFillingBpStepBean
+        from app.domain.steps.models.airtightness_test_lp_step_bean import (
+            AirtightnessTestLpStepBean,
+        )
+        from app.domain.steps.models.depressurization_step_bean import (
+            DepressurizationStepBean,
+        )
+        from app.domain.steps.models.gas_filling_bp_step_bean import (
+            GasFillingBpStepBean,
+        )
         from app.domain.steps.models.permeation_step_bean import PermeationStepBean
 
         # Créer FSEC catégorie 4
@@ -301,7 +307,9 @@ class TestFsecWorkflowCategory4:
         )
         mock_depressurization_repo = MagicMock()
         mock_depressurization_repo.create.return_value = depressurization_bean
-        created_depressurization = create_step(mock_depressurization_repo, depressurization_bean)
+        created_depressurization = create_step(
+            mock_depressurization_repo, depressurization_bean
+        )
         assert created_depressurization.enclosure_pressure_measured == 0.5
         logger.info("✅ Step Dépressurisation créé")
 
@@ -337,7 +345,9 @@ class TestFsecWorkflowCategory4:
         """
         Test scénario avec dépressurisation échouée → repressurisation.
         """
-        from app.domain.steps.models.repressurization_step_bean import RepressurizationStepBean
+        from app.domain.steps.models.repressurization_step_bean import (
+            RepressurizationStepBean,
+        )
 
         fsec_version_uuid = str(uuid.uuid4())
         fsec_bean = FsecBean(

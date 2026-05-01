@@ -40,7 +40,7 @@ describe('usersToMembres', () => {
         expect(result.map((m) => m.nom)).toEqual(['Actif Jean']);
     });
 
-    it("retombe sur le username si nom et prénom sont vides", () => {
+    it('retombe sur le username si nom et prénom sont vides', () => {
         const result = usersToMembres([makeUser({ firstName: '', lastName: '', username: 'matricule42' })]);
         expect(result[0].nom).toBe('matricule42');
     });

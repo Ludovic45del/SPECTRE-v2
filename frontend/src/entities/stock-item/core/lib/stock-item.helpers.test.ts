@@ -55,7 +55,7 @@ describe('isLowStock', () => {
         expect(isLowStock(parseItem({ seuil_alerte: null }))).toBe(false);
     });
 
-    it("retourne false sur un élément (jamais en stock bas)", () => {
+    it('retourne false sur un élément (jamais en stock bas)', () => {
         const elementItem = parseItem({
             kind: 'element',
             category: 'pieces_elementaires',
@@ -105,12 +105,10 @@ describe('isExpiringSoon', () => {
 
 describe('formatLocation / formatQuantity', () => {
     it('formatLocation joint boite et emplacement', () => {
-        expect(
-            formatLocation(parseItem({ boite: 'Boîte 1', emplacement: 'Étagère 3' })),
-        ).toBe('Boîte 1 · Étagère 3');
+        expect(formatLocation(parseItem({ boite: 'Boîte 1', emplacement: 'Étagère 3' }))).toBe('Boîte 1 · Étagère 3');
     });
 
-    it("formatLocation retourne — si rien", () => {
+    it('formatLocation retourne — si rien', () => {
         expect(formatLocation(parseItem({ boite: null, emplacement: null }))).toBe('—');
     });
 
@@ -118,7 +116,7 @@ describe('formatLocation / formatQuantity', () => {
         expect(formatQuantity(parseItem({ quantite: 7, unite: 'tubes' }))).toBe('7 tubes');
     });
 
-    it("formatQuantity retourne — si quantite ou unite null", () => {
+    it('formatQuantity retourne — si quantite ou unite null', () => {
         expect(formatQuantity(parseItem({ quantite: null, unite: 'tubes' }))).toBe('—');
         expect(formatQuantity(parseItem({ quantite: 7, unite: null }))).toBe('—');
     });
@@ -130,7 +128,7 @@ describe('getCategoryLabel', () => {
         expect(getCategoryLabel('colles')).toBe('Colles');
     });
 
-    it("retourne — si code null/undefined", () => {
+    it('retourne — si code null/undefined', () => {
         expect(getCategoryLabel(null)).toBe('—');
         expect(getCategoryLabel(undefined)).toBe('—');
     });

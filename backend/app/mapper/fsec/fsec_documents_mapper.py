@@ -55,5 +55,9 @@ def fsec_documents_mapper_bean_to_api(bean: FsecDocumentsBean) -> Dict[str, Any]
         "subtype_id": bean.subtype_id,
         "name": bean.name,
         "path": bean.path,
-        "date": (bean.date.isoformat() if bean.date and hasattr(bean.date, "isoformat") else bean.date),
+        "date": (
+            bean.date.isoformat()
+            if bean.date and hasattr(bean.date, "isoformat")
+            else bean.date
+        ),
     }

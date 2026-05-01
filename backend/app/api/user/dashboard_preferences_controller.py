@@ -8,7 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 
 from app.api.user.serializers import DashboardPreferencesSerializer
 from app.domain.user.services import dashboard_preferences_service
-from app.mapper.user.dashboard_preferences_mapper import dashboard_preferences_bean_to_dict
+from app.mapper.user.dashboard_preferences_mapper import (
+    dashboard_preferences_bean_to_dict,
+)
 from app.repository.user.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,9 @@ class DashboardPreferencesController(viewsets.ViewSet):
                 },
                 status=404,
             )
-        bean = dashboard_preferences_service.get_preferences(self.repository, profile.uuid)
+        bean = dashboard_preferences_service.get_preferences(
+            self.repository, profile.uuid
+        )
         return JsonResponse(dashboard_preferences_bean_to_dict(bean))
 
     def create(self, request):
@@ -60,4 +64,6 @@ class DashboardPreferencesController(viewsets.ViewSet):
         bean = dashboard_preferences_service.update_preferences(
             self.repository, profile.uuid, serializer.validated_data
         )
-        return JsonResponse(dashboard_preferences_bean_to_dict(bean), status=status.HTTP_200_OK)
+        return JsonResponse(
+            dashboard_preferences_bean_to_dict(bean), status=status.HTTP_200_OK
+        )

@@ -43,23 +43,33 @@ class Migration(migrations.Migration):
                 ("capteur_v1", models.CharField(blank=True, default="", max_length=50)),
                 (
                     "offset_v1_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 (
                     "mesurande_lie_v1_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 (
                     "sensibilite_v1_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 (
                     "signal_meteociel_v1_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 (
                     "capteur_cible_pfeiffer_mbar",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 ("etendue_v1_mbar", models.IntegerField(blank=True, null=True)),
                 (
@@ -80,7 +90,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "cote_ve",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=8, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=8, null=True
+                    ),
                 ),
                 (
                     "decalage_angulaire",
@@ -97,11 +109,15 @@ class Migration(migrations.Migration):
                 ("capteur_v2", models.CharField(blank=True, default="", max_length=50)),
                 (
                     "offset_v2_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 (
                     "sensibilite_v2_mv",
-                    models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
                 ),
                 ("etendue_v2_mbar", models.IntegerField(blank=True, null=True)),
                 ("observations_v2", models.TextField(blank=True, default="")),

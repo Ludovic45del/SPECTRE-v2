@@ -14,7 +14,9 @@ def fsec_mapper_entity_to_bean(entity: FsecEntity) -> FsecBean:
         fsec_uuid=str(entity.fsec_uuid),
         campaign_id=str(entity.campaign_id_id) if entity.campaign_id_id else None,
         status_id=entity.status_id_id if entity.status_id_id is not None else None,
-        category_id=(entity.category_id_id if entity.category_id_id is not None else None),
+        category_id=(
+            entity.category_id_id if entity.category_id_id is not None else None
+        ),
         rack_id=entity.rack_id_id if entity.rack_id_id is not None else None,
         name=entity.name,
         comments=entity.comments,

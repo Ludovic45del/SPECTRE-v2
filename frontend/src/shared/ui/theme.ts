@@ -364,28 +364,21 @@ export function createAppTheme(mode: ThemeMode) {
                                 c === 'warning' ||
                                 c === 'error' ||
                                 c === 'info');
-                        const isDefault =
-                            variant === 'filled' && (c === 'default' || c === undefined);
+                        const isDefault = variant === 'filled' && (c === 'default' || c === undefined);
 
                         const semanticStyles = isSemantic
                             ? {
                                   backgroundColor: alpha(t.palette[c].main, dark ? 0.2 : 0.12),
                                   color: dark ? t.palette[c].light : t.palette[c].dark,
                                   '&.MuiChip-clickable:hover': {
-                                      backgroundColor: alpha(
-                                          t.palette[c].main,
-                                          dark ? 0.3 : 0.2,
-                                      ),
+                                      backgroundColor: alpha(t.palette[c].main, dark ? 0.3 : 0.2),
                                   },
                               }
                             : {};
 
                         const defaultStyles = isDefault
                             ? {
-                                  backgroundColor: alpha(
-                                      t.palette.text.primary,
-                                      dark ? 0.1 : 0.06,
-                                  ),
+                                  backgroundColor: alpha(t.palette.text.primary, dark ? 0.1 : 0.06),
                                   color: t.palette.text.secondary,
                               }
                             : {};
@@ -396,10 +389,7 @@ export function createAppTheme(mode: ThemeMode) {
                             fontWeight: 600,
                             fontSize: '0.72rem',
                             letterSpacing: '0.01em',
-                            transition: motion.transition(
-                                ['background-color', 'color'],
-                                'fast',
-                            ),
+                            transition: motion.transition(['background-color', 'color'], 'fast'),
                             '& .MuiChip-label': {
                                 paddingLeft: 8,
                                 paddingRight: 8,

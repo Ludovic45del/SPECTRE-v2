@@ -116,7 +116,9 @@ class TestStockCatalogControllerList:
 class TestStockCatalogControllerRetrieve:
     @pytest.mark.integration
     @patch("app.api.stock.catalog_controller.get_item")
-    def test_retrieve_found(self, mock_get, request_factory, sample_consumable_api_bean):
+    def test_retrieve_found(
+        self, mock_get, request_factory, sample_consumable_api_bean
+    ):
         mock_get.return_value = sample_consumable_api_bean
         controller = StockCatalogController()
         response = controller.retrieve(
@@ -151,7 +153,9 @@ class TestStockCatalogControllerRetrieve:
 class TestStockCatalogControllerCreate:
     @pytest.mark.integration
     @patch("app.api.stock.catalog_controller.create_item")
-    def test_create_consumable_success(self, mock_create, request_factory, sample_consumable_api_bean):
+    def test_create_consumable_success(
+        self, mock_create, request_factory, sample_consumable_api_bean
+    ):
         mock_create.return_value = sample_consumable_api_bean
         controller = StockCatalogController()
         request = _make_post(

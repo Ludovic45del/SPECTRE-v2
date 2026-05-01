@@ -47,9 +47,13 @@ class TestCampaignDocumentsServiceCreate:
     """Tests pour la création de document de campagne."""
 
     @pytest.mark.unit
-    def test_create_campaign_document_success(self, sample_campaign_document_bean, mock_campaign_documents_repository):
+    def test_create_campaign_document_success(
+        self, sample_campaign_document_bean, mock_campaign_documents_repository
+    ):
         """Test création réussie d'un document de campagne."""
-        mock_campaign_documents_repository.create.return_value = sample_campaign_document_bean
+        mock_campaign_documents_repository.create.return_value = (
+            sample_campaign_document_bean
+        )
         mock_campaign_documents_repository.get_by_campaign_uuid.return_value = []
         mock_campaign_repo = MagicMock()
         mock_campaign_repo.get_by_uuid.return_value = MagicMock()
@@ -63,10 +67,14 @@ class TestCampaignDocumentsServiceCreate:
         assert result.uuid == sample_campaign_document_bean.uuid
         assert result.name == sample_campaign_document_bean.name
         assert result.campaign_uuid == sample_campaign_document_bean.campaign_uuid
-        mock_campaign_documents_repository.create.assert_called_once_with(sample_campaign_document_bean)
+        mock_campaign_documents_repository.create.assert_called_once_with(
+            sample_campaign_document_bean
+        )
 
     @pytest.mark.unit
-    def test_create_document_parent_not_found(self, sample_campaign_document_bean, mock_campaign_documents_repository):
+    def test_create_document_parent_not_found(
+        self, sample_campaign_document_bean, mock_campaign_documents_repository
+    ):
         """Test que la création avec campagne parente inexistante lève NotFoundException."""
         mock_campaign_repo = MagicMock()
         mock_campaign_repo.get_by_uuid.return_value = None
@@ -90,15 +98,23 @@ class TestCampaignDocumentsServiceGet:
         self, sample_campaign_document_bean, mock_campaign_documents_repository
     ):
         """Test récupération réussie par UUID."""
-        mock_campaign_documents_repository.get_by_uuid.return_value = sample_campaign_document_bean
+        mock_campaign_documents_repository.get_by_uuid.return_value = (
+            sample_campaign_document_bean
+        )
 
-        result = get_campaign_document_by_uuid(mock_campaign_documents_repository, sample_campaign_document_bean.uuid)
+        result = get_campaign_document_by_uuid(
+            mock_campaign_documents_repository, sample_campaign_document_bean.uuid
+        )
 
         assert result.uuid == sample_campaign_document_bean.uuid
-        mock_campaign_documents_repository.get_by_uuid.assert_called_once_with(sample_campaign_document_bean.uuid)
+        mock_campaign_documents_repository.get_by_uuid.assert_called_once_with(
+            sample_campaign_document_bean.uuid
+        )
 
     @pytest.mark.unit
-    def test_get_campaign_document_by_uuid_not_found(self, mock_campaign_documents_repository):
+    def test_get_campaign_document_by_uuid_not_found(
+        self, mock_campaign_documents_repository
+    ):
         """Test qu'un UUID inexistant lève NotFoundException."""
         mock_campaign_documents_repository.get_by_uuid.return_value = None
         fake_uuid = str(uuid.uuid4())
@@ -122,10 +138,14 @@ class TestCampaignDocumentsServiceGet:
             sample_campaign_document_bean,
         ]
 
-        result = get_campaign_documents(mock_campaign_documents_repository, sample_campaign_uuid)
+        result = get_campaign_documents(
+            mock_campaign_documents_repository, sample_campaign_uuid
+        )
 
         assert len(result) == 2
-        mock_campaign_documents_repository.get_by_campaign_uuid.assert_called_once_with(sample_campaign_uuid)
+        mock_campaign_documents_repository.get_by_campaign_uuid.assert_called_once_with(
+            sample_campaign_uuid
+        )
 
     @pytest.mark.unit
     def test_get_campaign_documents_empty(self, mock_campaign_documents_repository):
@@ -142,9 +162,13 @@ class TestCampaignDocumentsServiceUpdate:
     """Tests pour la mise à jour de document de campagne."""
 
     @pytest.mark.unit
-    def test_update_campaign_document_success(self, sample_campaign_document_bean, mock_campaign_documents_repository):
+    def test_update_campaign_document_success(
+        self, sample_campaign_document_bean, mock_campaign_documents_repository
+    ):
         """Test mise à jour réussie."""
-        mock_campaign_documents_repository.get_by_uuid.return_value = sample_campaign_document_bean
+        mock_campaign_documents_repository.get_by_uuid.return_value = (
+            sample_campaign_document_bean
+        )
         updated_bean = CampaignDocumentsBean(
             uuid=sample_campaign_document_bean.uuid,
             campaign_uuid=sample_campaign_document_bean.campaign_uuid,
@@ -156,14 +180,18 @@ class TestCampaignDocumentsServiceUpdate:
         )
         mock_campaign_documents_repository.update.return_value = updated_bean
 
-        result = update_campaign_document(mock_campaign_documents_repository, updated_bean)
+        result = update_campaign_document(
+            mock_campaign_documents_repository, updated_bean
+        )
 
         assert result.name == "Document Modifié"
         assert result.subtype_id == 2
         mock_campaign_documents_repository.update.assert_called_once_with(updated_bean)
 
     @pytest.mark.unit
-    def test_update_campaign_document_not_found(self, mock_campaign_documents_repository):
+    def test_update_campaign_document_not_found(
+        self, mock_campaign_documents_repository
+    ):
         """Test que la mise à jour d'un document inexistant lève NotFoundException."""
         mock_campaign_documents_repository.get_by_uuid.return_value = None
         fake_bean = CampaignDocumentsBean(
@@ -198,7 +226,9 @@ class TestCampaignDocumentsServiceDelete:
         mock_campaign_documents_repository.delete.assert_called_once_with(doc_uuid)
 
     @pytest.mark.unit
-    def test_delete_campaign_document_not_found(self, mock_campaign_documents_repository):
+    def test_delete_campaign_document_not_found(
+        self, mock_campaign_documents_repository
+    ):
         """Test que la suppression d'un document inexistant lève NotFoundException."""
         mock_campaign_documents_repository.get_by_uuid.return_value = None
         fake_uuid = str(uuid.uuid4())
@@ -209,7 +239,9 @@ class TestCampaignDocumentsServiceDelete:
         mock_campaign_documents_repository.delete.assert_not_called()
 
     @pytest.mark.unit
-    def test_delete_campaign_document_repo_returns_false(self, mock_campaign_documents_repository):
+    def test_delete_campaign_document_repo_returns_false(
+        self, mock_campaign_documents_repository
+    ):
         """Test que delete lève NotFoundException quand repository.delete retourne False."""
         mock_campaign_documents_repository.get_by_uuid.return_value = MagicMock()
         mock_campaign_documents_repository.delete.return_value = False
@@ -238,7 +270,10 @@ class TestCampaignDocumentsModuleLogger:
     @pytest.mark.unit
     def test_logger_name(self):
         """Vérifie que le logger porte le bon nom de module."""
-        assert campaign_documents_service.logger.name == "app.domain.campaign.services.campaign_documents_service"
+        assert (
+            campaign_documents_service.logger.name
+            == "app.domain.campaign.services.campaign_documents_service"
+        )
 
 
 class TestCreateCampaignDocumentAndOrMutants:
@@ -283,7 +318,9 @@ class TestCreateCampaignDocumentAndOrMutants:
         mock_repo.get_by_campaign_uuid.return_value = []
         mock_campaign_repo = MagicMock()
 
-        result = create_campaign_document(mock_repo, bean, campaign_repository=mock_campaign_repo)
+        result = create_campaign_document(
+            mock_repo, bean, campaign_repository=mock_campaign_repo
+        )
 
         assert result is bean
         mock_campaign_repo.get_by_uuid.assert_not_called()
@@ -444,7 +481,9 @@ class TestCampaignDocumentsExceptionMessages:
         mock_campaign_repo.get_by_uuid.return_value = None
 
         with pytest.raises(NotFoundException) as exc_info:
-            create_campaign_document(mock_repo, bean, campaign_repository=mock_campaign_repo)
+            create_campaign_document(
+                mock_repo, bean, campaign_repository=mock_campaign_repo
+            )
 
         assert exc_info.value.resource == "Campaign"
         assert exc_info.value.identifier == "parent-uuid"

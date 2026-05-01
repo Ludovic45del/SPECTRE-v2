@@ -35,7 +35,9 @@ def forwards(apps, schema_editor):
 def reverse(apps, schema_editor):
     FaEntity = apps.get_model("app", "FaEntity")
     for _text_field, fk_field in FA_TARGETS:
-        FaEntity.objects.exclude(**{f"{fk_field}__isnull": True}).update(**{fk_field: None})
+        FaEntity.objects.exclude(**{f"{fk_field}__isnull": True}).update(
+            **{fk_field: None}
+        )
 
 
 class Migration(migrations.Migration):

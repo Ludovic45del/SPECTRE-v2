@@ -25,10 +25,7 @@ interface FaSectionHeaderProps {
 const isMuiPaletteName = (c: string): c is NonNullable<ChipProps['color']> =>
     ['default', 'primary', 'secondary', 'success', 'warning', 'error', 'info'].includes(c);
 
-export const FaSectionHeader = memo(function FaSectionHeader({
-    label,
-    chipColor = 'default',
-}: FaSectionHeaderProps) {
+export const FaSectionHeader = memo(function FaSectionHeader({ label, chipColor = 'default' }: FaSectionHeaderProps) {
     const isHex = typeof chipColor === 'string' && chipColor.startsWith('#');
     return (
         <>
@@ -38,11 +35,7 @@ export const FaSectionHeader = memo(function FaSectionHeader({
                 ) : (
                     <Chip
                         label={label}
-                        color={
-                            typeof chipColor === 'string' && isMuiPaletteName(chipColor)
-                                ? chipColor
-                                : 'default'
-                        }
+                        color={typeof chipColor === 'string' && isMuiPaletteName(chipColor) ? chipColor : 'default'}
                         aria-hidden="true"
                     />
                 )}

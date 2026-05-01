@@ -5,7 +5,10 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.viewsets import ViewSet
 
-from app.api.stock.serializers import FsecAssemblyItemCreateSerializer, FsecAssemblyItemPatchSerializer
+from app.api.stock.serializers import (
+    FsecAssemblyItemCreateSerializer,
+    FsecAssemblyItemPatchSerializer,
+)
 from app.domain.exceptions import InvalidDataException
 from app.domain.stock.services.fsec_assembly_service import (
     add_assembly_item,
@@ -19,8 +22,12 @@ from app.mapper.stock.fsec_assembly_mapper import (
     fsec_assembly_mapper_detail_bean_to_api,
 )
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
-from app.repository.stock.repositories.fsec_assembly_item_repository import FsecAssemblyItemRepository
-from app.repository.stock.repositories.stock_catalog_repository import StockCatalogRepository
+from app.repository.stock.repositories.fsec_assembly_item_repository import (
+    FsecAssemblyItemRepository,
+)
+from app.repository.stock.repositories.stock_catalog_repository import (
+    StockCatalogRepository,
+)
 
 
 class FsecAssemblyItemController(ViewSet):
@@ -43,7 +50,9 @@ class FsecAssemblyItemController(ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """GET /api/v1/fsec-assembly-items/:uuid/."""
         bean = get_assembly_item(self.assembly_repository, uuid)
-        return JsonResponse(fsec_assembly_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            fsec_assembly_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- create
 
@@ -82,7 +91,9 @@ class FsecAssemblyItemController(ViewSet):
             uuid=uuid,
             partial_data=serializer.validated_data,
         )
-        return JsonResponse(fsec_assembly_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            fsec_assembly_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- destroy
 

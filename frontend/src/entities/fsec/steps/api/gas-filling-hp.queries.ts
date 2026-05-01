@@ -76,10 +76,7 @@ export function useCreateGasFillingHpStep() {
 
     return useMutation({
         mutationFn: async (input: CreateGasFillingHpStepInput): Promise<GasFillingHpStep> => {
-            const response = await api.post(
-                '/gas-filling-hp-steps/',
-                gasFillingHpStepToApi(input),
-            );
+            const response = await api.post('/gas-filling-hp-steps/', gasFillingHpStepToApi(input));
             return GasFillingHpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -98,10 +95,7 @@ export function useUpdateGasFillingHpStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateGasFillingHpStepInput): Promise<GasFillingHpStep> => {
-            const response = await api.put(
-                `/gas-filling-hp-steps/${input.uuid}/`,
-                gasFillingHpStepToApi(input),
-            );
+            const response = await api.put(`/gas-filling-hp-steps/${input.uuid}/`, gasFillingHpStepToApi(input));
             return GasFillingHpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

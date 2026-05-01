@@ -49,7 +49,9 @@ class EmbaseController(PaginatedControllerMixin, ViewSet):
     def list(self, request) -> JsonResponse:
         """Liste toutes les Embases (GET /)."""
         source = LazyRepositoryList(
-            fetch_func=lambda limit, offset: get_all_embases(self.repository, limit=limit, offset=offset),
+            fetch_func=lambda limit, offset: get_all_embases(
+                self.repository, limit=limit, offset=offset
+            ),
             count_func=lambda: count_all_embases(self.repository),
         )
         return self.paginate_or_json(request, source, embase_mapper_bean_to_api)
@@ -67,7 +69,9 @@ class EmbaseController(PaginatedControllerMixin, ViewSet):
 
         bean = embase_mapper_api_to_bean(serializer.validated_data)
         result = create_embase(self.repository, bean)
-        return JsonResponse(embase_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            embase_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
 
     def update(self, request, uuid=None) -> JsonResponse:
         """Met à jour une Embase (PUT /:uuid/)."""
@@ -80,7 +84,9 @@ class EmbaseController(PaginatedControllerMixin, ViewSet):
 
         bean = embase_mapper_api_to_bean(serializer.validated_data)
         result = update_embase(self.repository, bean)
-        return JsonResponse(embase_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            embase_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     def partial_update(self, request, uuid=None) -> JsonResponse:
         """Met à jour partiellement une Embase (PATCH /:uuid/)."""
@@ -89,7 +95,9 @@ class EmbaseController(PaginatedControllerMixin, ViewSet):
             raise InvalidDataException(str(serializer.errors))
 
         result = patch_embase(self.repository, uuid, serializer.validated_data)
-        return JsonResponse(embase_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            embase_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
+        )
 
     def get_permissions(self):
         """Admin-only pour la suppression."""

@@ -6,7 +6,10 @@ from rest_framework.decorators import action
 
 from app.api.shared.base_step_controller import BaseStepController
 from app.api.steps.serializers import PhotoViewSerializer
-from app.mapper.steps.photo_view_mapper import photo_view_mapper_api_to_bean, photo_view_mapper_bean_to_api
+from app.mapper.steps.photo_view_mapper import (
+    photo_view_mapper_api_to_bean,
+    photo_view_mapper_bean_to_api,
+)
 from app.repository.steps.repositories.photo_view_repository import PhotoViewRepository
 
 

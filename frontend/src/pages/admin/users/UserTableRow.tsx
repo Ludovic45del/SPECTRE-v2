@@ -107,10 +107,7 @@ export const UserTableRow = memo(function UserTableRow({ user, onOpenDialog }: U
                 </Typography>
             </TableCell>
             <TableCell>
-                <Chip
-                    label={user.isActive ? 'Actif' : 'Inactif'}
-                    color={user.isActive ? 'success' : 'error'}
-                />
+                <Chip label={user.isActive ? 'Actif' : 'Inactif'} color={user.isActive ? 'success' : 'error'} />
             </TableCell>
             <TableCell align="center" sx={{ px: 0 }}>
                 <IconButton size="small" onClick={handleOpenMenu}>

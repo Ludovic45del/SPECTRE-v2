@@ -12,10 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@shared/api';
 import { QUERY_CACHE_CONFIG } from '@shared/lib';
-import {
-    StockCatalogItemListSchema,
-    type StockCatalogItem,
-} from '@entities/stock-item';
+import { StockCatalogItemListSchema, type StockCatalogItem } from '@entities/stock-item';
 
 import {
     FsecAssemblyItemDetailListSchema,
@@ -36,11 +33,7 @@ export function useFsecAssemblyItems(fsecUuid: string | null | undefined) {
     return useQuery({
         queryKey: fsecAssemblyKeys.listByFsec(fsecUuid ?? ''),
         queryFn: async ({ signal }): Promise<FsecAssemblyItemDetail[]> => {
-            return api.get(
-                `/fsec-assembly-items/fsec/${fsecUuid}/`,
-                FsecAssemblyItemDetailListSchema,
-                signal,
-            );
+            return api.get(`/fsec-assembly-items/fsec/${fsecUuid}/`, FsecAssemblyItemDetailListSchema, signal);
         },
         enabled: Boolean(fsecUuid),
         ...QUERY_CACHE_CONFIG,
@@ -52,11 +45,7 @@ export function useAvailableForFsec(fsecUuid: string | null | undefined) {
     return useQuery({
         queryKey: fsecAssemblyKeys.availableForFsec(fsecUuid ?? ''),
         queryFn: async ({ signal }): Promise<StockCatalogItem[]> => {
-            return api.get(
-                `/stock/catalog/available-for-fsec/${fsecUuid}/`,
-                StockCatalogItemListSchema,
-                signal,
-            );
+            return api.get(`/stock/catalog/available-for-fsec/${fsecUuid}/`, StockCatalogItemListSchema, signal);
         },
         enabled: Boolean(fsecUuid),
         ...QUERY_CACHE_CONFIG,

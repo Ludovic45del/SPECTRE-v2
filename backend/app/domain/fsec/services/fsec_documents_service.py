@@ -4,7 +4,10 @@ import logging
 from typing import List
 
 from app.domain.exceptions import NotFoundException
-from app.domain.fsec.interface.fsec_repository import IFsecDocumentsRepository, IFsecRepository
+from app.domain.fsec.interface.fsec_repository import (
+    IFsecDocumentsRepository,
+    IFsecRepository,
+)
 from app.domain.fsec.models.fsec_documents_bean import FsecDocumentsBean
 
 logger = logging.getLogger(__name__)
@@ -32,7 +35,9 @@ def create_fsec_document(
     return repository.create(bean)
 
 
-def get_fsec_document_by_uuid(repository: IFsecDocumentsRepository, uuid: str) -> FsecDocumentsBean:
+def get_fsec_document_by_uuid(
+    repository: IFsecDocumentsRepository, uuid: str
+) -> FsecDocumentsBean:
     """Récupère un document par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -40,12 +45,16 @@ def get_fsec_document_by_uuid(repository: IFsecDocumentsRepository, uuid: str) -
     return bean
 
 
-def get_fsec_documents(repository: IFsecDocumentsRepository, fsec_id: str) -> List[FsecDocumentsBean]:
+def get_fsec_documents(
+    repository: IFsecDocumentsRepository, fsec_id: str
+) -> List[FsecDocumentsBean]:
     """Récupère tous les documents d'un FSEC."""
     return repository.get_by_fsec_id(fsec_id)
 
 
-def update_fsec_document(repository: IFsecDocumentsRepository, bean: FsecDocumentsBean) -> FsecDocumentsBean:
+def update_fsec_document(
+    repository: IFsecDocumentsRepository, bean: FsecDocumentsBean
+) -> FsecDocumentsBean:
     """Met à jour un document."""
     existing = repository.get_by_uuid(bean.uuid)
     if existing is None:

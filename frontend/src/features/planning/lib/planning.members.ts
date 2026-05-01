@@ -20,9 +20,7 @@ const MEMBER_ROLES_ORDER: readonly SpectreRole[] = [
     'stagiaire',
 ];
 
-const ROLE_ORDER_INDEX: ReadonlyMap<SpectreRole, number> = new Map(
-    MEMBER_ROLES_ORDER.map((role, idx) => [role, idx]),
-);
+const ROLE_ORDER_INDEX: ReadonlyMap<SpectreRole, number> = new Map(MEMBER_ROLES_ORDER.map((role, idx) => [role, idx]));
 
 /** Convention SPECTRE : "NOM Prénom" (cf. table admin Users). Fallback sur `username`. */
 function formatMemberName(user: User): string {

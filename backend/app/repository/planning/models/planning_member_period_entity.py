@@ -15,7 +15,9 @@ class PlanningMemberPeriodEntity(models.Model):
         db_table = "PLANNING_MEMBER_PERIOD"
         indexes = [
             models.Index(fields=["year"], name="pln_memperiod_year_idx"),
-            models.Index(fields=["start_date", "end_date"], name="pln_memperiod_dates_idx"),
+            models.Index(
+                fields=["start_date", "end_date"], name="pln_memperiod_dates_idx"
+            ),
         ]
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

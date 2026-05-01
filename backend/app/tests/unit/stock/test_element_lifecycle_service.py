@@ -33,7 +33,9 @@ class TestReserveElement:
     ):
         sample_element_bean.status = ELEMENT_STATUS_DISPO
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_element_bean
-        mock_fsec_assembly_repository.find_active_assignment_for_element.return_value = None
+        mock_fsec_assembly_repository.find_active_assignment_for_element.return_value = (
+            None
+        )
         reserve_element(
             mock_stock_catalog_repository,
             mock_fsec_assembly_repository,
@@ -129,7 +131,9 @@ class TestReserveElement:
 
 class TestReleaseElement:
     @pytest.mark.unit
-    def test_release_reservee_to_dispo(self, sample_element_bean, mock_stock_catalog_repository):
+    def test_release_reservee_to_dispo(
+        self, sample_element_bean, mock_stock_catalog_repository
+    ):
         sample_element_bean.status = ELEMENT_STATUS_RESERVEE
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_element_bean
         release_element(mock_stock_catalog_repository, sample_element_bean.uuid)
@@ -138,7 +142,9 @@ class TestReleaseElement:
         )
 
     @pytest.mark.unit
-    def test_release_tiree_is_no_op(self, sample_element_bean, mock_stock_catalog_repository):
+    def test_release_tiree_is_no_op(
+        self, sample_element_bean, mock_stock_catalog_repository
+    ):
         sample_element_bean.status = ELEMENT_STATUS_TIREE
         mock_stock_catalog_repository.get_by_uuid.return_value = sample_element_bean
         release_element(mock_stock_catalog_repository, sample_element_bean.uuid)
@@ -154,7 +160,9 @@ class TestSyncElementStatusesForFsec:
         stock_fsec_uuid,
         stock_element_uuid,
     ):
-        mock_fsec_assembly_repository.list_catalog_uuids_by_fsec.return_value = [stock_element_uuid]
+        mock_fsec_assembly_repository.list_catalog_uuids_by_fsec.return_value = [
+            stock_element_uuid
+        ]
         mock_stock_catalog_repository.update_status_for_uuids.return_value = 1
         updated = sync_element_statuses_for_fsec(
             mock_stock_catalog_repository,
@@ -175,7 +183,9 @@ class TestSyncElementStatusesForFsec:
         stock_fsec_uuid,
         stock_element_uuid,
     ):
-        mock_fsec_assembly_repository.list_catalog_uuids_by_fsec.return_value = [stock_element_uuid]
+        mock_fsec_assembly_repository.list_catalog_uuids_by_fsec.return_value = [
+            stock_element_uuid
+        ]
         mock_stock_catalog_repository.update_status_for_uuids.return_value = 1
         sync_element_statuses_for_fsec(
             mock_stock_catalog_repository,

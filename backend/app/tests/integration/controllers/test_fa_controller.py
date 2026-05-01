@@ -359,7 +359,9 @@ class TestFaControllerByFsec:
         )
 
         # Récupérer par FSEC
-        response = api_client.get(f"/api/v1/fas/fsec/{str(sample_fsec_version.version_uuid)}/")
+        response = api_client.get(
+            f"/api/v1/fas/fsec/{str(sample_fsec_version.version_uuid)}/"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -437,7 +439,9 @@ class TestFaStatusWorkflow:
         assert close_response.status_code == 200
         assert close_response.json()["status_id"] == 2
 
-    def test_workflow_backward_navigation_allowed_via_patch(self, api_client, sample_fa_payload):
+    def test_workflow_backward_navigation_allowed_via_patch(
+        self, api_client, sample_fa_payload
+    ):
         create_response = api_client.post(
             "/api/v1/fas/",
             data=json.dumps(sample_fa_payload),
@@ -524,7 +528,9 @@ class TestFaTypeAndCriticality:
         assert patch_response.json()["type_id"] == type_id
 
     @pytest.mark.parametrize("criticality_id", [0, 1, 2, 3])
-    def test_all_criticality_values(self, api_client, sample_fa_payload, criticality_id):
+    def test_all_criticality_values(
+        self, api_client, sample_fa_payload, criticality_id
+    ):
         """Test tous les niveaux de criticité."""
         # Créer FA
         create_response = api_client.post(

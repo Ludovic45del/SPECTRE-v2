@@ -59,7 +59,9 @@ router = DefaultRouter()
 # Campaign routes
 router.register(r"campaigns", CampaignController, basename="campaigns")
 router.register(r"campaign-teams", CampaignTeamsController, basename="campaign-teams")
-router.register(r"campaign-documents", CampaignDocumentsController, basename="campaign-documents")
+router.register(
+    r"campaign-documents", CampaignDocumentsController, basename="campaign-documents"
+)
 
 # FSEC routes
 router.register(r"fsecs", FsecController, basename="fsecs")
@@ -96,9 +98,15 @@ router.register(
     AirtightnessTestLpStepController,
     basename="airtightness-test-lp-steps",
 )
-router.register(r"gas-filling-bp-steps", GasFillingBpStepController, basename="gas-filling-bp-steps")
-router.register(r"gas-filling-hp-steps", GasFillingHpStepController, basename="gas-filling-hp-steps")
-router.register(r"permeation-steps", PermeationStepController, basename="permeation-steps")
+router.register(
+    r"gas-filling-bp-steps", GasFillingBpStepController, basename="gas-filling-bp-steps"
+)
+router.register(
+    r"gas-filling-hp-steps", GasFillingHpStepController, basename="gas-filling-hp-steps"
+)
+router.register(
+    r"permeation-steps", PermeationStepController, basename="permeation-steps"
+)
 router.register(
     r"depressurization-steps",
     DepressurizationStepController,
@@ -118,7 +126,9 @@ router.register(r"dashboard", DashboardController, basename="dashboard")
 
 # User routes
 router.register(r"users", UserAdminController, basename="users")
-router.register(r"auth/change-password", ChangePasswordController, basename="change-password")
+router.register(
+    r"auth/change-password", ChangePasswordController, basename="change-password"
+)
 router.register(
     r"auth/set-initial-password",
     SetInitialPasswordController,

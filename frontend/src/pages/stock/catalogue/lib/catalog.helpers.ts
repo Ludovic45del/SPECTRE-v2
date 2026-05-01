@@ -4,13 +4,7 @@
 
 import { formatLocation, isLowStock, type StockCatalogItem } from '@entities/stock-item';
 
-export type CatalogSortColumn =
-    | 'name'
-    | 'reference'
-    | 'category'
-    | 'fournisseur'
-    | 'emplacement'
-    | 'state';
+export type CatalogSortColumn = 'name' | 'reference' | 'category' | 'fournisseur' | 'emplacement' | 'state';
 export type SortDirection = 'asc' | 'desc';
 
 // ─────────────────────────────────────────────────────────────────────────────

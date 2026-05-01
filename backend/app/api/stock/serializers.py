@@ -28,18 +28,36 @@ class StockCatalogItemSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=_choices_keys(ITEM_KIND_CHOICES))
     category = serializers.ChoiceField(choices=_choices_keys(CATEGORY_CHOICES))
     name = serializers.CharField(max_length=200)
-    reference = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    caracteristique = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    type_de_colle = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-    fournisseur = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-    remarques = serializers.CharField(max_length=4000, required=False, allow_null=True, allow_blank=True)
+    reference = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    caracteristique = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    type_de_colle = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
+    fournisseur = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
+    remarques = serializers.CharField(
+        max_length=4000, required=False, allow_null=True, allow_blank=True
+    )
 
     # Champs consumable
-    unite = serializers.CharField(max_length=50, required=False, allow_null=True, allow_blank=True)
-    quantite = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=10**9)
-    seuil_alerte = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=10**9)
+    unite = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
+    quantite = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0, max_value=10**9
+    )
+    seuil_alerte = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0, max_value=10**9
+    )
     date_peremption = serializers.DateField(required=False, allow_null=True)
-    type_d_achat = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
+    type_d_achat = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
 
     # Champs element
     installation = serializers.ChoiceField(
@@ -52,11 +70,17 @@ class StockCatalogItemSerializer(serializers.Serializer):
         required=False,
         allow_null=True,
     )
-    materiaux_mat = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
+    materiaux_mat = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
 
     # Placement
-    boite = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    emplacement = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
+    boite = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    emplacement = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
     is_active = serializers.BooleanField(required=False)
 
 
@@ -67,18 +91,38 @@ class StockCatalogItemPatchSerializer(serializers.Serializer):
     (cf. CDC §5.1). S'il est passé dans le payload, il sera ignoré silencieusement.
     """
 
-    category = serializers.ChoiceField(choices=_choices_keys(CATEGORY_CHOICES), required=False)
+    category = serializers.ChoiceField(
+        choices=_choices_keys(CATEGORY_CHOICES), required=False
+    )
     name = serializers.CharField(max_length=200, required=False)
-    reference = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    caracteristique = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    type_de_colle = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-    fournisseur = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-    remarques = serializers.CharField(max_length=4000, required=False, allow_null=True, allow_blank=True)
-    unite = serializers.CharField(max_length=50, required=False, allow_null=True, allow_blank=True)
-    quantite = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=10**9)
-    seuil_alerte = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=10**9)
+    reference = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    caracteristique = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    type_de_colle = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
+    fournisseur = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
+    remarques = serializers.CharField(
+        max_length=4000, required=False, allow_null=True, allow_blank=True
+    )
+    unite = serializers.CharField(
+        max_length=50, required=False, allow_null=True, allow_blank=True
+    )
+    quantite = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0, max_value=10**9
+    )
+    seuil_alerte = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0, max_value=10**9
+    )
     date_peremption = serializers.DateField(required=False, allow_null=True)
-    type_d_achat = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
+    type_d_achat = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
     installation = serializers.ChoiceField(
         choices=_choices_keys(INSTALLATION_CHOICES),
         required=False,
@@ -89,9 +133,15 @@ class StockCatalogItemPatchSerializer(serializers.Serializer):
         required=False,
         allow_null=True,
     )
-    materiaux_mat = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    boite = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
-    emplacement = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
+    materiaux_mat = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    boite = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    emplacement = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
     is_active = serializers.BooleanField(required=False)
 
 
@@ -105,11 +155,17 @@ class StockMovementSerializer(serializers.Serializer):
 
     uuid = serializers.UUIDField(required=False, allow_null=True)
     catalog_item_uuid = serializers.UUIDField()
-    movement_type = serializers.ChoiceField(choices=_choices_keys(MOVEMENT_TYPE_CHOICES))
+    movement_type = serializers.ChoiceField(
+        choices=_choices_keys(MOVEMENT_TYPE_CHOICES)
+    )
     quantite_delta = serializers.IntegerField(min_value=-(10**9), max_value=10**9)
     date = serializers.DateField()
-    remarque = serializers.CharField(max_length=1000, required=False, allow_null=True, allow_blank=True)
-    auteur_name = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
+    remarque = serializers.CharField(
+        max_length=1000, required=False, allow_null=True, allow_blank=True
+    )
+    auteur_name = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
 
     def validate(self, attrs):
         """Cohérence movement_type ↔ signe de quantite_delta (cf. CDC §3.2).
@@ -121,11 +177,17 @@ class StockMovementSerializer(serializers.Serializer):
         mtype = attrs.get("movement_type")
         delta = attrs.get("quantite_delta", 0)
         if delta == 0:
-            raise serializers.ValidationError({"quantite_delta": "La quantité ne peut pas être nulle."})
+            raise serializers.ValidationError(
+                {"quantite_delta": "La quantité ne peut pas être nulle."}
+            )
         if mtype == "entree" and delta < 0:
-            raise serializers.ValidationError({"quantite_delta": "Pour une entrée, la quantité doit être positive."})
+            raise serializers.ValidationError(
+                {"quantite_delta": "Pour une entrée, la quantité doit être positive."}
+            )
         if mtype == "sortie" and delta > 0:
-            raise serializers.ValidationError({"quantite_delta": "Pour une sortie, la quantité doit être négative."})
+            raise serializers.ValidationError(
+                {"quantite_delta": "Pour une sortie, la quantité doit être négative."}
+            )
         return attrs
 
 
@@ -140,7 +202,9 @@ class FsecAssemblyItemCreateSerializer(serializers.Serializer):
     fsec_uuid = serializers.UUIDField()
     catalog_item_uuid = serializers.UUIDField()
     sort_order = serializers.IntegerField(required=False, default=0, min_value=0)
-    remarque = serializers.CharField(max_length=1000, required=False, allow_null=True, allow_blank=True)
+    remarque = serializers.CharField(
+        max_length=1000, required=False, allow_null=True, allow_blank=True
+    )
 
 
 class FsecAssemblyItemPatchSerializer(serializers.Serializer):
@@ -150,4 +214,6 @@ class FsecAssemblyItemPatchSerializer(serializers.Serializer):
     """
 
     sort_order = serializers.IntegerField(required=False, min_value=0)
-    remarque = serializers.CharField(max_length=1000, required=False, allow_null=True, allow_blank=True)
+    remarque = serializers.CharField(
+        max_length=1000, required=False, allow_null=True, allow_blank=True
+    )

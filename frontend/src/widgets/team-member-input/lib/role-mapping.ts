@@ -16,14 +16,7 @@
 import type { SpectreRole } from '@entities/user';
 
 /** Libellés de rôles tels que présents dans les CSV référentiels (CampaignRoles + FsecRoles). */
-export type TeamRoleLabel =
-    | 'MOE'
-    | 'RCE'
-    | 'IEC'
-    | 'ASSEMBLEUR'
-    | 'METROLOGUE'
-    | 'OPERATEUR_PHOTOS'
-    | 'TCI';
+export type TeamRoleLabel = 'MOE' | 'RCE' | 'IEC' | 'ASSEMBLEUR' | 'METROLOGUE' | 'OPERATEUR_PHOTOS' | 'TCI';
 
 /** Labels qui restent en texte libre (membres extérieurs au labo). */
 export const FREE_TEXT_TEAM_ROLES: readonly TeamRoleLabel[] = ['MOE', 'TCI'] as const;
@@ -33,16 +26,15 @@ export const FREE_TEXT_TEAM_ROLES: readonly TeamRoleLabel[] = ['MOE', 'TCI'] as 
  * Les rôles "free text" (MOE/TCI) sont absents : ils sont gérés en amont par
  * `isFreeTextTeamRole`.
  */
-export const TEAM_ROLE_TO_SPECTRE_ROLES: Partial<Record<TeamRoleLabel, SpectreRole[] | undefined>> =
-    {
-        RCE: ['rce'],
-        IEC: ['iec'],
-        ASSEMBLEUR: ['assembleur'],
-        METROLOGUE: ['metrologue'],
-        // Aucune restriction : tout user actif peut prendre des photos
-        // (y compris stagiaire/alternant — décision métier).
-        OPERATEUR_PHOTOS: undefined,
-    };
+export const TEAM_ROLE_TO_SPECTRE_ROLES: Partial<Record<TeamRoleLabel, SpectreRole[] | undefined>> = {
+    RCE: ['rce'],
+    IEC: ['iec'],
+    ASSEMBLEUR: ['assembleur'],
+    METROLOGUE: ['metrologue'],
+    // Aucune restriction : tout user actif peut prendre des photos
+    // (y compris stagiaire/alternant — décision métier).
+    OPERATEUR_PHOTOS: undefined,
+};
 
 export function isFreeTextTeamRole(role: TeamRoleLabel): boolean {
     return FREE_TEXT_TEAM_ROLES.includes(role);

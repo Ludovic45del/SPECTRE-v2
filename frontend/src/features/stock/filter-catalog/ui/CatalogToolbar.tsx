@@ -6,15 +6,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import {
-    Chip,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    Stack,
-    type SelectChangeEvent,
-} from '@mui/material';
+import { Chip, FormControl, InputLabel, MenuItem, Select, Stack, type SelectChangeEvent } from '@mui/material';
 import { FilterToolbar } from '@widgets/filter-toolbar';
 import {
     ELEMENT_STATUS_LABELS,

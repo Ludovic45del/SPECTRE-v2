@@ -8,7 +8,11 @@ import uuid as uuid_lib
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 from app.domain.user.interface.user_repository import IUserRepository
 from app.domain.user.models.user_bean import ALL_SPECTRE_ROLES, UserBean
 
@@ -114,7 +118,9 @@ def list_users(
     )
 
 
-def update_user(repository: IUserRepository, uuid: uuid_lib.UUID, bean: UserBean) -> UserBean:
+def update_user(
+    repository: IUserRepository, uuid: uuid_lib.UUID, bean: UserBean
+) -> UserBean:
     existing = repository.get_by_uuid(uuid)
     if not existing:
         raise NotFoundException("USER", str(uuid))

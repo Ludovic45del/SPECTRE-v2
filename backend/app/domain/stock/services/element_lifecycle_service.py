@@ -14,7 +14,9 @@ import logging
 
 from app.domain.exceptions import ConflictException, NotFoundException
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
-from app.domain.stock.interface.fsec_assembly_repository import IFsecAssemblyItemRepository
+from app.domain.stock.interface.fsec_assembly_repository import (
+    IFsecAssemblyItemRepository,
+)
 from app.domain.stock.models.stock_constants import (
     ELEMENT_STATUS_AFFECTEE,
     ELEMENT_STATUS_DISPO,
@@ -52,7 +54,9 @@ def reserve_element(
         # Pas applicable aux consommables : pas de réservation, pas de blocage.
         return
 
-    existing_assignment = assembly_repository.find_active_assignment_for_element(catalog_item_uuid)
+    existing_assignment = assembly_repository.find_active_assignment_for_element(
+        catalog_item_uuid
+    )
     if existing_assignment is not None and existing_assignment.fsec_uuid != fsec_uuid:
         raise ConflictException(
             ERROR_CODE_ELEMENT_ALREADY_USED,
@@ -72,7 +76,9 @@ def reserve_element(
         catalog_item_uuid,
         fsec_uuid,
     )
-    catalog_repository.update_status_for_uuids([catalog_item_uuid], ELEMENT_STATUS_RESERVEE)
+    catalog_repository.update_status_for_uuids(
+        [catalog_item_uuid], ELEMENT_STATUS_RESERVEE
+    )
 
 
 def release_element(
@@ -98,7 +104,9 @@ def release_element(
         return
 
     logger.info("Releasing element catalog_uuid=%s back to dispo", catalog_item_uuid)
-    catalog_repository.update_status_for_uuids([catalog_item_uuid], ELEMENT_STATUS_DISPO)
+    catalog_repository.update_status_for_uuids(
+        [catalog_item_uuid], ELEMENT_STATUS_DISPO
+    )
 
 
 def sync_element_statuses_for_fsec(
@@ -127,7 +135,9 @@ def sync_element_statuses_for_fsec(
         return 0
 
     target_status = (
-        ELEMENT_STATUS_AFFECTEE if new_fsec_status_id == FSEC_STATUS_ID_EN_COURS_ASSEMBLAGE else ELEMENT_STATUS_TIREE
+        ELEMENT_STATUS_AFFECTEE
+        if new_fsec_status_id == FSEC_STATUS_ID_EN_COURS_ASSEMBLAGE
+        else ELEMENT_STATUS_TIREE
     )
 
     logger.info(

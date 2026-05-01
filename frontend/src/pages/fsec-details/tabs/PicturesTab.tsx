@@ -137,10 +137,7 @@ function SessionCard({
                             Opérateur
                         </Typography>
                         <Box>
-                            <UserChip
-                                userUuid={picturesStep?.operatorUserUuid}
-                                fallbackText={picturesStep?.operator}
-                            />
+                            <UserChip userUuid={picturesStep?.operatorUserUuid} fallbackText={picturesStep?.operator} />
                         </Box>
                     </Grid>
                     <Grid item xs={6} md={4}>

@@ -3,7 +3,10 @@
 from typing import Any, Dict
 
 from app.domain.steps.models.pictures_step_bean import PicturesStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid, read_operator_user_uuid
+from app.mapper.steps.base_step_mapper import (
+    normalize_user_uuid,
+    read_operator_user_uuid,
+)
 from app.mapper.type_conversion import format_date_for_api, parse_date_string
 from app.repository.steps.models.pictures_step_entity import PicturesStepEntity
 
@@ -12,7 +15,9 @@ def pictures_step_mapper_entity_to_bean(entity: PicturesStepEntity) -> PicturesS
     """Convertit une PicturesStepEntity en PicturesStepBean."""
     return PicturesStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         operator=entity.operator,
         operator_user_uuid=read_operator_user_uuid(entity),
         date=entity.date,

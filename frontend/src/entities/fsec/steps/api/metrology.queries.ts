@@ -94,10 +94,7 @@ export function useUpdateMetrologyStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateMetrologyStepInput): Promise<MetrologyStep> => {
-            const response = await api.put(
-                `/metrology-steps/${input.uuid}/`,
-                metrologyStepToApi(input),
-            );
+            const response = await api.put(`/metrology-steps/${input.uuid}/`, metrologyStepToApi(input));
             return MetrologyStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

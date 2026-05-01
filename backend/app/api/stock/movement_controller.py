@@ -18,9 +18,16 @@ from app.domain.stock.services.movement_service import (
     get_movement,
     list_movements,
 )
-from app.mapper.stock.movement_mapper import stock_movement_mapper_api_to_bean, stock_movement_mapper_bean_to_api
-from app.repository.stock.repositories.stock_catalog_repository import StockCatalogRepository
-from app.repository.stock.repositories.stock_movement_repository import StockMovementRepository
+from app.mapper.stock.movement_mapper import (
+    stock_movement_mapper_api_to_bean,
+    stock_movement_mapper_bean_to_api,
+)
+from app.repository.stock.repositories.stock_catalog_repository import (
+    StockCatalogRepository,
+)
+from app.repository.stock.repositories.stock_movement_repository import (
+    StockMovementRepository,
+)
 
 
 def _parse_date_query_param(value):
@@ -85,7 +92,9 @@ class StockMovementController(PaginatedControllerMixin, ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """GET /api/v1/stock/movements/:uuid/."""
         bean = get_movement(self.movement_repository, uuid)
-        return JsonResponse(stock_movement_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            stock_movement_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder
+        )
 
     # ----------------------------------------------------------------- create
 
@@ -95,7 +104,9 @@ class StockMovementController(PaginatedControllerMixin, ViewSet):
         if not serializer.is_valid():
             raise InvalidDataException(str(serializer.errors))
         bean = stock_movement_mapper_api_to_bean(serializer.validated_data)
-        result = create_movement(self.movement_repository, self.catalog_repository, bean)
+        result = create_movement(
+            self.movement_repository, self.catalog_repository, bean
+        )
         return JsonResponse(
             stock_movement_mapper_bean_to_api(result),
             status=201,

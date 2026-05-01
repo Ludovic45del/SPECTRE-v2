@@ -18,7 +18,9 @@ class DateRangeValidationMixin:
         start = data.get("start_date")
         end = data.get("end_date")
         if start and end and end < start:
-            raise serializers.ValidationError({"end_date": "La date de fin doit etre >= a la date de debut."})
+            raise serializers.ValidationError(
+                {"end_date": "La date de fin doit etre >= a la date de debut."}
+            )
         return data
 
 
@@ -37,7 +39,9 @@ class PlanningMemberPeriodSerializer(DateRangeValidationMixin, serializers.Seria
     member_role = serializers.CharField(required=True, max_length=50)
     year = serializers.IntegerField(required=True, min_value=2000, max_value=2100)
     period_type = serializers.ChoiceField(required=True, choices=PERIOD_TYPE_CHOICES)
-    commentaire = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=500)
+    commentaire = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True, max_length=500
+    )
     start_date = serializers.DateField(required=True)
     end_date = serializers.DateField(required=True)
 
@@ -118,7 +122,9 @@ class LabEventSerializer(DateRangeValidationMixin, serializers.Serializer):
     """Validation pour la creation/mise a jour d'un evenement labo."""
 
     machine_uuid = serializers.UUIDField(required=True)
-    category = serializers.ChoiceField(required=True, choices=LAB_EVENT_CATEGORY_CHOICES)
+    category = serializers.ChoiceField(
+        required=True, choices=LAB_EVENT_CATEGORY_CHOICES
+    )
     description = serializers.CharField(required=False, allow_blank=True, default="")
     start_date = serializers.DateField(required=True)
     end_date = serializers.DateField(required=True)

@@ -3,23 +3,10 @@
  */
 
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import {
-    FormControl,
-    FormHelperText,
-    InputLabel,
-    MenuItem,
-    Select,
-    Stack,
-    TextField,
-} from '@mui/material';
+import { FormControl, FormHelperText, InputLabel, MenuItem, Select, Stack, TextField } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import {
-    CATEGORIES_BY_KIND,
-    CATEGORY_LABELS,
-    ITEM_KIND,
-    type ConsumableFormValues,
-} from '@entities/stock-item';
+import { CATEGORIES_BY_KIND, CATEGORY_LABELS, ITEM_KIND, type ConsumableFormValues } from '@entities/stock-item';
 
 interface ConsumableFormProps {
     control: Control<ConsumableFormValues>;
@@ -223,7 +210,8 @@ export function ConsumableForm({ control, errors }: ConsumableFormProps) {
                                     size: 'small',
                                     error: !!errors.datePeremption,
                                     helperText:
-                                        (errors.datePeremption?.message as string | undefined) ?? 'Alerte 30 jours avant',
+                                        (errors.datePeremption?.message as string | undefined) ??
+                                        'Alerte 30 jours avant',
                                 },
                             }}
                         />

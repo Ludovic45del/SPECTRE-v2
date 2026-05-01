@@ -66,7 +66,11 @@ def _clean_widgets(raw: Any) -> Optional[Dict[str, Dict[str, bool]]]:
     """Nettoie et valide la visibilite des widgets."""
     if not isinstance(raw, dict):
         return None
-    return {k: {"visible": bool(v.get("visible", True))} for k, v in raw.items() if isinstance(v, dict)}
+    return {
+        k: {"visible": bool(v.get("visible", True))}
+        for k, v in raw.items()
+        if isinstance(v, dict)
+    }
 
 
 def _clean_shortcuts(raw: Any) -> Optional[List[Dict[str, str]]]:
@@ -169,7 +173,9 @@ def _dict_to_bean(data: Dict[str, Any]) -> DashboardPreferencesBean:
     )
 
 
-def get_preferences(repository: IUserRepository, user_uuid: uuid_lib.UUID) -> DashboardPreferencesBean:
+def get_preferences(
+    repository: IUserRepository, user_uuid: uuid_lib.UUID
+) -> DashboardPreferencesBean:
     """Retourne les preferences ou les defaults si vide."""
     bean = repository.get_dashboard_preferences(user_uuid)
     if not bean.layout:
@@ -177,7 +183,9 @@ def get_preferences(repository: IUserRepository, user_uuid: uuid_lib.UUID) -> Da
     return bean
 
 
-def update_preferences(repository: IUserRepository, user_uuid: uuid_lib.UUID, data: dict) -> DashboardPreferencesBean:
+def update_preferences(
+    repository: IUserRepository, user_uuid: uuid_lib.UUID, data: dict
+) -> DashboardPreferencesBean:
     """Valide et sauvegarde les preferences."""
     cleaned = validate_dashboard_preferences(data)
     bean = _dict_to_bean(cleaned)

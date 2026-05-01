@@ -58,8 +58,7 @@ export function useUserLookup(roles?: readonly SpectreRole[]) {
 
     return useQuery({
         queryKey: userKeys.lookup(roles),
-        queryFn: ({ signal }): Promise<UserLookup[]> =>
-            api.get(url, UserLookupListSchema, signal),
+        queryFn: ({ signal }): Promise<UserLookup[]> => api.get(url, UserLookupListSchema, signal),
         ...QUERY_CACHE_CONFIG,
     });
 }

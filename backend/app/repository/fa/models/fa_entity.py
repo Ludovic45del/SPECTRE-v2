@@ -20,7 +20,9 @@ class FaEntity(models.Model):
             models.Index(fields=["fsec_version_id"], name="fa_fsec_idx"),
             models.Index(fields=["status_id"], name="fa_status_idx"),
             # Couvre la requête principale list() : filter(is_active=True).order_by("-created_at").
-            models.Index(fields=["is_active", "-created_at"], name="fa_active_created_idx"),
+            models.Index(
+                fields=["is_active", "-created_at"], name="fa_active_created_idx"
+            ),
         ]
 
     # Clé primaire
@@ -61,8 +63,12 @@ class FaEntity(models.Model):
     identifier = models.CharField(max_length=100, unique=True)
 
     # Phase Ouvert
-    fsec_step_id = models.IntegerField(null=True, blank=True)  # Étape FSEC où l'anomalie a été découverte
-    fsec_step_other = models.CharField(max_length=255, null=True, blank=True)  # Précision si "Autre"
+    fsec_step_id = models.IntegerField(
+        null=True, blank=True
+    )  # Étape FSEC où l'anomalie a été découverte
+    fsec_step_other = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # Précision si "Autre"
     # Decouvreur — texte legacy + FK source de verite
     discoverer = models.CharField(max_length=100)
     discoverer_user = models.ForeignKey(
@@ -97,7 +103,9 @@ class FaEntity(models.Model):
     experience_impact = models.TextField(null=True, blank=True)
     iec_validation_progress = models.BooleanField(default=False)
     iec_validation_progress_date = models.DateField(null=True, blank=True)
-    iec_validation_progress_name = models.CharField(max_length=100, null=True, blank=True)
+    iec_validation_progress_name = models.CharField(
+        max_length=100, null=True, blank=True
+    )
     iec_validation_progress_user = models.ForeignKey(
         "app.UserProfileEntity",
         on_delete=models.PROTECT,

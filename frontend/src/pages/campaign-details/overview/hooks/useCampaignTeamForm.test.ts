@@ -174,7 +174,7 @@ describe('useCampaignTeamForm', () => {
             );
         });
 
-        it("ajoute IEC (FK) quand un nouvel uuid est fourni pour un rôle vide", async () => {
+        it('ajoute IEC (FK) quand un nouvel uuid est fourni pour un rôle vide', async () => {
             const { result } = renderHook(() => useCampaignTeamForm(mockCampaign));
             act(() => {
                 result.current.startEditing();

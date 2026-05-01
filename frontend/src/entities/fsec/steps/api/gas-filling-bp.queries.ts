@@ -78,10 +78,7 @@ export function useCreateGasFillingBpStep() {
 
     return useMutation({
         mutationFn: async (input: CreateGasFillingBpStepInput): Promise<GasFillingBpStep> => {
-            const response = await api.post(
-                '/gas-filling-bp-steps/',
-                gasFillingBpStepToApi(input),
-            );
+            const response = await api.post('/gas-filling-bp-steps/', gasFillingBpStepToApi(input));
             return GasFillingBpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -100,10 +97,7 @@ export function useUpdateGasFillingBpStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateGasFillingBpStepInput): Promise<GasFillingBpStep> => {
-            const response = await api.put(
-                `/gas-filling-bp-steps/${input.uuid}/`,
-                gasFillingBpStepToApi(input),
-            );
+            const response = await api.put(`/gas-filling-bp-steps/${input.uuid}/`, gasFillingBpStepToApi(input));
             return GasFillingBpStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

@@ -3,10 +3,17 @@
 import logging
 from typing import List
 
-from app.domain.campaign.interface.campaign_repository import ICampaignRepository, ICampaignTeamsRepository
+from app.domain.campaign.interface.campaign_repository import (
+    ICampaignRepository,
+    ICampaignTeamsRepository,
+)
 from app.domain.campaign.models.campaign_team_constants import is_free_text_role
 from app.domain.campaign.models.campaign_teams_bean import CampaignTeamsBean
-from app.domain.exceptions import ConflictException, NotFoundException, ValidationException
+from app.domain.exceptions import (
+    ConflictException,
+    NotFoundException,
+    ValidationException,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +112,9 @@ def create_campaign_team_member(
     return result
 
 
-def get_campaign_team_member_by_uuid(repository: ICampaignTeamsRepository, uuid: str) -> CampaignTeamsBean:
+def get_campaign_team_member_by_uuid(
+    repository: ICampaignTeamsRepository, uuid: str
+) -> CampaignTeamsBean:
     """Récupère un membre d'équipe par son UUID."""
     bean = repository.get_by_uuid(uuid)
     if bean is None:
@@ -113,12 +122,16 @@ def get_campaign_team_member_by_uuid(repository: ICampaignTeamsRepository, uuid:
     return bean
 
 
-def get_campaign_team_members(repository: ICampaignTeamsRepository, campaign_uuid: str) -> List[CampaignTeamsBean]:
+def get_campaign_team_members(
+    repository: ICampaignTeamsRepository, campaign_uuid: str
+) -> List[CampaignTeamsBean]:
     """Récupère tous les membres d'une équipe de campagne."""
     return repository.get_by_campaign_uuid(campaign_uuid)
 
 
-def update_campaign_team_member(repository: ICampaignTeamsRepository, bean: CampaignTeamsBean) -> CampaignTeamsBean:
+def update_campaign_team_member(
+    repository: ICampaignTeamsRepository, bean: CampaignTeamsBean
+) -> CampaignTeamsBean:
     """Met à jour un membre d'équipe."""
     existing = repository.get_by_uuid(bean.uuid)
     if existing is None:
@@ -143,7 +156,9 @@ def update_campaign_team_member(repository: ICampaignTeamsRepository, bean: Camp
     return repository.update(bean)
 
 
-def delete_campaign_team_member(repository: ICampaignTeamsRepository, uuid: str) -> bool:
+def delete_campaign_team_member(
+    repository: ICampaignTeamsRepository, uuid: str
+) -> bool:
     """Supprime un membre d'équipe."""
     existing = repository.get_by_uuid(uuid)
     if existing is None:

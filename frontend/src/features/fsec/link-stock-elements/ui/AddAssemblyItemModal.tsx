@@ -42,11 +42,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 
-import {
-    useAddAssemblyItem,
-    useAvailableForFsec,
-    useFsecAssemblyItems,
-} from '@entities/fsec-assembly-item';
+import { useAddAssemblyItem, useAvailableForFsec, useFsecAssemblyItems } from '@entities/fsec-assembly-item';
 import {
     CATEGORIES_BY_KIND,
     CATEGORY_LABELS,
@@ -170,13 +166,7 @@ export function AddAssemblyItemModal({ open, fsecUuid, onClose }: AddAssemblyIte
     }, [kindTab]);
 
     return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{ sx: { height: '85vh' } }}
-        >
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth PaperProps={{ sx: { height: '85vh' } }}>
             <DialogTitle sx={{ pb: 1 }}>
                 Ajouter un élément ou consommable
                 <Typography variant="caption" color="text.secondary" component="div">
@@ -222,24 +212,16 @@ export function AddAssemblyItemModal({ open, fsecUuid, onClose }: AddAssemblyIte
                     <Tab value="all" label={`Tous (${items?.length ?? 0})`} />
                     <Tab
                         value={ITEM_KIND.ELEMENT}
-                        label={`Éléments (${
-                            items?.filter((i) => i.kind === ITEM_KIND.ELEMENT).length ?? 0
-                        })`}
+                        label={`Éléments (${items?.filter((i) => i.kind === ITEM_KIND.ELEMENT).length ?? 0})`}
                     />
                     <Tab
                         value={ITEM_KIND.CONSUMABLE}
-                        label={`Consommables (${
-                            items?.filter((i) => i.kind === ITEM_KIND.CONSUMABLE).length ?? 0
-                        })`}
+                        label={`Consommables (${items?.filter((i) => i.kind === ITEM_KIND.CONSUMABLE).length ?? 0})`}
                     />
                 </Tabs>
 
                 {/* Pills rubriques */}
-                <Stack
-                    direction="row"
-                    spacing={0.75}
-                    sx={{ flexWrap: 'wrap', rowGap: 0.75, alignItems: 'center' }}
-                >
+                <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', rowGap: 0.75, alignItems: 'center' }}>
                     <Chip
                         label={`Toutes · ${countsByCategory.total}`}
                         size="small"
@@ -309,9 +291,7 @@ export function AddAssemblyItemModal({ open, fsecUuid, onClose }: AddAssemblyIte
                     variant="outlined"
                     sx={{
                         p: 1.5,
-                        bgcolor: selected
-                            ? alpha(theme.palette.primary.main, 0.04)
-                            : 'background.default',
+                        bgcolor: selected ? alpha(theme.palette.primary.main, 0.04) : 'background.default',
                         borderColor: selected ? 'primary.main' : 'divider',
                     }}
                 >
@@ -325,8 +305,7 @@ export function AddAssemblyItemModal({ open, fsecUuid, onClose }: AddAssemblyIte
                                         {selected.reference ? ` — ${selected.reference}` : ''}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                        {ITEM_KIND_LABELS[selected.kind]} ·{' '}
-                                        {CATEGORY_LABELS[selected.category]}
+                                        {ITEM_KIND_LABELS[selected.kind]} · {CATEGORY_LABELS[selected.category]}
                                     </Typography>
                                 </Box>
                                 <Tooltip title="Désélectionner">
@@ -358,11 +337,7 @@ export function AddAssemblyItemModal({ open, fsecUuid, onClose }: AddAssemblyIte
                 <Button onClick={handleClose} color="inherit" disabled={addMutation.isPending}>
                     Annuler
                 </Button>
-                <Button
-                    onClick={handleSubmit}
-                    variant="contained"
-                    disabled={!selected || addMutation.isPending}
-                >
+                <Button onClick={handleSubmit} variant="contained" disabled={!selected || addMutation.isPending}>
                     {addMutation.isPending ? 'Ajout…' : 'Ajouter au tableau'}
                 </Button>
             </DialogActions>
@@ -383,8 +358,8 @@ function ItemRow({ item, isSelected, isAttached, onClick }: ItemRowProps) {
     const bg = isSelected
         ? alpha(theme.palette.primary.main, 0.08)
         : isAttached
-        ? alpha(theme.palette.action.disabledBackground, 0.4)
-        : 'transparent';
+          ? alpha(theme.palette.action.disabledBackground, 0.4)
+          : 'transparent';
     const borderColor = isSelected ? 'primary.main' : 'divider';
 
     return (
@@ -403,20 +378,14 @@ function ItemRow({ item, isSelected, isAttached, onClick }: ItemRowProps) {
                 cursor: isAttached ? 'not-allowed' : 'pointer',
                 opacity: isAttached ? 0.55 : 1,
                 transition: motion.transition(['background-color', 'border-color'], 'instant'),
-                '&:hover': isAttached
-                    ? undefined
-                    : { bgcolor: alpha(theme.palette.action.hover, 0.5) },
+                '&:hover': isAttached ? undefined : { bgcolor: alpha(theme.palette.action.hover, 0.5) },
             }}
             role="button"
             aria-pressed={isSelected}
             aria-disabled={isAttached}
         >
             <Box sx={{ color: isSelected ? 'primary.main' : 'text.disabled', display: 'flex' }}>
-                {isSelected ? (
-                    <CheckCircleIcon fontSize="small" />
-                ) : (
-                    <RadioButtonUncheckedIcon fontSize="small" />
-                )}
+                {isSelected ? <CheckCircleIcon fontSize="small" /> : <RadioButtonUncheckedIcon fontSize="small" />}
             </Box>
             <KindIcon kind={item.kind} size="small" />
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -454,9 +423,7 @@ function ItemRow({ item, isSelected, isAttached, onClick }: ItemRowProps) {
                     sx={{ mt: 0.25, flexWrap: 'wrap', rowGap: 0.5 }}
                 >
                     <RubricBadge category={item.category} />
-                    {item.kind === ITEM_KIND.ELEMENT && item.status && (
-                        <StatusBadge status={item.status} />
-                    )}
+                    {item.kind === ITEM_KIND.ELEMENT && item.status && <StatusBadge status={item.status} />}
                     {item.kind === ITEM_KIND.CONSUMABLE && <QuantityBadge item={item} />}
                     {item.fournisseur && (
                         <Typography variant="caption" color="text.secondary">

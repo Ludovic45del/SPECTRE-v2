@@ -44,10 +44,7 @@ function buildExpiredMeta(item: StockCatalogItem): { label: string; value: React
     ];
 }
 
-function buildExpiringSoonMeta(
-    item: StockCatalogItem,
-    today: Date,
-): { label: string; value: React.ReactNode }[] {
+function buildExpiringSoonMeta(item: StockCatalogItem, today: Date): { label: string; value: React.ReactNode }[] {
     const days = item.datePeremption ? Math.max(0, daysBetween(today, item.datePeremption)) : null;
     return [
         {
@@ -55,7 +52,12 @@ function buildExpiringSoonMeta(
             value: (
                 <>
                     <b style={{ color: '#b45309' }}>{formatDateMaybe(item.datePeremption)}</b>
-                    {days !== null && <> · dans <b>{days} jours</b></>}
+                    {days !== null && (
+                        <>
+                            {' '}
+                            · dans <b>{days} jours</b>
+                        </>
+                    )}
                 </>
             ),
         },
@@ -107,8 +109,7 @@ export function AlertsTab() {
     if (error) {
         return (
             <Alert severity="error" role="alert">
-                Erreur lors du chargement des alertes :{' '}
-                {error instanceof Error ? error.message : 'inconnue'}
+                Erreur lors du chargement des alertes : {error instanceof Error ? error.message : 'inconnue'}
             </Alert>
         );
     }
@@ -118,8 +119,7 @@ export function AlertsTab() {
     if (totalAlerts === 0) {
         return (
             <Alert severity="success" variant="outlined">
-                Aucune alerte active. Tous les consommables sont sous seuil et les dates de péremption sont
-                respectées.
+                Aucune alerte active. Tous les consommables sont sous seuil et les dates de péremption sont respectées.
             </Alert>
         );
     }

@@ -65,7 +65,9 @@ class StockCatalogItemEntity(models.Model):
     type_d_achat = models.CharField(max_length=100, null=True, blank=True)
 
     # --- Champs element uniquement (null pour kind=consumable) ---
-    installation = models.CharField(max_length=10, choices=INSTALLATION_CHOICES, null=True, blank=True)
+    installation = models.CharField(
+        max_length=10, choices=INSTALLATION_CHOICES, null=True, blank=True
+    )
     status = models.CharField(
         max_length=20,
         choices=ELEMENT_STATUS_CHOICES,

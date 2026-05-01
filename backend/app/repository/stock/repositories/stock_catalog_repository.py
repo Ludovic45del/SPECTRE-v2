@@ -8,8 +8,15 @@ from django.db.models import F, Q
 
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
 from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
-from app.domain.stock.models.stock_constants import ELEMENT_STATUS_DISPO, ITEM_KIND_CONSUMABLE, ITEM_KIND_ELEMENT
-from app.mapper.stock.catalog_mapper import stock_catalog_mapper_bean_to_entity, stock_catalog_mapper_entity_to_bean
+from app.domain.stock.models.stock_constants import (
+    ELEMENT_STATUS_DISPO,
+    ITEM_KIND_CONSUMABLE,
+    ITEM_KIND_ELEMENT,
+)
+from app.mapper.stock.catalog_mapper import (
+    stock_catalog_mapper_bean_to_entity,
+    stock_catalog_mapper_entity_to_bean,
+)
 from app.repository.stock.models.fsec_assembly_item_entity import FsecAssemblyItemEntity
 from app.repository.stock.models.stock_catalog_entity import StockCatalogItemEntity
 
@@ -124,7 +131,9 @@ class StockCatalogRepository(IStockCatalogRepository):
         offset: int = 0,
     ) -> List[StockCatalogItemBean]:
         """Liste paginée selon filtres (cf. CDC §5.1)."""
-        qs = self._build_filter_queryset(kind, category, status, installation, is_active, search)
+        qs = self._build_filter_queryset(
+            kind, category, status, installation, is_active, search
+        )
         if limit is not None:
             entities = qs[offset : offset + limit]
         else:
@@ -141,7 +150,9 @@ class StockCatalogRepository(IStockCatalogRepository):
         search: Optional[str] = None,
     ) -> int:
         """Compte selon filtres."""
-        return self._build_filter_queryset(kind, category, status, installation, is_active, search).count()
+        return self._build_filter_queryset(
+            kind, category, status, installation, is_active, search
+        ).count()
 
     # ---------------------------------------------------------------- Specific queries
 
@@ -153,7 +164,9 @@ class StockCatalogRepository(IStockCatalogRepository):
         exclude_uuid: Optional[str] = None,
     ) -> bool:
         """Unicité name+reference par kind (CDC §3.1)."""
-        qs = StockCatalogItemEntity.objects.filter(kind=kind, name=name, reference=reference, is_active=True)
+        qs = StockCatalogItemEntity.objects.filter(
+            kind=kind, name=name, reference=reference, is_active=True
+        )
         if exclude_uuid:
             qs = qs.exclude(uuid=exclude_uuid)
         return qs.exists()
@@ -177,13 +190,17 @@ class StockCatalogRepository(IStockCatalogRepository):
 
         # Pour les éléments : status='dispo' OU déjà attribués à cette même FSEC.
         already_assigned_uuids = list(
-            FsecAssemblyItemEntity.objects.filter(fsec_uuid=fsec_uuid).values_list("catalog_item_id", flat=True)
+            FsecAssemblyItemEntity.objects.filter(fsec_uuid=fsec_uuid).values_list(
+                "catalog_item_id", flat=True
+            )
         )
 
         # Construire un filtre composite : (kind=consumable) OR (kind=element AND
         # (status=dispo OR uuid in already_assigned)).
         consumable_q = Q(kind=ITEM_KIND_CONSUMABLE)
-        element_q = Q(kind=ITEM_KIND_ELEMENT) & (Q(status=ELEMENT_STATUS_DISPO) | Q(uuid__in=already_assigned_uuids))
+        element_q = Q(kind=ITEM_KIND_ELEMENT) & (
+            Q(status=ELEMENT_STATUS_DISPO) | Q(uuid__in=already_assigned_uuids)
+        )
         qs = qs.filter(consumable_q | element_q).order_by("category", "name")
         return [stock_catalog_mapper_entity_to_bean(e) for e in qs]
 
@@ -192,7 +209,9 @@ class StockCatalogRepository(IStockCatalogRepository):
         """Met à jour `status` en bulk pour des éléments. Retourne le nb de lignes affectées."""
         if not uuids:
             return 0
-        return StockCatalogItemEntity.objects.filter(uuid__in=uuids, kind=ITEM_KIND_ELEMENT).update(status=new_status)
+        return StockCatalogItemEntity.objects.filter(
+            uuid__in=uuids, kind=ITEM_KIND_ELEMENT
+        ).update(status=new_status)
 
     # ---------------------------------------------------------------- Alerts
 
@@ -219,7 +238,9 @@ class StockCatalogRepository(IStockCatalogRepository):
         ).order_by("date_peremption")
         return [stock_catalog_mapper_entity_to_bean(e) for e in qs]
 
-    def find_expiring_soon(self, today: date, days_ahead: int) -> List[StockCatalogItemBean]:
+    def find_expiring_soon(
+        self, today: date, days_ahead: int
+    ) -> List[StockCatalogItemBean]:
         """Consommables périmant entre demain et today + days_ahead jours."""
         qs = StockCatalogItemEntity.objects.filter(
             kind=ITEM_KIND_CONSUMABLE,

@@ -9,7 +9,9 @@ from app.mapper.steps.base_step_mapper import (
     parse_datetime_from_api,
     read_operator_user_uuid,
 )
-from app.repository.steps.models.depressurization_step_entity import DepressurizationStepEntity
+from app.repository.steps.models.depressurization_step_entity import (
+    DepressurizationStepEntity,
+)
 
 
 def depressurization_step_mapper_entity_to_bean(
@@ -18,7 +20,9 @@ def depressurization_step_mapper_entity_to_bean(
     """Convertit une DepressurizationStepEntity en DepressurizationStepBean."""
     return DepressurizationStepBean(
         uuid=str(entity.uuid),
-        fsec_version_id=(str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""),
+        fsec_version_id=(
+            str(entity.fsec_version_id_id) if entity.fsec_version_id_id else ""
+        ),
         operator=entity.operator,
         operator_user_uuid=read_operator_user_uuid(entity),
         date_of_fulfilment=entity.date_of_fulfilment,
@@ -48,7 +52,9 @@ def depressurization_step_mapper_bean_to_entity(
     entity.start_time = bean.start_time
     entity.end_time = bean.end_time
     entity.observations = bean.observations
-    entity.depressurization_time_before_firing = bean.depressurization_time_before_firing
+    entity.depressurization_time_before_firing = (
+        bean.depressurization_time_before_firing
+    )
     entity.computed_pressure_before_firing = bean.computed_pressure_before_firing
     return entity
 
@@ -68,7 +74,9 @@ def depressurization_step_mapper_api_to_bean(
         start_time=parse_datetime_from_api(data.get("start_time")),
         end_time=parse_datetime_from_api(data.get("end_time")),
         observations=data.get("observations"),
-        depressurization_time_before_firing=data.get("depressurization_time_before_firing"),
+        depressurization_time_before_firing=data.get(
+            "depressurization_time_before_firing"
+        ),
         computed_pressure_before_firing=data.get("computed_pressure_before_firing"),
     )
 
@@ -82,7 +90,9 @@ def depressurization_step_mapper_bean_to_api(
         "fsec_version_id": bean.fsec_version_id,
         "operator": bean.operator,
         "operator_user_uuid": bean.operator_user_uuid,
-        "date_of_fulfilment": (bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None),
+        "date_of_fulfilment": (
+            bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None
+        ),
         "pressure_gauge": bean.pressure_gauge,
         "enclosure_pressure_measured": bean.enclosure_pressure_measured,
         "start_time": bean.start_time.isoformat() if bean.start_time else None,

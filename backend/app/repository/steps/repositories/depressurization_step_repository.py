@@ -8,7 +8,9 @@ from app.mapper.steps.depressurization_step_mapper import (
     depressurization_step_mapper_bean_to_entity,
     depressurization_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.depressurization_step_entity import DepressurizationStepEntity
+from app.repository.steps.models.depressurization_step_entity import (
+    DepressurizationStepEntity,
+)
 from app.repository.steps.repositories.base_step_repository import BaseStepRepository
 
 
@@ -36,7 +38,9 @@ class DepressurizationStepRepository(
         entity.start_time = bean.start_time
         entity.end_time = bean.end_time
         entity.observations = bean.observations
-        entity.depressurization_time_before_firing = bean.depressurization_time_before_firing
+        entity.depressurization_time_before_firing = (
+            bean.depressurization_time_before_firing
+        )
         entity.computed_pressure_before_firing = bean.computed_pressure_before_firing
         entity.save()
         return self.entity_to_bean(entity)

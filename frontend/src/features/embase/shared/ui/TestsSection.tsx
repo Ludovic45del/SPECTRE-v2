@@ -39,11 +39,7 @@ export const TestsSection = memo(function TestsSection({
                             >
                                 {STATUS_OPTIONS.map((opt) => (
                                     <MenuItem key={opt.value} value={opt.value}>
-                                        {opt.color === 'default' ? (
-                                            '-'
-                                        ) : (
-                                            <Chip label={opt.label} color={opt.color} />
-                                        )}
+                                        {opt.color === 'default' ? '-' : <Chip label={opt.label} color={opt.color} />}
                                     </MenuItem>
                                 ))}
                             </Select>
