@@ -386,9 +386,9 @@ export function createAppTheme(mode: ThemeMode) {
                         return {
                             borderRadius: 6,
                             height: 22,
-                            fontWeight: 600,
-                            fontSize: '0.72rem',
-                            letterSpacing: '0.01em',
+                            fontWeight: 500,
+                            fontSize: '0.75rem',
+                            letterSpacing: 0,
                             transition: motion.transition(['background-color', 'color'], 'fast'),
                             '& .MuiChip-label': {
                                 paddingLeft: 8,

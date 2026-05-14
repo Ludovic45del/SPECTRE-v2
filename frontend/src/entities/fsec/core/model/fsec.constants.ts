@@ -59,7 +59,7 @@ export const FSEC_CATEGORIES: Record<number, FsecCategoryInfo> = {
     1: { label: 'Avec Gaz BP', color: '#1FDFED' },
     2: { label: 'Avec Gaz HP', color: '#1FEDB7' },
     3: { label: 'Avec Gaz BP + HP', color: '#1FED2B' },
-    4: { label: 'Avec Gaz Permeation + BP', color: '#1F9DED' },
+    4: { label: 'Avec Gaz Permeation + HP', color: '#1F9DED' },
 } as const;
 
 /** Status list for dropdowns */

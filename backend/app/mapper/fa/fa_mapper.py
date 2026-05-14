@@ -103,12 +103,14 @@ def fa_mapper_bean_to_entity(bean: FaBean) -> FaEntity:
     # Phase Ouvert
     entity.fsec_step_id = bean.fsec_step_id
     entity.fsec_step_other = bean.fsec_step_other
-    entity.discoverer = bean.discoverer
+    # discoverer/observation/quick_analysis sont NOT NULL en base : on coerce
+    # None -> "" (le mapper api_to_bean peut produire None pour les PUT partiels).
+    entity.discoverer = bean.discoverer or ""
     entity.discoverer_user_id = bean.discoverer_user_uuid
     entity.event_date = bean.event_date
-    entity.observation = bean.observation
+    entity.observation = bean.observation or ""
     entity.location_equipment = bean.location_equipment
-    entity.quick_analysis = bean.quick_analysis
+    entity.quick_analysis = bean.quick_analysis or ""
     entity.immediate_measures = bean.immediate_measures
     entity.iec_validation_open = bean.iec_validation_open
     entity.iec_validation_open_date = bean.iec_validation_open_date
@@ -135,7 +137,14 @@ def _opt_uuid_str(value):
 
 
 def fa_mapper_api_to_bean(data: Dict[str, Any]) -> FaBean:
-    """Convertit des données API en FaBean."""
+    """Convertit des données API en FaBean.
+
+    Pour les champs str non-Optional (discoverer, observation, quick_analysis),
+    on retourne None quand la clé est absente afin que `_merge_fa_beans` puisse
+    distinguer "non fourni" (preserve l'existant) de "vide explicitement" ("").
+    Sinon un PUT partiel (ex: phase En Cours) écraserait silencieusement
+    observation/quick_analysis avec une chaîne vide.
+    """
     return FaBean(
         uuid=data.get("uuid", ""),
         fsec_version_id=data.get("fsec_version_id", ""),
@@ -146,12 +155,12 @@ def fa_mapper_api_to_bean(data: Dict[str, Any]) -> FaBean:
         # Phase Ouvert
         fsec_step_id=data.get("fsec_step_id"),
         fsec_step_other=data.get("fsec_step_other"),
-        discoverer=data.get("discoverer", ""),
+        discoverer=data.get("discoverer"),
         discoverer_user_uuid=_opt_uuid_str(data.get("discoverer_user_uuid")),
         event_date=parse_date_string(data.get("event_date")),
-        observation=data.get("observation", ""),
+        observation=data.get("observation"),
         location_equipment=data.get("location_equipment"),
-        quick_analysis=data.get("quick_analysis", ""),
+        quick_analysis=data.get("quick_analysis"),
         immediate_measures=data.get("immediate_measures"),
         iec_validation_open=data.get("iec_validation_open", False),
         iec_validation_open_date=parse_date_string(

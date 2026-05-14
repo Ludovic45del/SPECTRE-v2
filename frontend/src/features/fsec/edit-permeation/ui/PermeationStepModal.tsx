@@ -17,6 +17,7 @@ import {
     useCreatePermeationStep,
     useUpdatePermeationStep,
     useDeletePermeationStep,
+    type CommonGasDataOptional,
 } from '@entities/fsec/steps';
 import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { useNotification } from '@shared/ui';
@@ -28,11 +29,11 @@ interface PermeationStepModalProps {
     onClose: () => void;
     fsecVersionId: string;
     step?: PermeationStep | null;
+    /** Données communes HP utilisées pour pré-remplir gasType / targetPressure si le step n'en a pas. */
+    commonData?: CommonGasDataOptional;
 }
 
 const PermeationStepFormSchema = z.object({
-    gasType: z.string().nullable().optional(),
-    targetPressure: z.number().finite().min(0, 'Doit être positif').nullable().optional(),
     operatorUserUuid: z.string().uuid('Opérateur requis'),
     startDate: z.date({ required_error: 'Date requise' }),
     estimatedEndDate: z.date().nullable().optional(),
@@ -43,8 +44,6 @@ const PermeationStepFormSchema = z.object({
 type PermeationStepForm = z.infer<typeof PermeationStepFormSchema>;
 
 const DEFAULT_VALUES: Partial<PermeationStepForm> = {
-    gasType: null,
-    targetPressure: null,
     operatorUserUuid: '',
     startDate: undefined,
     estimatedEndDate: null,
@@ -52,7 +51,7 @@ const DEFAULT_VALUES: Partial<PermeationStepForm> = {
     computedShotPressure: null,
 };
 
-export function PermeationStepModal({ open, onClose, fsecVersionId, step }: PermeationStepModalProps) {
+export function PermeationStepModal({ open, onClose, fsecVersionId, step, commonData }: PermeationStepModalProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const isEditMode = Boolean(step);
 
@@ -72,8 +71,6 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
             reset(
                 step
                     ? {
-                          gasType: step.gasType,
-                          targetPressure: step.targetPressure,
                           operatorUserUuid: step.operatorUserUuid ?? '',
                           startDate: step.startDate ?? undefined,
                           estimatedEndDate: step.estimatedEndDate,
@@ -84,7 +81,8 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
             );
             setShowDeleteConfirm(false);
         }
-    }, [open, step, reset]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, step?.uuid]);
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -92,11 +90,22 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
         async (data: PermeationStepForm) => {
             if (isPending) return;
             try {
+                // gasType + targetPressure proviennent désormais des données communes HP
+                // (édités via la modale "Données communes" — évite la redondance).
+                const sharedFromCommonData = {
+                    gasType: commonData?.gasType ?? null,
+                    targetPressure: commonData?.experimentPressure ?? null,
+                };
                 if (isEditMode && step) {
-                    await updateMutation.mutateAsync({ uuid: step.uuid, fsecVersionId, ...data });
+                    await updateMutation.mutateAsync({
+                        uuid: step.uuid,
+                        fsecVersionId,
+                        ...data,
+                        ...sharedFromCommonData,
+                    });
                     showNotification('Perméation mise à jour', 'success');
                 } else {
-                    await createMutation.mutateAsync({ fsecVersionId, ...data });
+                    await createMutation.mutateAsync({ fsecVersionId, ...data, ...sharedFromCommonData });
                     showNotification('Perméation créée', 'success');
                 }
                 onClose();
@@ -104,7 +113,17 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
                 showNotification(getErrorMessage(error, 'Erreur lors de la sauvegarde'), 'error');
             }
         },
-        [isPending, isEditMode, step, fsecVersionId, updateMutation, createMutation, showNotification, onClose],
+        [
+            isPending,
+            isEditMode,
+            step,
+            fsecVersionId,
+            updateMutation,
+            createMutation,
+            showNotification,
+            onClose,
+            commonData,
+        ],
     );
 
     const handleDelete = useCallback(async () => {
@@ -135,41 +154,21 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
             maxWidth="sm"
         >
             <Stack spacing={3}>
-                <Grid2 container spacing={2}>
-                    <Grid2 size={6}>
-                        <Controller
-                            name="operatorUserUuid"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <UserSelect
-                                    value={field.value || null}
-                                    onChange={(uuid) => field.onChange(uuid ?? '')}
-                                    roles={[...SPECTRE_OPERATOR_ROLES]}
-                                    label="Opérateur"
-                                    required
-                                    error={Boolean(fieldState.error)}
-                                    helperText={fieldState.error?.message}
-                                />
-                            )}
+                <Controller
+                    name="operatorUserUuid"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <UserSelect
+                            value={field.value || null}
+                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                            roles={[...SPECTRE_OPERATOR_ROLES]}
+                            label="Opérateur"
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
                         />
-                    </Grid2>
-                    <Grid2 size={6}>
-                        <Controller
-                            name="gasType"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    value={field.value ?? ''}
-                                    label="Type de gaz"
-                                    size="small"
-                                    fullWidth
-                                    inputProps={{ 'aria-label': 'Type de gaz' }}
-                                />
-                            )}
-                        />
-                    </Grid2>
-                </Grid2>
+                    )}
+                />
 
                 <Grid2 container spacing={2}>
                     <Grid2 size={6}>
@@ -215,23 +214,6 @@ export function PermeationStepModal({ open, onClose, fsecVersionId, step }: Perm
                         />
                     </Grid2>
                 </Grid2>
-
-                <Controller
-                    name="targetPressure"
-                    control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
-                            label="Pression cible (bar)"
-                            type="number"
-                            size="small"
-                            fullWidth
-                            inputProps={{ step: 0.01, 'aria-label': 'Pression cible en bar' }}
-                        />
-                    )}
-                />
 
                 <Grid2 container spacing={2}>
                     <Grid2 size={6}>

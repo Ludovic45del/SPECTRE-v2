@@ -26,7 +26,11 @@ const FaDetailsPage = lazy(() => import('@pages/fa-details'));
 const EmbasesPage = lazy(() => import('@pages/embases'));
 const EmbaseDetailsPage = lazy(() => import('@pages/embase-details'));
 const PlanningPage = lazy(() => import('@pages/planning'));
+const IndicateursFaPage = lazy(() => import('@pages/indicateurs/fa'));
+const IndicateursFsecPage = lazy(() => import('@pages/indicateurs/fsec'));
 const StockPage = lazy(() => import('@pages/stock'));
+const MaterielPage = lazy(() => import('@pages/materiel'));
+const MaterielMachinesView = lazy(() => import('@pages/materiel/MachinesView'));
 
 // Minimal loader for login page Suspense
 function LoginLoader() {
@@ -189,12 +193,41 @@ export const router = createBrowserRouter([
                 ),
             },
             {
+                path: 'indicateurs',
+                element: <Navigate to="/indicateurs/fa" replace />,
+            },
+            {
+                path: 'indicateurs/fa',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Indicateurs FA">
+                        <IndicateursFaPage />
+                    </QuerySafeErrorBoundary>
+                ),
+            },
+            {
+                path: 'indicateurs/fsec',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Indicateurs FSEC">
+                        <IndicateursFsecPage />
+                    </QuerySafeErrorBoundary>
+                ),
+            },
+            {
                 path: 'stock/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Stock">
                         <StockPage />
                     </QuerySafeErrorBoundary>
                 ),
+            },
+            {
+                path: 'materiel',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Matériel">
+                        <MaterielPage />
+                    </QuerySafeErrorBoundary>
+                ),
+                children: [{ index: true, element: <MaterielMachinesView /> }],
             },
             {
                 path: 'admin/utilisateurs',

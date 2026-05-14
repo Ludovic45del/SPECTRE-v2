@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
@@ -155,6 +156,20 @@ const StockCircleIcon = memo(function StockCircleIcon({ isActive }: { isActive?:
     );
 });
 
+const MaterielCircleIcon = memo(function MaterielCircleIcon({ isActive }: { isActive?: boolean }) {
+    return (
+        <CircleIcon isActive={isActive}>
+            <PrecisionManufacturingIcon
+                sx={{
+                    color: getIconColor(isActive),
+                    fontSize: '0.95rem',
+                    transition: `color ${TRANSITION}`,
+                }}
+            />
+        </CircleIcon>
+    );
+});
+
 const AdminCircleIcon = memo(function AdminCircleIcon({ isActive }: { isActive?: boolean }) {
     return (
         <CircleIcon isActive={isActive}>
@@ -208,6 +223,20 @@ const BASE_NAV_ITEMS: NavItem[] = [
     },
     { path: '/embases', label: 'Embases', icon: (isActive) => <TextCircleIcon isActive={isActive} label="E" /> },
     { path: '/planning', label: 'Planning', icon: (isActive) => <TextCircleIcon isActive={isActive} label="P" /> },
+    {
+        path: '/indicateurs',
+        label: 'Indicateurs',
+        icon: (isActive) => <TextCircleIcon isActive={isActive} label="KPI" fontSize="0.55rem" letterSpacing="-0.3px" />,
+        children: [
+            { path: '/indicateurs/fa', label: 'FA' },
+            { path: '/indicateurs/fsec', label: 'FSEC' },
+        ],
+    },
+    {
+        path: '/materiel',
+        label: 'Matériel',
+        icon: (isActive) => <MaterielCircleIcon isActive={isActive} />,
+    },
     {
         path: '/stock',
         label: 'Stock',
@@ -435,9 +464,11 @@ export interface SidebarProps {
     user?: SidebarUserInfo;
     /** Map of role keys to human-readable labels */
     roleLabels: Record<string, string>;
+    /** Callback déclenché au clic sur la carte profil du footer. */
+    onProfileClick?: () => void;
 }
 
-function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
+function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps) {
     const location = useLocation();
     const pathname = location.pathname;
     const navigate = useNavigate();
@@ -466,11 +497,13 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
         const flat: FlatNavItem[] = [];
         for (const item of NAV_ITEMS) {
             flat.push({ kind: 'parent', ...item });
-            if (item.children && isOpen && pathname.startsWith(item.path)) {
-                for (const child of item.children) {
-                    const enriched: NavSubItem =
-                        child.path === '/stock/alertes' ? { ...child, badgeCount: stockAlertsCount } : child;
-                    flat.push({ kind: 'child', ...enriched });
+            if (isOpen && pathname.startsWith(item.path)) {
+                if (item.children) {
+                    for (const child of item.children) {
+                        const enriched: NavSubItem =
+                            child.path === '/stock/alertes' ? { ...child, badgeCount: stockAlertsCount } : child;
+                        flat.push({ kind: 'child', ...enriched });
+                    }
                 }
             }
         }
@@ -638,11 +671,13 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                     p: 1.5,
                 }}
             >
-                {/* User avatar + info */}
+                {/* User avatar + info — clic ouvre la modale profil */}
                 <Tooltip
                     title={
                         isOpen
-                            ? ''
+                            ? me
+                                ? 'Voir / modifier mon profil'
+                                : ''
                             : me
                               ? `${me.firstName && me.lastName ? `${me.firstName} ${me.lastName}` : me.username} — ${roleLabels[me.role] ?? me.role}`
                               : ''
@@ -651,6 +686,11 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                     arrow
                 >
                     <Box
+                        component="button"
+                        type="button"
+                        onClick={onProfileClick}
+                        disabled={!me || !onProfileClick}
+                        aria-label="Ouvrir mon profil"
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
@@ -661,6 +701,21 @@ function SidebarComponent({ user: me, roleLabels }: SidebarProps) {
                             mb: 1,
                             justifyContent: isOpen ? 'flex-start' : 'center',
                             transition: `all ${TRANSITION}`,
+                            border: 'none',
+                            font: 'inherit',
+                            color: 'inherit',
+                            textAlign: 'left',
+                            width: '100%',
+                            cursor: me && onProfileClick ? 'pointer' : 'default',
+                            '&:hover': me && onProfileClick ? { bgcolor: 'action.selected' } : undefined,
+                            '&:focus-visible': {
+                                outline: '2px solid',
+                                outlineColor: 'primary.main',
+                                outlineOffset: 2,
+                            },
+                            '&:disabled': {
+                                cursor: 'default',
+                            },
                         }}
                     >
                         {/* Avatar initiales */}

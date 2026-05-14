@@ -33,6 +33,8 @@ interface AirtightnessStepModalProps {
     step?: AirtightnessStep | null;
     /** Données communes à utiliser comme valeurs par défaut si le step n'en a pas */
     commonData?: CommonGasDataOptional;
+    /** Phase de l'embase à filtrer ('BP' pour cat 1/3-BP, 'HP' pour cat 2/3-HP/4). Default 'BP'. */
+    phase?: 'BP' | 'HP';
 }
 
 const AirtightnessStepFormSchema = z.object({
@@ -57,7 +59,14 @@ const DEFAULT_VALUES: Partial<AirtightnessStepForm> = {
     dateOfFulfilment: undefined,
 };
 
-export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, commonData }: AirtightnessStepModalProps) {
+export function AirtightnessStepModal({
+    open,
+    onClose,
+    fsecVersionId,
+    step,
+    commonData,
+    phase = 'BP',
+}: AirtightnessStepModalProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const isEditMode = Boolean(step);
 
@@ -66,8 +75,15 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
     const deleteMutation = useDeleteAirtightnessStep();
     const { showNotification } = useNotification();
 
+    // En édition, on s'aligne sur la phase du step existant ; sinon on utilise la prop.
+    const effectivePhase = step?.phase ?? phase;
+    const embaseTypeForPhase = effectivePhase === 'HP' ? 'hp' : 'bp';
+
     const { data: allEmbases = [] } = useEmbases();
-    const bpEmbases = useMemo(() => allEmbases.filter((e: Embase) => e.type === 'bp'), [allEmbases]);
+    const filteredEmbases = useMemo(
+        () => allEmbases.filter((e: Embase) => e.type === embaseTypeForPhase),
+        [allEmbases, embaseTypeForPhase],
+    );
 
     const { control, handleSubmit, reset, watch } = useForm<AirtightnessStepForm>({
         mode: 'onBlur',
@@ -77,8 +93,8 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
 
     const selectedEmbaseId = watch('embaseId');
     const selectedEmbase = useMemo(
-        () => bpEmbases.find((e: Embase) => e.uuid === selectedEmbaseId) ?? null,
-        [bpEmbases, selectedEmbaseId],
+        () => filteredEmbases.find((e: Embase) => e.uuid === selectedEmbaseId) ?? null,
+        [filteredEmbases, selectedEmbaseId],
     );
 
     // Reset uniquement à l'ouverture (pas à chaque changement de référence de commonData,
@@ -116,10 +132,16 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
             if (isPending) return;
             try {
                 if (isEditMode && step) {
-                    await updateMutation.mutateAsync({ uuid: step.uuid, fsecVersionId, ...data });
+                    // Préserve la phase (BP/HP) en édition, sinon le backend la réinitialise à 'BP'.
+                    await updateMutation.mutateAsync({
+                        uuid: step.uuid,
+                        fsecVersionId,
+                        ...data,
+                        phase: step.phase,
+                    });
                     showNotification("Test d'étanchéité mis à jour", 'success');
                 } else {
-                    await createMutation.mutateAsync({ fsecVersionId, ...data });
+                    await createMutation.mutateAsync({ fsecVersionId, ...data, phase: effectivePhase });
                     showNotification("Test d'étanchéité créé", 'success');
                 }
                 onClose();
@@ -127,7 +149,17 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
                 showNotification(getErrorMessage(error, 'Erreur lors de la sauvegarde'), 'error');
             }
         },
-        [isPending, isEditMode, step, fsecVersionId, updateMutation, createMutation, showNotification, onClose],
+        [
+            isPending,
+            isEditMode,
+            step,
+            fsecVersionId,
+            updateMutation,
+            createMutation,
+            showNotification,
+            onClose,
+            effectivePhase,
+        ],
     );
 
     const handleDelete = useCallback(async () => {
@@ -207,7 +239,7 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
                     control={control}
                     render={({ field: { onChange } }) => (
                         <Autocomplete
-                            options={bpEmbases}
+                            options={filteredEmbases}
                             value={selectedEmbase}
                             onChange={(_, newValue) => onChange(newValue?.uuid ?? null)}
                             getOptionLabel={(option: Embase) => option.identifier}
@@ -234,9 +266,12 @@ export function AirtightnessStepModal({ open, onClose, fsecVersionId, step, comm
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
-                                    label="Embase BP"
-                                    placeholder="Sélectionner une embase BP"
-                                    inputProps={{ ...params.inputProps, 'aria-label': 'Embase BP' }}
+                                    label={`Embase ${effectivePhase}`}
+                                    placeholder={`Sélectionner une embase ${effectivePhase}`}
+                                    inputProps={{
+                                        ...params.inputProps,
+                                        'aria-label': `Embase ${effectivePhase}`,
+                                    }}
                                 />
                             )}
                         />

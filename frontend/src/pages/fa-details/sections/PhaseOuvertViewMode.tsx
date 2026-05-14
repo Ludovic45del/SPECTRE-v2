@@ -27,7 +27,7 @@ export const PhaseOuvertViewMode = memo(function PhaseOuvertViewMode({ fa }: Vie
     return (
         <Stack spacing={2}>
             <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
                     <Typography variant="subtitle2" color="text.secondary">
                         Étape FSEC
                     </Typography>
@@ -37,7 +37,7 @@ export const PhaseOuvertViewMode = memo(function PhaseOuvertViewMode({ fa }: Vie
                             : getFsecStepLabel(fa.fsecStepId ?? null)}
                     </Typography>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
                     <Typography variant="subtitle2" color="text.secondary">
                         Date de l'évènement
                     </Typography>
@@ -45,7 +45,15 @@ export const PhaseOuvertViewMode = memo(function PhaseOuvertViewMode({ fa }: Vie
                         {formatDateShort(fa.eventDate)}
                     </Typography>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                        Date d'ouverture
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                        {fa.iecValidationOpenDate ? formatDateShort(fa.iecValidationOpenDate) : '-'}
+                    </Typography>
+                </Grid>
+                <Grid item xs={3}>
                     <Typography variant="subtitle2" color="text.secondary">
                         Découvreur
                     </Typography>

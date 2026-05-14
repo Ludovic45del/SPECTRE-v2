@@ -14,10 +14,12 @@ import { z } from 'zod';
 import {
     AirtightnessStep,
     GasFillingBpStep,
+    GasFillingHpStep,
     useCreateAirtightnessStep,
     useUpdateAirtightnessStep,
     useCreateGasFillingBpStep,
     useUpdateGasFillingBpStep,
+    useUpdateGasFillingHpStep,
     type CommonGasData,
 } from '@entities/fsec/steps';
 import { useNotification } from '@shared/ui';
@@ -31,6 +33,9 @@ interface CommonGasDataModalProps {
     commonData: CommonGasData;
     airtightnessSteps?: AirtightnessStep[];
     gasFillingBpSteps?: GasFillingBpStep[];
+    gasFillingHpSteps?: GasFillingHpStep[];
+    /** Phase displayed in the title and totals. Default 'BP'. */
+    phase?: 'BP' | 'HP';
 }
 
 const CommonGasDataFormSchema = z.object({
@@ -49,11 +54,15 @@ export function CommonGasDataModal({
     commonData,
     airtightnessSteps,
     gasFillingBpSteps,
+    gasFillingHpSteps,
+    phase = 'BP',
 }: CommonGasDataModalProps) {
+    const title = `Modifier les données communes ${phase}`;
     const createAirtightnessMutation = useCreateAirtightnessStep();
     const updateAirtightnessMutation = useUpdateAirtightnessStep();
     const createFillingMutation = useCreateGasFillingBpStep();
     const updateFillingMutation = useUpdateGasFillingBpStep();
+    const updateFillingHpMutation = useUpdateGasFillingHpStep();
     const { showNotification } = useNotification();
 
     const { control, handleSubmit, reset } = useForm<CommonGasDataForm>({
@@ -82,7 +91,8 @@ export function CommonGasDataModal({
         createAirtightnessMutation.isPending ||
         updateAirtightnessMutation.isPending ||
         createFillingMutation.isPending ||
-        updateFillingMutation.isPending;
+        updateFillingMutation.isPending ||
+        updateFillingHpMutation.isPending;
 
     const onSubmit = useCallback(
         async (data: CommonGasDataForm) => {
@@ -104,6 +114,7 @@ export function CommonGasDataModal({
                             // Preserve individual fields
                             operator: step.operator,
                             dateOfFulfilment: step.dateOfFulfilment,
+                            phase: step.phase,
                         }),
                     );
                 });
@@ -128,9 +139,33 @@ export function CommonGasDataModal({
                     );
                 });
 
+                // Update ALL gasFillingHp steps (HP n'a pas de durée test)
+                gasFillingHpSteps?.forEach((step) => {
+                    updatePromises.push(
+                        updateFillingHpMutation.mutateAsync({
+                            uuid: step.uuid,
+                            fsecVersionId,
+                            gasType: data.gasType,
+                            leakRateDtri: data.leakRateDtri,
+                            experimentPressure: data.experimentPressure,
+                            // Preserve individual fields
+                            embaseId: step.embaseId,
+                            operator: step.operator,
+                            operatorUserUuid: step.operatorUserUuid,
+                            dateOfFulfilment: step.dateOfFulfilment,
+                            gasBase: step.gasBase,
+                            gasContainer: step.gasContainer,
+                            observations: step.observations,
+                        }),
+                    );
+                });
+
                 await Promise.all(updatePromises);
 
-                const updatedCount = (airtightnessSteps?.length || 0) + (gasFillingBpSteps?.length || 0);
+                const updatedCount =
+                    (airtightnessSteps?.length || 0) +
+                    (gasFillingBpSteps?.length || 0) +
+                    (gasFillingHpSteps?.length || 0);
                 showNotification(`Données communes mises à jour pour ${updatedCount} step(s)`, 'success');
                 onClose();
             } catch (error) {
@@ -141,9 +176,11 @@ export function CommonGasDataModal({
             isPending,
             airtightnessSteps,
             gasFillingBpSteps,
+            gasFillingHpSteps,
             fsecVersionId,
             updateAirtightnessMutation,
             updateFillingMutation,
+            updateFillingHpMutation,
             showNotification,
             onClose,
         ],
@@ -153,8 +190,8 @@ export function CommonGasDataModal({
         <StepModalLayout
             open={open}
             onClose={onClose}
-            title="Modifier les données communes"
-            editTitle="Modifier les données communes"
+            title={title}
+            editTitle={title}
             isEditMode={true}
             isPending={isPending}
             isDeleting={false}
@@ -168,8 +205,9 @@ export function CommonGasDataModal({
         >
             <Stack spacing={3}>
                 <Alert severity="info" sx={{ mb: 1 }}>
-                    Ces données seront appliquées à TOUTES les rubriques ({airtightnessSteps?.length || 0} Test(s)
-                    d&apos;étanchéité + {gasFillingBpSteps?.length || 0} Remplissage(s)).
+                    Ces données seront appliquées à TOUTES les rubriques de la phase {phase} (
+                    {airtightnessSteps?.length || 0} Test(s) d&apos;étanchéité +{' '}
+                    {(gasFillingBpSteps?.length || 0) + (gasFillingHpSteps?.length || 0)} Remplissage(s)).
                 </Alert>
 
                 <Grid2 container spacing={2}>

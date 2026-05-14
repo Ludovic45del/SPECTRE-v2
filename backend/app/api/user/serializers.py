@@ -44,6 +44,28 @@ class UpdateUserSerializer(serializers.Serializer):
     bureau = serializers.CharField(max_length=50, required=False)
 
 
+class UpdateSelfProfileSerializer(serializers.Serializer):
+    # Self-update : pas de role (privilege escalation), pas de username (immuable).
+    first_name = serializers.CharField(
+        max_length=150, required=False, allow_blank=True, default=""
+    )
+    last_name = serializers.CharField(
+        max_length=150, required=False, allow_blank=True, default=""
+    )
+    laboratoire = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, default=""
+    )
+    service = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, default=""
+    )
+    numero = serializers.CharField(
+        max_length=30, required=False, allow_blank=True, default=""
+    )
+    bureau = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=""
+    )
+
+
 class DashboardPreferencesSerializer(serializers.Serializer):
     layout = serializers.ListField(
         child=serializers.DictField(), required=False, default=list, max_length=20

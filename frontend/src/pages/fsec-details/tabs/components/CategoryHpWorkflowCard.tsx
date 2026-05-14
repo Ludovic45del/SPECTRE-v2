@@ -2,30 +2,54 @@
  * HP Gas Workflow Card Component
  * @module pages/fsec-details/tabs/components
  *
- * Individual collapsible cards for HP gas filling steps (Category 2 - Gaz HP only).
- * Design aligned with AssemblyTab / ControleTab pattern.
+ * Collapsible card per HP rubrique (Category 2 - Gaz HP only).
+ * Same pattern as CategoryBpWorkflowCard: Test étanchéité → Remplissage HP.
+ * Réutilise AirtightnessStep car le test d'étanchéité se fait à basse pression
+ * dans tous les cas (pas de modèle backend dédié au test HP).
  */
 
 import { useState } from 'react';
-import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import AddIcon from '@mui/icons-material/Add';
+import { Box, Chip, Collapse, Divider, IconButton, Paper, Stack, Typography } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import dayjs from 'dayjs';
-import type { GasFillingHpStep } from '@entities/fsec/steps';
-import { UserChip } from '@entities/user';
+import type { AirtightnessStep, GasFillingHpStep } from '@entities/fsec/steps';
+import { WorkflowMiniStepper } from './MiniStepper';
+import { HpRubriqueItem } from './gas-workflow-components';
 
 interface CategoryHpWorkflowCardProps {
-    steps?: GasFillingHpStep[];
-    onEdit: (step?: GasFillingHpStep) => void;
-    onAdd: () => void;
-    isCreating?: boolean;
+    index: number;
+    numRubriques: number;
+    airtightnessStep?: AirtightnessStep;
+    fillingStep?: GasFillingHpStep;
+    onEditAirtightness: (step?: AirtightnessStep) => void;
+    onEditFilling: (step?: GasFillingHpStep) => void;
+    onDelete?: () => void;
+    isDeleting?: boolean;
 }
 
-function GasFillingHpStepCard({ step, index, onEdit }: { step: GasFillingHpStep; index: number; onEdit: () => void }) {
-    const [expanded, setExpanded] = useState(false);
-    const isComplete = Boolean(step.dateOfFulfilment);
+const WORKFLOW_STEPS = ['Test étanchéité', 'Remplissage HP'];
+
+export function CategoryHpWorkflowCard({
+    index,
+    numRubriques,
+    airtightnessStep,
+    fillingStep,
+    onEditAirtightness,
+    onEditFilling,
+    onDelete,
+    isDeleting = false,
+}: CategoryHpWorkflowCardProps) {
+    const [expanded, setExpanded] = useState<boolean>(() => {
+        const testComplete = Boolean(airtightnessStep?.dateOfFulfilment);
+        const fillingComplete = Boolean(fillingStep?.dateOfFulfilment);
+        return !(testComplete && fillingComplete);
+    });
+
+    const isTestComplete = Boolean(airtightnessStep?.dateOfFulfilment);
+    const isFillingComplete = Boolean(fillingStep?.dateOfFulfilment);
+    const activeStep = isTestComplete ? (isFillingComplete ? 2 : 1) : 0;
+    const isComplete = isTestComplete && isFillingComplete;
 
     return (
         <Paper
@@ -40,6 +64,9 @@ function GasFillingHpStepCard({ step, index, onEdit }: { step: GasFillingHpStep;
         >
             {/* Header */}
             <Box
+                role="button"
+                tabIndex={0}
+                aria-expanded={expanded}
                 sx={{
                     p: 2,
                     display: 'flex',
@@ -49,135 +76,52 @@ function GasFillingHpStepCard({ step, index, onEdit }: { step: GasFillingHpStep;
                     '&:hover': { bgcolor: 'action.hover' },
                 }}
                 onClick={() => setExpanded(!expanded)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpanded(!expanded);
+                    }
+                }}
             >
-                <Stack direction="row" alignItems="center" spacing={1}>
+                <Stack direction="row" alignItems="center" spacing={2}>
                     <Typography variant="h6" fontWeight={600}>
-                        Remplissage HP n°{index + 1}
+                        Gaz HP{numRubriques > 1 ? ` n°${index + 1}` : ''}
                     </Typography>
                     {isComplete && <Chip label="Complet" color="success" />}
                 </Stack>
-                <IconButton size="small">{expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <WorkflowMiniStepper activeStep={activeStep} steps={WORKFLOW_STEPS} />
+                    {onDelete && (
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            disabled={isDeleting}
+                        >
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    )}
+                    <IconButton size="small">{expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
+                </Stack>
             </Box>
 
+            {/* Content */}
             <Collapse in={expanded}>
                 <Divider />
-                <Box sx={{ p: 3, position: 'relative' }}>
-                    <IconButton
-                        size="small"
-                        onClick={onEdit}
-                        color="primary"
-                        sx={{ position: 'absolute', top: 12, right: 12 }}
-                    >
-                        <EditIcon fontSize="small" />
-                    </IconButton>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Date
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.dateOfFulfilment ? dayjs(step.dateOfFulfilment).format('DD/MM/YYYY') : '-'}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Opérateur
-                            </Typography>
-                            <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Type de gaz
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.gasType ?? '-'}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Pression (bar)
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.experimentPressure ?? '-'}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Base gaz
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.gasBase ?? '-'}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Bouteille
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.gasContainer ?? '-'}
-                            </Typography>
-                        </Grid>
-                        {step.embaseIdentifier && (
-                            <Grid item xs={6} md={3}>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Embase
-                                </Typography>
-                                <Typography variant="body1" fontWeight="medium">
-                                    {step.embaseIdentifier}
-                                </Typography>
-                            </Grid>
-                        )}
-                    </Grid>
-                    {step.observations && (
-                        <Box sx={{ mt: 1.5 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Observations
-                            </Typography>
-                            <Typography variant="body1">{step.observations}</Typography>
-                        </Box>
-                    )}
+                <Box sx={{ p: 3 }}>
+                    <HpRubriqueItem
+                        index={index}
+                        showNumber={false}
+                        airtightnessStep={airtightnessStep}
+                        fillingStep={fillingStep}
+                        onEditAirtightness={onEditAirtightness}
+                        onEditFilling={onEditFilling}
+                    />
                 </Box>
             </Collapse>
         </Paper>
-    );
-}
-
-function EmptyHpCard({ onAdd }: { onAdd: () => void }) {
-    return (
-        <Paper
-            variant="outlined"
-            sx={{
-                p: 4,
-                borderRadius: 1,
-                bgcolor: 'background.paper',
-                borderColor: 'divider',
-                textAlign: 'center',
-            }}
-        >
-            <Button variant="contained" startIcon={<AddIcon />} onClick={onAdd}>
-                Ajouter un remplissage HP
-            </Button>
-        </Paper>
-    );
-}
-
-export function CategoryHpWorkflowCard({ steps, onEdit, onAdd, isCreating = false }: CategoryHpWorkflowCardProps) {
-    return (
-        <Stack spacing={3}>
-            {steps?.length ? (
-                <>
-                    {steps.map((step, index) => (
-                        <GasFillingHpStepCard key={step.uuid} step={step} index={index} onEdit={() => onEdit(step)} />
-                    ))}
-                    <Box>
-                        <Button variant="outlined" startIcon={<AddIcon />} onClick={onAdd} disabled={isCreating}>
-                            {isCreating ? 'Création...' : `Ajouter un remplissage HP`}
-                        </Button>
-                    </Box>
-                </>
-            ) : (
-                <EmptyHpCard onAdd={onAdd} />
-            )}
-        </Stack>
     );
 }

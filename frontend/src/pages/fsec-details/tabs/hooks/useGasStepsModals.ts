@@ -23,8 +23,12 @@ export type ModalType =
     | 'commonData'
     | null;
 
+export type CommonDataPhase = 'BP' | 'HP';
+
 export function useGasStepsModals() {
     const [openModal, setOpenModal] = useState<ModalType>(null);
+    const [commonDataPhase, setCommonDataPhase] = useState<CommonDataPhase | null>(null);
+    const [airtightnessPhase, setAirtightnessPhase] = useState<CommonDataPhase>('BP');
     const [selectedAirtightness, setSelectedAirtightness] = useState<AirtightnessStep | undefined>();
     const [selectedGasFillingBp, setSelectedGasFillingBp] = useState<GasFillingBpStep | undefined>();
     const [selectedGasFillingHp, setSelectedGasFillingHp] = useState<GasFillingHpStep | undefined>();
@@ -34,6 +38,7 @@ export function useGasStepsModals() {
 
     const handleCloseModal = useCallback(() => {
         setOpenModal(null);
+        setCommonDataPhase(null);
         setSelectedAirtightness(undefined);
         setSelectedGasFillingBp(undefined);
         setSelectedGasFillingHp(undefined);
@@ -42,10 +47,14 @@ export function useGasStepsModals() {
         setSelectedRepressurization(undefined);
     }, []);
 
-    const handleOpenAirtightnessModal = useCallback((step?: AirtightnessStep) => {
-        setSelectedAirtightness(step);
-        setOpenModal('airtightness');
-    }, []);
+    const handleOpenAirtightnessModal = useCallback(
+        (step?: AirtightnessStep, phase: CommonDataPhase = 'BP') => {
+            setSelectedAirtightness(step);
+            setAirtightnessPhase(phase);
+            setOpenModal('airtightness');
+        },
+        [],
+    );
 
     const handleOpenGasFillingBpModal = useCallback((step?: GasFillingBpStep) => {
         setSelectedGasFillingBp(step);
@@ -72,12 +81,15 @@ export function useGasStepsModals() {
         setOpenModal('repressurization');
     }, []);
 
-    const handleOpenCommonDataModal = useCallback(() => {
+    const handleOpenCommonDataModal = useCallback((phase: CommonDataPhase = 'BP') => {
+        setCommonDataPhase(phase);
         setOpenModal('commonData');
     }, []);
 
     return {
         openModal,
+        commonDataPhase,
+        airtightnessPhase,
         selectedAirtightness,
         selectedGasFillingBp,
         selectedGasFillingHp,

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { AssemblyStep, useAssemblyStepsByFsec } from '@entities/fsec/steps';
 import { UserChip } from '@entities/user';
 import EditIcon from '@mui/icons-material/Edit';
@@ -159,7 +159,7 @@ function EmptyAssemblyCard({ onAdd }: { onAdd: () => void }) {
 }
 
 export function AssemblyTab({ fsecVersionId, fsecUuid, fsecStatusId }: AssemblyTabProps) {
-    const { data: assemblySteps } = useAssemblyStepsByFsec(fsecVersionId);
+    const { data: assemblySteps, isLoading } = useAssemblyStepsByFsec(fsecVersionId);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedStep, setSelectedStep] = useState<AssemblyStep | null>(null);
 
@@ -185,7 +185,9 @@ export function AssemblyTab({ fsecVersionId, fsecUuid, fsecStatusId }: AssemblyT
             <Stack spacing={3}>
                 <AssemblyItemsSection fsecUuid={fsecUuid} isLocked={isFsecLocked} />
 
-                {assemblySteps?.length ? (
+                {isLoading ? (
+                    <Skeleton variant="rounded" height={120} sx={{ borderRadius: 1 }} />
+                ) : assemblySteps?.length ? (
                     <>
                         {assemblySteps.map((step, index) => (
                             <AssemblyStepCard

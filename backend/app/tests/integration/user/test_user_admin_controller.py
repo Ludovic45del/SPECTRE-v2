@@ -506,6 +506,85 @@ class TestMeController:
         assert response.status_code in (401, 403)
 
 
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestMeUpdateProfile:
+    """Tests endpoint PUT /api/v1/auth/me/update/ — self-service profil."""
+
+    def test_update_self_profile_success(self, operateur_client, operateur_user):
+        payload = {
+            "first_name": "Jean",
+            "last_name": "Dupont",
+            "laboratoire": "Labo Z",
+            "service": "Service Y",
+            "numero": "999",
+            "bureau": "B42",
+        }
+        response = operateur_client.put(
+            "/api/v1/auth/me/update/",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["first_name"] == "Jean"
+        assert data["last_name"] == "Dupont"
+        assert data["laboratoire"] == "Labo Z"
+        assert data["service"] == "Service Y"
+        assert data["numero"] == "999"
+        assert data["bureau"] == "B42"
+        # Le role et le matricule sont inchanges
+        assert data["role"] == "iec"
+        assert data["username"] == "oper_test"
+
+        operateur_user.refresh_from_db()
+        assert operateur_user.first_name == "Jean"
+        assert operateur_user.last_name == "Dupont"
+
+    def test_update_self_profile_ignores_role(self, operateur_client, operateur_user):
+        """Tente de passer un role : doit etre ignore (preserve role existant)."""
+        payload = {
+            "first_name": "Hack",
+            "role": "chef_labo",  # Champ non declare dans le serializer self-update
+        }
+        response = operateur_client.put(
+            "/api/v1/auth/me/update/",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["role"] == "iec"  # role inchange
+        assert data["permission_group"] == "operateur"
+
+        operateur_user.refresh_from_db()
+        assert operateur_user.profile.role == "iec"
+        assert {g.name for g in operateur_user.groups.all()} == {"operateur"}
+
+    def test_update_self_profile_unauthenticated(self, db):
+        client = Client()
+        response = client.put(
+            "/api/v1/auth/me/update/",
+            data=json.dumps({"first_name": "X"}),
+            content_type="application/json",
+        )
+        assert response.status_code in (401, 403)
+
+    def test_update_self_profile_partial(self, operateur_client, operateur_user):
+        """Un payload partiel ne casse pas — les champs absents sont vides par defaut."""
+        response = operateur_client.put(
+            "/api/v1/auth/me/update/",
+            data=json.dumps({"bureau": "C99"}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["bureau"] == "C99"
+
+
 # ============================================================================
 # CHANGE PASSWORD ENDPOINT
 # ============================================================================

@@ -284,9 +284,9 @@ describe('CreateFaModal', () => {
     // Helper: select FSEC-002 from the FSEC dropdown
     async function selectFsec002(user: ReturnType<typeof userEvent.setup>) {
         await waitFor(() => {
-            expect(screen.getByLabelText(/fsec/i)).not.toBeDisabled();
+            expect(screen.getByLabelText(/^FSEC/i)).not.toBeDisabled();
         });
-        await user.click(screen.getByLabelText(/fsec/i));
+        await user.click(screen.getByLabelText(/^FSEC/i));
         const listbox = await screen.findByRole('listbox');
         const option = within(listbox).getByText('FSEC-002');
         await user.click(option);
@@ -354,7 +354,7 @@ describe('CreateFaModal', () => {
             openModal();
             renderWithProviders(<CreateFaModal />);
 
-            expect(screen.getByLabelText(/fsec/i)).toBeInTheDocument();
+            expect(screen.getByLabelText(/^FSEC/i)).toBeInTheDocument();
         });
 
         it('should render Phase Ouvert fields', () => {
@@ -421,7 +421,7 @@ describe('CreateFaModal', () => {
             openModal();
             renderWithProviders(<CreateFaModal />);
 
-            const fsecInput = screen.getByLabelText(/fsec/i);
+            const fsecInput = screen.getByLabelText(/^FSEC/i);
             expect(fsecInput).toBeDisabled();
         });
 
@@ -444,7 +444,7 @@ describe('CreateFaModal', () => {
 
             // FSEC should be enabled
             await waitFor(() => {
-                const fsecInput = screen.getByLabelText(/fsec/i);
+                const fsecInput = screen.getByLabelText(/^FSEC/i);
                 expect(fsecInput).not.toBeDisabled();
             });
         });
@@ -459,7 +459,7 @@ describe('CreateFaModal', () => {
 
             // Wait for FSECs to load
             await waitFor(() => {
-                expect(screen.getByLabelText(/fsec/i)).not.toBeDisabled();
+                expect(screen.getByLabelText(/^FSEC/i)).not.toBeDisabled();
             });
 
             // Select FSEC
@@ -469,7 +469,7 @@ describe('CreateFaModal', () => {
             await selectCampaign2(user);
 
             // FSEC should be reset
-            const fsecInput = screen.getByLabelText(/fsec/i) as HTMLInputElement;
+            const fsecInput = screen.getByLabelText(/^FSEC/i) as HTMLInputElement;
             expect(fsecInput.value).toBe('');
         });
 
@@ -483,9 +483,9 @@ describe('CreateFaModal', () => {
 
             // Open FSEC dropdown
             await waitFor(() => {
-                expect(screen.getByLabelText(/fsec/i)).not.toBeDisabled();
+                expect(screen.getByLabelText(/^FSEC/i)).not.toBeDisabled();
             });
-            await user.click(screen.getByLabelText(/fsec/i));
+            await user.click(screen.getByLabelText(/^FSEC/i));
 
             const listbox = await screen.findByRole('listbox');
 
@@ -827,7 +827,7 @@ describe('CreateFaModal', () => {
             renderWithProviders(<CreateFaModal />);
 
             await waitFor(() => {
-                const fsecInput = screen.getByLabelText(/fsec/i) as HTMLInputElement;
+                const fsecInput = screen.getByLabelText(/^FSEC/i) as HTMLInputElement;
                 expect(fsecInput.value).toBe('FSEC-002');
             });
         });
@@ -837,7 +837,7 @@ describe('CreateFaModal', () => {
             renderWithProviders(<CreateFaModal />);
 
             await waitFor(() => {
-                const fsecInput = screen.getByLabelText(/fsec/i);
+                const fsecInput = screen.getByLabelText(/^FSEC/i);
                 expect(fsecInput).not.toBeDisabled();
             });
         });
@@ -931,7 +931,7 @@ describe('CreateFaModal', () => {
             const campaignInput = screen.getByLabelText(/campagne/i);
             expect(campaignInput).toHaveAttribute('required');
 
-            const fsecInput = screen.getByLabelText(/fsec/i);
+            const fsecInput = screen.getByLabelText(/^FSEC/i);
             expect(fsecInput).toHaveAttribute('required');
 
             const discovererInput = screen.getByLabelText(/découvreur/i);

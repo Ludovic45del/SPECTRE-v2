@@ -111,6 +111,9 @@ class AirtightnessTestLpStepSerializer(serializers.Serializer):
     experiment_pressure = serializers.FloatField(required=False, allow_null=True)
     airtightness_test_duration = serializers.FloatField(required=False, allow_null=True)
     date_of_fulfilment = serializers.DateField(required=False, allow_null=True)
+    phase = serializers.ChoiceField(
+        choices=["BP", "HP"], required=False, default="BP"
+    )
 
 
 class GasFillingBpStepSerializer(serializers.Serializer):

@@ -249,6 +249,32 @@ export function userUpdateToApi(data: UserUpdateForm): Record<string, unknown> {
 }
 
 /**
+ * Schema pour la modification de son propre profil (self-update).
+ * N'inclut pas le rôle (réservé aux admins) ni le matricule (immuable).
+ */
+export const SelfProfileUpdateFormSchema = z.object({
+    firstName: z.string().optional().default(''),
+    lastName: z.string().optional().default(''),
+    laboratoire: z.string().optional().default(''),
+    service: z.string().optional().default(''),
+    numero: z.string().optional().default(''),
+    bureau: z.string().optional().default(''),
+});
+
+export type SelfProfileUpdateForm = z.infer<typeof SelfProfileUpdateFormSchema>;
+
+export function selfProfileUpdateToApi(data: SelfProfileUpdateForm): Record<string, unknown> {
+    return {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        laboratoire: data.laboratoire,
+        service: data.service,
+        numero: data.numero,
+        bureau: data.bureau,
+    };
+}
+
+/**
  * Schema pour le changement de mot de passe
  */
 export const ChangePasswordFormSchema = z

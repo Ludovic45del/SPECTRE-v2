@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 import { useCampaigns } from '@entities/campaign';
-import { useCreateFa, useFas } from '@entities/fa';
+import { useCreateFa, useFas, FSEC_STEP_ID } from '@entities/fa';
 import { useFsecsByCampaign } from '@entities/fsec';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
@@ -53,6 +53,8 @@ export function CreateFaModal() {
         defaultValues: {
             campaignId: '',
             fsecVersionId: '',
+            fsecStepId: null,
+            fsecStepOther: '',
             discovererUserUuid: '',
             eventDate: dayjs(),
             observation: '',
@@ -99,6 +101,9 @@ export function CreateFaModal() {
             try {
                 const newFa = await createMutation.mutateAsync({
                     fsecVersionId: data.fsecVersionId,
+                    fsecStepId: data.fsecStepId,
+                    fsecStepOther:
+                        data.fsecStepId === FSEC_STEP_ID.AUTRE ? data.fsecStepOther?.trim() || null : null,
                     discovererUserUuid: data.discovererUserUuid,
                     eventDate: data.eventDate.toDate(),
                     observation: data.observation,

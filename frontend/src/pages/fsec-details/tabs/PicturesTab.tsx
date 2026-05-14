@@ -18,6 +18,7 @@ import {
     ListItem,
     ListItemText,
     Paper,
+    Skeleton,
     Stack,
     Tooltip,
     Typography,
@@ -292,7 +293,7 @@ function PhotoViewsList({
 // ============ Main Component ============
 
 export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
-    const { data: picturesSteps } = usePicturesStepsByFsec(fsecVersionId);
+    const { data: picturesSteps, isLoading: isLoadingSession } = usePicturesStepsByFsec(fsecVersionId);
     const { data: fsec } = useFsec(fsecVersionId);
     const { data: campaign } = useCampaign(fsec?.campaignId ?? '');
 
@@ -307,7 +308,7 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
     const picturesStep = picturesSteps?.[0] ?? null;
 
     // Fetch photo views if session exists
-    const { data: photoViews } = usePhotoViewsByPicturesStep(picturesStep?.uuid ?? '');
+    const { data: photoViews, isLoading: isLoadingViews } = usePhotoViewsByPicturesStep(picturesStep?.uuid ?? '');
 
     // Create session mutation (for empty state)
     const createSessionMutation = useCreatePicturesStep();
@@ -351,24 +352,31 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
         <Box>
             <Stack spacing={3}>
                 {/* Session Photo Card */}
-                <SessionCard
-                    picturesStep={picturesStep}
-                    onEdit={handleEditSession}
-                    onCreate={handleCreateSession}
-                    isCreating={createSessionMutation.isPending}
-                />
-
-                {/* Photo Views List - Only show if session exists */}
-                {picturesStep && (
-                    <PhotoViewsList
-                        views={photoViews}
-                        onAdd={handleAddView}
-                        onEdit={handleEditView}
-                        buildFallbackLink={(viewName) =>
-                            buildViewLink(campaign?.name, campaign?.year, campaign?.installation?.label, viewName)
-                        }
+                {isLoadingSession ? (
+                    <Skeleton variant="rounded" height={140} sx={{ borderRadius: 1 }} />
+                ) : (
+                    <SessionCard
+                        picturesStep={picturesStep}
+                        onEdit={handleEditSession}
+                        onCreate={handleCreateSession}
+                        isCreating={createSessionMutation.isPending}
                     />
                 )}
+
+                {/* Photo Views List - Only show if session exists */}
+                {picturesStep &&
+                    (isLoadingViews ? (
+                        <Skeleton variant="rounded" height={120} sx={{ borderRadius: 1 }} />
+                    ) : (
+                        <PhotoViewsList
+                            views={photoViews}
+                            onAdd={handleAddView}
+                            onEdit={handleEditView}
+                            buildFallbackLink={(viewName) =>
+                                buildViewLink(campaign?.name, campaign?.year, campaign?.installation?.label, viewName)
+                            }
+                        />
+                    ))}
             </Stack>
 
             {/* Modals */}

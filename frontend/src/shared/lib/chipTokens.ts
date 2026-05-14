@@ -24,9 +24,9 @@
 import { alpha, darken, type Theme } from '@mui/material';
 import type { SystemStyleObject } from '@mui/system';
 
-const SOFT_BG_ALPHA_LIGHT = 0.12;
-const SOFT_BG_ALPHA_DARK = 0.2;
-const SOFT_TEXT_DARKEN = 0.25;
+const SOFT_BG_ALPHA_LIGHT = 0.16;
+const SOFT_BG_ALPHA_DARK = 0.24;
+const SOFT_TEXT_DARKEN = 0.55;
 
 /**
  * Override ponctuel : si la couleur de référence est trop claire pour donner

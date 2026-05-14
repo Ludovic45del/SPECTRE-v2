@@ -88,7 +88,7 @@ def seed_reference_data(db):
         (0, "Sans gaz"),
         (1, "BP"),
         (2, "BP + HP"),
-        (3, "Perméation + BP"),
+        (3, "Perméation + HP"),
         (4, "Perméation + BP + HP"),
     ]:
         FsecCategoryEntity.objects.get_or_create(id=id_, defaults={"label": label})

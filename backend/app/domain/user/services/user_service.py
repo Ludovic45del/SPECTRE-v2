@@ -132,6 +132,22 @@ def update_user(
     return updated
 
 
+def update_user_self_profile(
+    repository: IUserRepository, uuid: uuid_lib.UUID, bean: UserBean
+) -> UserBean:
+    """Self-update : conserve role/username de l'existant pour éviter l'escalade."""
+    existing = repository.get_by_uuid(uuid)
+    if not existing:
+        raise NotFoundException("USER", str(uuid))
+
+    bean.uuid = uuid
+    bean.username = existing.username
+    bean.role = existing.role
+    updated = repository.update(bean)
+    logger.debug("Profil self-modifie: %s", updated.username)
+    return updated
+
+
 def toggle_active(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
     existing = repository.get_by_uuid(uuid)
     if not existing:

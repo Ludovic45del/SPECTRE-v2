@@ -10,12 +10,13 @@
  * propre `<RouteTransition>` plus localisé.
  */
 
-import { Suspense, memo, useMemo } from 'react';
+import { Suspense, memo, useCallback, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { Sidebar, SIDEBAR_WIDTH_OPEN, SIDEBAR_WIDTH_CLOSED, useSidebarStore } from '@widgets/sidebar';
 import type { SidebarUserInfo } from '@widgets/sidebar';
 import { useMe, ROLE_LABELS } from '@entities/user';
+import { ProfileModal } from '@features/user/edit-profile';
 import { motionDuration, motionEasing } from '@shared/ui/motion';
 
 // Fallback Suspense — discret (pas de spinner intrusif quand le code-split
@@ -61,6 +62,10 @@ function MainLayoutComponent() {
     const isOpen = useSidebarStore((state) => state.isOpen);
     const marginLeft = isOpen ? SIDEBAR_WIDTH_OPEN : SIDEBAR_WIDTH_CLOSED;
     const { data: meData } = useMe();
+    const [profileOpen, setProfileOpen] = useState(false);
+
+    const handleOpenProfile = useCallback(() => setProfileOpen(true), []);
+    const handleCloseProfile = useCallback(() => setProfileOpen(false), []);
 
     const sidebarUser = useMemo<SidebarUserInfo | undefined>(
         () =>
@@ -105,7 +110,8 @@ function MainLayoutComponent() {
             >
                 Aller au contenu principal
             </Box>
-            <Sidebar user={sidebarUser} roleLabels={ROLE_LABELS} />
+            <Sidebar user={sidebarUser} roleLabels={ROLE_LABELS} onProfileClick={handleOpenProfile} />
+            <ProfileModal user={meData ?? null} open={profileOpen} onClose={handleCloseProfile} />
             <Box
                 id="main-content"
                 component="main"

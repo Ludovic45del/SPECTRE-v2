@@ -352,6 +352,26 @@ class TestFaMapperApiToBean:
         assert result.event_date is None
         assert result.closure_date is None
 
+    @pytest.mark.unit
+    def test_api_to_bean_missing_text_fields_are_none(self):
+        """Régression: discoverer/observation/quick_analysis absents -> None.
+
+        Sinon un PUT partiel (PhaseEnCoursSection ne renvoie pas la phase Ouvert)
+        écraserait silencieusement constat & analyse rapide via _merge_fa_beans
+        qui distingue None ("non fourni") de "" (effacement explicite).
+        """
+        partial_payload = {
+            "uuid": "test-uuid",
+            "fsec_version_id": "fsec-uuid",
+            "cause": "Nouvelle cause",
+        }
+
+        result = fa_mapper_api_to_bean(partial_payload)
+
+        assert result.discoverer is None
+        assert result.observation is None
+        assert result.quick_analysis is None
+
 
 class TestFaMapperBeanToEntity:
     """Tests conversion Bean → Entity."""

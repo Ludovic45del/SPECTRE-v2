@@ -15,6 +15,8 @@ import {
     type UserUpdateForm,
     userCreateToApi,
     userUpdateToApi,
+    type SelfProfileUpdateForm,
+    selfProfileUpdateToApi,
     type User,
     type UserCreated,
     type PasswordResetResponse,
@@ -96,6 +98,26 @@ export function useUpdateUser() {
             return UserSchema.parse(response);
         },
         onSuccess: (updatedUser) => {
+            queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
+                old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
+            );
+        },
+    });
+}
+
+/**
+ * Self-update du profil utilisateur connecté (sans rôle / matricule).
+ */
+export function useUpdateMe() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (data: SelfProfileUpdateForm): Promise<User> => {
+            const apiData = selfProfileUpdateToApi(data);
+            const response = await api.put('/auth/me/update/', apiData);
+            return UserSchema.parse(response);
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(userKeys.me(), updatedUser);
             queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
                 old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
             );

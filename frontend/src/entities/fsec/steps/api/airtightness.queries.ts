@@ -47,6 +47,7 @@ interface CreateAirtightnessStepInput {
     operator?: string | null;
     operatorUserUuid?: string | null;
     dateOfFulfilment?: Date | null;
+    phase?: 'BP' | 'HP';
 }
 
 interface UpdateAirtightnessStepInput extends CreateAirtightnessStepInput {
@@ -64,6 +65,7 @@ function airtightnessStepToApi(input: CreateAirtightnessStepInput) {
         operator: input.operator ?? null,
         operator_user_uuid: input.operatorUserUuid ?? null,
         date_of_fulfilment: input.dateOfFulfilment?.toISOString().split('T')[0] ?? null,
+        phase: input.phase ?? 'BP',
     };
 }
 

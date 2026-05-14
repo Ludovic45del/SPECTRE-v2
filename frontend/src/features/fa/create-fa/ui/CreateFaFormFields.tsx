@@ -6,14 +6,15 @@
  */
 
 import { memo } from 'react';
-import { Stack, TextField, Typography, Divider } from '@mui/material';
+import { Stack, TextField, Typography, Divider, MenuItem } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Controller } from 'react-hook-form';
+import { Controller, useWatch } from 'react-hook-form';
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 
 import type { CampaignWithRelations } from '@entities/campaign';
 import type { Fsec } from '@entities/fsec';
 import { UserSelect } from '@entities/user';
+import { FSEC_STEP_LIST, FSEC_STEP_ID } from '@entities/fa';
 import type { CreateFaForm } from '../model';
 import { CampaignFsecSelector } from './CampaignFsecSelector';
 
@@ -34,6 +35,9 @@ export const CreateFaFormFields = memo(function CreateFaFormFields({
     availableFsecs,
     selectedCampaignId,
 }: CreateFaFormFieldsProps) {
+    const watchedStepId = useWatch({ control, name: 'fsecStepId' });
+    const isAutreStep = watchedStepId === FSEC_STEP_ID.AUTRE;
+
     return (
         <Stack spacing={3}>
             <CampaignFsecSelector
@@ -50,6 +54,53 @@ export const CreateFaFormFields = memo(function CreateFaFormFields({
             <Typography variant="subtitle2" color="text.secondary">
                 Informations de l'anomalie
             </Typography>
+
+            <Controller
+                name="fsecStepId"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        select
+                        value={field.value ?? ''}
+                        onChange={(e) => {
+                            const raw = e.target.value;
+                            field.onChange(raw === '' ? null : Number(raw));
+                            if (Number(raw) !== FSEC_STEP_ID.AUTRE) {
+                                setValue('fsecStepOther', '');
+                            }
+                        }}
+                        label="Étape FSEC"
+                        fullWidth
+                    >
+                        <MenuItem value="">-</MenuItem>
+                        {FSEC_STEP_LIST.map((step) => (
+                            <MenuItem key={step.id} value={step.id}>
+                                {step.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                )}
+            />
+
+            {isAutreStep && (
+                <Controller
+                    name="fsecStepOther"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <TextField
+                            {...field}
+                            value={field.value ?? ''}
+                            label="Préciser l'étape"
+                            placeholder="Précisez l'étape..."
+                            required
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
+                            fullWidth
+                        />
+                    )}
+                />
+            )}
 
             <Controller
                 name="discovererUserUuid"

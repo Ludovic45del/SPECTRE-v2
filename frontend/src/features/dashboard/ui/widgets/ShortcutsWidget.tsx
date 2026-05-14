@@ -7,6 +7,7 @@ import { memo, useCallback, useState, useMemo } from 'react';
 import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography, alpha, useTheme } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
 import LinkIcon from '@mui/icons-material/Link';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
@@ -81,10 +82,11 @@ const EmptyShortcuts = memo(function EmptyShortcuts({ onAdd }: { onAdd: () => vo
 interface ShortcutCardProps {
     readonly shortcut: Shortcut;
     readonly isEditMode: boolean;
+    readonly onEdit: (shortcut: Shortcut) => void;
     readonly onDelete: (id: string) => void;
 }
 
-const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete }: ShortcutCardProps) {
+const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onEdit, onDelete }: ShortcutCardProps) {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const IconComp = ICON_MAP[shortcut.icon] ?? LinkIcon;
@@ -93,6 +95,13 @@ const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete
     const accentFg = `hsl(${hue}, 70%, ${isDark ? 70 : 38}%)`;
 
     const handleClick = useCallback(() => window.open(shortcut.url, '_blank'), [shortcut.url]);
+    const handleEdit = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation();
+            onEdit(shortcut);
+        },
+        [onEdit, shortcut],
+    );
     const handleDelete = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
@@ -103,7 +112,15 @@ const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete
 
     return (
         <Tooltip title={shortcut.url} arrow placement="top">
-            <Box sx={{ position: 'relative' }}>
+            <Box
+                sx={{
+                    position: 'relative',
+                    '&:hover .shortcut-actions, &:focus-within .shortcut-actions': {
+                        opacity: 1,
+                        pointerEvents: 'auto',
+                    },
+                }}
+            >
                 <ButtonBase
                     onClick={handleClick}
                     focusRipple
@@ -168,16 +185,44 @@ const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete
                         }}
                     />
                 </ButtonBase>
-                {isEditMode && (
+                <Box
+                    className="shortcut-actions"
+                    sx={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -6,
+                        display: 'flex',
+                        gap: 0.5,
+                        opacity: isEditMode ? 1 : 0,
+                        pointerEvents: isEditMode ? 'auto' : 'none',
+                        transition: `opacity ${motion.fast}`,
+                    }}
+                >
+                    <Tooltip title="Modifier" arrow>
+                        <IconButton
+                            size="small"
+                            onClick={handleEdit}
+                            aria-label={`Modifier ${shortcut.label}`}
+                            sx={{
+                                width: 20,
+                                height: 20,
+                                bgcolor: 'background.paper',
+                                color: 'primary.main',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                boxShadow: 1,
+                                '&:hover': { bgcolor: 'primary.main', color: 'primary.contrastText' },
+                            }}
+                        >
+                            <EditIcon sx={{ fontSize: 12 }} />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Supprimer" arrow>
                         <IconButton
                             size="small"
                             onClick={handleDelete}
                             aria-label={`Supprimer ${shortcut.label}`}
                             sx={{
-                                position: 'absolute',
-                                top: -6,
-                                right: -6,
                                 width: 20,
                                 height: 20,
                                 bgcolor: 'error.main',
@@ -189,7 +234,7 @@ const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onDelete
                             <CloseIcon sx={{ fontSize: 12 }} />
                         </IconButton>
                     </Tooltip>
-                )}
+                </Box>
             </Box>
         </Tooltip>
     );
@@ -200,6 +245,7 @@ interface ShortcutCategoryGroupProps {
     readonly category: string;
     readonly items: Shortcut[];
     readonly isEditMode: boolean;
+    readonly onEdit: (shortcut: Shortcut) => void;
     readonly onDelete: (id: string) => void;
 }
 
@@ -207,6 +253,7 @@ const ShortcutCategoryGroup = memo(function ShortcutCategoryGroup({
     category,
     items,
     isEditMode,
+    onEdit,
     onDelete,
 }: ShortcutCategoryGroupProps) {
     const theme = useTheme();
@@ -241,7 +288,13 @@ const ShortcutCategoryGroup = memo(function ShortcutCategoryGroup({
                 }}
             >
                 {items.map((s) => (
-                    <ShortcutCard key={s.id} shortcut={s} isEditMode={isEditMode} onDelete={onDelete} />
+                    <ShortcutCard
+                        key={s.id}
+                        shortcut={s}
+                        isEditMode={isEditMode}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
                 ))}
             </Box>
         </Box>
@@ -260,6 +313,10 @@ export default memo(function ShortcutsWidget() {
     const [editingShortcut, setEditingShortcut] = useState<Shortcut | null>(null);
     const handleOpenDialog = useCallback(() => {
         setEditingShortcut(null);
+        setDialogOpen(true);
+    }, []);
+    const handleEdit = useCallback((shortcut: Shortcut) => {
+        setEditingShortcut(shortcut);
         setDialogOpen(true);
     }, []);
     const handleCloseDialog = useCallback(() => {
@@ -346,6 +403,7 @@ export default memo(function ShortcutsWidget() {
                                 category={category}
                                 items={items}
                                 isEditMode={isEditMode}
+                                onEdit={handleEdit}
                                 onDelete={handleDelete}
                             />
                         ))}

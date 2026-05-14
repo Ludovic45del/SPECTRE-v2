@@ -11,6 +11,9 @@ from app.api.campaign.campaign_teams_controller import CampaignTeamsController
 # Dashboard Controller
 from app.api.dashboard.dashboard_controller import DashboardController
 
+# Indicators Controller
+from app.api.indicators.indicators_controller import IndicatorsController
+
 # Embase Controllers
 from app.api.embase.embase_controller import EmbaseController
 from app.api.embase.etalonnage_controller import EtalonnageController
@@ -22,6 +25,13 @@ from app.api.fa.fa_controller import FaController
 from app.api.fsec.fsec_controller import FsecController
 from app.api.fsec.fsec_documents_controller import FsecDocumentsController
 from app.api.fsec.fsec_teams_controller import FsecTeamsController
+
+# Material Controllers
+from app.api.material.machine_controller import MachineController
+from app.api.material.machine_maintenance_controller import (
+    MachineMaintenanceController,
+)
+from app.api.material.machine_room_controller import MachineRoomController
 
 # Steps Controllers
 from app.api.steps.assembly_step_controller import AssemblyStepController
@@ -75,6 +85,15 @@ router.register(r"fas", FaController, basename="fas")
 router.register(r"embases", EmbaseController, basename="embases")
 router.register(r"etalonnages", EtalonnageController, basename="etalonnages")
 
+# Material routes
+router.register(r"material/rooms", MachineRoomController, basename="material-rooms")
+router.register(r"material/machines", MachineController, basename="material-machines")
+router.register(
+    r"material/maintenances",
+    MachineMaintenanceController,
+    basename="material-maintenances",
+)
+
 # Stock routes
 router.register(r"stock/catalog", StockCatalogController, basename="stock-catalog")
 router.register(r"stock/movements", StockMovementController, basename="stock-movements")
@@ -123,6 +142,9 @@ router.register(r"all-gas-steps", AllGasStepsController, basename="all-gas-steps
 
 # Dashboard route (agrégation légère pour la page d'accueil)
 router.register(r"dashboard", DashboardController, basename="dashboard")
+
+# Indicators route (KPI agrégés pour la page Indicateurs)
+router.register(r"indicators", IndicatorsController, basename="indicators")
 
 # User routes
 router.register(r"users", UserAdminController, basename="users")

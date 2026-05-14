@@ -21,16 +21,13 @@ import {
     TablePagination,
     TableSortLabel,
     Alert,
-    Chip,
-    Stack,
-    alpha,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useEmbases, EMBASE_TYPE_LABELS } from '@entities/embase';
+import { useEmbases } from '@entities/embase';
 import { EmbasesToolbar, useFilterEmbasesStore, useCreateEmbaseStore } from '@features/embase';
 import { CreateEmbaseModal } from '@features/embase';
-import { useEntityList, ROWS_PER_PAGE_OPTIONS, getChipStyles } from '@shared/lib';
-import { type SortColumn, VOIE_COLORS, filterEmbases, sortEmbases } from './embase-list-utils';
+import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
+import { type SortColumn, filterEmbases, sortEmbases } from './embase-list-utils';
 import { EmbaseTableRow } from './components/EmbaseTableRow';
 import { EmbaseTableSkeleton } from './components/EmbaseTableSkeleton';
 
@@ -60,48 +57,6 @@ const COLUMNS: { key: SortColumn; label: string; width: string }[] = [
     { key: 'mcc', label: 'MCC', width: COLUMN_WIDTHS.mcc },
     { key: 'electrovanne', label: 'EV', width: COLUMN_WIDTHS.electrovanne },
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-component: Active filter chips
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface ActiveFilterChipsProps {
-    filters: ReturnType<typeof useFilterEmbasesStore.getState>['filters'];
-}
-
-const ActiveFilterChips = memo(function ActiveFilterChips({ filters }: ActiveFilterChipsProps) {
-    return (
-        <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
-            {filters.nombreVoies.map((v) => (
-                <Chip
-                    key={v}
-                    label={`Voie ${v}`}
-                    size="small"
-                    onDelete={
-                        filters.nombreVoies.length > 1
-                            ? () => {
-                                  const { setFilter } = useFilterEmbasesStore.getState();
-                                  setFilter('nombreVoies', filters.nombreVoies.filter((x) => x !== v) as (1 | 2)[]);
-                              }
-                            : undefined
-                    }
-                    sx={getChipStyles(alpha(VOIE_COLORS[v], 0.15), VOIE_COLORS[v])}
-                />
-            ))}
-            {filters.type !== null && (
-                <Chip
-                    label={`Type: ${EMBASE_TYPE_LABELS[filters.type]}`}
-                    size="small"
-                    onDelete={() => {
-                        const { setFilter } = useFilterEmbasesStore.getState();
-                        setFilter('type', null);
-                    }}
-                    sx={getChipStyles(alpha('#1976d2', 0.1), '#1976d2')}
-                />
-            )}
-        </Stack>
-    );
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-component: Sortable column header bar
@@ -195,7 +150,6 @@ export default function EmbasesPage() {
     return (
         <Container maxWidth={false} sx={{ py: 4 }}>
             <EmbasesToolbar onAdd={openCreateModal} />
-            <ActiveFilterChips filters={filters} />
             <EmbaseTableHeader
                 columns={COLUMNS}
                 sortColumn={sortColumn}

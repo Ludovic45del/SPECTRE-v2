@@ -9,6 +9,7 @@ import { memo } from 'react';
 import { Box, Paper, Typography, Stack, Grid } from '@mui/material';
 import { Fa } from '@entities/fa';
 import { DataChip } from '@widgets/data-chip';
+import { formatDateShort } from '@shared/lib';
 
 // ============================================================================
 // Types
@@ -32,7 +33,7 @@ export const PhaseEnCoursViewMode = memo(function PhaseEnCoursViewMode({
     return (
         <Stack spacing={2}>
             <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                     <Typography variant="subtitle2" color="text.secondary">
                         Type (5M)
                     </Typography>
@@ -44,7 +45,7 @@ export const PhaseEnCoursViewMode = memo(function PhaseEnCoursViewMode({
                         </Typography>
                     )}
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                     <Typography variant="subtitle2" color="text.secondary">
                         Criticité
                     </Typography>
@@ -55,6 +56,14 @@ export const PhaseEnCoursViewMode = memo(function PhaseEnCoursViewMode({
                             -
                         </Typography>
                     )}
+                </Grid>
+                <Grid item xs={4}>
+                    <Typography variant="subtitle2" color="text.secondary">
+                        Date de passage en cours
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                        {fa.iecValidationProgressDate ? formatDateShort(fa.iecValidationProgressDate) : '-'}
+                    </Typography>
                 </Grid>
             </Grid>
 

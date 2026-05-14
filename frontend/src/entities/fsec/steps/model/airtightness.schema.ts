@@ -7,6 +7,9 @@
 
 import { z } from 'zod';
 
+export const AirtightnessPhaseSchema = z.enum(['BP', 'HP']);
+export type AirtightnessPhase = z.infer<typeof AirtightnessPhaseSchema>;
+
 export const AirtightnessStepApiSchema = z.object({
     uuid: z.string().uuid(),
     fsec_version_id: z.string().uuid(),
@@ -19,6 +22,7 @@ export const AirtightnessStepApiSchema = z.object({
     operator: z.string().nullable(),
     operator_user_uuid: z.string().uuid().nullable().optional(),
     date_of_fulfilment: z.string().nullable(),
+    phase: AirtightnessPhaseSchema.optional().default('BP'),
 });
 
 export const AirtightnessStepSchema = AirtightnessStepApiSchema.transform((api) => ({
@@ -33,6 +37,7 @@ export const AirtightnessStepSchema = AirtightnessStepApiSchema.transform((api) 
     operator: api.operator,
     operatorUserUuid: api.operator_user_uuid ?? null,
     dateOfFulfilment: api.date_of_fulfilment ? new Date(api.date_of_fulfilment) : null,
+    phase: api.phase,
 }));
 
 export type AirtightnessStep = z.infer<typeof AirtightnessStepSchema>;

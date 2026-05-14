@@ -7,7 +7,11 @@ from typing import Optional
 
 @dataclass
 class AirtightnessTestLpStepBean:
-    """Bean représentant un test d'étanchéité basse pression."""
+    """Bean représentant un test d'étanchéité basse pression.
+
+    `phase` indique à quelle phase fonctionnelle le test est rattaché :
+    'BP' (default) pour les rubriques BP, 'HP' pour les rubriques HP d'une FSEC.
+    """
 
     uuid: str = ""
     fsec_version_id: str = ""
@@ -20,3 +24,4 @@ class AirtightnessTestLpStepBean:
     operator: Optional[str] = None
     operator_user_uuid: Optional[str] = None
     date_of_fulfilment: Optional[date] = None
+    phase: str = "BP"

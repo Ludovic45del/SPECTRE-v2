@@ -35,6 +35,7 @@ def airtightness_test_lp_step_mapper_entity_to_bean(
         operator=entity.operator,
         operator_user_uuid=read_operator_user_uuid(entity),
         date_of_fulfilment=entity.date_of_fulfilment,
+        phase=entity.phase or "BP",
     )
 
 
@@ -54,6 +55,7 @@ def airtightness_test_lp_step_mapper_bean_to_entity(
     entity.operator = bean.operator
     entity.operator_user_id = bean.operator_user_uuid
     entity.date_of_fulfilment = bean.date_of_fulfilment
+    entity.phase = bean.phase or "BP"
     return entity
 
 
@@ -72,6 +74,7 @@ def airtightness_test_lp_step_mapper_api_to_bean(
         operator=data.get("operator"),
         operator_user_uuid=normalize_user_uuid(data.get("operator_user_uuid")),
         date_of_fulfilment=parse_date_from_api(data.get("date_of_fulfilment")),
+        phase=data.get("phase") or "BP",
     )
 
 
@@ -93,4 +96,5 @@ def airtightness_test_lp_step_mapper_bean_to_api(
         "date_of_fulfilment": (
             bean.date_of_fulfilment.isoformat() if bean.date_of_fulfilment else None
         ),
+        "phase": bean.phase or "BP",
     }

@@ -5,12 +5,12 @@
  * Style: Aligned with CampaignDetailsPage
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Box, Container, CircularProgress, Alert } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { useParams, useLocation } from 'react-router-dom';
-import { useFsec, useUpdateFsec } from '@entities/fsec';
-import { useNotification, ErrorBoundary, RouteTransition } from '@shared/ui';
+import { useFsec } from '@entities/fsec';
+import { ErrorBoundary, RouteTransition } from '@shared/ui';
 import { useCampaignTeam } from '@entities/campaign/team';
 import { useFsecDocumentsByFsec } from '@entities/fsec/document';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
@@ -20,7 +20,7 @@ import { AssemblyTab } from './tabs/AssemblyTab';
 import { ControleTab } from './tabs/ControleTab';
 import { PicturesTab } from './tabs/PicturesTab';
 import { GasStepsTab } from './tabs/GasStepsTab';
-import { PlaceholderTab } from './tabs/PlaceholderTab';
+import { ResultsTab } from './tabs/ResultsTab';
 import 'dayjs/locale/fr';
 
 const BASE_TABS: TabItem[] = [
@@ -45,50 +45,6 @@ export default function FsecDetailsPage() {
     const { data: fsec, isLoading, error } = useFsec(versionUuid);
     const { data: campaignTeam } = useCampaignTeam(fsec?.campaignId ?? '');
     const { data: documents } = useFsecDocumentsByFsec(versionUuid);
-
-    // FSEC update mutation for depressurization validation
-    const { mutate: updateFsec } = useUpdateFsec();
-    const { showNotification } = useNotification();
-
-    const handleDepressurizationValidationChange = useCallback(
-        (failed: boolean) => {
-            if (!fsec) return;
-
-            updateFsec(
-                {
-                    versionUuid: fsec.versionUuid,
-                    data: {
-                        name: fsec.name,
-                        campaignId: fsec.campaignId,
-                        statusId: fsec.statusId,
-                        categoryId: fsec.categoryId,
-                        rackId: fsec.rackId,
-                        comments: fsec.comments,
-                        depressurizationFailed: failed,
-                        shootingDate: fsec.shootingDate,
-                        deliveryDate: fsec.deliveryDate,
-                        preshootingPressure: fsec.preshootingPressure,
-                        experienceSrxx: fsec.experienceSrxx,
-                        localisation: fsec.localisation,
-                    },
-                },
-                {
-                    onSuccess: () => {
-                        showNotification(
-                            failed
-                                ? 'Dépressurisation non validée - Re-pressurisation requise'
-                                : 'Dépressurisation validée',
-                            failed ? 'warning' : 'success',
-                        );
-                    },
-                    onError: () => {
-                        showNotification('Erreur lors de la mise à jour', 'error');
-                    },
-                },
-            );
-        },
-        [fsec, updateFsec, showNotification],
-    );
 
     const tabs = useMemo(() => getTabs(fsec?.categoryId ?? null), [fsec?.categoryId]);
     const hasGas = fsec?.categoryId != null && fsec?.categoryId !== 0;
@@ -161,17 +117,12 @@ export default function FsecDetailsPage() {
                             )}
                             {hasGas && location.pathname.includes('/gaz') && (
                                 <ErrorBoundary compact onReset={reset}>
-                                    <GasStepsTab
-                                        fsecVersionId={versionUuid}
-                                        categoryId={fsec.categoryId}
-                                        depressurizationFailed={fsec.depressurizationFailed}
-                                        onDepressurizationValidationChange={handleDepressurizationValidationChange}
-                                    />
+                                    <GasStepsTab fsecVersionId={versionUuid} categoryId={fsec.categoryId} />
                                 </ErrorBoundary>
                             )}
                             {location.pathname.includes('/resultats') && (
                                 <ErrorBoundary compact onReset={reset}>
-                                    <PlaceholderTab label="Alignement/Livraison/Résultats" />
+                                    <ResultsTab fsec={fsec} />
                                 </ErrorBoundary>
                             )}
                         </Box>

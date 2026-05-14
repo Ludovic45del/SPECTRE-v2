@@ -73,7 +73,7 @@ const FSEC_CATEGORIES = [
     { id: 1, label: 'Gaz BP', color: '#1FDFED' },
     { id: 2, label: 'Gaz HP', color: '#1FEDB7' },
     { id: 3, label: 'Gaz BP + HP', color: '#1FED2B' },
-    { id: 4, label: 'Gaz Permeation + BP', color: '#1F9DED' },
+    { id: 4, label: 'Gaz Permeation + HP', color: '#1F9DED' },
 ];
 
 export function UpdateFsecModal({ open, onClose, fsec }: UpdateFsecModalProps) {

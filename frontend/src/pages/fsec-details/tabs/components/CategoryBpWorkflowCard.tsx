@@ -3,17 +3,15 @@ import { Box, Chip, Collapse, Divider, IconButton, Paper, Stack, Typography } fr
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import type { AirtightnessStep, CommonGasData, GasFillingBpStep } from '@entities/fsec/steps';
+import type { AirtightnessStep, GasFillingBpStep } from '@entities/fsec/steps';
 import { WorkflowMiniStepper } from './MiniStepper';
-import { CommonDataSection, BpRubriqueItem } from './gas-workflow-components';
+import { BpRubriqueItem } from './gas-workflow-components';
 
 interface CategoryBpWorkflowCardProps {
     index: number;
     numRubriques: number;
     airtightnessStep?: AirtightnessStep;
     fillingStep?: GasFillingBpStep;
-    commonData: CommonGasData;
-    onEditCommonData: () => void;
     onEditAirtightness: (step?: AirtightnessStep) => void;
     onEditFilling: (step?: GasFillingBpStep) => void;
     onDelete?: () => void;
@@ -27,8 +25,6 @@ export function CategoryBpWorkflowCard({
     numRubriques,
     airtightnessStep,
     fillingStep,
-    commonData,
-    onEditCommonData,
     onEditAirtightness,
     onEditFilling,
     onDelete,
@@ -106,23 +102,14 @@ export function CategoryBpWorkflowCard({
             <Collapse in={expanded}>
                 <Divider />
                 <Box sx={{ p: 3 }}>
-                    <Stack spacing={3}>
-                        {index === 0 && (
-                            <>
-                                <CommonDataSection commonData={commonData} onEdit={onEditCommonData} />
-                                <Divider />
-                            </>
-                        )}
-
-                        <BpRubriqueItem
-                            index={index}
-                            showNumber={false}
-                            airtightnessStep={airtightnessStep}
-                            fillingStep={fillingStep}
-                            onEditAirtightness={onEditAirtightness}
-                            onEditFilling={onEditFilling}
-                        />
-                    </Stack>
+                    <BpRubriqueItem
+                        index={index}
+                        showNumber={false}
+                        airtightnessStep={airtightnessStep}
+                        fillingStep={fillingStep}
+                        onEditAirtightness={onEditAirtightness}
+                        onEditFilling={onEditFilling}
+                    />
                 </Box>
             </Collapse>
         </Paper>

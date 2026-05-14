@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import {
     MetrologyStep,
     SealingStep,
@@ -281,7 +281,7 @@ function EmptyControleCard({ onAdd }: { onAdd: () => void }) {
 // ============ Main Component ============
 
 export function ControleTab({ fsecVersionId }: ControleTabProps) {
-    const { data: metrologySteps } = useMetrologyStepsByFsec(fsecVersionId);
+    const { data: metrologySteps, isLoading } = useMetrologyStepsByFsec(fsecVersionId);
     // Metrology modal state
     const [metrologyModalOpen, setMetrologyModalOpen] = useState(false);
     const [selectedMetrologyStep, setSelectedMetrologyStep] = useState<MetrologyStep | null>(null);
@@ -323,7 +323,9 @@ export function ControleTab({ fsecVersionId }: ControleTabProps) {
     return (
         <Box>
             <Stack spacing={3}>
-                {metrologySteps?.length ? (
+                {isLoading ? (
+                    <Skeleton variant="rounded" height={120} sx={{ borderRadius: 1 }} />
+                ) : metrologySteps?.length ? (
                     <>
                         {metrologySteps.map((step, index) => (
                             <ControleMetrologiqueCard

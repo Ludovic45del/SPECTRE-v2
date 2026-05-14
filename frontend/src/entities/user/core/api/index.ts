@@ -5,6 +5,7 @@ export {
     useMe,
     useCreateUser,
     useUpdateUser,
+    useUpdateMe,
     useToggleUserActive,
     useResetPassword,
     useChangePassword,
