@@ -16,7 +16,10 @@ describe('AssemblyStepSchema', () => {
             start_date: '2024-01-15',
             end_date: '2024-01-20',
             comments: 'Step completed',
-            assembly_bench_ids: [1, 2, 3],
+            machine_uuids: [
+                '423e4567-e89b-12d3-a456-426614174003',
+                '523e4567-e89b-12d3-a456-426614174004',
+            ],
         };
 
         const result = AssemblyStepSchema.parse(apiData);
@@ -27,7 +30,10 @@ describe('AssemblyStepSchema', () => {
         expect(result.operatorUserUuid).toBe('323e4567-e89b-12d3-a456-426614174002');
         expect(result.startDate).toBeInstanceOf(Date);
         expect(result.endDate).toBeInstanceOf(Date);
-        expect(result.assemblyBenchIds).toEqual([1, 2, 3]);
+        expect(result.machineUuids).toEqual([
+            '423e4567-e89b-12d3-a456-426614174003',
+            '523e4567-e89b-12d3-a456-426614174004',
+        ]);
     });
 
     it('should handle null optional fields', () => {
@@ -39,7 +45,7 @@ describe('AssemblyStepSchema', () => {
             start_date: null,
             end_date: null,
             comments: null,
-            assembly_bench_ids: [],
+            machine_uuids: [],
         };
 
         const result = AssemblyStepSchema.parse(apiData);
@@ -49,6 +55,6 @@ describe('AssemblyStepSchema', () => {
         expect(result.startDate).toBeNull();
         expect(result.endDate).toBeNull();
         expect(result.comments).toBeNull();
-        expect(result.assemblyBenchIds).toEqual([]);
+        expect(result.machineUuids).toEqual([]);
     });
 });

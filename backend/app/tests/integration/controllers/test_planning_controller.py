@@ -12,8 +12,8 @@ import pytest
 
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.planning.models.lab_machine_entity import LabMachineEntity
-from app.repository.planning.models.lab_salle_entity import LabSalleEntity
+from app.repository.material.models.machine_entity import MachineEntity
+from app.repository.material.models.machine_room_entity import MachineRoomEntity
 
 BASE_URL = "/api/v1/planning"
 
@@ -43,15 +43,10 @@ def fsec(db, campaign):
 
 
 @pytest.fixture
-def salle(db):
-    """Salle de test pour les machines."""
-    return LabSalleEntity.objects.create(name="A1")
-
-
-@pytest.fixture
-def machine(db, salle):
-    """Machine de test pour les evenements."""
-    return LabMachineEntity.objects.create(salle=salle, name="Machine 1")
+def machine(db):
+    """Machine du parc Matériel pour les evenements labo."""
+    room = MachineRoomEntity.objects.get(code="B1")
+    return MachineEntity.objects.create(name="Machine 1", room=room)
 
 
 # ============================================================================
@@ -277,106 +272,6 @@ class TestMemberPeriodController:
 # ============================================================================
 # LAB SALLE CONTROLLER TESTS
 # ============================================================================
-
-
-@pytest.mark.integration
-@pytest.mark.django_db
-class TestLabSalleController:
-    """Tests endpoints /api/v1/planning/lab-salles/"""
-
-    url = f"{BASE_URL}/lab-salles/"
-
-    def test_list_salles_empty(self, api_client):
-        """Test GET list retourne une liste vide."""
-        response = api_client.get(self.url)
-
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
-
-    def test_create_salle(self, api_client):
-        """Test POST creation d'une salle."""
-        payload = {"name": "A1"}
-
-        response = api_client.post(
-            self.url,
-            data=json.dumps(payload),
-            content_type="application/json",
-        )
-
-        assert response.status_code == 201
-        data = response.json()
-        assert data["name"] == "A1"
-        assert "uuid" in data
-
-    def test_create_salle_then_list(self, api_client):
-        """Test que le list retourne les salles creees."""
-        payload = {"name": "B2"}
-        api_client.post(
-            self.url,
-            data=json.dumps(payload),
-            content_type="application/json",
-        )
-
-        response = api_client.get(self.url)
-
-        assert response.status_code == 200
-        data = response.json()
-        assert any(s["name"] == "B2" for s in data)
-
-    def test_update_salle(self, api_client):
-        """Test PATCH mise a jour d'une salle."""
-        create_response = api_client.post(
-            self.url,
-            data=json.dumps({"name": "A1"}),
-            content_type="application/json",
-        )
-        salle_uuid = create_response.json()["uuid"]
-
-        patch_payload = {"name": "A1 Rename", "sort_order": 5}
-        response = api_client.patch(
-            f"{self.url}{salle_uuid}/",
-            data=json.dumps(patch_payload),
-            content_type="application/json",
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "A1 Rename"
-        assert data["sort_order"] == 5
-
-    def test_update_salle_not_found(self, api_client):
-        """Test PATCH pour UUID inexistant retourne 404."""
-        fake_uuid = str(uuid.uuid4())
-
-        response = api_client.patch(
-            f"{self.url}{fake_uuid}/",
-            data=json.dumps({"name": "X"}),
-            content_type="application/json",
-        )
-
-        assert response.status_code == 404
-
-    def test_delete_salle(self, api_client):
-        """Test DELETE suppression d'une salle."""
-        create_response = api_client.post(
-            self.url,
-            data=json.dumps({"name": "Z9"}),
-            content_type="application/json",
-        )
-        salle_uuid = create_response.json()["uuid"]
-
-        response = api_client.delete(f"{self.url}{salle_uuid}/")
-
-        assert response.status_code == 204
-
-    def test_delete_salle_not_found(self, api_client):
-        """Test DELETE pour UUID inexistant retourne 404."""
-        fake_uuid = str(uuid.uuid4())
-
-        response = api_client.delete(f"{self.url}{fake_uuid}/")
-
-        assert response.status_code == 404
 
 
 # ============================================================================

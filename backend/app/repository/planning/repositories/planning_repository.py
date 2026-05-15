@@ -7,8 +7,6 @@ from django.db import IntegrityError, transaction
 from app.domain.exceptions import ValidationException
 from app.domain.planning.interface.planning_repository import IPlanningRepository
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -24,8 +22,6 @@ from app.domain.planning.models.planning_member_period_bean import (
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.mapper.planning.planning_mapper import (
     lab_event_entity_to_bean,
-    lab_machine_entity_to_bean,
-    lab_salle_entity_to_bean,
     planning_campaign_step_entity_to_bean,
     planning_cell_annotation_entity_to_bean,
     planning_fsec_cell_link_entity_to_bean,
@@ -33,8 +29,6 @@ from app.mapper.planning.planning_mapper import (
     planning_week_state_entity_to_bean,
 )
 from app.repository.planning.models.lab_event_entity import LabEventEntity
-from app.repository.planning.models.lab_machine_entity import LabMachineEntity
-from app.repository.planning.models.lab_salle_entity import LabSalleEntity
 from app.repository.planning.models.planning_campaign_step_entity import (
     PlanningCampaignStepEntity,
 )
@@ -271,82 +265,6 @@ class PlanningRepository(IPlanningRepository):
     @transaction.atomic
     def delete_campaign_step(self, uuid: uuid_mod.UUID) -> bool:
         return self._delete_by_uuid(PlanningCampaignStepEntity, uuid)
-
-    # ====================== LAB SALLE ======================
-
-    def get_all_salles(self) -> list[LabSalleBean]:
-        entities = LabSalleEntity.objects.prefetch_related("labmachineentity_set").all()
-        return [lab_salle_entity_to_bean(e) for e in entities]
-
-    @transaction.atomic
-    def create_salle(self, bean: LabSalleBean) -> LabSalleBean:
-        entity = LabSalleEntity.objects.create(
-            name=bean.name,
-            sort_order=bean.sort_order,
-        )
-        return lab_salle_entity_to_bean(entity)
-
-    @transaction.atomic
-    def update_salle(
-        self, uuid: uuid_mod.UUID, bean: LabSalleBean
-    ) -> LabSalleBean | None:
-        try:
-            entity = LabSalleEntity.objects.prefetch_related(
-                "labmachineentity_set"
-            ).get(uuid=uuid)
-        except LabSalleEntity.DoesNotExist:
-            return None
-        update_fields = []
-        if bean.name is not None:
-            entity.name = bean.name
-            update_fields.append("name")
-        if bean.sort_order is not None:
-            entity.sort_order = bean.sort_order
-            update_fields.append("sort_order")
-        if update_fields:
-            entity.save(update_fields=update_fields)
-        return lab_salle_entity_to_bean(entity)
-
-    @transaction.atomic
-    def delete_salle(self, uuid: uuid_mod.UUID) -> bool:
-        return self._delete_by_uuid(LabSalleEntity, uuid)
-
-    # ====================== LAB MACHINE ======================
-
-    @transaction.atomic
-    def create_machine(self, bean: LabMachineBean) -> LabMachineBean:
-        try:
-            entity = LabMachineEntity.objects.create(
-                salle_id=bean.salle_uuid,
-                name=bean.name,
-                sort_order=bean.sort_order,
-            )
-        except IntegrityError:
-            raise ValidationException("salle_uuid", "La salle referencee n'existe pas.")
-        return lab_machine_entity_to_bean(entity)
-
-    @transaction.atomic
-    def update_machine(
-        self, uuid: uuid_mod.UUID, bean: LabMachineBean
-    ) -> LabMachineBean | None:
-        try:
-            entity = LabMachineEntity.objects.get(uuid=uuid)
-        except LabMachineEntity.DoesNotExist:
-            return None
-        update_fields = []
-        if bean.name is not None:
-            entity.name = bean.name
-            update_fields.append("name")
-        if bean.sort_order is not None:
-            entity.sort_order = bean.sort_order
-            update_fields.append("sort_order")
-        if update_fields:
-            entity.save(update_fields=update_fields)
-        return lab_machine_entity_to_bean(entity)
-
-    @transaction.atomic
-    def delete_machine(self, uuid: uuid_mod.UUID) -> bool:
-        return self._delete_by_uuid(LabMachineEntity, uuid)
 
     # ====================== LAB EVENT ======================
 

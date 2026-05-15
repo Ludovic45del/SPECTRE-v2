@@ -6,18 +6,9 @@
 import dayjs from 'dayjs';
 import { create } from 'zustand';
 import { DEFAULT_FILTERS, type PlanningFilters, type SectionId } from './planning.constants';
-import type { CellCoord } from './planning.utils';
 
 /** Navigation step used for forward/backward pagination. */
 const NAVIGATION_STEP = { unit: 'month' as const, amount: 1 };
-
-// ====================== Cell Range ======================
-
-export interface CellRange {
-    rowId: string;
-    startColIndex: number;
-    endColIndex: number;
-}
 
 // ====================== Event Drag & Drop ======================
 
@@ -28,17 +19,6 @@ export interface EventDragInfo {
     originColIndex: number;
     currentColIndex: number;
     currentRowId: string;
-}
-
-// ====================== Popover Target ======================
-
-export interface PopoverTarget {
-    anchorPosition: { top: number; left: number } | null;
-    section: 'member' | 'lab' | 'campaign';
-    rowId: string;
-    timeSlots: Array<{ year: number; weekNum: number }>;
-    campaignUuid?: string;
-    stepLabel?: string;
 }
 
 // ====================== Store Interface ======================
@@ -63,30 +43,11 @@ interface PlanningUIState {
     collapsedStepGroups: Record<string, boolean>;
     toggleStepGroup: (campaignUuid: string, stepLabel: string) => void;
 
-    // Drag selection
-    isDragging: boolean;
-    dragOrigin: CellCoord | null;
-    dragCurrent: CellCoord | null;
-    selectedRange: CellRange | null;
-    startDrag: (coord: CellCoord) => void;
-    updateDrag: (coord: CellCoord) => void;
-    endDrag: () => void;
-    clearSelection: () => void;
-
     // Event drag & drop
     eventDrag: EventDragInfo | null;
     startEventDrag: (machineKey: string, rowId: string, eventIndex: number, colIndex: number) => void;
     updateEventDrag: (colIndex: number, rowId: string) => void;
     endEventDrag: () => EventDragInfo | null;
-
-    // Popover
-    popoverTarget: PopoverTarget | null;
-    openPopover: (target: PopoverTarget) => void;
-    closePopover: () => void;
-
-    // Edit mode
-    editMode: boolean;
-    toggleEditMode: () => void;
 
     // Reset transient UI state
     resetUIState: () => void;
@@ -141,33 +102,6 @@ export const usePlanningStore = create<PlanningUIState>((set, get) => ({
         }));
     },
 
-    // Drag selection
-    isDragging: false,
-    dragOrigin: null,
-    dragCurrent: null,
-    selectedRange: null,
-    startDrag: (coord) => set({ isDragging: true, dragOrigin: coord, dragCurrent: coord, selectedRange: null }),
-    updateDrag: (coord) => {
-        const { isDragging, dragOrigin } = get();
-        if (!isDragging || !dragOrigin) return;
-        if (coord.rowId !== dragOrigin.rowId) return;
-        set({ dragCurrent: coord });
-    },
-    endDrag: () => {
-        const { dragOrigin, dragCurrent } = get();
-        if (!dragOrigin || !dragCurrent || dragOrigin.rowId !== dragCurrent.rowId) {
-            set({ isDragging: false, dragOrigin: null, dragCurrent: null });
-            return;
-        }
-        const startCol = Math.min(dragOrigin.colIndex, dragCurrent.colIndex);
-        const endCol = Math.max(dragOrigin.colIndex, dragCurrent.colIndex);
-        set({
-            isDragging: false,
-            selectedRange: { rowId: dragOrigin.rowId, startColIndex: startCol, endColIndex: endCol },
-        });
-    },
-    clearSelection: () => set({ isDragging: false, dragOrigin: null, dragCurrent: null, selectedRange: null }),
-
     // Event drag & drop
     eventDrag: null,
     startEventDrag: (machineKey, rowId, eventIndex, colIndex) =>
@@ -191,25 +125,8 @@ export const usePlanningStore = create<PlanningUIState>((set, get) => ({
         return drag;
     },
 
-    // Popover
-    popoverTarget: null,
-    openPopover: (target) => set({ popoverTarget: target }),
-    closePopover: () => set({ popoverTarget: null, selectedRange: null }),
-
-    // Edit mode
-    editMode: false,
-    toggleEditMode: () => set((s) => ({ editMode: !s.editMode })),
-
     // Reset transient UI state
-    resetUIState: () =>
-        set({
-            isDragging: false,
-            dragOrigin: null,
-            dragCurrent: null,
-            selectedRange: null,
-            eventDrag: null,
-            popoverTarget: null,
-        }),
+    resetUIState: () => set({ eventDrag: null }),
 
     // Filters
     filters: DEFAULT_FILTERS,

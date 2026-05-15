@@ -16,7 +16,7 @@ export default memo(function SectionCard({
     readonly action?: ReactNode;
 }) {
     return (
-        <Card sx={{ height: '100%' }}>
+        <Card sx={{ height: '100%', borderRadius: 2 }}>
             <CardContent
                 sx={{
                     p: 2.5,

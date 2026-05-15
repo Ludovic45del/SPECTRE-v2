@@ -11,8 +11,6 @@ from datetime import date
 import pytest
 
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -23,9 +21,6 @@ from app.domain.planning.models.planning_week_state_bean import PlanningWeekStat
 from app.mapper.planning.planning_mapper import (
     lab_event_api_to_bean,
     lab_event_bean_to_api,
-    lab_machine_api_to_bean,
-    lab_salle_api_to_bean,
-    lab_salle_bean_to_api,
     planning_campaign_step_api_to_bean,
     planning_campaign_step_bean_to_api,
     planning_cell_annotation_api_to_bean,
@@ -168,40 +163,6 @@ class TestFsecCellLinkMapper:
         bean = planning_fsec_cell_link_api_to_bean(data)
         assert bean.campaign_uuid == c_uuid
         assert bean.fsec_uuid == f_uuid
-
-
-# ====================== LAB SALLE + MACHINE ======================
-
-
-class TestLabSalleMapper:
-
-    @pytest.mark.unit
-    def test_api_to_bean_defaults(self):
-        data = {"name": "A1"}
-        bean = lab_salle_api_to_bean(data)
-        assert bean.name == "A1"
-        assert bean.sort_order == 0
-        assert bean.machines == []
-
-    @pytest.mark.unit
-    def test_bean_to_api_with_machines(self):
-        machine = LabMachineBean(uuid=uuid.uuid4(), salle_uuid=uuid.uuid4(), name="M1")
-        bean = LabSalleBean(uuid=uuid.uuid4(), name="A1", machines=[machine])
-        result = lab_salle_bean_to_api(bean)
-        assert len(result["machines"]) == 1
-        assert result["machines"][0]["name"] == "M1"
-
-
-class TestLabMachineMapper:
-
-    @pytest.mark.unit
-    def test_api_to_bean(self):
-        s_uuid = uuid.uuid4()
-        data = {"salle_uuid": s_uuid, "name": "Machine XY", "sort_order": 2}
-        bean = lab_machine_api_to_bean(data)
-        assert bean.salle_uuid == s_uuid
-        assert bean.name == "Machine XY"
-        assert bean.sort_order == 2
 
 
 # ====================== LAB EVENT ======================

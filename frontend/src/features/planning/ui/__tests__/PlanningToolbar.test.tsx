@@ -1,5 +1,5 @@
 /**
- * Tests for PlanningToolbar — navigation, filters, edit mode.
+ * Tests for PlanningToolbar — navigation, filters.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
@@ -11,9 +11,6 @@ import { usePlanningStore } from '../../lib/planning.store';
 
 beforeEach(() => {
     server.use(http.get('/api/v1/campaigns/', () => HttpResponse.json([])));
-    usePlanningStore.setState({
-        editMode: false,
-    });
     usePlanningStore.getState().resetFilters();
 });
 
@@ -24,11 +21,6 @@ describe('PlanningToolbar', () => {
             expect(screen.getByLabelText('Précédent')).toBeInTheDocument();
             expect(screen.getByLabelText('Suivant')).toBeInTheDocument();
             expect(screen.getByLabelText("Aujourd'hui")).toBeInTheDocument();
-        });
-
-        it('should render edit mode button', () => {
-            renderWithProviders(<PlanningToolbar />);
-            expect(screen.getByText('Modifier')).toBeInTheDocument();
         });
 
         it('should render filter button', () => {
@@ -56,25 +48,6 @@ describe('PlanningToolbar', () => {
             await user.click(screen.getByLabelText('Précédent'));
 
             expect(usePlanningStore.getState().anchorDate).not.toBe(initialDate);
-        });
-    });
-
-    describe('Edit mode', () => {
-        it('should toggle edit mode on click', async () => {
-            const user = userEvent.setup();
-            renderWithProviders(<PlanningToolbar />);
-
-            expect(usePlanningStore.getState().editMode).toBe(false);
-            await user.click(screen.getByText('Modifier'));
-            expect(usePlanningStore.getState().editMode).toBe(true);
-        });
-
-        it('should show "Modification" when edit mode is active', async () => {
-            const user = userEvent.setup();
-            renderWithProviders(<PlanningToolbar />);
-
-            await user.click(screen.getByText('Modifier'));
-            expect(screen.getByText('Modification')).toBeInTheDocument();
         });
     });
 

@@ -29,6 +29,7 @@ import {
     YAxis,
 } from 'recharts';
 import type { StepDuration } from '@entities/indicators';
+import { ChartTooltipCard } from './ChartTooltip';
 
 interface StepDurationsChartProps {
     title: string;
@@ -146,6 +147,7 @@ const StepDurationsChart = memo(function StepDurationsChart({
                                             ? 'rgba(255,255,255,0.04)'
                                             : 'rgba(0,0,0,0.04)',
                                     }}
+                                    wrapperStyle={{ outline: 'none' }}
                                     content={<StepTooltip />}
                                 />
                                 <Bar dataKey="avg" radius={[0, 4, 4, 0]} barSize={20}>
@@ -215,43 +217,25 @@ function StepTooltip({ active, payload }: { active?: boolean; payload?: TooltipP
     if (!active || !payload || payload.length === 0) return null;
     const row = payload[0].payload;
     return (
-        <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 1, minWidth: 220 }}>
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {row.label}
-            </Typography>
-            <Stack spacing={0.25} sx={{ mt: 0.5 }}>
-                <TooltipRow label="N" value={`${row.count}`} />
-                <TooltipRow label="Moyenne" value={`${row.avg.toFixed(1)} j`} bold />
-                <TooltipRow
-                    label="Médiane"
-                    value={row.median !== null ? `${row.median.toFixed(1)} j` : '—'}
-                />
-                <TooltipRow label="Min" value={`${row.min.toFixed(1)} j`} />
-                <TooltipRow label="Max" value={`${row.max.toFixed(1)} j`} />
-            </Stack>
-            {row.isBottleneck ? (
-                <Chip
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                    label="Goulot"
-                    sx={{ mt: 0.75 }}
-                />
-            ) : null}
-        </Paper>
-    );
-}
-
-function TooltipRow({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) {
-    return (
-        <Stack direction="row" justifyContent="space-between" spacing={2}>
-            <Typography variant="caption" color="text.secondary">
-                {label}
-            </Typography>
-            <Typography variant="caption" sx={{ fontWeight: bold ? 700 : 500 }}>
-                {value}
-            </Typography>
-        </Stack>
+        <ChartTooltipCard
+            title={row.label}
+            accent={row.isBottleneck ? BOTTLENECK_COLOR : BAR_COLOR}
+            metrics={[
+                { label: 'N', value: `${row.count}` },
+                { label: 'Moyenne', value: `${row.avg.toFixed(1)} j`, bold: true },
+                {
+                    label: 'Médiane',
+                    value: row.median !== null ? `${row.median.toFixed(1)} j` : '—',
+                },
+                { label: 'Min', value: `${row.min.toFixed(1)} j` },
+                { label: 'Max', value: `${row.max.toFixed(1)} j` },
+            ]}
+            footer={
+                row.isBottleneck ? (
+                    <Chip size="small" color="warning" variant="outlined" label="Goulot" />
+                ) : null
+            }
+        />
     );
 }
 

@@ -11,15 +11,17 @@ from app.mapper.steps.assembly_step_mapper import (
     assembly_step_mapper_bean_to_entity,
     assembly_step_mapper_entity_to_bean,
 )
-from app.repository.steps.models.assembly_bench_entity import AssemblyBenchEntity
+from app.repository.material.models.machine_entity import MachineEntity
 from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
+
+ASSEMBLY_ROOM_CODE = "B1"
 
 
 class AssemblyStepRepository(IAssemblyStepRepository):
     """Implémentation du repository AssemblyStep."""
 
     select_related_fields = ("fsec_version_id",)
-    prefetch_related_fields = ("assembly_bench",)
+    prefetch_related_fields = ("machines", "machines__room")
 
     def _base_queryset(self):
         """Returns queryset with select_related and prefetch_related applied."""
@@ -27,34 +29,42 @@ class AssemblyStepRepository(IAssemblyStepRepository):
             *self.select_related_fields
         ).prefetch_related(*self.prefetch_related_fields)
 
-    def _get_valid_bench_ids(self) -> set:
-        """Récupère les IDs valides depuis la base de données."""
-        return set(AssemblyBenchEntity.objects.values_list("id", flat=True))
-
-    def _validate_bench_ids(self, bench_ids: List[int]) -> None:
-        """Valide que les IDs de bancs existent dans la base."""
-        if not bench_ids:
-            return
-        valid_ids = self._get_valid_bench_ids()
-        invalid_ids = set(bench_ids) - valid_ids
-        if invalid_ids:
+    def _resolve_machines(self, machine_uuids: List[str]) -> List[MachineEntity]:
+        """Charge les MachineEntity correspondantes et valide la salle B1."""
+        if not machine_uuids:
+            return []
+        machines = list(
+            MachineEntity.objects.select_related("room").filter(uuid__in=machine_uuids)
+        )
+        found_uuids = {str(machine.uuid) for machine in machines}
+        missing = set(machine_uuids) - found_uuids
+        if missing:
             raise ValidationException(
-                "assembly_bench_ids",
-                f"IDs invalides: {invalid_ids}. Valeurs acceptées: {valid_ids}",
+                "machine_uuids",
+                f"Machines introuvables: {sorted(missing)}",
             )
+        wrong_room = [
+            str(machine.uuid)
+            for machine in machines
+            if machine.room.code != ASSEMBLY_ROOM_CODE
+        ]
+        if wrong_room:
+            raise ValidationException(
+                "machine_uuids",
+                f"Machines hors de la salle {ASSEMBLY_ROOM_CODE}: {sorted(wrong_room)}",
+            )
+        return machines
 
     @transaction.atomic
     def create(self, bean: AssemblyStepBean) -> AssemblyStepBean:
         """Crée une nouvelle étape d'assemblage."""
-        if bean.assembly_bench_ids:
-            self._validate_bench_ids(bean.assembly_bench_ids)
+        machines = self._resolve_machines(bean.machine_uuids)
 
         entity = assembly_step_mapper_bean_to_entity(bean)
         entity.save()
 
-        if bean.assembly_bench_ids:
-            benches = AssemblyBenchEntity.objects.filter(id__in=bean.assembly_bench_ids)
-            entity.assembly_bench.set(benches)
+        if machines:
+            entity.machines.set(machines)
 
         return assembly_step_mapper_entity_to_bean(entity)
 
@@ -74,8 +84,7 @@ class AssemblyStepRepository(IAssemblyStepRepository):
     @transaction.atomic
     def update(self, bean: AssemblyStepBean) -> AssemblyStepBean:
         """Met à jour une étape d'assemblage."""
-        if bean.assembly_bench_ids is not None:
-            self._validate_bench_ids(bean.assembly_bench_ids)
+        machines = self._resolve_machines(bean.machine_uuids)
 
         entity = AssemblyStepEntity.objects.get(uuid=bean.uuid)
         entity.fsec_version_id_id = bean.fsec_version_id
@@ -86,9 +95,7 @@ class AssemblyStepRepository(IAssemblyStepRepository):
         entity.comments = bean.comments
         entity.save()
 
-        if bean.assembly_bench_ids is not None:
-            benches = AssemblyBenchEntity.objects.filter(id__in=bean.assembly_bench_ids)
-            entity.assembly_bench.set(benches)
+        entity.machines.set(machines)
 
         return assembly_step_mapper_entity_to_bean(entity)
 

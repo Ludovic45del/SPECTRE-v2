@@ -23,15 +23,7 @@ import {
     alpha,
     useTheme,
 } from '@mui/material';
-import {
-    ArrowBackIosNew,
-    ArrowForwardIos,
-    CalendarToday,
-    FilterList,
-    LockOpenOutlined,
-    LockOutlined,
-    RestartAlt,
-} from '@mui/icons-material';
+import { ArrowBackIosNew, ArrowForwardIos, CalendarToday, FilterList, RestartAlt } from '@mui/icons-material';
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
 import { CAMPAIGN_INSTALLATIONS } from '@entities/campaign/core/lib';
 import { getInputStyles, getChipStyles } from '@shared/lib';
@@ -47,8 +39,6 @@ export function PlanningToolbar() {
     const navigateForward = usePlanningStore((s) => s.navigateForward);
     const navigateBackward = usePlanningStore((s) => s.navigateBackward);
     const goToToday = usePlanningStore((s) => s.goToToday);
-    const editMode = usePlanningStore((s) => s.editMode);
-    const toggleEditMode = usePlanningStore((s) => s.toggleEditMode);
     const filters = usePlanningStore((s) => s.filters);
     const setFilters = usePlanningStore((s) => s.setFilters);
     const resetFilters = usePlanningStore((s) => s.resetFilters);
@@ -357,43 +347,6 @@ export function PlanningToolbar() {
                             >
                                 <ArrowForwardIos sx={{ fontSize: 16 }} />
                             </IconButton>
-                        </Tooltip>
-
-                        {/* Edit mode */}
-                        <Tooltip title={editMode ? 'Quitter le mode modification' : 'Modifier les salles et machines'}>
-                            <Button
-                                size="small"
-                                variant={editMode ? 'contained' : 'outlined'}
-                                onClick={toggleEditMode}
-                                startIcon={editMode ? <LockOpenOutlined /> : <LockOutlined />}
-                                sx={{
-                                    borderRadius: 1,
-                                    px: 2,
-                                    height: 40,
-                                    fontWeight: 600,
-                                    ...(editMode
-                                        ? {
-                                              bgcolor: theme.palette.primary.main,
-                                              color: '#fff',
-                                              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
-                                              '&:hover': {
-                                                  bgcolor: theme.palette.primary.dark,
-                                                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-                                              },
-                                          }
-                                        : {
-                                              color: 'text.secondary',
-                                              borderColor: 'divider',
-                                              '&:hover': {
-                                                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                                                  borderColor: theme.palette.primary.main,
-                                                  color: theme.palette.primary.main,
-                                              },
-                                          }),
-                                }}
-                            >
-                                {editMode ? 'Modification' : 'Modifier'}
-                            </Button>
                         </Tooltip>
                     </Stack>
                 </Stack>

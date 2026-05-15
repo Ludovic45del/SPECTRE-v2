@@ -4,8 +4,6 @@ import abc
 import uuid as uuid_mod
 
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -114,42 +112,6 @@ class IPlanningRepository(abc.ABC):
 
     @abc.abstractmethod
     def delete_campaign_step(self, uuid: uuid_mod.UUID) -> bool:
-        raise NotImplementedError
-
-    # --- Lab Salles ---
-
-    @abc.abstractmethod
-    def get_all_salles(self) -> list[LabSalleBean]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def create_salle(self, bean: LabSalleBean) -> LabSalleBean:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def update_salle(
-        self, uuid: uuid_mod.UUID, bean: LabSalleBean
-    ) -> LabSalleBean | None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def delete_salle(self, uuid: uuid_mod.UUID) -> bool:
-        raise NotImplementedError
-
-    # --- Lab Machines ---
-
-    @abc.abstractmethod
-    def create_machine(self, bean: LabMachineBean) -> LabMachineBean:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def update_machine(
-        self, uuid: uuid_mod.UUID, bean: LabMachineBean
-    ) -> LabMachineBean | None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def delete_machine(self, uuid: uuid_mod.UUID) -> bool:
         raise NotImplementedError
 
     # --- Lab Events ---

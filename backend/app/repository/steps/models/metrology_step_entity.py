@@ -5,7 +5,6 @@ from django.db import models
 from app.repository.fsec.models.fsec_entity import FsecEntity
 from app.repository.fsec.models.fsec_rack_entity import FsecRackEntity
 from app.repository.steps.models.base_step_entity import BaseStepEntity
-from app.repository.steps.models.metrology_machine_entity import MetrologyMachineEntity
 
 
 class MetrologyStepEntity(BaseStepEntity):
@@ -22,12 +21,10 @@ class MetrologyStepEntity(BaseStepEntity):
         related_name="metrology_steps",
         to_field="version_uuid",
     )
-    machine_id = models.ForeignKey(
-        MetrologyMachineEntity,
-        on_delete=models.PROTECT,
-        db_column="machine_id",
+    machines = models.ManyToManyField(
+        "app.MachineEntity",
+        db_table="METROLOGY_STEP_MACHINE",
         related_name="metrology_steps",
-        null=True,
         blank=True,
     )
     rack_id = models.ForeignKey(

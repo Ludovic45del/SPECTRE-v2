@@ -23,7 +23,7 @@ def assembly_step_mapper_entity_to_bean(entity: AssemblyStepEntity) -> AssemblyS
         start_date=entity.start_date,
         end_date=entity.end_date,
         comments=entity.comments,
-        assembly_bench_ids=[bench.id for bench in entity.assembly_bench.all()],
+        machine_uuids=[str(machine.uuid) for machine in entity.machines.all()],
     )
 
 
@@ -51,7 +51,7 @@ def assembly_step_mapper_api_to_bean(data: Dict[str, Any]) -> AssemblyStepBean:
         start_date=data.get("start_date"),
         end_date=data.get("end_date"),
         comments=data.get("comments"),
-        assembly_bench_ids=data.get("assembly_bench_ids", []),
+        machine_uuids=[str(uuid) for uuid in data.get("machine_uuids") or []],
     )
 
 
@@ -65,5 +65,5 @@ def assembly_step_mapper_bean_to_api(bean: AssemblyStepBean) -> Dict[str, Any]:
         "start_date": format_date_for_api(bean.start_date),
         "end_date": format_date_for_api(bean.end_date),
         "comments": bean.comments,
-        "assembly_bench_ids": bean.assembly_bench_ids,
+        "machine_uuids": list(bean.machine_uuids),
     }

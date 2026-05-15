@@ -4,10 +4,11 @@
  */
 import { useEffect, useMemo } from 'react';
 import { Container } from '@mui/material';
-import { useLabSalles, useLabEvents } from '@entities/planning/core/api/planning.queries';
+import { useLabEvents } from '@entities/planning/core/api/planning.queries';
 import type { LabEvent } from '@entities/planning/core/model/planning.schema';
 import { useUsers } from '@entities/user';
 import { usePlanningStore } from '@features/planning/lib/planning.store';
+import { usePlanningLabSalles } from '@features/planning/lib/planning.lab';
 import { usersToMembres } from '@features/planning/lib/planning.members';
 import { PlanningToolbar } from '@features/planning/ui/PlanningToolbar';
 import { PlanningGrid } from '@features/planning/ui/PlanningGrid';
@@ -26,7 +27,7 @@ export default function PlanningPage() {
     }, [resetUIState]);
 
     const { data: users = [] } = useUsers();
-    const { data: salles = [] } = useLabSalles();
+    const salles = usePlanningLabSalles();
     const { data: labEventsList = [] } = useLabEvents();
 
     const membres = useMemo(() => usersToMembres(users), [users]);

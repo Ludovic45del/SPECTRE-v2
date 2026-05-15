@@ -8,11 +8,11 @@
  * - start_date
  * - end_date
  * - comments
- * - assembly_bench_ids (multi-select referential)
+ * - machine_uuids (machines B1, multi-select)
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { TextField, Stack, Box, Grid2, Checkbox, FormControlLabel, FormGroup, FormLabel } from '@mui/material';
+import { TextField, Stack, Grid2 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useForm, Controller } from 'react-hook-form';
@@ -25,6 +25,7 @@ import {
     useDeleteAssemblyStep,
 } from '@entities/fsec/steps';
 import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
+import { MachineMultiSelect } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -41,17 +42,10 @@ const AssemblyStepFormSchema = z.object({
     startDate: z.date({ required_error: 'Date requise' }),
     endDate: z.date().nullable().optional(),
     comments: z.string().nullable().optional(),
-    assemblyBenchIds: z.array(z.number()).optional(),
+    machineUuids: z.array(z.string().uuid()),
 });
 
 type AssemblyStepForm = z.infer<typeof AssemblyStepFormSchema>;
-
-// Referential - Assembly benches
-const ASSEMBLY_BENCHES = [
-    { id: 0, label: 'Banc 1' },
-    { id: 1, label: 'Banc 2' },
-    { id: 2, label: 'Banc 3' },
-];
 
 export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: AssemblyStepModalProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -62,7 +56,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
     const deleteMutation = useDeleteAssemblyStep();
     const { showNotification } = useNotification();
 
-    const { control, handleSubmit, reset, watch, setValue } = useForm<AssemblyStepForm>({
+    const { control, handleSubmit, reset } = useForm<AssemblyStepForm>({
         mode: 'onBlur',
         resolver: zodResolver(AssemblyStepFormSchema),
         defaultValues: {
@@ -70,11 +64,9 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
             startDate: undefined,
             endDate: null,
             comments: '',
-            assemblyBenchIds: [],
+            machineUuids: [],
         },
     });
-
-    const selectedBenches = watch('assemblyBenchIds') ?? [];
 
     useEffect(() => {
         if (open) {
@@ -84,7 +76,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     startDate: step.startDate ?? undefined,
                     endDate: step.endDate,
                     comments: step.comments ?? '',
-                    assemblyBenchIds: step.assemblyBenchIds ?? [],
+                    machineUuids: step.machineUuids ?? [],
                 });
             } else {
                 reset({
@@ -92,27 +84,12 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     startDate: undefined,
                     endDate: null,
                     comments: '',
-                    assemblyBenchIds: [],
+                    machineUuids: [],
                 });
             }
             setShowDeleteConfirm(false);
         }
     }, [open, step, reset]);
-
-    const handleBenchToggle = useCallback(
-        (benchId: number) => {
-            const current = selectedBenches;
-            if (current.includes(benchId)) {
-                setValue(
-                    'assemblyBenchIds',
-                    current.filter((id) => id !== benchId),
-                );
-            } else {
-                setValue('assemblyBenchIds', [...current, benchId]);
-            }
-        },
-        [selectedBenches, setValue],
-    );
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -129,7 +106,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
-                        assemblyBenchIds: data.assemblyBenchIds,
+                        machineUuids: data.machineUuids,
                     });
                     showNotification('Assemblage mis à jour', 'success');
                 } else {
@@ -139,7 +116,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
-                        assemblyBenchIds: data.assemblyBenchIds,
+                        machineUuids: data.machineUuids,
                     });
                     showNotification('Assemblage créé', 'success');
                 }
@@ -246,32 +223,21 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     )}
                 />
 
-                {/* Assembly Benches */}
-                <Box>
-                    <FormLabel
-                        component="legend"
-                        sx={{ mb: 1, fontWeight: 600, fontSize: '0.875rem' }}
-                        id="assembly-benches-label"
-                    >
-                        Bancs d'assemblage
-                    </FormLabel>
-                    <FormGroup row aria-labelledby="assembly-benches-label">
-                        {ASSEMBLY_BENCHES.map((bench) => (
-                            <FormControlLabel
-                                key={bench.id}
-                                control={
-                                    <Checkbox
-                                        checked={selectedBenches.includes(bench.id)}
-                                        onChange={() => handleBenchToggle(bench.id)}
-                                        size="small"
-                                        inputProps={{ 'aria-label': `Sélectionner ${bench.label}` }}
-                                    />
-                                }
-                                label={bench.label}
-                            />
-                        ))}
-                    </FormGroup>
-                </Box>
+                {/* Machines B1 */}
+                <Controller
+                    name="machineUuids"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <MachineMultiSelect
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            roomCode="B1"
+                            label="Machines B1"
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
+                        />
+                    )}
+                />
 
                 {/* Comments */}
                 <Controller

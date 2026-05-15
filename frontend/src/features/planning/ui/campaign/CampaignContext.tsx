@@ -4,7 +4,7 @@
  */
 import { createContext, useContext } from 'react';
 import type { CampaignWithRelations } from '@entities/campaign/core/model/referential.schema';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { PlanningSalle } from '../../lib/planning.lab';
 import type { Membre } from '../../lib/planning.constants';
 import type { PlanningData, LabEventsMap } from '../../lib/planning.hooks';
 import type { TimelineColumn } from '../../lib/planning.utils';
@@ -15,7 +15,7 @@ export interface CampaignContextValue {
     columns: TimelineColumn[];
     planningData: PlanningData;
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
     visibleRange: VisibleColumnRange;
     onNavigate: () => void;

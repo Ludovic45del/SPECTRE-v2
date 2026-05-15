@@ -11,8 +11,6 @@ from datetime import date
 import pytest
 
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -28,7 +26,8 @@ from app.domain.planning.models.planning_member_period_bean import (
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.planning.models.lab_salle_entity import LabSalleEntity
+from app.repository.material.models.machine_entity import MachineEntity
+from app.repository.material.models.machine_room_entity import MachineRoomEntity
 from app.repository.planning.repositories.planning_repository import PlanningRepository
 
 
@@ -63,9 +62,10 @@ def fsec(db, campaign):
 
 
 @pytest.fixture
-def salle(db):
-    """Salle de test pour les machines."""
-    return LabSalleEntity.objects.create(name="A1")
+def machine(db):
+    """Machine du parc Matériel pour les evenements labo."""
+    room = MachineRoomEntity.objects.get(code="B1")
+    return MachineEntity.objects.create(name="Machine 1", room=room)
 
 
 # ============================================================================
@@ -497,111 +497,6 @@ class TestPlanningRepositoryCampaignStep:
 
 
 # ============================================================================
-# LAB SALLE TESTS
-# ============================================================================
-
-
-@pytest.mark.integration
-@pytest.mark.django_db
-class TestPlanningRepositoryLabSalle:
-    """Tests CRUD pour les salles du laboratoire."""
-
-    def test_create_salle(self, planning_repository):
-        """Test creation d'une salle."""
-        bean = LabSalleBean(name="B2", sort_order=1)
-
-        result = planning_repository.create_salle(bean)
-
-        assert result.uuid is not None
-        assert result.name == "B2"
-        assert result.sort_order == 1
-
-    def test_get_all_salles(self, planning_repository):
-        """Test recuperation de toutes les salles avec machines imbriquees."""
-        salle_bean = LabSalleBean(name="C3")
-        created_salle = planning_repository.create_salle(salle_bean)
-
-        machine_bean = LabMachineBean(
-            salle_uuid=created_salle.uuid, name="Machine Test"
-        )
-        planning_repository.create_machine(machine_bean)
-
-        results = planning_repository.get_all_salles()
-
-        assert len(results) >= 1
-        target_salle = next(s for s in results if s.uuid == created_salle.uuid)
-        assert len(target_salle.machines) == 1
-        assert target_salle.machines[0].name == "Machine Test"
-
-    def test_update_salle(self, planning_repository):
-        """Test mise a jour d'une salle."""
-        bean = LabSalleBean(name="D4")
-        created = planning_repository.create_salle(bean)
-
-        updated_bean = LabSalleBean(name="D4 Rename", sort_order=5)
-        result = planning_repository.update_salle(created.uuid, updated_bean)
-
-        assert result is not None
-        assert result.name == "D4 Rename"
-        assert result.sort_order == 5
-
-    def test_delete_salle(self, planning_repository):
-        """Test suppression d'une salle."""
-        bean = LabSalleBean(name="E5")
-        created = planning_repository.create_salle(bean)
-
-        result = planning_repository.delete_salle(created.uuid)
-
-        assert result is True
-
-
-# ============================================================================
-# LAB MACHINE TESTS
-# ============================================================================
-
-
-@pytest.mark.integration
-@pytest.mark.django_db
-class TestPlanningRepositoryLabMachine:
-    """Tests CRUD pour les machines du laboratoire."""
-
-    def test_create_machine(self, planning_repository, salle):
-        """Test creation d'une machine."""
-        bean = LabMachineBean(salle_uuid=salle.uuid, name="Machine 1")
-
-        result = planning_repository.create_machine(bean)
-
-        assert result.uuid is not None
-        assert result.salle_uuid == salle.uuid
-        assert result.name == "Machine 1"
-
-    def test_update_machine(self, planning_repository, salle):
-        """Test mise a jour d'une machine."""
-        bean = LabMachineBean(salle_uuid=salle.uuid, name="Machine 1")
-        created = planning_repository.create_machine(bean)
-
-        updated_bean = LabMachineBean(
-            salle_uuid=salle.uuid,
-            name="Machine 1 Rename",
-            sort_order=3,
-        )
-        result = planning_repository.update_machine(created.uuid, updated_bean)
-
-        assert result is not None
-        assert result.name == "Machine 1 Rename"
-        assert result.sort_order == 3
-
-    def test_delete_machine(self, planning_repository, salle):
-        """Test suppression d'une machine."""
-        bean = LabMachineBean(salle_uuid=salle.uuid, name="Machine 1")
-        created = planning_repository.create_machine(bean)
-
-        result = planning_repository.delete_machine(created.uuid)
-
-        assert result is True
-
-
-# ============================================================================
 # LAB EVENT TESTS
 # ============================================================================
 
@@ -610,12 +505,6 @@ class TestPlanningRepositoryLabMachine:
 @pytest.mark.django_db
 class TestPlanningRepositoryLabEvent:
     """Tests CRUD pour les evenements du laboratoire."""
-
-    @pytest.fixture
-    def machine(self, planning_repository, salle):
-        """Machine de test pour les evenements."""
-        bean = LabMachineBean(salle_uuid=salle.uuid, name="Machine Evt")
-        return planning_repository.create_machine(bean)
 
     def test_create_lab_event(self, planning_repository, machine):
         """Test creation d'un evenement."""

@@ -16,8 +16,6 @@ import pytest
 
 from app.domain.exceptions import NotFoundException, ValidationException
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -98,16 +96,16 @@ class TestUpdateOrRaise:
         assert str(uid) in exc_info.value.identifier
 
     def test_returns_result_on_success(self):
-        expected = LabSalleBean(name="A1")
+        expected = LabEventBean(category="Maintenance")
         repo_method = MagicMock(return_value=expected)
-        result = svc._update_or_raise(repo_method, uuid.uuid4(), expected, "LabSalle")
+        result = svc._update_or_raise(repo_method, uuid.uuid4(), expected, "LabEvent")
         assert result is expected
 
     def test_calls_repo_method_with_uuid_and_bean(self):
         uid = uuid.uuid4()
-        bean = LabMachineBean(name="M1")
+        bean = LabEventBean(category="Panne")
         repo_method = MagicMock(return_value=bean)
-        svc._update_or_raise(repo_method, uid, bean, "LabMachine")
+        svc._update_or_raise(repo_method, uid, bean, "LabEvent")
         repo_method.assert_called_once_with(uid, bean)
 
 
@@ -552,93 +550,6 @@ class TestCampaignStepService:
         assert svc.delete_campaign_step(mock_repo, uuid.uuid4()) is True
 
 
-# ====================== LAB SALLE ======================
-
-
-@pytest.mark.unit
-class TestLabSalleService:
-    """Tests pour la gestion des salles."""
-
-    def test_get_all_salles_delegates(self, mock_repo):
-        expected = [LabSalleBean(name="Salle A")]
-        mock_repo.get_all_salles.return_value = expected
-        result = svc.get_all_salles(mock_repo)
-        assert result is expected
-        mock_repo.get_all_salles.assert_called_once()
-
-    def test_create_salle_delegates(self, mock_repo):
-        bean = LabSalleBean(name="Nouvelle Salle")
-        mock_repo.create_salle.return_value = bean
-        result = svc.create_salle(mock_repo, bean)
-        assert result is bean
-        mock_repo.create_salle.assert_called_once_with(bean)
-
-    def test_update_success(self, mock_repo):
-        bean = LabSalleBean(name="Updated")
-        uid = uuid.uuid4()
-        mock_repo.update_salle.return_value = bean
-        result = svc.update_salle(mock_repo, uid, bean)
-        assert result is bean
-
-    def test_update_not_found_raises(self, mock_repo):
-        mock_repo.update_salle.return_value = None
-        bean = LabSalleBean(name="A1")
-        uid = uuid.uuid4()
-        with pytest.raises(NotFoundException) as exc_info:
-            svc.update_salle(mock_repo, uid, bean)
-        assert exc_info.value.resource == "LabSalle"
-
-    def test_delete_not_found_raises(self, mock_repo):
-        mock_repo.delete_salle.return_value = False
-        uid = uuid.uuid4()
-        with pytest.raises(NotFoundException) as exc_info:
-            svc.delete_salle(mock_repo, uid)
-        assert exc_info.value.resource == "LabSalle"
-
-    def test_delete_success(self, mock_repo):
-        mock_repo.delete_salle.return_value = True
-        assert svc.delete_salle(mock_repo, uuid.uuid4()) is True
-
-
-# ====================== LAB MACHINE ======================
-
-
-@pytest.mark.unit
-class TestLabMachineService:
-    """Tests pour la gestion des machines."""
-
-    def test_create_machine_delegates(self, mock_repo):
-        bean = LabMachineBean(name="Machine 1", salle_uuid=uuid.uuid4())
-        mock_repo.create_machine.return_value = bean
-        result = svc.create_machine(mock_repo, bean)
-        assert result is bean
-        mock_repo.create_machine.assert_called_once_with(bean)
-
-    def test_update_success(self, mock_repo):
-        bean = LabMachineBean(name="Updated Machine")
-        uid = uuid.uuid4()
-        mock_repo.update_machine.return_value = bean
-        result = svc.update_machine(mock_repo, uid, bean)
-        assert result is bean
-
-    def test_update_not_found_raises(self, mock_repo):
-        mock_repo.update_machine.return_value = None
-        bean = LabMachineBean(name="Machine 1")
-        uid = uuid.uuid4()
-        with pytest.raises(NotFoundException) as exc_info:
-            svc.update_machine(mock_repo, uid, bean)
-        assert exc_info.value.resource == "LabMachine"
-
-    def test_delete_not_found_raises(self, mock_repo):
-        mock_repo.delete_machine.return_value = False
-        uid = uuid.uuid4()
-        with pytest.raises(NotFoundException) as exc_info:
-            svc.delete_machine(mock_repo, uid)
-        assert exc_info.value.resource == "LabMachine"
-
-    def test_delete_success(self, mock_repo):
-        mock_repo.delete_machine.return_value = True
-        assert svc.delete_machine(mock_repo, uuid.uuid4()) is True
 
 
 # ====================== LAB EVENT ======================

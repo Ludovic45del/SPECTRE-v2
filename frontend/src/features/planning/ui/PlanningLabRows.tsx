@@ -1,29 +1,20 @@
 /**
  * PlanningLabRows — Lignes Vie Labo : salle (rowSpan) + machines.
- * Double-clic sur salle/machine pour renommer.
+ * Les salles et machines proviennent du module Matériel (lecture seule).
  * Clic sur une cellule pour créer/modifier un événement (catégorie + période).
- * Mutations directes via React Query hooks (pas de callback props).
  * Uses row virtualization via @tanstack/react-virtual for large salle lists.
  * Passes visible column range for column virtualization.
  */
 import { memo, useEffect, useRef, useState } from 'react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, Delete } from '@mui/icons-material';
+import { Typography } from '@mui/material';
 import { type PlanningData, usePlanningColors } from '../lib/planning.hooks';
-import { usePlanningStore } from '../lib/planning.store';
 import type { TimelineColumn } from '../lib/planning.utils';
 import type { VisibleColumnRange } from '../lib/useColumnVirtualization';
 import { StickyLabelCell } from './PlanningCell';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { PlanningSalle } from '../lib/planning.lab';
 import type { LabEventsMap } from '../lib/planning.hooks';
-import {
-    useCreateLabMachine,
-    useDeleteLabSalle,
-    useUpdateLabSalle,
-} from '@entities/planning/core/api/planning.queries';
 import LabMachineRow from './lab/LabMachineRow';
-import { EditableLabel } from './lab/EditableLabel';
 
 // ====================== Constants ======================
 
@@ -36,7 +27,7 @@ const VIRTUALIZATION_THRESHOLD = 10;
 // ====================== Types ======================
 
 interface PlanningLabRowsProps {
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     columns: TimelineColumn[];
     planningData: PlanningData;
     labEvents: LabEventsMap;
@@ -193,51 +184,17 @@ function EmptySalleRow({
     columns,
     visibleRange,
 }: {
-    salle: LabSalle;
+    salle: PlanningSalle;
     columns: TimelineColumn[];
     visibleRange: VisibleColumnRange;
 }) {
     const colors = usePlanningColors();
-    const editMode = usePlanningStore((s) => s.editMode);
-    const updateSalle = useUpdateLabSalle();
-    const deleteSalle = useDeleteLabSalle();
-    const createMachine = useCreateLabMachine();
 
     const { startCol, endCol } = visibleRange;
 
     return (
         <tr role="row">
-            {editMode ? (
-                <EditableLabel
-                    value={salle.name}
-                    bold
-                    onCommit={(v) => updateSalle.mutate({ uuid: salle.uuid, data: { name: v } })}
-                    extraContent={
-                        <Box sx={{ display: 'flex', gap: 0.2 }}>
-                            <Tooltip title="Ajouter une machine">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => createMachine.mutate({ salleUuid: salle.uuid, name: 'Machine 1' })}
-                                    sx={{ p: 0.2, color: colors.accent }}
-                                >
-                                    <Add sx={{ fontSize: 14 }} />
-                                </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Supprimer la salle">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => deleteSalle.mutate({ uuid: salle.uuid })}
-                                    sx={{ p: 0.2, color: '#ef4444' }}
-                                >
-                                    <Delete sx={{ fontSize: 14 }} />
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                    }
-                />
-            ) : (
-                <StickyLabelCell bold>{salle.name}</StickyLabelCell>
-            )}
+            <StickyLabelCell bold>{salle.name}</StickyLabelCell>
             <StickyLabelCell isSubLabel>
                 <Typography fontSize={11} color="text.secondary" fontStyle="italic">
                     Aucune machine

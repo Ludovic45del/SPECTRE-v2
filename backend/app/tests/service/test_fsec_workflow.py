@@ -120,7 +120,7 @@ class TestFsecWorkflowCategory0:
             start_date=date(2025, 2, 1),
             end_date=date(2025, 2, 5),
             comments="Assemblage nominal",
-            assembly_bench_ids=[0, 1],
+            machine_uuids=[],
         )
         mock_assembly_repo = MagicMock()
         mock_assembly_repo.create.return_value = assembly_bean
@@ -140,14 +140,14 @@ class TestFsecWorkflowCategory0:
         metrology_bean = MetrologyStepBean(
             uuid=str(uuid.uuid4()),
             fsec_version_id=fsec_version_uuid,
-            machine_id=0,
             date=date(2025, 2, 10),
             comments="Métrologie validée",
+            machine_uuids=[],
         )
         mock_metrology_repo = MagicMock()
         mock_metrology_repo.create.return_value = metrology_bean
         created_metrology = create_step(mock_metrology_repo, metrology_bean)
-        assert created_metrology.machine_id == 0
+        assert created_metrology.machine_uuids == []
         logger.info("✅ Step Métrologie créé")
 
         # Passage statut Métrologie (2)

@@ -15,6 +15,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { ChartTooltipCard } from './ChartTooltip';
 
 export interface CategoryBarEntry {
     label: string;
@@ -75,10 +76,32 @@ const CategoryBarChart = memo(function CategoryBarChart({
                                 </>
                             )}
                             <Tooltip
-                                formatter={(value) => [`${value}`, 'Effectif']}
-                                labelStyle={{ fontSize: 12 }}
+                                cursor={{ fill: 'rgba(128, 128, 128, 0.1)', radius: 4 }}
+                                wrapperStyle={{ outline: 'none' }}
+                                content={({ active, payload }) => {
+                                    if (!active || !payload || payload.length === 0) {
+                                        return null;
+                                    }
+                                    const entry = payload[0].payload as CategoryBarEntry;
+                                    return (
+                                        <ChartTooltipCard
+                                            title={entry.label}
+                                            accent={entry.color}
+                                            metrics={[
+                                                {
+                                                    label: 'Effectif',
+                                                    value: `${entry.count}`,
+                                                    bold: true,
+                                                },
+                                            ]}
+                                        />
+                                    );
+                                }}
                             />
-                            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                            <Bar
+                                dataKey="count"
+                                radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+                            >
                                 {data.map((entry, idx) => (
                                     <Cell key={`cell-${idx}`} fill={entry.color} />
                                 ))}

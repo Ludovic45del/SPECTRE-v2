@@ -9,8 +9,6 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -25,8 +23,6 @@ from app.domain.planning.models.planning_member_period_bean import (
 )
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.repository.planning.models.lab_event_entity import LabEventEntity
-from app.repository.planning.models.lab_machine_entity import LabMachineEntity
-from app.repository.planning.models.lab_salle_entity import LabSalleEntity
 from app.repository.planning.models.planning_campaign_step_entity import (
     PlanningCampaignStepEntity,
 )
@@ -260,87 +256,6 @@ def planning_fsec_cell_link_api_to_bean(
         year=data["year"],
         week_num=data["week_num"],
         fsec_uuid=data["fsec_uuid"],
-    )
-
-
-# ====================== LAB SALLE ======================
-
-
-def lab_machine_entity_to_bean(entity: LabMachineEntity) -> LabMachineBean:
-    return LabMachineBean(
-        uuid=entity.uuid,
-        salle_uuid=entity.salle_id,
-        name=entity.name,
-        sort_order=entity.sort_order,
-    )
-
-
-def lab_salle_entity_to_bean(entity: LabSalleEntity) -> LabSalleBean:
-    machines = [
-        lab_machine_entity_to_bean(m) for m in entity.labmachineentity_set.all()
-    ]
-    return LabSalleBean(
-        uuid=entity.uuid,
-        name=entity.name,
-        sort_order=entity.sort_order,
-        machines=machines,
-    )
-
-
-def lab_salle_bean_to_entity(bean: LabSalleBean) -> LabSalleEntity:
-    entity = LabSalleEntity(
-        name=bean.name,
-        sort_order=bean.sort_order,
-    )
-    if bean.uuid:
-        entity.uuid = bean.uuid
-    return entity
-
-
-def lab_salle_bean_to_api(bean: LabSalleBean) -> dict[str, Any]:
-    return {
-        "uuid": bean.uuid,
-        "name": bean.name,
-        "sort_order": bean.sort_order,
-        "machines": [lab_machine_bean_to_api(m) for m in bean.machines],
-    }
-
-
-def lab_salle_api_to_bean(data: dict[str, Any]) -> LabSalleBean:
-    return LabSalleBean(
-        name=data.get("name", ""),
-        sort_order=data.get("sort_order", 0),
-    )
-
-
-# ====================== LAB MACHINE ======================
-
-
-def lab_machine_bean_to_entity(bean: LabMachineBean) -> LabMachineEntity:
-    entity = LabMachineEntity(
-        salle_id=bean.salle_uuid,
-        name=bean.name,
-        sort_order=bean.sort_order,
-    )
-    if bean.uuid:
-        entity.uuid = bean.uuid
-    return entity
-
-
-def lab_machine_bean_to_api(bean: LabMachineBean) -> dict[str, Any]:
-    return {
-        "uuid": bean.uuid,
-        "salle_uuid": bean.salle_uuid,
-        "name": bean.name,
-        "sort_order": bean.sort_order,
-    }
-
-
-def lab_machine_api_to_bean(data: dict[str, Any]) -> LabMachineBean:
-    return LabMachineBean(
-        salle_uuid=data.get("salle_uuid"),
-        name=data.get("name", ""),
-        sort_order=data.get("sort_order", 0),
     )
 
 

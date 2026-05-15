@@ -1,17 +1,10 @@
 /**
- * PlanningCell — Cellule interactive du planning avec barre Gantt et drag highlight.
+ * PlanningCell — Cellules sticky (labels) et td hover du planning.
  */
 import React, { memo } from 'react';
-import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import {
-    type BarPosition,
-    type PlanningColors,
-    GRID_LABEL_WIDTH,
-    GRID_SUB_LABEL_WIDTH,
-} from '../lib/planning.constants';
-import { getBarBorderRadius } from '../lib/planning.bar-utils';
-import { useIsCellInRange, usePlanningColors } from '../lib/planning.hooks';
+import { GRID_LABEL_WIDTH, GRID_SUB_LABEL_WIDTH } from '../lib/planning.constants';
+import { usePlanningColors } from '../lib/planning.hooks';
 import { motion } from '@shared/ui/motion';
 
 // ====================== Hover-enabled td for timeline cells ======================
@@ -23,103 +16,7 @@ export const HoverTd = styled('td')({
     },
 });
 
-interface PlanningCellProps {
-    rowId: string;
-    colIndex: number;
-    isCurrent: boolean;
-    isWeekend: boolean;
-    weekState?: 'vacances' | 'fermeture';
-    bar?: { color: string; position: BarPosition; label?: string };
-    children?: React.ReactNode;
-}
-
 const stickyZIndex = 2;
-
-export function getCellBg(
-    colors: PlanningColors,
-    isCurrent: boolean,
-    isWeekend: boolean,
-    weekState?: 'vacances' | 'fermeture',
-    isInRange?: boolean,
-): string {
-    if (isInRange) return colors.dragHighlight;
-    if (isCurrent) return colors.currentDay;
-    if (weekState === 'fermeture') return colors.fermeture;
-    if (weekState === 'vacances') return colors.vacances;
-    if (isWeekend) return colors.weekend;
-    return colors.cellBg;
-}
-
-export const PlanningCell = memo(function PlanningCell({
-    rowId,
-    colIndex,
-    isCurrent,
-    isWeekend,
-    weekState,
-    bar,
-    children,
-}: PlanningCellProps) {
-    const colors = usePlanningColors();
-    const isInRange = useIsCellInRange(rowId, colIndex);
-
-    return (
-        <HoverTd
-            role="gridcell"
-            aria-selected={isInRange}
-            data-row-id={rowId}
-            data-col-index={colIndex}
-            style={{
-                position: 'relative',
-                padding: 0,
-                borderTop: `1px solid ${colors.border}`,
-                borderBottom: `1px solid ${colors.border}`,
-                borderLeft:
-                    bar && (bar.position === 'middle' || bar.position === 'end')
-                        ? 'none'
-                        : `1px solid ${colors.border}`,
-                borderRight:
-                    bar && (bar.position === 'start' || bar.position === 'middle')
-                        ? 'none'
-                        : `1px solid ${colors.border}`,
-                backgroundColor: getCellBg(colors, isCurrent, isWeekend, weekState, isInRange),
-                cursor: 'crosshair',
-                height: 32,
-                verticalAlign: 'middle',
-                textAlign: 'center',
-                fontSize: 12,
-                color: colors.textPrimary,
-                userSelect: 'none',
-            }}
-        >
-            {bar && (
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: 3,
-                        bottom: 3,
-                        left: bar.position === 'start' || bar.position === 'single' ? 2 : 0,
-                        right: bar.position === 'end' || bar.position === 'single' ? 2 : 0,
-                        backgroundColor: bar.color,
-                        borderRadius: getBarBorderRadius(bar.position),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 10,
-                        fontWeight: 600,
-                        color: colors.barText,
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                        opacity: 0.85,
-                    }}
-                >
-                    {bar.label}
-                </Box>
-            )}
-            {!bar && children}
-        </HoverTd>
-    );
-});
 
 // ====================== Sticky Label Cells ======================
 

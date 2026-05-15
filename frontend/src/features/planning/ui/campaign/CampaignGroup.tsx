@@ -4,7 +4,7 @@
 import { memo, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import type { CampaignWithRelations } from '@entities/campaign/core/model/referential.schema';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { PlanningSalle } from '../../lib/planning.lab';
 import type { Etape, Membre } from '../../lib/planning.constants';
 import { type PlanningData, usePlanningColors } from '../../lib/planning.hooks';
 import type { LabEventsMap } from '../../lib/planning.hooks';
@@ -35,7 +35,7 @@ interface CampaignGroupProps {
         shootingDate: Date | null;
     }>;
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
     visibleRange: VisibleColumnRange;
     onNavigate: () => void;

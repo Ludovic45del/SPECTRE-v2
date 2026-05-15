@@ -21,6 +21,5 @@ export const planningKeys = {
     campaignSteps: () => [...planningKeys.all, 'campaign-steps'] as const,
     campaignStepsByYear: (year: number) => [...planningKeys.campaignSteps(), year] as const,
 
-    labSalles: () => [...planningKeys.all, 'lab-salles'] as const,
     labEvents: () => [...planningKeys.all, 'lab-events'] as const,
 };

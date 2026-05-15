@@ -3,10 +3,6 @@
 from app.api.planning.base_planning_controller import BasePlanningController
 from app.api.planning.serializers import (
     LabEventSerializer,
-    LabMachineCreateSerializer,
-    LabMachineUpdateSerializer,
-    LabSalleCreateSerializer,
-    LabSalleUpdateSerializer,
     PlanningCampaignStepSerializer,
     PlanningCellAnnotationSerializer,
     PlanningFsecCellLinkSerializer,
@@ -17,19 +13,14 @@ from app.domain.planning.services.planning_service import (
     create_campaign_step,
     create_fsec_cell_link,
     create_lab_event,
-    create_machine,
     create_member_period,
-    create_salle,
     delete_campaign_step,
     delete_cell_annotation,
     delete_fsec_cell_link,
     delete_lab_event,
-    delete_machine,
     delete_member_period,
-    delete_salle,
     delete_week_state,
     get_all_lab_events,
-    get_all_salles,
     get_campaign_steps_by_year,
     get_cell_annotations_by_year,
     get_fsec_cell_links_by_year,
@@ -37,19 +28,13 @@ from app.domain.planning.services.planning_service import (
     get_week_states_by_year,
     update_campaign_step,
     update_lab_event,
-    update_machine,
     update_member_period,
-    update_salle,
     upsert_cell_annotation,
     upsert_week_state,
 )
 from app.mapper.planning.planning_mapper import (
     lab_event_api_to_bean,
     lab_event_bean_to_api,
-    lab_machine_api_to_bean,
-    lab_machine_bean_to_api,
-    lab_salle_api_to_bean,
-    lab_salle_bean_to_api,
     planning_campaign_step_api_to_bean,
     planning_campaign_step_bean_to_api,
     planning_cell_annotation_api_to_bean,
@@ -133,36 +118,6 @@ class PlanningCampaignStepController(BasePlanningController):
 
 
 # ====================== Lab Entities ======================
-
-
-class LabSalleController(BasePlanningController):
-    """Salles du laboratoire."""
-
-    serializer_class = LabSalleCreateSerializer
-    update_serializer_class = LabSalleUpdateSerializer
-    mapper_api_to_bean = staticmethod(lab_salle_api_to_bean)
-    mapper_bean_to_api = staticmethod(lab_salle_bean_to_api)
-    service_list = staticmethod(get_all_salles)
-    service_create = staticmethod(create_salle)
-    service_update = staticmethod(update_salle)
-    service_delete = staticmethod(delete_salle)
-    list_mode = "all"
-    entity_name = "LabSalle"
-
-
-class LabMachineController(BasePlanningController):
-    """Machines du laboratoire."""
-
-    serializer_class = LabMachineCreateSerializer
-    update_serializer_class = LabMachineUpdateSerializer
-    mapper_api_to_bean = staticmethod(lab_machine_api_to_bean)
-    mapper_bean_to_api = staticmethod(lab_machine_bean_to_api)
-    service_list = None
-    service_create = staticmethod(create_machine)
-    service_update = staticmethod(update_machine)
-    service_delete = staticmethod(delete_machine)
-    list_mode = "all"
-    entity_name = "LabMachine"
 
 
 class LabEventController(BasePlanningController):

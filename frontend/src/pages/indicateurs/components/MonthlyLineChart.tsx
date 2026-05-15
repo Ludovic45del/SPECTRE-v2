@@ -14,6 +14,11 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { ChartTooltipCard } from './ChartTooltip';
+
+interface TooltipEntry {
+    value?: number | string;
+}
 
 interface MonthlyLineChartProps {
     title: string;
@@ -70,16 +75,44 @@ const MonthlyLineChart = memo(function MonthlyLineChart({
                         <XAxis dataKey="month" fontSize={11} />
                         <YAxis fontSize={11} allowDecimals={false} />
                         <Tooltip
-                            formatter={(value) => [`${value}`, valueLabel]}
-                            labelStyle={{ fontSize: 12 }}
+                            cursor={{
+                                stroke: color,
+                                strokeWidth: 1.5,
+                                strokeDasharray: '4 4',
+                            }}
+                            wrapperStyle={{ outline: 'none' }}
+                            content={({ active, payload, label }) => {
+                                if (!active || !payload || payload.length === 0) {
+                                    return null;
+                                }
+                                const value = (payload[0] as TooltipEntry).value ?? 0;
+                                return (
+                                    <ChartTooltipCard
+                                        title={String(label)}
+                                        accent={color}
+                                        metrics={[
+                                            {
+                                                label: valueLabel,
+                                                value: `${value}`,
+                                                bold: true,
+                                            },
+                                        ]}
+                                    />
+                                );
+                            }}
                         />
                         <Line
                             type="monotone"
                             dataKey="count"
                             stroke={color}
-                            strokeWidth={2}
+                            strokeWidth={2.5}
                             dot={{ r: 3 }}
-                            activeDot={{ r: 5 }}
+                            activeDot={{
+                                r: 6,
+                                strokeWidth: 3,
+                                stroke: '#fff',
+                                fill: color,
+                            }}
                         />
                     </LineChart>
                 </ResponsiveContainer>

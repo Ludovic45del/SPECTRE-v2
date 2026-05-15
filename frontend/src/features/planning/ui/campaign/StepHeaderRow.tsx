@@ -266,7 +266,7 @@ export function StepHeaderRow({
                     stepColor={etape.color}
                     fonctionFilter={isAssemblage ? 'Assembleur' : 'Métrologue'}
                     fonctionLabel={isAssemblage ? 'Assembleurs' : 'Métrologues'}
-                    salleName={isAssemblage ? 'A1' : 'A2'}
+                    salleName={isAssemblage ? 'B1' : 'B2'}
                 />
             )}
         </tr>

@@ -4,11 +4,11 @@
  *
  * Fields from backend:
  * - fsec_version_id (required)
- * - machine_id (referential)
  * - rack_id (referential)
  * - metrologist_name
  * - date
  * - comments
+ * - machine_uuids (machines B2, multi-select)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,10 +23,10 @@ import {
     useCreateMetrologyStep,
     useUpdateMetrologyStep,
     useDeleteMetrologyStep,
-    METROLOGY_MACHINES_LIST,
     FSEC_RACKS_LIST,
 } from '@entities/fsec/steps';
 import { UserSelect } from '@entities/user';
+import { MachineMultiSelect } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { StepModalLayout } from '@features/fsec/shared';
@@ -39,11 +39,11 @@ interface MetrologyStepModalProps {
 }
 
 const MetrologyStepFormSchema = z.object({
-    machineId: z.number().nullable().optional(),
     rackId: z.number().nullable().optional(),
     metrologistUserUuid: z.string().uuid('Métrologue requis'),
     date: z.date({ required_error: 'Date requise' }),
     comments: z.string().nullable().optional(),
+    machineUuids: z.array(z.string().uuid()),
 });
 
 type MetrologyStepForm = z.infer<typeof MetrologyStepFormSchema>;
@@ -61,11 +61,11 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
         mode: 'onBlur',
         resolver: zodResolver(MetrologyStepFormSchema),
         defaultValues: {
-            machineId: null,
             rackId: null,
             metrologistUserUuid: '',
             date: undefined,
             comments: '',
+            machineUuids: [],
         },
     });
 
@@ -73,19 +73,19 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
         if (open) {
             if (step) {
                 reset({
-                    machineId: step.machineId,
                     rackId: step.rackId,
                     metrologistUserUuid: step.metrologistUserUuid ?? '',
                     date: step.date ?? undefined,
                     comments: step.comments ?? '',
+                    machineUuids: step.machineUuids ?? [],
                 });
             } else {
                 reset({
-                    machineId: null,
                     rackId: null,
                     metrologistUserUuid: '',
                     date: undefined,
                     comments: '',
+                    machineUuids: [],
                 });
             }
             setShowDeleteConfirm(false);
@@ -103,21 +103,21 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                     await updateMutation.mutateAsync({
                         uuid: step.uuid,
                         fsecVersionId,
-                        machineId: data.machineId,
                         rackId: data.rackId,
                         metrologistUserUuid: data.metrologistUserUuid,
                         date: data.date,
                         comments: data.comments,
+                        machineUuids: data.machineUuids,
                     });
                     showNotification('Métrologie mise à jour', 'success');
                 } else {
                     await createMutation.mutateAsync({
                         fsecVersionId,
-                        machineId: data.machineId,
                         rackId: data.rackId,
                         metrologistUserUuid: data.metrologistUserUuid,
                         date: data.date,
                         comments: data.comments,
+                        machineUuids: data.machineUuids,
                     });
                     showNotification('Métrologie créée', 'success');
                 }
@@ -230,34 +230,19 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                     )}
                 />
 
-                {/* Machine */}
+                {/* Machines B2 */}
                 <Controller
-                    name="machineId"
+                    name="machineUuids"
                     control={control}
-                    render={({ field }) => (
-                        <FormControl fullWidth size="small">
-                            <InputLabel id="machine-select-label">Machine</InputLabel>
-                            <Select
-                                {...field}
-                                labelId="machine-select-label"
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    field.onChange(val === '' ? null : Number(val));
-                                }}
-                                label="Machine"
-                                inputProps={{ 'aria-label': 'Sélectionner une machine' }}
-                            >
-                                <MenuItem value="">
-                                    <em>Non spécifiée</em>
-                                </MenuItem>
-                                {METROLOGY_MACHINES_LIST.map((machine) => (
-                                    <MenuItem key={machine.id} value={machine.id}>
-                                        {machine.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                    render={({ field, fieldState }) => (
+                        <MachineMultiSelect
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            roomCode="B2"
+                            label="Machines B2"
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
+                        />
                     )}
                 />
 

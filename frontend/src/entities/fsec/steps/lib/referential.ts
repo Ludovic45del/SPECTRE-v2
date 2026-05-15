@@ -5,21 +5,10 @@
  * Hardcoded values matching database initialization (fsec_racks.csv, etc.)
  */
 
-export interface MetrologyMachine {
-    id: number;
-    label: string;
-}
-
 export interface FsecRack {
     id: number;
     label: string;
 }
-
-// Referential - Metrology machines
-export const METROLOGY_MACHINES: Record<number, MetrologyMachine> = {
-    0: { id: 0, label: 'MACHINE1' },
-    1: { id: 1, label: 'MACHINE2' },
-};
 
 // Referential - FSEC Racks (from fsec_racks.csv)
 export const FSEC_RACKS: Record<number, FsecRack> = {
@@ -66,15 +55,9 @@ export const FSEC_RACKS: Record<number, FsecRack> = {
 };
 
 // Helper arrays for selectors
-export const METROLOGY_MACHINES_LIST = Object.values(METROLOGY_MACHINES);
 export const FSEC_RACKS_LIST = Object.values(FSEC_RACKS);
 
 // Getter functions
-export function getMetrologyMachine(id: number | null): MetrologyMachine | null {
-    if (id === null || id === undefined) return null;
-    return METROLOGY_MACHINES[id] ?? null;
-}
-
 export function getFsecRack(id: number | null): FsecRack | null {
     if (id === null || id === undefined) return null;
     return FSEC_RACKS[id] ?? null;

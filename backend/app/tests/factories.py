@@ -225,7 +225,7 @@ class AssemblyStepBeanFactory(Factory):
     start_date = LazyFunction(lambda: date(2025, 2, 1))
     end_date = LazyFunction(lambda: date(2025, 2, 15))
     comments = "Assemblage de test"
-    assembly_bench_ids = factory.LazyFunction(lambda: [0, 1])
+    machine_uuids = factory.LazyFunction(list)
     created_at = None
     last_updated = None
 
@@ -244,7 +244,7 @@ class MetrologyStepBeanFactory(Factory):
 
     uuid = LazyFunction(lambda: str(uuid.uuid4()))
     fsec_version_id = LazyFunction(lambda: str(uuid.uuid4()))
-    machine_id = 0
+    machine_uuids = factory.LazyFunction(list)
     date = LazyFunction(lambda: date(2025, 2, 20))
     comments = "Métrologie de test"
     created_at = None

@@ -5,8 +5,8 @@
  * off-screen columns are replaced by colSpan spacer cells.
  */
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, Delete, NotesOutlined } from '@mui/icons-material';
+import { Box, Tooltip, Typography } from '@mui/material';
+import { NotesOutlined } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { getEventCategoryMeta, labRowId } from '../../lib/planning.constants';
 import { type PlanningData, usePlanningColors } from '../../lib/planning.hooks';
@@ -15,16 +15,10 @@ import type { TimelineColumn } from '../../lib/planning.utils';
 import type { VisibleColumnRange } from '../../lib/useColumnVirtualization';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
 import { HoverTd, StickyLabelCell } from '../PlanningCell';
-import type { LabEvent, LabMachine, LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { LabEvent } from '@entities/planning/core/model/planning.schema';
+import type { PlanningMachine, PlanningSalle } from '../../lib/planning.lab';
 import type { LabEventsMap } from '../../lib/planning.hooks';
-import {
-    useCreateLabMachine,
-    useDeleteLabMachine,
-    useDeleteLabSalle,
-    useUpdateLabEvent,
-    useUpdateLabMachine,
-    useUpdateLabSalle,
-} from '@entities/planning/core/api/planning.queries';
+import { useUpdateLabEvent } from '@entities/planning/core/api/planning.queries';
 import {
     itemOverlapsColumn,
     getBarPosition,
@@ -34,7 +28,6 @@ import {
 } from '../../lib/planning.bar-utils';
 import { useDragToMove } from '../../lib/useDragToMove';
 import { useResizeBar } from '../../lib/useResizeBar';
-import { EditableLabel } from './EditableLabel';
 import { EventPopover } from './EventPopover';
 import { motion } from '@shared/ui/motion';
 
@@ -66,8 +59,8 @@ const LabMachineRow = memo(function LabMachineRow({
     labEvents,
     visibleRange,
 }: {
-    salle: LabSalle;
-    machine: LabMachine;
+    salle: PlanningSalle;
+    machine: PlanningMachine;
     isFirstMachine: boolean;
     totalMachines: number;
     columns: TimelineColumn[];
@@ -76,19 +69,12 @@ const LabMachineRow = memo(function LabMachineRow({
     visibleRange: VisibleColumnRange;
 }) {
     const colors = usePlanningColors();
-    const editMode = usePlanningStore((s) => s.editMode);
     const eventDrag = usePlanningStore((s) => s.eventDrag);
 
-    const updateSalle = useUpdateLabSalle();
-    const deleteSalle = useDeleteLabSalle();
-    const createMachine = useCreateLabMachine();
-    const updateMachine = useUpdateLabMachine();
-    const deleteMachine = useDeleteLabMachine();
     const updateEvent = useUpdateLabEvent();
 
     const rowId = labRowId(machine.uuid);
     const machineEvents = labEvents.get(machine.uuid) ?? [];
-    const [hovered, setHovered] = useState(false);
     const [popover, setPopover] = useState<{
         anchorEl: HTMLElement;
         defaultDate: string;
@@ -103,7 +89,6 @@ const LabMachineRow = memo(function LabMachineRow({
 
     const { handleCellMouseDown, skipNextClick: skipNextClickDrag } = useDragToMove<LabEvent>({
         columns,
-        disabled: editMode,
         findItemAtColumn,
         onMove: (event, dayOffset) => {
             const newStartDate = dayjs(event.startDate).add(dayOffset, 'day').format('YYYY-MM-DD');
@@ -149,7 +134,6 @@ const LabMachineRow = memo(function LabMachineRow({
     // Click handler: create/edit popover (skipped after a drag or resize)
     const handleCellClick = useCallback(
         (e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn) => {
-            if (editMode) return;
             if (skipNextClickDrag.current || skipNextClickResize.current) {
                 skipNextClickDrag.current = false;
                 skipNextClickResize.current = false;
@@ -169,7 +153,7 @@ const LabMachineRow = memo(function LabMachineRow({
                 });
             }
         },
-        [machineEvents, editMode, skipNextClickDrag, skipNextClickResize],
+        [machineEvents, skipNextClickDrag, skipNextClickResize],
     );
 
     // Drag visual state for this row (cross-machine drag via event drag store)
@@ -274,7 +258,7 @@ const LabMachineRow = memo(function LabMachineRow({
                                 : col.isWeekend
                                   ? colors.weekend
                                   : colors.cellBg,
-                        cursor: editMode ? 'default' : matchingEvent ? 'grab' : 'pointer',
+                        cursor: matchingEvent ? 'grab' : 'pointer',
                         height: 32,
                         verticalAlign: 'middle',
                         textAlign: 'center',
@@ -299,13 +283,13 @@ const LabMachineRow = memo(function LabMachineRow({
                             }}
                         >
                             {/* Resize handles at bar edges */}
-                            {!editMode && !resizing && (barPos === 'start' || barPos === 'single') && (
+                            {!resizing && (barPos === 'start' || barPos === 'single') && (
                                 <Box
                                     onMouseDown={(e) => handleResizeStart(e, matchingEvent, 'start', idx)}
                                     sx={resizeHandleStartSx}
                                 />
                             )}
-                            {!editMode && !resizing && (barPos === 'end' || barPos === 'single') && (
+                            {!resizing && (barPos === 'end' || barPos === 'single') && (
                                 <Box
                                     onMouseDown={(e) => handleResizeStart(e, matchingEvent, 'end', idx)}
                                     sx={resizeHandleEndSx}
@@ -416,7 +400,6 @@ const LabMachineRow = memo(function LabMachineRow({
         eventDrag,
         rowId,
         colors,
-        editMode,
         labEvents,
         handleCellMouseDown,
         handleCellClick,
@@ -425,72 +408,16 @@ const LabMachineRow = memo(function LabMachineRow({
     ]);
 
     return (
-        <tr role="row" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+        <tr role="row">
             {/* Salle cell — only on first machine row */}
-            {isFirstMachine &&
-                (editMode ? (
-                    <EditableLabel
-                        value={salle.name}
-                        bold
-                        rowSpan={totalMachines}
-                        onCommit={(v) => updateSalle.mutate({ uuid: salle.uuid, data: { name: v } })}
-                        extraContent={
-                            <Box sx={{ display: 'flex', gap: 0.2 }}>
-                                <Tooltip title="Ajouter une machine">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                            createMachine.mutate({
-                                                salleUuid: salle.uuid,
-                                                name: `Machine ${totalMachines + 1}`,
-                                            })
-                                        }
-                                        sx={{ p: 0.2, color: colors.accent }}
-                                    >
-                                        <Add sx={{ fontSize: 14 }} />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Supprimer la salle">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => deleteSalle.mutate({ uuid: salle.uuid })}
-                                        sx={{ p: 0.2, color: '#ef4444' }}
-                                    >
-                                        <Delete sx={{ fontSize: 14 }} />
-                                    </IconButton>
-                                </Tooltip>
-                            </Box>
-                        }
-                    />
-                ) : (
-                    <StickyLabelCell bold rowSpan={totalMachines}>
-                        {salle.name}
-                    </StickyLabelCell>
-                ))}
+            {isFirstMachine && (
+                <StickyLabelCell bold rowSpan={totalMachines}>
+                    {salle.name}
+                </StickyLabelCell>
+            )}
 
             {/* Machine cell */}
-            {editMode ? (
-                <EditableLabel
-                    value={machine.name}
-                    isSubLabel
-                    onCommit={(v) => updateMachine.mutate({ uuid: machine.uuid, data: { name: v } })}
-                    extraContent={
-                        hovered ? (
-                            <Tooltip title="Supprimer cette machine">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => deleteMachine.mutate({ uuid: machine.uuid })}
-                                    sx={{ p: 0.2, color: '#ef4444' }}
-                                >
-                                    <Delete sx={{ fontSize: 14 }} />
-                                </IconButton>
-                            </Tooltip>
-                        ) : undefined
-                    }
-                />
-            ) : (
-                <StickyLabelCell isSubLabel>{machine.name}</StickyLabelCell>
-            )}
+            <StickyLabelCell isSubLabel>{machine.name}</StickyLabelCell>
 
             {/* Timeline cells */}
             {timelineCells}

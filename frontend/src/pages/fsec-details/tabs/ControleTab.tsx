@@ -11,7 +11,6 @@ import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton
 import {
     MetrologyStep,
     SealingStep,
-    getMetrologyMachine,
     getFsecRack,
     useMetrologyStepsByFsec,
     useSealingStepByMetrology,
@@ -25,6 +24,7 @@ import dayjs from 'dayjs';
 import { MetrologyStepModal } from '@features/fsec/edit-metrology';
 import { SealingStepModal } from '@features/fsec/edit-sealing';
 import { UserChip } from '@entities/user';
+import { MachineChipList } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
 import { WorkflowMiniStepper } from './components/MiniStepper';
@@ -149,12 +149,10 @@ function ControleMetrologiqueCard({
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={6} md={3}>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Machine
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                                        Machines B2
                                     </Typography>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {getMetrologyMachine(metrologyStep.machineId)?.label ?? '-'}
-                                    </Typography>
+                                    <MachineChipList uuids={metrologyStep.machineUuids} roomCode="B2" emptyText="-" />
                                 </Grid>
                             </Grid>
                             {metrologyStep.comments && (

@@ -6,9 +6,8 @@ import React, { memo, useCallback, useRef } from 'react';
 import { Box } from '@mui/material';
 import { COL_WIDTH, GRID_LABEL_WIDTH, GRID_SUB_LABEL_WIDTH, type Membre, SECTION_IDS } from '../lib/planning.constants';
 import { usePlanningStore } from '../lib/planning.store';
-import { useDragSelection, usePlanningColors, usePlanningData, usePlanningTimeline } from '../lib/planning.hooks';
-import { useCreateLabSalle } from '@entities/planning/core/api/planning.queries';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import { usePlanningColors, usePlanningData, usePlanningTimeline } from '../lib/planning.hooks';
+import type { PlanningSalle } from '../lib/planning.lab';
 import type { LabEventsMap } from '../lib/planning.hooks';
 import { useColumnVirtualization } from '../lib/useColumnVirtualization';
 import { PlanningTimeHeader } from './PlanningTimeHeader';
@@ -16,11 +15,10 @@ import { PlanningSection } from './PlanningSection';
 import { PlanningMemberRows } from './PlanningMemberRows';
 import { PlanningLabRows } from './PlanningLabRows';
 import { PlanningCampaignRows } from './PlanningCampaignRows';
-import { PlanningEditPopover } from './PlanningEditPopover';
 
 interface PlanningGridProps {
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
 }
 
@@ -28,19 +26,13 @@ export const PlanningGrid = memo(function PlanningGrid({ membres, salles, labEve
     const colors = usePlanningColors();
     const anchorDate = usePlanningStore((s) => s.anchorDate);
     const selectedYear = usePlanningStore((s) => s.selectedYear);
-    const editMode = usePlanningStore((s) => s.editMode);
 
     const timeline = usePlanningTimeline(anchorDate);
     const planningData = usePlanningData(selectedYear);
 
-    const createSalle = useCreateLabSalle();
-
     const tableRef = useRef<HTMLTableElement>(null);
-    const { handleMouseDown, handleMouseMove, handleMouseUp } = useDragSelection(timeline.columns, editMode);
 
     const totalCols = 2 + timeline.columns.length;
-
-    const handleAddSalle = editMode ? () => createSalle.mutate({ name: 'Nouvelle salle' }) : undefined;
 
     // ---- Column virtualization (A-perf) ----
     const [scrollContainerRef, visibleRange] = useColumnVirtualization(timeline.columns.length);
@@ -127,9 +119,6 @@ export const PlanningGrid = memo(function PlanningGrid({ membres, salles, labEve
                 aria-label="Planning"
                 tabIndex={0}
                 onKeyDown={handleGridKeyDown}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
                 style={{
                     tableLayout: 'fixed',
                     borderCollapse: 'separate',
@@ -157,12 +146,7 @@ export const PlanningGrid = memo(function PlanningGrid({ membres, salles, labEve
                     />
                 </PlanningSection>
 
-                <PlanningSection
-                    sectionId={SECTION_IDS.vieLabo}
-                    label="Vie Labo"
-                    totalColumns={totalCols}
-                    onAdd={handleAddSalle}
-                >
+                <PlanningSection sectionId={SECTION_IDS.vieLabo} label="Vie Labo" totalColumns={totalCols}>
                     <PlanningLabRows
                         salles={salles}
                         columns={timeline.columns}
@@ -183,8 +167,6 @@ export const PlanningGrid = memo(function PlanningGrid({ membres, salles, labEve
                     />
                 </PlanningSection>
             </table>
-
-            <PlanningEditPopover />
         </Box>
     );
 });

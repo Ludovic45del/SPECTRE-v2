@@ -20,7 +20,6 @@ beforeEach(() => {
     usePlanningStore.setState({
         collapsedSections: {},
         collapsedStepGroups: {},
-        editMode: false,
     });
 });
 

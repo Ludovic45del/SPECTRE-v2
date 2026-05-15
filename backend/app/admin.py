@@ -153,7 +153,7 @@ class AssemblyStepAdmin(admin.ModelAdmin):
 
 
 class MetrologyStepAdmin(admin.ModelAdmin):
-    list_display = ("uuid", "fsec_version_id", "machine_id", "date")
+    list_display = ("uuid", "fsec_version_id", "date")
 
 
 class SealingStepAdmin(admin.ModelAdmin):

@@ -43,12 +43,12 @@ export function useMetrologyStep(uuid: string) {
 
 interface CreateMetrologyStepInput {
     fsecVersionId: string;
-    machineId?: number | null;
     rackId?: number | null;
     metrologistName?: string | null;
     metrologistUserUuid?: string | null;
     date?: Date | null;
     comments?: string | null;
+    machineUuids?: string[];
 }
 
 interface UpdateMetrologyStepInput extends CreateMetrologyStepInput {
@@ -58,12 +58,12 @@ interface UpdateMetrologyStepInput extends CreateMetrologyStepInput {
 function metrologyStepToApi(input: CreateMetrologyStepInput) {
     return {
         fsec_version_id: input.fsecVersionId,
-        machine_id: input.machineId ?? null,
         rack_id: input.rackId ?? null,
         metrologist_name: input.metrologistName ?? null,
         metrologist_user_uuid: input.metrologistUserUuid ?? null,
         date: input.date?.toISOString().split('T')[0] ?? null,
         comments: input.comments ?? null,
+        machine_uuids: input.machineUuids ?? [],
     };
 }
 

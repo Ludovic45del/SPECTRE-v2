@@ -61,9 +61,7 @@ export const MemberRow = memo(function MemberRow({
     visibleRange: VisibleColumnRange;
 }) {
     const colors = usePlanningColors();
-    const editMode = usePlanningStore((s) => s.editMode);
     const selectedYear = usePlanningStore((s) => s.selectedYear);
-    const selectedRange = usePlanningStore((s) => s.selectedRange);
 
     const updatePeriod = useUpdateMemberPeriod();
 
@@ -107,7 +105,6 @@ export const MemberRow = memo(function MemberRow({
         columns,
         findItemAtColumn,
         onMove: handleMove,
-        disabled: editMode,
     });
 
     // ---- Resize via shared hook ----
@@ -144,7 +141,6 @@ export const MemberRow = memo(function MemberRow({
     // Click handler: create/edit popover
     const handleCellClick = useCallback(
         (e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn) => {
-            if (editMode) return;
             if (skipNextClickDrag.current || skipNextClickResize.current) {
                 skipNextClickDrag.current = false;
                 skipNextClickResize.current = false;
@@ -157,7 +153,7 @@ export const MemberRow = memo(function MemberRow({
                 existingPeriod: match,
             });
         },
-        [memberPeriods, editMode, skipNextClickDrag, skipNextClickResize],
+        [memberPeriods, skipNextClickDrag, skipNextClickResize],
     );
 
     // ── Precomputed timeline cells with column virtualization ──
@@ -213,17 +209,10 @@ export const MemberRow = memo(function MemberRow({
             const isResizePreviewStart = isInResizePreview && idx === resizePreview!.startIdx;
             const isResizePreviewEnd = isInResizePreview && idx === resizePreview!.endIdx;
 
-            const isCellSelected = selectedRange
-                ? selectedRange.rowId === rowId &&
-                  idx >= selectedRange.startColIndex &&
-                  idx <= selectedRange.endColIndex
-                : false;
-
             cells.push(
                 <HoverTd
                     key={col.key}
                     role="gridcell"
-                    aria-selected={isCellSelected || undefined}
                     data-row-id={rowId}
                     data-col-index={idx}
                     onMouseDown={(e) => handleCellMouseDown(e, col, idx)}
@@ -248,7 +237,7 @@ export const MemberRow = memo(function MemberRow({
                                 : col.isWeekend
                                   ? colors.weekend
                                   : colors.cellBg,
-                        cursor: editMode ? 'default' : matchingPeriod ? 'grab' : 'pointer',
+                        cursor: matchingPeriod ? 'grab' : 'pointer',
                         height: 32,
                         verticalAlign: 'middle',
                         textAlign: 'center',
@@ -273,13 +262,13 @@ export const MemberRow = memo(function MemberRow({
                             }}
                         >
                             {/* Resize handles */}
-                            {!editMode && !resizing && (barPos === 'start' || barPos === 'single') && (
+                            {!resizing && (barPos === 'start' || barPos === 'single') && (
                                 <Box
                                     onMouseDown={(e) => handleResizeStart(e, matchingPeriod, 'start', idx)}
                                     sx={resizeHandleStartSx}
                                 />
                             )}
-                            {!editMode && !resizing && (barPos === 'end' || barPos === 'single') && (
+                            {!resizing && (barPos === 'end' || barPos === 'single') && (
                                 <Box
                                     onMouseDown={(e) => handleResizeStart(e, matchingPeriod, 'end', idx)}
                                     sx={resizeHandleEndSx}
@@ -359,10 +348,8 @@ export const MemberRow = memo(function MemberRow({
         memberPeriods,
         planningData.weekStatesMap,
         resizing,
-        selectedRange,
         rowId,
         colors,
-        editMode,
         handleCellMouseDown,
         handleCellClick,
         handleResizeStart,

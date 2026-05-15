@@ -32,3 +32,7 @@ export type {
     MachineStatus,
     MaintenanceType,
 } from './model';
+export { MachineMultiSelect } from './ui/MachineMultiSelect';
+export type { MachineMultiSelectProps } from './ui/MachineMultiSelect';
+export { MachineChipList } from './ui/MachineChipList';
+export type { MachineChipListProps } from './ui/MachineChipList';

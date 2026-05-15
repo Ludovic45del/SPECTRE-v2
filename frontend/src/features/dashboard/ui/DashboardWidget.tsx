@@ -113,6 +113,7 @@ export const DashboardWidget = memo(
                 height: '100%',
                 position: 'relative' as const,
                 overflow: 'hidden',
+                borderRadius: 2,
                 border: isEditMode ? '2px dashed' : 'none',
                 borderColor: isEditMode ? alpha(theme.palette.primary.main, 0.3) : undefined,
             }),

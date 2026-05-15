@@ -7,10 +7,10 @@
  * - DELETE   /planning/week-states/{uuid}/
  * - GET/POST /planning/member-periods/?year=YYYY
  * - DELETE   /planning/member-periods/{uuid}/
- * - GET/POST /planning/cell-annotations/?year=YYYY
- * - DELETE   /planning/cell-annotations/{uuid}/
- * - GET/POST /planning/fsec-cell-links/?year=YYYY
- * - DELETE   /planning/fsec-cell-links/{uuid}/
+ * - GET      /planning/cell-annotations/?year=YYYY
+ * - GET      /planning/fsec-cell-links/?year=YYYY
+ * - GET/POST /planning/campaign-steps/?year=YYYY
+ * - GET/POST /planning/lab-events/
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,21 +22,10 @@ import {
     LabEventCreate,
     LabEventListSchema,
     LabEventSchema,
-    LabMachineCreate,
-    LabMachineUpdate,
-    LabSalle,
-    LabSalleCreate,
-    LabSalleListSchema,
-    LabSalleSchema,
-    LabSalleUpdate,
     PlanningCellAnnotation,
-    PlanningCellAnnotationCreate,
     PlanningCellAnnotationListSchema,
-    PlanningCellAnnotationSchema,
     PlanningFsecCellLink,
-    PlanningFsecCellLinkCreate,
     PlanningFsecCellLinkListSchema,
-    PlanningFsecCellLinkSchema,
     PlanningMemberPeriod,
     PlanningMemberPeriodCreate,
     PlanningMemberPeriodListSchema,
@@ -50,12 +39,6 @@ import {
     PlanningWeekStateListSchema,
     PlanningWeekStateSchema,
     labEventCreateToApi,
-    labMachineCreateToApi,
-    labMachineUpdateToApi,
-    labSalleCreateToApi,
-    labSalleUpdateToApi,
-    planningCellAnnotationCreateToApi,
-    planningFsecCellLinkCreateToApi,
     planningCampaignStepCreateToApi,
     planningMemberPeriodCreateToApi,
     planningWeekStateCreateToApi,
@@ -181,7 +164,7 @@ export function useDeleteMemberPeriod() {
     });
 }
 
-// ====================== CELL ANNOTATIONS ======================
+// ====================== CELL ANNOTATIONS (lecture seule) ======================
 
 export function useCellAnnotations(year: number) {
     return useQuery({
@@ -192,34 +175,7 @@ export function useCellAnnotations(year: number) {
     });
 }
 
-export function useUpsertCellAnnotation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: PlanningCellAnnotationCreate): Promise<PlanningCellAnnotation> => {
-            const response = await api.post('/planning/cell-annotations/', planningCellAnnotationCreateToApi(data));
-            return PlanningCellAnnotationSchema.parse(response);
-        },
-        onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.cellAnnotationsByYear(result.year) });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useDeleteCellAnnotation() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid }: { uuid: string; year: number }): Promise<void> => {
-            await api.delete(`/planning/cell-annotations/${uuid}/`);
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.cellAnnotationsByYear(variables.year) });
-        },
-        onError: handleMutationError,
-    });
-}
-
-// ====================== FSEC CELL LINKS ======================
+// ====================== FSEC CELL LINKS (lecture seule) ======================
 
 export function useFsecCellLinks(year: number) {
     return useQuery({
@@ -227,125 +183,6 @@ export function useFsecCellLinks(year: number) {
         queryFn: ({ signal }): Promise<PlanningFsecCellLink[]> =>
             api.get(`/planning/fsec-cell-links/?year=${year}`, PlanningFsecCellLinkListSchema, signal),
         ...QUERY_CACHE_CONFIG,
-    });
-}
-
-export function useCreateFsecCellLink() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: PlanningFsecCellLinkCreate): Promise<PlanningFsecCellLink> => {
-            const response = await api.post('/planning/fsec-cell-links/', planningFsecCellLinkCreateToApi(data));
-            return PlanningFsecCellLinkSchema.parse(response);
-        },
-        onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.fsecCellLinksByYear(result.year) });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useDeleteFsecCellLink() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid }: { uuid: string; year: number }): Promise<void> => {
-            await api.delete(`/planning/fsec-cell-links/${uuid}/`);
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.fsecCellLinksByYear(variables.year) });
-        },
-        onError: handleMutationError,
-    });
-}
-
-// ====================== LAB SALLES ======================
-
-export function useLabSalles() {
-    return useQuery({
-        queryKey: planningKeys.labSalles(),
-        queryFn: ({ signal }): Promise<LabSalle[]> => api.get('/planning/lab-salles/', LabSalleListSchema, signal),
-        ...QUERY_CACHE_CONFIG,
-    });
-}
-
-export function useCreateLabSalle() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: LabSalleCreate): Promise<LabSalle> => {
-            const response = await api.post('/planning/lab-salles/', labSalleCreateToApi(data));
-            return LabSalleSchema.parse(response);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useUpdateLabSalle() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid, data }: { uuid: string; data: LabSalleUpdate }): Promise<LabSalle> => {
-            const response = await api.patch(`/planning/lab-salles/${uuid}/`, labSalleUpdateToApi(data));
-            return LabSalleSchema.parse(response);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useDeleteLabSalle() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid }: { uuid: string }): Promise<void> => {
-            await api.delete(`/planning/lab-salles/${uuid}/`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
-    });
-}
-
-// ====================== LAB MACHINES ======================
-
-export function useCreateLabMachine() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (data: LabMachineCreate): Promise<void> => {
-            await api.post('/planning/lab-machines/', labMachineCreateToApi(data));
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useUpdateLabMachine() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid, data }: { uuid: string; data: LabMachineUpdate }): Promise<void> => {
-            await api.patch(`/planning/lab-machines/${uuid}/`, labMachineUpdateToApi(data));
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
-    });
-}
-
-export function useDeleteLabMachine() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ uuid }: { uuid: string }): Promise<void> => {
-            await api.delete(`/planning/lab-machines/${uuid}/`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: planningKeys.labSalles() });
-        },
-        onError: handleMutationError,
     });
 }
 

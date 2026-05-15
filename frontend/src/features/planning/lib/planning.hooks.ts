@@ -3,7 +3,7 @@
  * @module features/planning/lib
  */
 
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTheme } from '@mui/material/styles';
 import {
     useCampaignSteps,
@@ -24,14 +24,7 @@ import type {
 /** Map from machineUuid -> array of lab events for that machine. */
 export type LabEventsMap = Map<string, LabEvent[]>;
 import { type PlanningColors, PLANNING_COLORS_DARK, PLANNING_COLORS_LIGHT } from './planning.constants';
-import { usePlanningStore } from './planning.store';
-import {
-    type TimelineColumn,
-    type TimelineData,
-    columnToWeekNums,
-    computeTimeline,
-    getCellCoordFromEvent,
-} from './planning.utils';
+import { type TimelineData, computeTimeline } from './planning.utils';
 
 // ====================== Theme-aware Colors ======================
 
@@ -149,110 +142,3 @@ export function usePlanningData(year: number): PlanningData {
     };
 }
 
-// ====================== Drag Selection Hook ======================
-
-export function useDragSelection(columns: TimelineColumn[], editMode: boolean) {
-    const store = usePlanningStore;
-
-    const handleMouseDown = useCallback(
-        (e: React.MouseEvent) => {
-            if (!editMode || e.button !== 0) return;
-            const coord = getCellCoordFromEvent(e);
-            if (!coord) return;
-            e.preventDefault();
-            store.getState().startDrag(coord);
-        },
-        [editMode],
-    );
-
-    const handleMouseMove = useCallback((e: React.MouseEvent) => {
-        const state = store.getState();
-        if (!state.isDragging) return;
-        const coord = getCellCoordFromEvent(e);
-        if (!coord) return;
-        state.updateDrag(coord);
-    }, []);
-
-    const handleMouseUp = useCallback(
-        (e: React.MouseEvent) => {
-            const state = store.getState();
-            if (!state.isDragging) return;
-
-            state.endDrag();
-
-            const newState = store.getState();
-            const range = newState.selectedRange;
-            if (!range) return;
-
-            // Determine section from rowId prefix
-            let section: 'member' | 'lab' | 'campaign';
-            if (range.rowId.startsWith('member:')) section = 'member';
-            else if (range.rowId.startsWith('lab:')) section = 'lab';
-            else if (range.rowId.startsWith('campaign:')) section = 'campaign';
-            else return;
-
-            // Resolve time slots
-            const timeSlots: Array<{ year: number; weekNum: number }> = [];
-            const seen = new Set<string>();
-            for (let i = range.startColIndex; i <= range.endColIndex; i++) {
-                const col = columns[i];
-                if (!col) continue;
-                const weekNums = columnToWeekNums(col);
-                for (const wn of weekNums) {
-                    const key = `${col.year}#${wn}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        timeSlots.push({ year: col.year, weekNum: wn });
-                    }
-                }
-            }
-
-            // Extract campaign info if applicable
-            let campaignUuid: string | undefined;
-            let stepLabel: string | undefined;
-            if (section === 'campaign') {
-                const parts = range.rowId.slice('campaign:'.length).split('#');
-                campaignUuid = parts[0];
-                stepLabel = parts.slice(1).join('#');
-            }
-
-            // Compute anchor position for popover (avoid storing HTMLElement in store)
-            const td = (e.target as HTMLElement).closest('td') as HTMLElement | null;
-            if (!td) return;
-            const rect = td.getBoundingClientRect();
-            const anchorPosition = { top: rect.bottom, left: rect.left + rect.width / 2 };
-
-            newState.openPopover({
-                anchorPosition,
-                section,
-                rowId: range.rowId,
-                timeSlots,
-                campaignUuid,
-                stepLabel,
-            });
-        },
-        [columns],
-    );
-
-    return { handleMouseDown, handleMouseMove, handleMouseUp };
-}
-
-// ====================== Cell in range check ======================
-
-export function useIsCellInRange(rowId: string, colIndex: number): boolean {
-    return usePlanningStore((state) => {
-        // During drag
-        if (state.isDragging && state.dragOrigin && state.dragCurrent) {
-            if (state.dragOrigin.rowId !== rowId) return false;
-            const minCol = Math.min(state.dragOrigin.colIndex, state.dragCurrent.colIndex);
-            const maxCol = Math.max(state.dragOrigin.colIndex, state.dragCurrent.colIndex);
-            return colIndex >= minCol && colIndex <= maxCol;
-        }
-        // After drag (selected range)
-        if (state.selectedRange) {
-            if (state.selectedRange.rowId !== rowId) return false;
-            return colIndex >= state.selectedRange.startColIndex && colIndex <= state.selectedRange.endColIndex;
-        }
-        return false;
-    });
-}

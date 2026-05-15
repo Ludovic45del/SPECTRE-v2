@@ -82,39 +82,6 @@ class PlanningCampaignStepSerializer(DateRangeValidationMixin, serializers.Seria
     end_date = serializers.DateField(required=True)
 
 
-# ====================== LAB SALLE ======================
-
-
-class LabSalleCreateSerializer(serializers.Serializer):
-    """Validation pour la creation d'une salle."""
-
-    name = serializers.CharField(required=True, max_length=100)
-
-
-class LabSalleUpdateSerializer(serializers.Serializer):
-    """Validation pour la mise a jour d'une salle."""
-
-    name = serializers.CharField(required=False, max_length=100)
-    sort_order = serializers.IntegerField(required=False)
-
-
-# ====================== LAB MACHINE ======================
-
-
-class LabMachineCreateSerializer(serializers.Serializer):
-    """Validation pour la creation d'une machine."""
-
-    salle_uuid = serializers.UUIDField(required=True)
-    name = serializers.CharField(required=True, max_length=100)
-
-
-class LabMachineUpdateSerializer(serializers.Serializer):
-    """Validation pour la mise a jour d'une machine."""
-
-    name = serializers.CharField(required=False, max_length=100)
-    sort_order = serializers.IntegerField(required=False)
-
-
 # ====================== LAB EVENT ======================
 
 

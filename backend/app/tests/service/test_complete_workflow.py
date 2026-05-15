@@ -153,7 +153,7 @@ class TestCompleteWorkflow:
             start_date=date(2025, 2, 1),
             end_date=date(2025, 2, 10),
             comments="Assemblage terminé avec succès",
-            assembly_bench_ids=[0, 1],
+            machine_uuids=[],
         )
 
         mock_assembly_repo = MagicMock()
@@ -178,9 +178,9 @@ class TestCompleteWorkflow:
         metrology_bean = MetrologyStepBean(
             uuid=metrology_uuid,
             fsec_version_id=fsec_version_uuid,
-            machine_id=0,
             date=date(2025, 2, 15),
             comments="Métrologie validée",
+            machine_uuids=[],
         )
 
         mock_metrology_repo = MagicMock()
@@ -189,7 +189,7 @@ class TestCompleteWorkflow:
         created_metrology = create_step(mock_metrology_repo, metrology_bean)
 
         assert created_metrology.uuid == metrology_uuid
-        assert created_metrology.machine_id == 0
+        assert created_metrology.machine_uuids == []
         mock_metrology_repo.create.assert_called_once()
 
         logger.info(f"✅ STEP 4: MetrologyStep créé - Date: {created_metrology.date}")

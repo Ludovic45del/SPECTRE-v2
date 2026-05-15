@@ -48,7 +48,7 @@ interface CreateAssemblyStepInput {
     startDate?: Date | null;
     endDate?: Date | null;
     comments?: string | null;
-    assemblyBenchIds?: number[];
+    machineUuids?: string[];
 }
 
 interface UpdateAssemblyStepInput extends CreateAssemblyStepInput {
@@ -70,7 +70,7 @@ export function useCreateAssemblyStep() {
                 start_date: input.startDate?.toISOString().split('T')[0] ?? null,
                 end_date: input.endDate?.toISOString().split('T')[0] ?? null,
                 comments: input.comments ?? null,
-                assembly_bench_ids: input.assemblyBenchIds ?? [],
+                machine_uuids: input.machineUuids ?? [],
             };
             const response = await api.post('/assembly-steps/', apiData);
             return AssemblyStepSchema.parse(response);
@@ -98,7 +98,7 @@ export function useUpdateAssemblyStep() {
                 start_date: input.startDate?.toISOString().split('T')[0] ?? null,
                 end_date: input.endDate?.toISOString().split('T')[0] ?? null,
                 comments: input.comments ?? null,
-                assembly_bench_ids: input.assemblyBenchIds ?? [],
+                machine_uuids: input.machineUuids ?? [],
             };
             const response = await api.put(`/assembly-steps/${input.uuid}/`, apiData);
             return AssemblyStepSchema.parse(response);

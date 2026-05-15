@@ -17,6 +17,9 @@ from app.mapper.steps.assembly_step_mapper import (
     assembly_step_mapper_entity_to_bean,
 )
 
+MACHINE_UUID_1 = "11111111-1111-1111-1111-111111111111"
+MACHINE_UUID_2 = "22222222-2222-2222-2222-222222222222"
+
 # ============================================================================
 # FIXTURES
 # ============================================================================
@@ -33,7 +36,7 @@ def sample_assembly_bean():
         start_date=date(2025, 2, 1),
         end_date=date(2025, 2, 15),
         comments="Assemblage terminé avec succès",
-        assembly_bench_ids=[1, 2, 3],
+        machine_uuids=[MACHINE_UUID_1, MACHINE_UUID_2],
     )
 
 
@@ -49,12 +52,12 @@ def mock_assembly_entity():
     mock.start_date = date(2025, 2, 1)
     mock.end_date = date(2025, 2, 15)
     mock.comments = "Assemblage terminé avec succès"
-    # Mock M2M relation
-    bench1 = MagicMock()
-    bench1.id = 1
-    bench2 = MagicMock()
-    bench2.id = 2
-    mock.assembly_bench.all.return_value = [bench1, bench2]
+    # Mock M2M relation (machines B1)
+    machine1 = MagicMock()
+    machine1.uuid = MACHINE_UUID_1
+    machine2 = MagicMock()
+    machine2.uuid = MACHINE_UUID_2
+    mock.machines.all.return_value = [machine1, machine2]
     return mock
 
 
@@ -81,11 +84,11 @@ class TestAssemblyStepMapperEntityToBean:
 
     @pytest.mark.unit
     def test_entity_to_bean_m2m_relation(self, mock_assembly_entity):
-        """Test conversion des relations M2M (assembly_bench)."""
+        """Test conversion des relations M2M (machines)."""
         result = assembly_step_mapper_entity_to_bean(mock_assembly_entity)
 
-        assert result.assembly_bench_ids == [1, 2]
-        mock_assembly_entity.assembly_bench.all.assert_called_once()
+        assert result.machine_uuids == [MACHINE_UUID_1, MACHINE_UUID_2]
+        mock_assembly_entity.machines.all.assert_called_once()
 
     @pytest.mark.unit
     def test_entity_to_bean_nullable_fields(self):
@@ -99,7 +102,7 @@ class TestAssemblyStepMapperEntityToBean:
         mock.start_date = None
         mock.end_date = None
         mock.comments = None
-        mock.assembly_bench.all.return_value = []
+        mock.machines.all.return_value = []
 
         result = assembly_step_mapper_entity_to_bean(mock)
 
@@ -108,7 +111,7 @@ class TestAssemblyStepMapperEntityToBean:
         assert result.start_date is None
         assert result.end_date is None
         assert result.comments is None
-        assert result.assembly_bench_ids == []
+        assert result.machine_uuids == []
 
     @pytest.mark.unit
     def test_entity_to_bean_empty_fsec_version_id(self):
@@ -122,7 +125,7 @@ class TestAssemblyStepMapperEntityToBean:
         mock.start_date = None
         mock.end_date = None
         mock.comments = None
-        mock.assembly_bench.all.return_value = []
+        mock.machines.all.return_value = []
 
         result = assembly_step_mapper_entity_to_bean(mock)
 
@@ -160,22 +163,13 @@ class TestAssemblyStepMapperBeanToEntity:
             start_date=date(2025, 3, 1),
             end_date=None,
             comments="Nouveau step",
-            assembly_bench_ids=[],
+            machine_uuids=[],
         )
 
         result = assembly_step_mapper_bean_to_entity(bean)
 
         assert result.fsec_version_id_id == "fsec-uuid"
         assert result.operator == "Assembleur Martin"
-
-    @pytest.mark.unit
-    def test_bean_to_entity_does_not_map_m2m(self, sample_assembly_bean):
-        """Test que la relation M2M n'est pas mappée directement."""
-        result = assembly_step_mapper_bean_to_entity(sample_assembly_bean)
-
-        # Les M2M sont gérées séparément dans le repository
-        # Le mapper ne doit pas tenter de les mapper
-        assert not hasattr(result, "assembly_bench_ids")
 
 
 # ============================================================================
@@ -197,7 +191,7 @@ class TestAssemblyStepMapperApiToBean:
             "start_date": "2025-04-01",
             "end_date": "2025-04-15",
             "comments": "Commentaire API",
-            "assembly_bench_ids": [1, 2, 3, 4],
+            "machine_uuids": [MACHINE_UUID_1, MACHINE_UUID_2],
         }
 
         result = assembly_step_mapper_api_to_bean(api_data)
@@ -207,7 +201,7 @@ class TestAssemblyStepMapperApiToBean:
         assert result.fsec_version_id == "fsec-api-uuid"
         assert result.operator == "Assembleur API"
         assert result.comments == "Commentaire API"
-        assert result.assembly_bench_ids == [1, 2, 3, 4]
+        assert result.machine_uuids == [MACHINE_UUID_1, MACHINE_UUID_2]
 
     @pytest.mark.unit
     def test_api_to_bean_missing_optional_fields(self):
@@ -225,7 +219,7 @@ class TestAssemblyStepMapperApiToBean:
         assert result.start_date is None
         assert result.end_date is None
         assert result.comments is None
-        assert result.assembly_bench_ids == []
+        assert result.machine_uuids == []
 
     @pytest.mark.unit
     def test_api_to_bean_empty_data(self):
@@ -236,7 +230,7 @@ class TestAssemblyStepMapperApiToBean:
 
         assert result.uuid == ""
         assert result.fsec_version_id == ""
-        assert result.assembly_bench_ids == []
+        assert result.machine_uuids == []
 
     @pytest.mark.unit
     def test_api_to_bean_date_as_string(self):
@@ -273,7 +267,7 @@ class TestAssemblyStepMapperBeanToApi:
         assert result["fsec_version_id"] == sample_assembly_bean.fsec_version_id
         assert result["operator"] == "Assembleur Dupont"
         assert result["comments"] == "Assemblage terminé avec succès"
-        assert result["assembly_bench_ids"] == [1, 2, 3]
+        assert result["machine_uuids"] == [MACHINE_UUID_1, MACHINE_UUID_2]
 
     @pytest.mark.unit
     def test_bean_to_api_date_format(self, sample_assembly_bean):
@@ -294,7 +288,7 @@ class TestAssemblyStepMapperBeanToApi:
             start_date=None,
             end_date=None,
             comments=None,
-            assembly_bench_ids=[],
+            machine_uuids=[],
         )
 
         result = assembly_step_mapper_bean_to_api(bean)
@@ -313,7 +307,7 @@ class TestAssemblyStepMapperBeanToApi:
             start_date="2025-06-01",  # Déjà string
             end_date="2025-06-15",
             comments=None,
-            assembly_bench_ids=[],
+            machine_uuids=[],
         )
 
         result = assembly_step_mapper_bean_to_api(bean)
@@ -341,4 +335,4 @@ class TestAssemblyStepMapperRoundtrip:
         assert restored.operator == sample_assembly_bean.operator
         assert restored.operator_user_uuid == sample_assembly_bean.operator_user_uuid
         assert restored.comments == sample_assembly_bean.comments
-        assert restored.assembly_bench_ids == sample_assembly_bean.assembly_bench_ids
+        assert restored.machine_uuids == sample_assembly_bean.machine_uuids

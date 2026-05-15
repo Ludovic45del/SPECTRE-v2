@@ -14,7 +14,6 @@ import { softChipSx } from '@shared/lib';
 import {
     useCampaignSteps,
     useLabEvents,
-    useLabSalles,
     useMemberPeriods,
     useWeekStates,
 } from '@entities/planning/core/api/planning.queries';
@@ -25,6 +24,7 @@ import type {
 } from '@entities/planning/core/model/planning.schema';
 import { ETAPES, getEventCategoryMeta, getPeriodeMeta, type PlanningColors } from '../lib/planning.constants';
 import { usePlanningColors } from '../lib/planning.hooks';
+import { usePlanningLabSalles } from '../lib/planning.lab';
 
 // ====================== Types ======================
 
@@ -113,7 +113,7 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
     const { data: weekStates = [] } = useWeekStates(year);
     const { data: memberPeriods = [] } = useMemberPeriods(year);
     const { data: campaignSteps = [] } = useCampaignSteps(year);
-    const { data: salles = [] } = useLabSalles();
+    const salles = usePlanningLabSalles();
     const { data: labEventsList = [] } = useLabEvents();
 
     // Week state

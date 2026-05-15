@@ -27,7 +27,7 @@ const mockAssemblyStep = {
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
-    assembly_bench_ids: [1, 2],
+    machine_uuids: ["423e4567-e89b-12d3-a456-426614174003"],
 };
 
 const mockAssemblySteps = [
@@ -131,7 +131,7 @@ describe('useCreateAssemblyStep', () => {
             startDate: new Date('2025-03-01'),
             endDate: new Date('2025-03-15'),
             comments: 'New step',
-            assemblyBenchIds: [1],
+            machineUuids: ["423e4567-e89b-12d3-a456-426614174003"],
         };
 
         result.current.mutate(newStep);
@@ -158,7 +158,7 @@ describe('useCreateAssemblyStep', () => {
             startDate: null,
             endDate: null,
             comments: '',
-            assemblyBenchIds: [],
+            machineUuids: [],
         });
 
         await waitFor(() => expect(result.current.isError).toBe(true));
@@ -181,7 +181,7 @@ describe('useCreateAssemblyStep', () => {
             startDate: null,
             endDate: null,
             comments: '',
-            assemblyBenchIds: [],
+            machineUuids: [],
         });
 
         await waitFor(() => expect(result.current.isError).toBe(true));
@@ -217,7 +217,7 @@ describe('useUpdateAssemblyStep', () => {
             startDate: null,
             endDate: null,
             comments: 'Updated comment',
-            assemblyBenchIds: [1, 2, 3],
+            machineUuids: ["423e4567-e89b-12d3-a456-426614174003"],
         });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -243,7 +243,7 @@ describe('useUpdateAssemblyStep', () => {
             startDate: null,
             endDate: null,
             comments: '',
-            assemblyBenchIds: [],
+            machineUuids: [],
         });
 
         await waitFor(() => expect(result.current.isError).toBe(true));
@@ -342,7 +342,7 @@ describe('Cache Invalidation', () => {
             startDate: null,
             endDate: null,
             comments: '',
-            assemblyBenchIds: [],
+            machineUuids: [],
         });
 
         await waitFor(() => expect(createResult.current.isSuccess).toBe(true));

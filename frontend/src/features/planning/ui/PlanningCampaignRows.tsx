@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
 import type { CampaignWithRelations } from '@entities/campaign/core/model/referential.schema';
 import { useFsecs } from '@entities/fsec/core/api/fsec.queries';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { PlanningSalle } from '../lib/planning.lab';
 import { ETAPES, type Etape, type Membre } from '../lib/planning.constants';
 import type { PlanningData } from '../lib/planning.hooks';
 import type { LabEventsMap } from '../lib/planning.hooks';
@@ -39,7 +39,7 @@ interface PlanningCampaignRowsProps {
     columns: TimelineColumn[];
     planningData: PlanningData;
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
     visibleRange: VisibleColumnRange;
 }
@@ -149,7 +149,7 @@ interface VirtualizedCampaignRowsProps {
         shootingDate: Date | null;
     }>;
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
     visibleRange: VisibleColumnRange;
 }

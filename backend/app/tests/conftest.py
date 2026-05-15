@@ -113,7 +113,7 @@ def sample_assembly_step_bean(sample_fsec_version_uuid):
         start_date=date(2025, 2, 1),
         end_date=date(2025, 2, 15),
         comments="Assemblage terminé",
-        assembly_bench_ids=[0, 1],
+        machine_uuids=[],
     )
 
 
@@ -125,9 +125,9 @@ def sample_metrology_step_bean(sample_fsec_version_uuid):
     return MetrologyStepBean(
         uuid=str(uuid.uuid4()),
         fsec_version_id=sample_fsec_version_uuid,
-        machine_id=0,
         date=date(2025, 2, 20),
         comments="Métrologie OK",
+        machine_uuids=[],
     )
 
 

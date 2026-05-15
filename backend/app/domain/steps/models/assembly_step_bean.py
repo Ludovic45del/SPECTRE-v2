@@ -16,4 +16,4 @@ class AssemblyStepBean:
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     comments: Optional[str] = None
-    assembly_bench_ids: List[int] = field(default_factory=list)
+    machine_uuids: List[str] = field(default_factory=list)

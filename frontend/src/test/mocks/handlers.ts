@@ -86,7 +86,7 @@ export const createMockAssemblyStep = (overrides = {}) => ({
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Assemblage de test',
-    assembly_bench_ids: [0, 1],
+    machine_uuids: [],
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
     ...overrides,
@@ -225,11 +225,11 @@ export const createMockEtalonnage = (overrides = {}) => ({
 export const createMockMetrologyStep = (overrides = {}) => ({
     uuid: crypto.randomUUID(),
     fsec_version_id: crypto.randomUUID(),
-    machine_id: 0,
     rack_id: 0,
     metrologist_name: 'Métrologue Test',
     date: '2025-03-01',
     comments: 'Métrologie de test',
+    machine_uuids: [],
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
     ...overrides,
@@ -1174,6 +1174,22 @@ export const handlers = [
     http.put('/api/v1/gas-filling-hp-steps/:uuid/', async ({ params, request }) => {
         const body = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(createMockGasStep('gas_filling_hp', { uuid: params.uuid, ...body }));
+    }),
+
+    // ========================================
+    // MATERIAL HANDLERS (salles + machines)
+    // ========================================
+
+    http.get('/api/v1/material/rooms/', () => {
+        return HttpResponse.json([
+            { id: 1, code: 'B1', label: 'Salle B1', color: '#1976D2', sort_order: 0 },
+            { id: 2, code: 'B2', label: 'Salle B2', color: '#388E3C', sort_order: 1 },
+            { id: 3, code: 'A13', label: 'Salle A13', color: '#F57C00', sort_order: 2 },
+        ]);
+    }),
+
+    http.get('/api/v1/material/machines/', () => {
+        return HttpResponse.json([]);
     }),
 
     // ========================================

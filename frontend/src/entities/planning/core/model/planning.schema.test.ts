@@ -22,13 +22,6 @@ import {
     PlanningCampaignStepApiSchema,
     PlanningCampaignStepSchema,
     planningCampaignStepCreateToApi,
-    LabMachineSchema,
-    LabMachineCreateSchema,
-    labMachineCreateToApi,
-    labMachineUpdateToApi,
-    LabSalleSchema,
-    labSalleCreateToApi,
-    labSalleUpdateToApi,
     LabEventApiSchema,
     LabEventSchema,
     LabEventCreateSchema,
@@ -267,62 +260,6 @@ describe('PlanningCampaignStep schemas', () => {
             start_date: '2025-04-01',
             end_date: '2025-04-10',
         });
-    });
-});
-
-// ====================== LAB MACHINE ======================
-
-describe('LabMachine schemas', () => {
-    const validApi = { uuid: uuid(), salle_uuid: uuid(), name: 'Machine A', sort_order: 1 };
-
-    it('Schema transforms to camelCase', () => {
-        const parsed = LabMachineSchema.parse(validApi);
-        expect(parsed.salleUuid).toBe(validApi.salle_uuid);
-        expect(parsed.sortOrder).toBe(1);
-    });
-
-    it('CreateSchema rejects empty name', () => {
-        expect(() => LabMachineCreateSchema.parse({ salleUuid: uuid(), name: '' })).toThrow();
-    });
-
-    it('createToApi converts correctly', () => {
-        const api = labMachineCreateToApi({ salleUuid: 'su', name: 'M1' });
-        expect(api).toEqual({ salle_uuid: 'su', name: 'M1' });
-    });
-
-    it('updateToApi only includes provided fields', () => {
-        expect(labMachineUpdateToApi({ name: 'New' })).toEqual({ name: 'New' });
-        expect(labMachineUpdateToApi({ sortOrder: 5 })).toEqual({ sort_order: 5 });
-        expect(labMachineUpdateToApi({})).toEqual({});
-    });
-});
-
-// ====================== LAB SALLE ======================
-
-describe('LabSalle schemas', () => {
-    const machineApi = { uuid: uuid(), salle_uuid: uuid(), name: 'M1', sort_order: 0 };
-    const validApi = { uuid: uuid(), name: 'Salle A', sort_order: 0, machines: [machineApi] };
-
-    it('Schema transforms and includes nested machines', () => {
-        const parsed = LabSalleSchema.parse(validApi);
-        expect(parsed.sortOrder).toBe(0);
-        expect(parsed.machines).toHaveLength(1);
-        expect(parsed.machines[0].salleUuid).toBe(machineApi.salle_uuid);
-    });
-
-    it('Schema accepts empty machines array', () => {
-        const parsed = LabSalleSchema.parse({ ...validApi, machines: [] });
-        expect(parsed.machines).toHaveLength(0);
-    });
-
-    it('createToApi converts correctly', () => {
-        expect(labSalleCreateToApi({ name: 'B1' })).toEqual({ name: 'B1' });
-    });
-
-    it('updateToApi only includes provided fields', () => {
-        expect(labSalleUpdateToApi({ name: 'New' })).toEqual({ name: 'New' });
-        expect(labSalleUpdateToApi({ sortOrder: 3 })).toEqual({ sort_order: 3 });
-        expect(labSalleUpdateToApi({})).toEqual({});
     });
 });
 

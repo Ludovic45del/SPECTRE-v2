@@ -3,7 +3,6 @@
 from django.db import models
 
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.steps.models.assembly_bench_entity import AssemblyBenchEntity
 from app.repository.steps.models.base_step_entity import BaseStepEntity
 
 
@@ -24,8 +23,9 @@ class AssemblyStepEntity(BaseStepEntity):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     comments = models.TextField(max_length=4000, null=True, blank=True)
-    assembly_bench = models.ManyToManyField(
-        AssemblyBenchEntity,
+    machines = models.ManyToManyField(
+        "app.MachineEntity",
+        db_table="ASSEMBLY_STEP_MACHINE",
         related_name="assembly_steps",
         blank=True,
     )

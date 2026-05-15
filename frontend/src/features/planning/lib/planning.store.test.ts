@@ -1,8 +1,7 @@
 /**
  * Tests for the Planning Zustand store.
  *
- * Covers: navigation, sections, step groups, drag selection,
- *         event drag, popover, edit mode, filters.
+ * Covers: navigation, sections, step groups, event drag, filters.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
@@ -16,8 +15,7 @@ beforeEach(() => {
     const { result } = renderHook(() => usePlanningStore());
     act(() => {
         result.current.goToToday();
-        result.current.clearSelection();
-        result.current.closePopover();
+        result.current.resetUIState();
         result.current.resetFilters();
     });
     // Reset collapsed sections and step groups
@@ -25,7 +23,6 @@ beforeEach(() => {
         usePlanningStore.setState({
             collapsedSections: {},
             collapsedStepGroups: {},
-            editMode: false,
             eventDrag: null,
         });
     });
@@ -134,64 +131,6 @@ describe('Step Groups', () => {
     });
 });
 
-// ====================== Drag Selection ======================
-
-describe('Drag Selection', () => {
-    it('initial state: not dragging, no selection', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        expect(result.current.isDragging).toBe(false);
-        expect(result.current.dragOrigin).toBeNull();
-        expect(result.current.selectedRange).toBeNull();
-    });
-
-    it('startDrag sets dragging state', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 2 }));
-        expect(result.current.isDragging).toBe(true);
-        expect(result.current.dragOrigin).toEqual({ rowId: 'r1', colIndex: 2 });
-    });
-
-    it('updateDrag tracks current cell on same row', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 2 }));
-        act(() => result.current.updateDrag({ rowId: 'r1', colIndex: 5 }));
-        expect(result.current.dragCurrent).toEqual({ rowId: 'r1', colIndex: 5 });
-    });
-
-    it('updateDrag ignores different row', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 2 }));
-        act(() => result.current.updateDrag({ rowId: 'r2', colIndex: 5 }));
-        // dragCurrent stays at origin
-        expect(result.current.dragCurrent).toEqual({ rowId: 'r1', colIndex: 2 });
-    });
-
-    it('endDrag computes selectedRange with correct min/max', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 5 }));
-        act(() => result.current.updateDrag({ rowId: 'r1', colIndex: 2 }));
-        act(() => result.current.endDrag());
-        expect(result.current.isDragging).toBe(false);
-        expect(result.current.selectedRange).toEqual({
-            rowId: 'r1',
-            startColIndex: 2,
-            endColIndex: 5,
-        });
-    });
-
-    it('clearSelection resets all drag state', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 1 }));
-        act(() => result.current.updateDrag({ rowId: 'r1', colIndex: 4 }));
-        act(() => result.current.endDrag());
-        act(() => result.current.clearSelection());
-        expect(result.current.isDragging).toBe(false);
-        expect(result.current.dragOrigin).toBeNull();
-        expect(result.current.dragCurrent).toBeNull();
-        expect(result.current.selectedRange).toBeNull();
-    });
-});
-
 // ====================== Event Drag & Drop ======================
 
 describe('Event Drag & Drop', () => {
@@ -231,61 +170,6 @@ describe('Event Drag & Drop', () => {
         expect(dragInfo!).not.toBeNull();
         expect(dragInfo!.machineKey).toBe('mk');
         expect(result.current.eventDrag).toBeNull();
-    });
-});
-
-// ====================== Popover ======================
-
-describe('Popover', () => {
-    it('initial popoverTarget is null', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        expect(result.current.popoverTarget).toBeNull();
-    });
-
-    it('openPopover sets target', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        const target = {
-            anchorPosition: { top: 100, left: 200 },
-            section: 'member' as const,
-            rowId: 'r1',
-            timeSlots: [{ year: 2025, weekNum: 10 }],
-        };
-        act(() => result.current.openPopover(target));
-        expect(result.current.popoverTarget).toEqual(target);
-    });
-
-    it('closePopover clears target and selection', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.startDrag({ rowId: 'r1', colIndex: 1 }));
-        act(() => result.current.endDrag());
-        act(() =>
-            result.current.openPopover({
-                anchorPosition: { top: 100, left: 200 },
-                section: 'lab',
-                rowId: 'r1',
-                timeSlots: [],
-            }),
-        );
-        act(() => result.current.closePopover());
-        expect(result.current.popoverTarget).toBeNull();
-        expect(result.current.selectedRange).toBeNull();
-    });
-});
-
-// ====================== Edit Mode ======================
-
-describe('Edit Mode', () => {
-    it('initial editMode is false', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        expect(result.current.editMode).toBe(false);
-    });
-
-    it('toggleEditMode flips the value', () => {
-        const { result } = renderHook(() => usePlanningStore());
-        act(() => result.current.toggleEditMode());
-        expect(result.current.editMode).toBe(true);
-        act(() => result.current.toggleEditMode());
-        expect(result.current.editMode).toBe(false);
     });
 });
 

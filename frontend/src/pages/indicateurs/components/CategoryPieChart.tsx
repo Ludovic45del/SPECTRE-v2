@@ -6,6 +6,7 @@
 import { memo } from 'react';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ChartTooltipCard } from './ChartTooltip';
 
 export interface CategoryPieEntry {
     label: string;
@@ -56,11 +57,32 @@ const CategoryPieChart = memo(function CategoryPieChart({
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value, name) => {
-                                        const num = typeof value === 'number' ? value : Number(value);
-                                        return [`${num} (${((num / total) * 100).toFixed(0)}%)`, name];
+                                    wrapperStyle={{ outline: 'none' }}
+                                    content={({ active, payload }) => {
+                                        if (!active || !payload || payload.length === 0) {
+                                            return null;
+                                        }
+                                        const entry = payload[0].payload as CategoryPieEntry;
+                                        const pct =
+                                            total > 0 ? (entry.count / total) * 100 : 0;
+                                        return (
+                                            <ChartTooltipCard
+                                                title={entry.label}
+                                                accent={entry.color}
+                                                metrics={[
+                                                    {
+                                                        label: 'Effectif',
+                                                        value: `${entry.count}`,
+                                                        bold: true,
+                                                    },
+                                                    {
+                                                        label: 'Part',
+                                                        value: `${pct.toFixed(1)} %`,
+                                                    },
+                                                ]}
+                                            />
+                                        );
                                     }}
-                                    labelStyle={{ fontSize: 12 }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>

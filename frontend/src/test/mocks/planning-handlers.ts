@@ -34,14 +34,6 @@ export const createMockCampaignStep = (overrides: Record<string, unknown> = {}) 
     ...overrides,
 });
 
-export const createMockLabSalle = (overrides: Record<string, unknown> = {}) => ({
-    uuid: crypto.randomUUID(),
-    name: 'A1',
-    sort_order: 0,
-    machines: [],
-    ...overrides,
-});
-
 /** Default planning handlers — return empty arrays for all endpoints */
 export const planningHandlers = [
     http.get('/api/v1/planning/week-states/', () => HttpResponse.json([])),
@@ -49,7 +41,6 @@ export const planningHandlers = [
     http.get('/api/v1/planning/cell-annotations/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/fsec-cell-links/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/campaign-steps/', () => HttpResponse.json([])),
-    http.get('/api/v1/planning/lab-salles/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/lab-events/', () => HttpResponse.json([])),
     http.get('/api/v1/campaigns/', () => HttpResponse.json([])),
     http.get('/api/v1/fsecs/', () => HttpResponse.json([])),
@@ -62,7 +53,6 @@ export function planningHandlersWithData(data: {
     cellAnnotations?: unknown[];
     fsecCellLinks?: unknown[];
     campaignSteps?: unknown[];
-    salles?: unknown[];
     labEvents?: unknown[];
     campaigns?: unknown[];
     fsecs?: unknown[];
@@ -73,7 +63,6 @@ export function planningHandlersWithData(data: {
         http.get('/api/v1/planning/cell-annotations/', () => HttpResponse.json(data.cellAnnotations ?? [])),
         http.get('/api/v1/planning/fsec-cell-links/', () => HttpResponse.json(data.fsecCellLinks ?? [])),
         http.get('/api/v1/planning/campaign-steps/', () => HttpResponse.json(data.campaignSteps ?? [])),
-        http.get('/api/v1/planning/lab-salles/', () => HttpResponse.json(data.salles ?? [])),
         http.get('/api/v1/planning/lab-events/', () => HttpResponse.json(data.labEvents ?? [])),
         http.get('/api/v1/campaigns/', () => HttpResponse.json(data.campaigns ?? [])),
         http.get('/api/v1/fsecs/', () => HttpResponse.json(data.fsecs ?? [])),

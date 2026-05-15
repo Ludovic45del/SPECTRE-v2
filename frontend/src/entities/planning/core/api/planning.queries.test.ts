@@ -13,7 +13,6 @@ import {
     useCellAnnotations,
     useFsecCellLinks,
     useCampaignSteps,
-    useLabSalles,
     useLabEvents,
 } from './planning.queries';
 
@@ -78,19 +77,6 @@ describe('Planning Queries', () => {
     describe('useCampaignSteps', () => {
         it('fetches campaign steps for a year', async () => {
             const { result } = renderHook(() => useCampaignSteps(2025), {
-                wrapper: createQueryWrapper(),
-            });
-
-            await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-            expect(result.current.data).toBeDefined();
-            expect(Array.isArray(result.current.data)).toBe(true);
-        });
-    });
-
-    describe('useLabSalles', () => {
-        it('fetches lab salles', async () => {
-            const { result } = renderHook(() => useLabSalles(), {
                 wrapper: createQueryWrapper(),
             });
 

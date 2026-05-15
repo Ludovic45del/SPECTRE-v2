@@ -25,7 +25,7 @@ import { softChipSx } from '@shared/lib';
 import { getEventCategoryMeta, getPeriodeMeta, type Membre } from '../lib/planning.constants';
 import type { PlanningData } from '../lib/planning.hooks';
 import { type TimelineColumn, dateRangeOverlapsColumn } from '../lib/planning.utils';
-import type { LabSalle } from '@entities/planning/core/model/planning.schema';
+import type { PlanningSalle } from '../lib/planning.lab';
 import type { LabEventsMap } from '../lib/planning.hooks';
 import { FsecPlanningRow, type FsecInfo } from './assemblage/FsecPlanningRow';
 
@@ -47,7 +47,7 @@ interface StepAvailabilityConfig {
 interface AssemblageInfoPopoverProps extends StepAvailabilityConfig {
     column: TimelineColumn;
     membres: Membre[];
-    salles: LabSalle[];
+    salles: PlanningSalle[];
     labEvents: LabEventsMap;
     planningData: PlanningData;
     campaignUuid: string;

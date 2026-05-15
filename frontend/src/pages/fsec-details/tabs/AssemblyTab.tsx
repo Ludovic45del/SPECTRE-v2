@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { AssemblyStep, useAssemblyStepsByFsec } from '@entities/fsec/steps';
 import { UserChip } from '@entities/user';
+import { MachineChipList } from '@entities/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -31,13 +32,6 @@ interface AssemblyTabProps {
     /** ID du statut FSEC courant — verrouille le tableau récap si === 7 (Tirée). */
     fsecStatusId: number;
 }
-
-// Referential - Assembly benches
-const ASSEMBLY_BENCHES: Record<number, string> = {
-    0: 'Banc 1',
-    1: 'Banc 2',
-    2: 'Banc 3',
-};
 
 const ASSEMBLY_WORKFLOW_STEPS = ["Début d'assemblage", "Fin d'assemblage"];
 
@@ -117,14 +111,10 @@ function AssemblyStepCard({ step, index, onEdit }: { step: AssemblyStep; index: 
                             <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
                         </Grid>
                         <Grid item xs={6} md={3}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                Bancs d'assemblage
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                Machines B1
                             </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {step.assemblyBenchIds.length > 0
-                                    ? step.assemblyBenchIds.map((id) => ASSEMBLY_BENCHES[id] ?? id).join(', ')
-                                    : '-'}
-                            </Typography>
+                            <MachineChipList uuids={step.machineUuids} roomCode="B1" emptyText="-" />
                         </Grid>
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" color="text.secondary">

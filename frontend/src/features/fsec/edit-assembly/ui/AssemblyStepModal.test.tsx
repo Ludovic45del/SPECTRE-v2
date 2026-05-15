@@ -23,7 +23,7 @@ const mockAssemblyStep = {
     startDate: new Date('2025-02-01'),
     endDate: new Date('2025-02-15'),
     comments: 'Test assembly step',
-    assemblyBenchIds: [1, 2],
+    machineUuids: [],
 };
 
 // Mock API response - snake_case matching AssemblyStepApiSchema
@@ -35,14 +35,8 @@ const mockAssemblyStepApi = {
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
-    assembly_bench_ids: [1, 2],
+    machine_uuids: [],
 };
-
-const mockAssemblyBenches = [
-    { id: 1, name: 'Banc A' },
-    { id: 2, name: 'Banc B' },
-    { id: 3, name: 'Banc C' },
-];
 
 describe('AssemblyStepModal', () => {
     const mockOnClose = vi.fn();
@@ -53,9 +47,6 @@ describe('AssemblyStepModal', () => {
 
         // Setup default handlers
         server.use(
-            http.get('/api/v1/assembly-benches/', () => {
-                return HttpResponse.json(mockAssemblyBenches);
-            }),
             http.post('/api/v1/assembly-steps/', () => {
                 return HttpResponse.json(mockAssemblyStepApi, { status: 201 });
             }),

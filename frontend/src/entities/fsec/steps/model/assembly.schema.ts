@@ -15,7 +15,7 @@ export const AssemblyStepApiSchema = z.object({
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     comments: z.string().nullable(),
-    assembly_bench_ids: z.array(z.number().int()),
+    machine_uuids: z.array(z.string().uuid()),
 });
 
 export const AssemblyStepSchema = AssemblyStepApiSchema.transform((api) => ({
@@ -26,7 +26,7 @@ export const AssemblyStepSchema = AssemblyStepApiSchema.transform((api) => ({
     startDate: api.start_date ? new Date(api.start_date) : null,
     endDate: api.end_date ? new Date(api.end_date) : null,
     comments: api.comments,
-    assemblyBenchIds: api.assembly_bench_ids,
+    machineUuids: api.machine_uuids,
 }));
 
 export type AssemblyStep = z.infer<typeof AssemblyStepSchema>;

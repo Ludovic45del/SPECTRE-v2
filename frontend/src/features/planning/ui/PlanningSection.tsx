@@ -2,8 +2,8 @@
  * PlanningSection — Section collapsible (tbody) avec header cliquable.
  */
 import React from 'react';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, ExpandMore } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
 import { type SectionId } from '../lib/planning.constants';
 import { usePlanningColors } from '../lib/planning.hooks';
 import { usePlanningStore } from '../lib/planning.store';
@@ -13,11 +13,10 @@ interface PlanningSectionProps {
     sectionId: SectionId;
     label: string;
     totalColumns: number;
-    onAdd?: () => void;
     children: React.ReactNode;
 }
 
-export function PlanningSection({ sectionId, label, totalColumns, onAdd, children }: PlanningSectionProps) {
+export function PlanningSection({ sectionId, label, totalColumns, children }: PlanningSectionProps) {
     const colors = usePlanningColors();
     const isCollapsed = usePlanningStore((s) => !!s.collapsedSections[sectionId]);
     const toggleSection = usePlanningStore((s) => s.toggleSection);
@@ -63,18 +62,6 @@ export function PlanningSection({ sectionId, label, totalColumns, onAdd, childre
                                     {label}
                                 </Typography>
                             </Box>
-                            {onAdd && (
-                                <Tooltip title="Ajouter une ligne">
-                                    <IconButton
-                                        size="small"
-                                        onClick={onAdd}
-                                        aria-label="Ajouter une ligne"
-                                        sx={{ color: colors.accent, p: 0.3 }}
-                                    >
-                                        <Add fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
                         </Box>
                     </td>
                 </tr>

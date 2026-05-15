@@ -11,8 +11,6 @@ from typing import Any, Callable, TypeVar
 from app.domain.exceptions import NotFoundException, ValidationException
 from app.domain.planning.interface.planning_repository import IPlanningRepository
 from app.domain.planning.models.lab_event_bean import LabEventBean
-from app.domain.planning.models.lab_machine_bean import LabMachineBean
-from app.domain.planning.models.lab_salle_bean import LabSalleBean
 from app.domain.planning.models.planning_campaign_step_bean import (
     PlanningCampaignStepBean,
 )
@@ -203,46 +201,6 @@ def delete_campaign_step(repository: IPlanningRepository, uuid: uuid_mod.UUID) -
     return _delete_or_raise(
         repository.delete_campaign_step, uuid, "PlanningCampaignStep"
     )
-
-
-# ====================== LAB SALLE ======================
-
-
-def get_all_salles(repository: IPlanningRepository) -> list[LabSalleBean]:
-    return repository.get_all_salles()
-
-
-def create_salle(repository: IPlanningRepository, bean: LabSalleBean) -> LabSalleBean:
-    return repository.create_salle(bean)
-
-
-def update_salle(
-    repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabSalleBean
-) -> LabSalleBean:
-    return _update_or_raise(repository.update_salle, uuid, bean, "LabSalle")
-
-
-def delete_salle(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_salle, uuid, "LabSalle")
-
-
-# ====================== LAB MACHINE ======================
-
-
-def create_machine(
-    repository: IPlanningRepository, bean: LabMachineBean
-) -> LabMachineBean:
-    return repository.create_machine(bean)
-
-
-def update_machine(
-    repository: IPlanningRepository, uuid: uuid_mod.UUID, bean: LabMachineBean
-) -> LabMachineBean:
-    return _update_or_raise(repository.update_machine, uuid, bean, "LabMachine")
-
-
-def delete_machine(repository: IPlanningRepository, uuid: uuid_mod.UUID) -> bool:
-    return _delete_or_raise(repository.delete_machine, uuid, "LabMachine")
 
 
 # ====================== LAB EVENT ======================

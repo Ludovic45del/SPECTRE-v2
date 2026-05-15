@@ -5,7 +5,6 @@ import uuid
 from django.db import models
 
 from app.domain.planning.models.planning_constants import LAB_EVENT_CATEGORY_CHOICES
-from app.repository.planning.models.lab_machine_entity import LabMachineEntity
 
 
 class LabEventEntity(models.Model):
@@ -22,7 +21,7 @@ class LabEventEntity(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     machine = models.ForeignKey(
-        LabMachineEntity, on_delete=models.CASCADE, db_column="machine_id"
+        "app.MachineEntity", on_delete=models.CASCADE, db_column="machine_id"
     )
     category = models.CharField(
         max_length=50,

@@ -17,8 +17,9 @@ class AssemblyStepSerializer(serializers.Serializer):
     comments = serializers.CharField(
         max_length=4000, required=False, allow_blank=True, allow_null=True
     )
-    assembly_bench_ids = serializers.ListField(
-        child=serializers.IntegerField(), required=False, allow_empty=True
+    # UUIDs de MachineEntity (salle B1) liées à cette étape d'assemblage.
+    machine_uuids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, allow_empty=True
     )
 
 
@@ -27,9 +28,7 @@ class MetrologyStepSerializer(serializers.Serializer):
 
     uuid = serializers.UUIDField(required=False)
     fsec_version_id = serializers.UUIDField(required=True)
-    # Les machines de métrologie et les racks sont seedés à partir de l'id 0
-    # (cf. data/fsec/metrology_machine.csv et data/fsec/fsec_racks.csv).
-    machine_id = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    # Les racks sont seedés à partir de l'id 0 (cf. data/fsec/fsec_racks.csv).
     rack_id = serializers.IntegerField(required=False, allow_null=True, min_value=0)
     metrologist_name = serializers.CharField(
         max_length=255, required=False, allow_blank=True, allow_null=True
@@ -38,6 +37,10 @@ class MetrologyStepSerializer(serializers.Serializer):
     date = serializers.DateField(required=False, allow_null=True)
     comments = serializers.CharField(
         max_length=4000, required=False, allow_blank=True, allow_null=True
+    )
+    # UUIDs de MachineEntity (salle B2) liées à cette étape de métrologie.
+    machine_uuids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, allow_empty=True
     )
 
 
@@ -111,9 +114,7 @@ class AirtightnessTestLpStepSerializer(serializers.Serializer):
     experiment_pressure = serializers.FloatField(required=False, allow_null=True)
     airtightness_test_duration = serializers.FloatField(required=False, allow_null=True)
     date_of_fulfilment = serializers.DateField(required=False, allow_null=True)
-    phase = serializers.ChoiceField(
-        choices=["BP", "HP"], required=False, default="BP"
-    )
+    phase = serializers.ChoiceField(choices=["BP", "HP"], required=False, default="BP")
 
 
 class GasFillingBpStepSerializer(serializers.Serializer):

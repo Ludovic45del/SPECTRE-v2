@@ -5,8 +5,6 @@ from rest_framework.routers import DefaultRouter
 
 from app.api.planning.planning_controller import (
     LabEventController,
-    LabMachineController,
-    LabSalleController,
     PlanningCampaignStepController,
     PlanningCellAnnotationController,
     PlanningFsecCellLinkController,
@@ -38,8 +36,6 @@ router.register(
     PlanningCampaignStepController,
     basename="planning-campaign-steps",
 )
-router.register(r"lab-salles", LabSalleController, basename="planning-lab-salles")
-router.register(r"lab-machines", LabMachineController, basename="planning-lab-machines")
 router.register(r"lab-events", LabEventController, basename="planning-lab-events")
 
 urlpatterns = [
