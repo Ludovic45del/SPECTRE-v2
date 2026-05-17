@@ -19,6 +19,7 @@ from app.domain.planning.models.planning_fsec_cell_link_bean import (
 from app.domain.planning.models.planning_member_period_bean import (
     PlanningMemberPeriodBean,
 )
+from app.domain.planning.models.planning_step_bean import PlanningStepBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.mapper.planning.planning_mapper import (
     lab_event_entity_to_bean,
@@ -26,6 +27,7 @@ from app.mapper.planning.planning_mapper import (
     planning_cell_annotation_entity_to_bean,
     planning_fsec_cell_link_entity_to_bean,
     planning_member_period_entity_to_bean,
+    planning_step_entity_to_bean,
     planning_week_state_entity_to_bean,
 )
 from app.repository.planning.models.lab_event_entity import LabEventEntity
@@ -41,6 +43,7 @@ from app.repository.planning.models.planning_fsec_cell_link_entity import (
 from app.repository.planning.models.planning_member_period_entity import (
     PlanningMemberPeriodEntity,
 )
+from app.repository.planning.models.planning_step_entity import PlanningStepEntity
 from app.repository.planning.models.planning_week_state_entity import (
     PlanningWeekStateEntity,
 )
@@ -185,6 +188,12 @@ class PlanningRepository(IPlanningRepository):
     @transaction.atomic
     def delete_fsec_cell_link(self, uuid: uuid_mod.UUID) -> bool:
         return self._delete_by_uuid(PlanningFsecCellLinkEntity, uuid)
+
+    # ====================== PLANNING STEP (referentiel) ======================
+
+    def get_planning_steps(self) -> list[PlanningStepBean]:
+        entities = PlanningStepEntity.objects.all()
+        return [planning_step_entity_to_bean(e) for e in entities]
 
     # ====================== CAMPAIGN STEP ======================
 

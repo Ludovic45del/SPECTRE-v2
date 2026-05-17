@@ -64,6 +64,9 @@ from app.repository.steps.models.repressurization_step_entity import (
 )
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
 
+# Planning Entities
+from app.repository.planning.models.planning_step_entity import PlanningStepEntity
+
 
 # Campaign Admin Classes
 class CampaignAdmin(admin.ModelAdmin):
@@ -168,6 +171,25 @@ class PhotoViewAdmin(admin.ModelAdmin):
     list_display = ("uuid", "pictures_step_id", "name", "link")
 
 
+# Planning Admin Classes
+class PlanningStepAdmin(admin.ModelAdmin):
+    list_display = (
+        "display_order",
+        "label",
+        "color",
+        "min_status_for_done",
+        "use_shooting_date",
+        "gas_only",
+    )
+    list_editable = (
+        "color",
+        "min_status_for_done",
+        "use_shooting_date",
+        "gas_only",
+    )
+    ordering = ("display_order",)
+
+
 # Register Campaign Models
 admin.site.register(CampaignEntity, CampaignAdmin)
 admin.site.register(CampaignTypesEntity, CampaignTypesAdmin)
@@ -204,6 +226,9 @@ admin.site.register(GasFillingHpStepEntity)
 admin.site.register(PermeationStepEntity)
 admin.site.register(DepressurizationStepEntity)
 admin.site.register(RepressurizationStepEntity)
+
+# Register Planning Models
+admin.site.register(PlanningStepEntity, PlanningStepAdmin)
 
 
 # Embase Admin Classes

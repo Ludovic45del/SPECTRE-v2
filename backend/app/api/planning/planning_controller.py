@@ -25,6 +25,7 @@ from app.domain.planning.services.planning_service import (
     get_cell_annotations_by_year,
     get_fsec_cell_links_by_year,
     get_member_periods_by_year,
+    get_planning_steps,
     get_week_states_by_year,
     update_campaign_step,
     update_lab_event,
@@ -43,6 +44,7 @@ from app.mapper.planning.planning_mapper import (
     planning_fsec_cell_link_bean_to_api,
     planning_member_period_api_to_bean,
     planning_member_period_bean_to_api,
+    planning_step_bean_to_api,
     planning_week_state_api_to_bean,
     planning_week_state_bean_to_api,
 )
@@ -115,6 +117,16 @@ class PlanningCampaignStepController(BasePlanningController):
     service_delete = staticmethod(delete_campaign_step)
     list_mode = "year"
     entity_name = "PlanningCampaignStep"
+
+
+class PlanningStepController(BasePlanningController):
+    """Referentiel des etapes de planning campagne (lecture seule)."""
+
+    http_method_names = ["get", "options", "head"]
+    mapper_bean_to_api = staticmethod(planning_step_bean_to_api)
+    service_list = staticmethod(get_planning_steps)
+    list_mode = "all"
+    entity_name = "PlanningStep"
 
 
 # ====================== Lab Entities ======================

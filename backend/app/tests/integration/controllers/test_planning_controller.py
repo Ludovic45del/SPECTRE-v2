@@ -517,3 +517,60 @@ class TestCampaignStepController:
         response = api_client.delete(f"{self.url}{fake_uuid}/")
 
         assert response.status_code == 404
+
+
+# ============================================================================
+# PLANNING STEP CONTROLLER TESTS (referentiel lecture seule)
+# ============================================================================
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestPlanningStepController:
+    """Tests endpoint /api/v1/planning/planning-steps/"""
+
+    url = f"{BASE_URL}/planning-steps/"
+
+    def test_list_planning_steps(self, api_client):
+        """Le referentiel seede expose les 6 etapes par defaut."""
+        response = api_client.get(self.url)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) == 6
+        labels = {s["label"] for s in data}
+        assert "Assemblage" in labels
+        assert "Tir" in labels
+
+    def test_planning_step_exposes_config_fields(self, api_client):
+        """Chaque etape expose ses champs de configuration."""
+        data = api_client.get(self.url).json()
+
+        for key in (
+            "id",
+            "label",
+            "color",
+            "display_order",
+            "min_status_for_done",
+            "use_shooting_date",
+            "gas_only",
+        ):
+            assert key in data[0]
+
+    def test_planning_steps_ordered_by_display_order(self, api_client):
+        """Les etapes sont triees par display_order."""
+        data = api_client.get(self.url).json()
+
+        orders = [s["display_order"] for s in data]
+        assert orders == sorted(orders)
+
+    def test_create_planning_step_not_allowed(self, api_client):
+        """L'endpoint est en lecture seule : POST renvoie 405."""
+        response = api_client.post(
+            self.url,
+            data=json.dumps({"label": "Nouvelle etape"}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 405

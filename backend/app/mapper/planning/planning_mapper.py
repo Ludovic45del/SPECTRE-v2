@@ -21,6 +21,7 @@ from app.domain.planning.models.planning_fsec_cell_link_bean import (
 from app.domain.planning.models.planning_member_period_bean import (
     PlanningMemberPeriodBean,
 )
+from app.domain.planning.models.planning_step_bean import PlanningStepBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.repository.planning.models.lab_event_entity import LabEventEntity
 from app.repository.planning.models.planning_campaign_step_entity import (
@@ -35,6 +36,7 @@ from app.repository.planning.models.planning_fsec_cell_link_entity import (
 from app.repository.planning.models.planning_member_period_entity import (
     PlanningMemberPeriodEntity,
 )
+from app.repository.planning.models.planning_step_entity import PlanningStepEntity
 from app.repository.planning.models.planning_week_state_entity import (
     PlanningWeekStateEntity,
 )
@@ -365,3 +367,30 @@ def planning_campaign_step_api_to_bean(
         start_date=data["start_date"],
         end_date=data["end_date"],
     )
+
+
+# ====================== PLANNING STEP (referentiel) ======================
+
+
+def planning_step_entity_to_bean(entity: PlanningStepEntity) -> PlanningStepBean:
+    return PlanningStepBean(
+        id=entity.id,
+        label=entity.label,
+        color=entity.color,
+        display_order=entity.display_order,
+        min_status_for_done=entity.min_status_for_done,
+        use_shooting_date=entity.use_shooting_date,
+        gas_only=entity.gas_only,
+    )
+
+
+def planning_step_bean_to_api(bean: PlanningStepBean) -> dict[str, Any]:
+    return {
+        "id": bean.id,
+        "label": bean.label,
+        "color": bean.color,
+        "display_order": bean.display_order,
+        "min_status_for_done": bean.min_status_for_done,
+        "use_shooting_date": bean.use_shooting_date,
+        "gas_only": bean.gas_only,
+    }

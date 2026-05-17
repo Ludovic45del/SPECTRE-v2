@@ -5,7 +5,6 @@ from rest_framework import serializers
 from app.domain.planning.models.planning_constants import (
     LAB_EVENT_CATEGORY_CHOICES,
     PERIOD_TYPE_CHOICES,
-    STEP_LABEL_CHOICES,
     WEEK_STATE_CHOICES,
 )
 
@@ -22,6 +21,25 @@ class DateRangeValidationMixin:
                 {"end_date": "La date de fin doit etre >= a la date de debut."}
             )
         return data
+
+
+class StepLabelValidationMixin:
+    """Mixin validant step_label contre le referentiel PLANNING_STEP.
+
+    Remplace une liste de choix figee : les etapes sont desormais
+    configurables via l'admin Django.
+    """
+
+    def validate_step_label(self, value):
+        from app.repository.planning.models.planning_step_entity import (
+            PlanningStepEntity,
+        )
+
+        if not PlanningStepEntity.objects.filter(label=value).exists():
+            raise serializers.ValidationError(
+                f"Etape de planning inconnue: '{value}'."
+            )
+        return value
 
 
 class PlanningWeekStateSerializer(serializers.Serializer):
@@ -46,23 +64,27 @@ class PlanningMemberPeriodSerializer(DateRangeValidationMixin, serializers.Seria
     end_date = serializers.DateField(required=True)
 
 
-class PlanningCellAnnotationSerializer(serializers.Serializer):
+class PlanningCellAnnotationSerializer(
+    StepLabelValidationMixin, serializers.Serializer
+):
     """Validation pour les annotations de cellules campagne."""
 
     campaign_uuid = serializers.UUIDField(required=True)
-    step_label = serializers.ChoiceField(required=True, choices=STEP_LABEL_CHOICES)
+    step_label = serializers.CharField(required=True, max_length=50)
     year = serializers.IntegerField(required=True, min_value=2000, max_value=2100)
     week_num = serializers.IntegerField(required=True, min_value=1, max_value=53)
     text = serializers.CharField(required=True, max_length=1000)
 
 
-class PlanningFsecCellLinkSerializer(serializers.Serializer):
+class PlanningFsecCellLinkSerializer(
+    StepLabelValidationMixin, serializers.Serializer
+):
     """Validation pour les liens FSEC -> cellule/etape planning.
     week_num=0 signifie un lien au niveau de l'etape (pas une semaine specifique).
     """
 
     campaign_uuid = serializers.UUIDField(required=True)
-    step_label = serializers.ChoiceField(required=True, choices=STEP_LABEL_CHOICES)
+    step_label = serializers.CharField(required=True, max_length=50)
     year = serializers.IntegerField(required=True, min_value=2000, max_value=2100)
     week_num = serializers.IntegerField(required=True, min_value=0, max_value=53)
     fsec_uuid = serializers.UUIDField(required=True)
@@ -71,12 +93,14 @@ class PlanningFsecCellLinkSerializer(serializers.Serializer):
 # ====================== CAMPAIGN STEP ======================
 
 
-class PlanningCampaignStepSerializer(DateRangeValidationMixin, serializers.Serializer):
+class PlanningCampaignStepSerializer(
+    StepLabelValidationMixin, DateRangeValidationMixin, serializers.Serializer
+):
     """Validation pour les etapes programmees des campagnes."""
 
     campaign_uuid = serializers.UUIDField(required=True)
     fsec_uuid = serializers.UUIDField(required=True)
-    step_label = serializers.ChoiceField(required=True, choices=STEP_LABEL_CHOICES)
+    step_label = serializers.CharField(required=True, max_length=50)
     year = serializers.IntegerField(required=True, min_value=2000, max_value=2100)
     start_date = serializers.DateField(required=True)
     end_date = serializers.DateField(required=True)

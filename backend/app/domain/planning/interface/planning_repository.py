@@ -16,6 +16,7 @@ from app.domain.planning.models.planning_fsec_cell_link_bean import (
 from app.domain.planning.models.planning_member_period_bean import (
     PlanningMemberPeriodBean,
 )
+from app.domain.planning.models.planning_step_bean import PlanningStepBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 
 
@@ -112,6 +113,12 @@ class IPlanningRepository(abc.ABC):
 
     @abc.abstractmethod
     def delete_campaign_step(self, uuid: uuid_mod.UUID) -> bool:
+        raise NotImplementedError
+
+    # --- Planning Steps (referentiel) ---
+
+    @abc.abstractmethod
+    def get_planning_steps(self) -> list[PlanningStepBean]:
         raise NotImplementedError
 
     # --- Lab Events ---

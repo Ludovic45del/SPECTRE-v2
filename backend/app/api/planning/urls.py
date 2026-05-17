@@ -9,6 +9,7 @@ from app.api.planning.planning_controller import (
     PlanningCellAnnotationController,
     PlanningFsecCellLinkController,
     PlanningMemberPeriodController,
+    PlanningStepController,
     PlanningWeekStateController,
 )
 
@@ -35,6 +36,9 @@ router.register(
     r"campaign-steps",
     PlanningCampaignStepController,
     basename="planning-campaign-steps",
+)
+router.register(
+    r"planning-steps", PlanningStepController, basename="planning-steps"
 )
 router.register(r"lab-events", LabEventController, basename="planning-lab-events")
 

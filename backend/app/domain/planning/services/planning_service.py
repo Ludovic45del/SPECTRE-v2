@@ -24,6 +24,7 @@ from app.domain.planning.models.planning_fsec_cell_link_bean import (
 from app.domain.planning.models.planning_member_period_bean import (
     PlanningMemberPeriodBean,
 )
+from app.domain.planning.models.planning_step_bean import PlanningStepBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,13 @@ def delete_fsec_cell_link(repository: IPlanningRepository, uuid: uuid_mod.UUID) 
     return _delete_or_raise(
         repository.delete_fsec_cell_link, uuid, "PlanningFsecCellLink"
     )
+
+
+# ====================== PLANNING STEP (referentiel) ======================
+
+
+def get_planning_steps(repository: IPlanningRepository) -> list[PlanningStepBean]:
+    return repository.get_planning_steps()
 
 
 # ====================== CAMPAIGN STEP ======================

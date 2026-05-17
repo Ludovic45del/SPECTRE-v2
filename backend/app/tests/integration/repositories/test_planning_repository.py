@@ -589,3 +589,44 @@ class TestPlanningRepositoryLabEvent:
         result = planning_repository.delete_lab_event(created.uuid)
 
         assert result is True
+
+
+# ============================================================================
+# PLANNING STEP TESTS (referentiel)
+# ============================================================================
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestPlanningRepositoryPlanningStep:
+    """Tests get_planning_steps - referentiel des etapes."""
+
+    def test_get_planning_steps_returns_seeded(self, planning_repository):
+        """Le referentiel seede retourne les 6 etapes par defaut."""
+        steps = planning_repository.get_planning_steps()
+
+        assert len(steps) == 6
+        labels = {s.label for s in steps}
+        assert labels == {
+            "Réception cibles",
+            "Assemblage",
+            "Métrologie",
+            "Gaz",
+            "Livraison",
+            "Tir",
+        }
+
+    def test_planning_steps_carry_configuration(self, planning_repository):
+        """Les beans portent la configuration de chaque etape."""
+        steps = {s.label: s for s in planning_repository.get_planning_steps()}
+
+        assert steps["Gaz"].gas_only is True
+        assert steps["Assemblage"].gas_only is False
+        assert steps["Assemblage"].min_status_for_done == 2
+
+    def test_planning_steps_ordered_by_display_order(self, planning_repository):
+        """Les etapes sont triees par display_order."""
+        steps = planning_repository.get_planning_steps()
+
+        orders = [s.display_order for s in steps]
+        assert orders == sorted(orders)

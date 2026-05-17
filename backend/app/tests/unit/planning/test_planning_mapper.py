@@ -17,6 +17,7 @@ from app.domain.planning.models.planning_campaign_step_bean import (
 from app.domain.planning.models.planning_member_period_bean import (
     PlanningMemberPeriodBean,
 )
+from app.domain.planning.models.planning_step_bean import PlanningStepBean
 from app.domain.planning.models.planning_week_state_bean import PlanningWeekStateBean
 from app.mapper.planning.planning_mapper import (
     lab_event_api_to_bean,
@@ -27,9 +28,12 @@ from app.mapper.planning.planning_mapper import (
     planning_fsec_cell_link_api_to_bean,
     planning_member_period_api_to_bean,
     planning_member_period_bean_to_api,
+    planning_step_bean_to_api,
+    planning_step_entity_to_bean,
     planning_week_state_api_to_bean,
     planning_week_state_bean_to_api,
 )
+from app.repository.planning.models.planning_step_entity import PlanningStepEntity
 
 # ====================== WEEK STATE ======================
 
@@ -251,3 +255,45 @@ class TestCampaignStepMapper:
         result = planning_campaign_step_bean_to_api(bean)
         assert result["uuid"] == uid
         assert result["step_label"] == "Scellement"
+
+
+# ====================== PLANNING STEP (referentiel) ======================
+
+
+class TestPlanningStepMapper:
+
+    @pytest.mark.unit
+    def test_entity_to_bean(self):
+        entity = PlanningStepEntity(
+            id=3,
+            label="Gaz",
+            color="#8b5cf6",
+            display_order=3,
+            min_status_for_done=5,
+            use_shooting_date=False,
+            gas_only=True,
+        )
+        bean = planning_step_entity_to_bean(entity)
+        assert bean.id == 3
+        assert bean.label == "Gaz"
+        assert bean.color == "#8b5cf6"
+        assert bean.display_order == 3
+        assert bean.min_status_for_done == 5
+        assert bean.gas_only is True
+
+    @pytest.mark.unit
+    def test_bean_to_api(self):
+        bean = PlanningStepBean(
+            id=1,
+            label="Assemblage",
+            color="#5B7FC7",
+            display_order=1,
+            min_status_for_done=2,
+        )
+        result = planning_step_bean_to_api(bean)
+        assert result["id"] == 1
+        assert result["label"] == "Assemblage"
+        assert result["display_order"] == 1
+        assert result["min_status_for_done"] == 2
+        assert result["gas_only"] is False
+        assert result["use_shooting_date"] is False
