@@ -19,10 +19,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(clear_lab_events, migrations.RunPython.noop),
-        migrations.RemoveField(
-            model_name='labmachineentity',
-            name='salle',
-        ),
+        # Repointe LabEvent vers le parc Matériel : LabMachineEntity n'a plus
+        # de FK entrante.
         migrations.AlterField(
             model_name='labevententity',
             name='machine',
@@ -32,10 +30,13 @@ class Migration(migrations.Migration):
                 to='app.machineentity',
             ),
         ),
-        migrations.DeleteModel(
-            name='LabSalleEntity',
-        ),
+        # Supprimer LabMachine d'abord : sa FK `salle` vers LabSalle disparaît
+        # avec la table. Évite un RemoveField(salle) incompatible SQLite
+        # (reconstruction de table + contrainte sur la colonne supprimée).
         migrations.DeleteModel(
             name='LabMachineEntity',
+        ),
+        migrations.DeleteModel(
+            name='LabSalleEntity',
         ),
     ]

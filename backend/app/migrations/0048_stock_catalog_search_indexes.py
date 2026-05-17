@@ -38,6 +38,22 @@ CREATE_INDEX_REF_SQL = (
 DROP_INDEX_REF_SQL = "DROP INDEX IF EXISTS stock_item_reference_trgm_idx;"
 
 
+def create_trgm_indexes(apps, schema_editor):
+    """Active pg_trgm + index GIN. No-op hors PostgreSQL (SQLite de dev)."""
+    if schema_editor.connection.vendor != "postgresql":
+        return
+    schema_editor.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+    schema_editor.execute(CREATE_INDEX_NAME_SQL)
+    schema_editor.execute(CREATE_INDEX_REF_SQL)
+
+
+def drop_trgm_indexes(apps, schema_editor):
+    if schema_editor.connection.vendor != "postgresql":
+        return
+    schema_editor.execute(DROP_INDEX_NAME_SQL)
+    schema_editor.execute(DROP_INDEX_REF_SQL)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -45,16 +61,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql="CREATE EXTENSION IF NOT EXISTS pg_trgm;",
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunSQL(
-            sql=CREATE_INDEX_NAME_SQL,
-            reverse_sql=DROP_INDEX_NAME_SQL,
-        ),
-        migrations.RunSQL(
-            sql=CREATE_INDEX_REF_SQL,
-            reverse_sql=DROP_INDEX_REF_SQL,
-        ),
+        migrations.RunPython(create_trgm_indexes, drop_trgm_indexes),
     ]
