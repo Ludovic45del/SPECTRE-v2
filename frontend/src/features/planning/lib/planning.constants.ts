@@ -3,6 +3,8 @@
  * @module features/planning/lib
  */
 
+import type { PlanningStep } from '@entities/planning/core/model/planning.schema';
+
 // ====================== Grid Layout ======================
 
 export const GRID_LABEL_WIDTH = 180;
@@ -135,23 +137,13 @@ export function getPeriodeMeta(value: string): Periode | undefined {
 
 // ====================== Étapes campagnes ======================
 
-export interface Etape {
-    label: string;
-    color: string;
-    minStatusForDone?: number;
-    useShootingDate?: boolean;
-    /** Only show for campaigns with gas FSECs (categoryId >= 1) */
-    gasOnly?: boolean;
-}
-
-export const ETAPES: Etape[] = [
-    { label: 'Réception cibles', color: '#C47A9A', minStatusForDone: 1 },
-    { label: 'Assemblage', color: '#5B7FC7', minStatusForDone: 2 },
-    { label: 'Métrologie', color: '#4BAFB5', minStatusForDone: 3 },
-    { label: 'Gaz', color: '#8b5cf6', minStatusForDone: 5, gasOnly: true },
-    { label: 'Livraison', color: '#C4A035', minStatusForDone: 6 },
-    { label: 'Tir', color: '#D4915C', minStatusForDone: 7 },
-];
+/**
+ * Une étape de planning campagne.
+ *
+ * Référentiel servi par l'API (`usePlanningSteps()` → table `PLANNING_STEP`),
+ * éditable via l'admin Django. Remplace l'ancienne constante figée `ETAPES`.
+ */
+export type Etape = PlanningStep;
 
 // ====================== Membre type ======================
 
@@ -189,6 +181,7 @@ export function getEventCategoryMeta(label: string): LabEventCategory | undefine
 export interface PlanningFilters {
     year: number | null;
     installations: string[];
+    /** Étapes à afficher (par label). Vide = toutes les étapes (aucun filtre). */
     etapeLabels: string[];
     campaignUuid: string | null;
 }
@@ -196,7 +189,7 @@ export interface PlanningFilters {
 export const DEFAULT_FILTERS: PlanningFilters = {
     year: new Date().getFullYear(),
     installations: ['LMJ'],
-    etapeLabels: ETAPES.map((e) => e.label),
+    etapeLabels: [],
     campaignUuid: null,
 };
 

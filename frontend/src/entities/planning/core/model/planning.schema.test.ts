@@ -22,6 +22,8 @@ import {
     PlanningCampaignStepApiSchema,
     PlanningCampaignStepSchema,
     planningCampaignStepCreateToApi,
+    PlanningStepSchema,
+    PlanningStepListSchema,
     LabEventApiSchema,
     LabEventSchema,
     LabEventCreateSchema,
@@ -260,6 +262,39 @@ describe('PlanningCampaignStep schemas', () => {
             start_date: '2025-04-01',
             end_date: '2025-04-10',
         });
+    });
+});
+
+// ====================== PLANNING STEP ======================
+
+describe('PlanningStep schemas', () => {
+    const validApi = {
+        id: 3,
+        label: 'Gaz',
+        color: '#8b5cf6',
+        display_order: 3,
+        min_status_for_done: 5,
+        use_shooting_date: false,
+        gas_only: true,
+    };
+
+    it('Schema transforms to camelCase', () => {
+        const parsed = PlanningStepSchema.parse(validApi);
+        expect(parsed.displayOrder).toBe(3);
+        expect(parsed.minStatusForDone).toBe(5);
+        expect(parsed.useShootingDate).toBe(false);
+        expect(parsed.gasOnly).toBe(true);
+        expect(parsed.label).toBe('Gaz');
+    });
+
+    it('Schema accepts null min_status_for_done', () => {
+        const parsed = PlanningStepSchema.parse({ ...validApi, min_status_for_done: null });
+        expect(parsed.minStatusForDone).toBeNull();
+    });
+
+    it('ListSchema parses an array', () => {
+        const parsed = PlanningStepListSchema.parse([validApi, { ...validApi, id: 4, label: 'Tir' }]);
+        expect(parsed).toHaveLength(2);
     });
 });
 

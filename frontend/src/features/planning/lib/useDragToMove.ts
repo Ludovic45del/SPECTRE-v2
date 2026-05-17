@@ -1,8 +1,11 @@
 /**
  * useDragToMove — generic drag-to-move hook for planning bar rows.
  *
- * Handles mousedown on a cell containing an item, tracks column movement via
- * document-level mousemove/mouseup, and invokes `onMove` with the day offset.
+ * Two entry points:
+ *  - `handleCellMouseDown` : mousedown on a `<td>` cell, the item is resolved
+ *    via `findItemAtColumn` (one item per row).
+ *  - `handleItemMouseDown` : mousedown on a bar element with an explicit item
+ *    (used when a single row hosts several bars, e.g. lane-packed campaign rows).
  */
 import { useCallback, useEffect, useRef } from 'react';
 import type { TimelineColumn } from './planning.utils';
@@ -18,9 +21,11 @@ export interface DragToMoveOptions<T> {
     disabled?: boolean;
 }
 
-export interface DragToMoveResult {
-    /** Attach to `onMouseDown` of each cell `<td>`. */
-    handleCellMouseDown: (e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn, colIdx: number) => void;
+export interface DragToMoveResult<T> {
+    /** Attach to `onMouseDown` of each cell `<td>` (single-item rows). */
+    handleCellMouseDown: (e: React.MouseEvent<HTMLElement>, col: TimelineColumn, colIdx: number) => void;
+    /** Attach to `onMouseDown` of a bar element with an explicit item (multi-bar rows). */
+    handleItemMouseDown: (e: React.MouseEvent<HTMLElement>, item: T, colIdx: number) => void;
     /** Ref that is `true` for one click cycle after a drag so the click handler can bail out. */
     skipNextClick: React.MutableRefObject<boolean>;
 }
@@ -30,7 +35,7 @@ export function useDragToMove<T>({
     findItemAtColumn,
     onMove,
     disabled = false,
-}: DragToMoveOptions<T>): DragToMoveResult {
+}: DragToMoveOptions<T>): DragToMoveResult<T> {
     const columnsRef = useRef(columns);
     columnsRef.current = columns;
 
@@ -47,15 +52,8 @@ export function useDragToMove<T>({
         };
     }, [disabled]);
 
-    const handleCellMouseDown = useCallback(
-        (e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn, colIdx: number) => {
-            if (disabled || e.button !== 0) return;
-            const match = findItemAtColumn(col);
-            if (!match) return;
-
-            e.preventDefault();
-            const originColIdx = colIdx;
-
+    const startDrag = useCallback(
+        (item: T, originColIdx: number) => {
             const handleDocMove = (me: MouseEvent) => {
                 const td = (me.target as HTMLElement).closest('td[data-col-index]') as HTMLElement | null;
                 if (!td) return;
@@ -85,7 +83,7 @@ export function useDragToMove<T>({
                 const dayOffset = targetCol.start.diff(originCol.start, 'day');
                 if (dayOffset === 0) return;
 
-                onMove(match, dayOffset);
+                onMove(item, dayOffset);
             };
 
             const cleanup = () => {
@@ -100,8 +98,29 @@ export function useDragToMove<T>({
             document.addEventListener('mouseup', handleDocUp);
             cleanupRef.current = cleanup;
         },
-        [disabled, findItemAtColumn, onMove],
+        [onMove],
     );
 
-    return { handleCellMouseDown, skipNextClick };
+    const handleCellMouseDown = useCallback(
+        (e: React.MouseEvent<HTMLElement>, col: TimelineColumn, colIdx: number) => {
+            if (disabled || e.button !== 0) return;
+            const match = findItemAtColumn(col);
+            if (!match) return;
+            e.preventDefault();
+            startDrag(match, colIdx);
+        },
+        [disabled, findItemAtColumn, startDrag],
+    );
+
+    const handleItemMouseDown = useCallback(
+        (e: React.MouseEvent<HTMLElement>, item: T, colIdx: number) => {
+            if (disabled || e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            startDrag(item, colIdx);
+        },
+        [disabled, startDrag],
+    );
+
+    return { handleCellMouseDown, handleItemMouseDown, skipNextClick };
 }

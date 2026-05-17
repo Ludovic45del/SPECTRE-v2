@@ -13,6 +13,7 @@ import {
     useCellAnnotations,
     useFsecCellLinks,
     useCampaignSteps,
+    usePlanningSteps,
     useLabEvents,
 } from './planning.queries';
 
@@ -97,6 +98,21 @@ describe('Planning Queries', () => {
 
             expect(result.current.data).toBeDefined();
             expect(Array.isArray(result.current.data)).toBe(true);
+        });
+    });
+
+    describe('usePlanningSteps', () => {
+        it('fetches the planning step referential', async () => {
+            const { result } = renderHook(() => usePlanningSteps(), {
+                wrapper: createQueryWrapper(),
+            });
+
+            await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+            expect(Array.isArray(result.current.data)).toBe(true);
+            expect(result.current.data!.length).toBeGreaterThan(0);
+            expect(result.current.data![0]).toHaveProperty('label');
+            expect(result.current.data![0]).toHaveProperty('displayOrder');
         });
     });
 });

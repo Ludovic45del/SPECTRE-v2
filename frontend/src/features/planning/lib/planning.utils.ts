@@ -140,9 +140,9 @@ export function dateRangeOverlapsColumn(
 
 export function isFsecStepDone(
     fsec: { statusId: number | null; shootingDate: Date | null },
-    etape: { minStatusForDone?: number; useShootingDate?: boolean },
+    etape: { minStatusForDone?: number | null; useShootingDate?: boolean },
 ): boolean {
     if (etape.useShootingDate) return fsec.shootingDate != null;
-    if (etape.minStatusForDone !== undefined) return (fsec.statusId ?? 0) >= etape.minStatusForDone;
+    if (etape.minStatusForDone != null) return (fsec.statusId ?? 0) >= etape.minStatusForDone;
     return false;
 }

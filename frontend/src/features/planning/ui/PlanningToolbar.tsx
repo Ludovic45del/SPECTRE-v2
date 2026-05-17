@@ -26,9 +26,9 @@ import {
 import { ArrowBackIosNew, ArrowForwardIos, CalendarToday, FilterList, RestartAlt } from '@mui/icons-material';
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
 import { CAMPAIGN_INSTALLATIONS } from '@entities/campaign/core/lib';
+import { usePlanningSteps } from '@entities/planning/core/api/planning.queries';
 import { getInputStyles, getChipStyles } from '@shared/lib';
 import { ColorDot } from '@shared/ui';
-import { ETAPES } from '../lib/planning.constants';
 import { usePlanningStore } from '../lib/planning.store';
 
 const INSTALLATION_LIST = Object.values(CAMPAIGN_INSTALLATIONS);
@@ -45,6 +45,7 @@ export function PlanningToolbar() {
     const setSelectedYear = usePlanningStore((s) => s.setSelectedYear);
 
     const { data: campaigns = [] } = useCampaigns();
+    const { data: planningSteps = [] } = usePlanningSteps();
 
     const inputSx = useMemo(() => getInputStyles(theme), [theme]);
 
@@ -78,14 +79,14 @@ export function PlanningToolbar() {
     );
 
     const selectedEtapes = useMemo(
-        () => ETAPES.filter((e) => filters.etapeLabels.includes(e.label)),
-        [filters.etapeLabels],
+        () => planningSteps.filter((e) => filters.etapeLabels.includes(e.label)),
+        [planningSteps, filters.etapeLabels],
     );
 
     // Active filter count — always count year & installation (like other toolbars)
     const activeFilterCount = useMemo(() => {
         let count = 2; // year + installation are always active
-        if (filters.etapeLabels.length !== ETAPES.length) count++;
+        if (filters.etapeLabels.length > 0) count++;
         if (filters.campaignUuid !== null) count++;
         return count;
     }, [filters]);
@@ -108,10 +109,8 @@ export function PlanningToolbar() {
     }
 
     function handleEtapeChange(labels: string[]) {
-        setFilters((f) => ({
-            ...f,
-            etapeLabels: labels.length ? labels : ETAPES.map((e) => e.label),
-        }));
+        // Aucune sélection = toutes les étapes (filtre vide).
+        setFilters((f) => ({ ...f, etapeLabels: labels }));
     }
 
     function handleCampaignChange(uuid: string | '') {
@@ -254,14 +253,14 @@ export function PlanningToolbar() {
                                     <InputLabel>Étape</InputLabel>
                                     <Select
                                         multiple
-                                        value={filters.etapeLabels.length === ETAPES.length ? [] : filters.etapeLabels}
+                                        value={filters.etapeLabels}
                                         onChange={(e) => handleEtapeChange(e.target.value as string[])}
                                         label="Étape"
                                         renderValue={(selected) =>
                                             selected.length === 0 ? undefined : (selected as string[]).join(', ')
                                         }
                                     >
-                                        {ETAPES.map((etape) => (
+                                        {planningSteps.map((etape) => (
                                             <MenuItem key={etape.label} value={etape.label}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                     <ColorDot color={etape.color} />
@@ -381,7 +380,7 @@ export function PlanningToolbar() {
                     : null}
 
                 {/* Étape chips */}
-                {filters.etapeLabels.length !== ETAPES.length &&
+                {filters.etapeLabels.length > 0 &&
                     selectedEtapes.map((etape) => (
                         <Chip
                             key={etape.label}

@@ -13,8 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
 import type { CampaignWithRelations } from '@entities/campaign/core/model/referential.schema';
 import { useFsecs } from '@entities/fsec/core/api/fsec.queries';
+import { usePlanningSteps } from '@entities/planning/core/api/planning.queries';
 import type { PlanningSalle } from '../lib/planning.lab';
-import { ETAPES, type Etape, type Membre } from '../lib/planning.constants';
+import { type Etape, type Membre } from '../lib/planning.constants';
+import { assignLanes, laneRowHeight } from '../lib/planning.lane-utils';
 import type { PlanningData } from '../lib/planning.hooks';
 import type { LabEventsMap } from '../lib/planning.hooks';
 import { usePlanningStore } from '../lib/planning.store';
@@ -27,8 +29,11 @@ export type { FsecInfo } from './campaign/types';
 
 // ====================== Constants ======================
 
-/** Estimated row height per campaign group row in pixels */
-const ROW_HEIGHT = 32;
+/** Estimated height of an étape header row, in pixels. */
+const HEADER_ROW_HEIGHT = 30;
+
+/** Height of the "Aucune FSEC" placeholder row, in pixels. */
+const EMPTY_ROW_HEIGHT = 28;
 
 /** Virtualize only when campaign count exceeds this threshold */
 const VIRTUALIZATION_THRESHOLD = 10;
@@ -58,6 +63,7 @@ export const PlanningCampaignRows = memo(function PlanningCampaignRows({
     const filters = usePlanningStore((s) => s.filters);
     const { data: campaigns = [] } = useCampaigns();
     const { data: allFsecs = [] } = useFsecs();
+    const { data: planningSteps = [] } = usePlanningSteps();
 
     const filteredCampaigns = useMemo(
         () =>
@@ -77,9 +83,11 @@ export const PlanningCampaignRows = memo(function PlanningCampaignRows({
     );
 
     const filteredEtapes = useMemo(() => {
+        // etapeLabels vide = aucun filtre, on affiche toutes les étapes du référentiel.
+        if (filters.etapeLabels.length === 0) return planningSteps;
         const labels = new Set(filters.etapeLabels);
-        return ETAPES.filter((e) => labels.has(e.label));
-    }, [filters.etapeLabels]);
+        return planningSteps.filter((e) => labels.has(e.label));
+    }, [planningSteps, filters.etapeLabels]);
 
     if (filteredCampaigns.length === 0) {
         return (
@@ -178,30 +186,38 @@ function VirtualizedCampaignRows({
         }
     }, []);
 
-    // Estimate each campaign group height based on its etapes and FSECs
-    const campaignRowCounts = useMemo(() => {
+    // Estimate each campaign group height (header rows + lane rows), in pixels.
+    const campaignGroupHeights = useMemo(() => {
         return filteredCampaigns.map((campagne) => {
             const campaignFsecs = allFsecs.filter((f) => f.campaignId === campagne.uuid);
             const gasFsecs = campaignFsecs.filter((f) => (f.categoryId ?? 0) >= 1);
             const visibleEtapes = filteredEtapes.filter((e) => !e.gasOnly || gasFsecs.length > 0);
 
-            let count = 0;
+            let height = 0;
             for (const etape of visibleEtapes) {
-                count += 1; // header row
+                height += HEADER_ROW_HEIGHT;
                 const key = `${campagne.uuid}#${etape.label}`;
                 const isCollapsed = collapsedStepGroups[key] !== false;
-                if (!isCollapsed) {
-                    const fsecs = etape.gasOnly ? gasFsecs : campaignFsecs;
-                    count += Math.max(fsecs.length, 1);
+                if (isCollapsed) continue;
+
+                const etapeFsecs = etape.gasOnly ? gasFsecs : campaignFsecs;
+                if (etapeFsecs.length === 0) {
+                    height += EMPTY_ROW_HEIGHT;
+                    continue;
                 }
+                const fsecUuids = new Set(etapeFsecs.map((f) => f.versionUuid));
+                const steps = (planningData.campaignStepsMap.get(key) ?? []).filter((s) =>
+                    fsecUuids.has(s.fsecUuid),
+                );
+                height += laneRowHeight(assignLanes(steps).laneCount);
             }
-            return Math.max(count, 1);
+            return Math.max(height, HEADER_ROW_HEIGHT);
         });
-    }, [filteredCampaigns, allFsecs, filteredEtapes, collapsedStepGroups]);
+    }, [filteredCampaigns, allFsecs, filteredEtapes, collapsedStepGroups, planningData.campaignStepsMap]);
 
     const virtualizer = useWindowVirtualizer({
         count: filteredCampaigns.length,
-        estimateSize: (index) => campaignRowCounts[index] * ROW_HEIGHT,
+        estimateSize: (index) => campaignGroupHeights[index],
         overscan: 3,
         scrollMargin,
     });

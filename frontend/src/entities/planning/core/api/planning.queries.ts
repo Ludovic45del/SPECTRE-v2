@@ -38,6 +38,8 @@ import {
     PlanningWeekStateCreate,
     PlanningWeekStateListSchema,
     PlanningWeekStateSchema,
+    PlanningStep,
+    PlanningStepListSchema,
     labEventCreateToApi,
     planningCampaignStepCreateToApi,
     planningMemberPeriodCreateToApi,
@@ -295,5 +297,20 @@ export function useDeleteCampaignStep() {
             queryClient.invalidateQueries({ queryKey: planningKeys.campaignStepsByYear(variables.year) });
         },
         onError: handleMutationError,
+    });
+}
+
+// ====================== PLANNING STEPS (referentiel) ======================
+
+/**
+ * Référentiel des étapes de planning campagne.
+ * Lecture seule — édition via l'admin Django. Remplace la constante ETAPES.
+ */
+export function usePlanningSteps() {
+    return useQuery({
+        queryKey: planningKeys.planningSteps(),
+        queryFn: ({ signal }): Promise<PlanningStep[]> =>
+            api.get('/planning/planning-steps/', PlanningStepListSchema, signal),
+        ...QUERY_CACHE_CONFIG,
     });
 }

@@ -81,16 +81,16 @@ export function StepHeaderRow({
     const aggregateRange = useMemo(() => computeAggregateRange(stepsForEtape), [stepsForEtape]);
 
     // Progression: count how many FSECs are "done" out of total
-    const hasProgress = etape.minStatusForDone !== undefined || etape.useShootingDate;
+    const hasProgress = etape.minStatusForDone != null || etape.useShootingDate;
     const totalFsecs = campaignFsecs.length;
     const doneCount = useMemo(() => {
         if (!hasProgress) return 0;
         return campaignFsecs.filter((f) => isFsecStepDone(f, etape)).length;
     }, [campaignFsecs, etape, hasProgress]);
-    // Count FSECs that have a matching step (ignores orphaned steps with unknown fsecUuid)
+    // Count FSECs that have a matching step (step.fsecUuid référence la version FSEC).
     const scheduledFsecCount = useMemo(() => {
         const scheduled = new Set(stepsForEtape.map((s) => s.fsecUuid));
-        return campaignFsecs.filter((f) => scheduled.has(f.fsecUuid)).length;
+        return campaignFsecs.filter((f) => scheduled.has(f.versionUuid)).length;
     }, [stepsForEtape, campaignFsecs]);
 
     const allDone = hasProgress && totalFsecs > 0 && doneCount === totalFsecs;

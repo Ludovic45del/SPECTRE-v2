@@ -245,6 +245,32 @@ export function planningCampaignStepCreateToApi(data: PlanningCampaignStepCreate
     };
 }
 
+// ====================== PLANNING STEP (referentiel) ======================
+
+export const PlanningStepApiSchema = z.object({
+    id: z.number().int(),
+    label: z.string(),
+    color: z.string(),
+    display_order: z.number().int(),
+    min_status_for_done: z.number().int().nullable(),
+    use_shooting_date: z.boolean(),
+    gas_only: z.boolean(),
+});
+
+export const PlanningStepSchema = PlanningStepApiSchema.transform((api) => ({
+    id: api.id,
+    label: api.label,
+    color: api.color,
+    displayOrder: api.display_order,
+    minStatusForDone: api.min_status_for_done,
+    useShootingDate: api.use_shooting_date,
+    gasOnly: api.gas_only,
+}));
+
+export type PlanningStep = z.infer<typeof PlanningStepSchema>;
+
+export const PlanningStepListSchema = z.array(PlanningStepSchema);
+
 // ====================== LAB EVENT ======================
 
 export const LabEventApiSchema = z.object({

@@ -1,8 +1,11 @@
 /**
  * FsecStepPopover — Popover DatePicker pour créer/modifier/supprimer un step FSEC.
+ *
+ * En création depuis la vue couloirs, aucune FSEC n'est pré-sélectionnée :
+ * `fsecOptions` fournit la liste des FSEC planifiables et l'utilisateur choisit.
  */
-import { useState } from 'react';
-import { Box, Button, IconButton, Popover, Typography } from '@mui/material';
+import { useMemo, useState } from 'react';
+import { Box, Button, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Close } from '@mui/icons-material';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -16,13 +19,21 @@ import type { PlanningCampaignStep } from '@entities/planning/core/model/plannin
 
 // ====================== Types ======================
 
+export interface FsecOption {
+    versionUuid: string;
+    name: string;
+}
+
 interface FsecStepPopoverProps {
     anchorEl: HTMLElement;
     existingStep?: PlanningCampaignStep;
     defaultDate: string;
     campaignUuid: string;
-    fsecUuid: string;
-    fsecName: string;
+    /** FSEC fixe (édition d'un step existant). */
+    fsecUuid?: string;
+    fsecName?: string;
+    /** FSEC sélectionnables (création depuis la vue couloirs). */
+    fsecOptions?: FsecOption[];
     stepLabel: string;
     stepColor: string;
     year: number;
@@ -38,6 +49,7 @@ export function FsecStepPopover({
     campaignUuid,
     fsecUuid,
     fsecName,
+    fsecOptions,
     stepLabel,
     stepColor,
     year,
@@ -51,10 +63,21 @@ export function FsecStepPopover({
     const [startDate, setStartDate] = useState<Dayjs>(dayjs(existingStep?.startDate ?? defaultDate));
     const [endDate, setEndDate] = useState<Dayjs>(dayjs(existingStep?.endDate ?? defaultDate));
 
+    // FSEC ciblée : fixe en édition, choisie via la liste en création.
+    const showPicker = !existingStep && !fsecUuid && (fsecOptions?.length ?? 0) > 0;
+    const [pickedFsec, setPickedFsec] = useState<string>(fsecUuid ?? fsecOptions?.[0]?.versionUuid ?? '');
+    const targetFsec = fsecUuid ?? existingStep?.fsecUuid ?? pickedFsec;
+
+    const displayName = useMemo(() => {
+        if (fsecName) return fsecName;
+        return fsecOptions?.find((f) => f.versionUuid === targetFsec)?.name ?? '';
+    }, [fsecName, fsecOptions, targetFsec]);
+
     const handleSave = () => {
+        if (!targetFsec) return;
         const payload = {
             campaignUuid,
-            fsecUuid,
+            fsecUuid: targetFsec,
             stepLabel,
             year,
             startDate: startDate.format('YYYY-MM-DD'),
@@ -94,9 +117,27 @@ export function FsecStepPopover({
                 </IconButton>
             </Box>
 
-            <Typography fontSize={11} color="text.secondary" sx={{ mb: 1 }}>
-                {fsecName}
-            </Typography>
+            {showPicker ? (
+                <FormControl size="small" fullWidth sx={{ mb: 1.5 }}>
+                    <InputLabel>FSEC</InputLabel>
+                    <Select
+                        label="FSEC"
+                        value={pickedFsec}
+                        onChange={(e) => setPickedFsec(e.target.value)}
+                        sx={{ '& .MuiSelect-select': { fontSize: 12 } }}
+                    >
+                        {fsecOptions!.map((f) => (
+                            <MenuItem key={f.versionUuid} value={f.versionUuid} sx={{ fontSize: 12 }}>
+                                {f.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            ) : (
+                <Typography fontSize={11} color="text.secondary" sx={{ mb: 1 }}>
+                    {displayName}
+                </Typography>
+            )}
 
             <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
                 <DatePicker
@@ -151,7 +192,7 @@ export function FsecStepPopover({
                     size="small"
                     variant="contained"
                     onClick={handleSave}
-                    disabled={createStep.isPending || updateStep.isPending}
+                    disabled={createStep.isPending || updateStep.isPending || !targetFsec}
                     sx={{
                         fontSize: 11,
                         textTransform: 'none',

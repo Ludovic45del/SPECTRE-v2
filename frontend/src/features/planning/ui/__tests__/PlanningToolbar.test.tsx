@@ -6,11 +6,15 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders, server } from '@test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import { DEFAULT_PLANNING_STEPS } from '@test/mocks/planning-handlers';
 import { PlanningToolbar } from '../PlanningToolbar';
 import { usePlanningStore } from '../../lib/planning.store';
 
 beforeEach(() => {
-    server.use(http.get('/api/v1/campaigns/', () => HttpResponse.json([])));
+    server.use(
+        http.get('/api/v1/campaigns/', () => HttpResponse.json([])),
+        http.get('/api/v1/planning/planning-steps/', () => HttpResponse.json(DEFAULT_PLANNING_STEPS)),
+    );
     usePlanningStore.getState().resetFilters();
 });
 

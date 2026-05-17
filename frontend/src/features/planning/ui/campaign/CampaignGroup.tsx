@@ -15,7 +15,7 @@ import { resolveWeekState } from '../../lib/planning.grid-utils';
 import { HoverTd, StickyLabelCell } from '../PlanningCell';
 import { CampaignContext } from './CampaignContext';
 import { StepHeaderRow } from './StepHeaderRow';
-import { FsecRow } from './FsecRow';
+import { StepLanesRow } from './StepLanesRow';
 import type { FsecInfo } from './types';
 
 // ====================== Types ======================
@@ -85,20 +85,18 @@ export const CampaignGroup = memo(function CampaignGroup({
         [etapes, gasFsecs.length],
     );
 
-    // Compute total rows for rowSpan of campaign name
+    // Compute total rows for rowSpan of campaign name.
+    // Une étape dépliée = 1 ligne en-tête + 1 ligne couloirs (ou "Aucune FSEC").
     const totalRows = useMemo(() => {
         let count = 0;
         for (const etape of visibleEtapes) {
             count += 1; // header row
             const key = `${campagne.uuid}#${etape.label}`;
             const isCollapsed = collapsedStepGroups[key] !== false;
-            if (!isCollapsed) {
-                const fsecs = etape.gasOnly ? gasFsecs : campaignFsecs;
-                count += Math.max(fsecs.length, 1); // FSEC rows or "Aucune FSEC"
-            }
+            if (!isCollapsed) count += 1; // ligne couloirs
         }
         return count;
-    }, [visibleEtapes, campagne.uuid, collapsedStepGroups, campaignFsecs.length, gasFsecs.length]);
+    }, [visibleEtapes, campagne.uuid, collapsedStepGroups]);
 
     let isFirstRow = true;
 
@@ -108,7 +106,8 @@ export const CampaignGroup = memo(function CampaignGroup({
                 const key = `${campagne.uuid}#${etape.label}`;
                 const isCollapsed = collapsedStepGroups[key] !== false;
                 const etapeFsecs = etape.gasOnly ? gasFsecs : campaignFsecs;
-                const etapeFsecUuids = new Set(etapeFsecs.map((f) => f.fsecUuid));
+                // step.fsecUuid référence la version FSEC (FsecEntity.version_uuid).
+                const etapeFsecUuids = new Set(etapeFsecs.map((f) => f.versionUuid));
                 const stepsForEtape = (planningData.campaignStepsMap.get(key) ?? []).filter((s) =>
                     etapeFsecUuids.has(s.fsecUuid),
                 );
@@ -179,9 +178,14 @@ export const CampaignGroup = memo(function CampaignGroup({
                             </tr>,
                         );
                     } else {
-                        for (const fsec of etapeFsecs) {
-                            rows.push(<FsecRow key={`fsec-${key}-${fsec.fsecUuid}`} etape={etape} fsec={fsec} />);
-                        }
+                        rows.push(
+                            <StepLanesRow
+                                key={`lanes-${key}`}
+                                etape={etape}
+                                etapeFsecs={etapeFsecs}
+                                stepsForEtape={stepsForEtape}
+                            />,
+                        );
                     }
                 }
 

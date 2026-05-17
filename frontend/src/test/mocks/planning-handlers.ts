@@ -34,13 +34,35 @@ export const createMockCampaignStep = (overrides: Record<string, unknown> = {}) 
     ...overrides,
 });
 
-/** Default planning handlers — return empty arrays for all endpoints */
+export const createMockPlanningStep = (overrides: Record<string, unknown> = {}) => ({
+    id: 1,
+    label: 'Assemblage',
+    color: '#5B7FC7',
+    display_order: 1,
+    min_status_for_done: 2,
+    use_shooting_date: false,
+    gas_only: false,
+    ...overrides,
+});
+
+/** Référentiel d'étapes par défaut — reflète le seed de la migration 0066. */
+export const DEFAULT_PLANNING_STEPS = [
+    createMockPlanningStep({ id: 0, label: 'Réception cibles', color: '#C47A9A', display_order: 0, min_status_for_done: 1 }),
+    createMockPlanningStep({ id: 1, label: 'Assemblage', color: '#5B7FC7', display_order: 1, min_status_for_done: 2 }),
+    createMockPlanningStep({ id: 2, label: 'Métrologie', color: '#4BAFB5', display_order: 2, min_status_for_done: 3 }),
+    createMockPlanningStep({ id: 3, label: 'Gaz', color: '#8b5cf6', display_order: 3, min_status_for_done: 5, gas_only: true }),
+    createMockPlanningStep({ id: 4, label: 'Livraison', color: '#C4A035', display_order: 4, min_status_for_done: 6 }),
+    createMockPlanningStep({ id: 5, label: 'Tir', color: '#D4915C', display_order: 5, min_status_for_done: 7 }),
+];
+
+/** Default planning handlers — return empty arrays (sauf le référentiel d'étapes) */
 export const planningHandlers = [
     http.get('/api/v1/planning/week-states/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/member-periods/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/cell-annotations/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/fsec-cell-links/', () => HttpResponse.json([])),
     http.get('/api/v1/planning/campaign-steps/', () => HttpResponse.json([])),
+    http.get('/api/v1/planning/planning-steps/', () => HttpResponse.json(DEFAULT_PLANNING_STEPS)),
     http.get('/api/v1/planning/lab-events/', () => HttpResponse.json([])),
     http.get('/api/v1/campaigns/', () => HttpResponse.json([])),
     http.get('/api/v1/fsecs/', () => HttpResponse.json([])),
@@ -53,6 +75,7 @@ export function planningHandlersWithData(data: {
     cellAnnotations?: unknown[];
     fsecCellLinks?: unknown[];
     campaignSteps?: unknown[];
+    planningSteps?: unknown[];
     labEvents?: unknown[];
     campaigns?: unknown[];
     fsecs?: unknown[];
@@ -63,6 +86,9 @@ export function planningHandlersWithData(data: {
         http.get('/api/v1/planning/cell-annotations/', () => HttpResponse.json(data.cellAnnotations ?? [])),
         http.get('/api/v1/planning/fsec-cell-links/', () => HttpResponse.json(data.fsecCellLinks ?? [])),
         http.get('/api/v1/planning/campaign-steps/', () => HttpResponse.json(data.campaignSteps ?? [])),
+        http.get('/api/v1/planning/planning-steps/', () =>
+            HttpResponse.json(data.planningSteps ?? DEFAULT_PLANNING_STEPS),
+        ),
         http.get('/api/v1/planning/lab-events/', () => HttpResponse.json(data.labEvents ?? [])),
         http.get('/api/v1/campaigns/', () => HttpResponse.json(data.campaigns ?? [])),
         http.get('/api/v1/fsecs/', () => HttpResponse.json(data.fsecs ?? [])),

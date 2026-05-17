@@ -15,6 +15,7 @@ import {
     useCampaignSteps,
     useLabEvents,
     useMemberPeriods,
+    usePlanningSteps,
     useWeekStates,
 } from '@entities/planning/core/api/planning.queries';
 import type {
@@ -22,7 +23,7 @@ import type {
     PlanningMemberPeriod,
     LabEvent,
 } from '@entities/planning/core/model/planning.schema';
-import { ETAPES, getEventCategoryMeta, getPeriodeMeta, type PlanningColors } from '../lib/planning.constants';
+import { getEventCategoryMeta, getPeriodeMeta, type PlanningColors } from '../lib/planning.constants';
 import { usePlanningColors } from '../lib/planning.hooks';
 import { usePlanningLabSalles } from '../lib/planning.lab';
 
@@ -113,6 +114,7 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
     const { data: weekStates = [] } = useWeekStates(year);
     const { data: memberPeriods = [] } = useMemberPeriods(year);
     const { data: campaignSteps = [] } = useCampaignSteps(year);
+    const { data: planningSteps = [] } = usePlanningSteps();
     const salles = usePlanningLabSalles();
     const { data: labEventsList = [] } = useLabEvents();
 
@@ -197,11 +199,13 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
                 etapeMap.set(s.stepLabel, arr);
             }
 
-            const etapes = ETAPES.filter((e) => etapeMap.has(e.label)).map((e) => ({
-                label: e.label,
-                color: e.color,
-                steps: etapeMap.get(e.label)!,
-            }));
+            const etapes = planningSteps
+                .filter((e) => etapeMap.has(e.label))
+                .map((e) => ({
+                    label: e.label,
+                    color: e.color,
+                    steps: etapeMap.get(e.label)!,
+                }));
 
             if (etapes.length > 0) {
                 result.push({
@@ -213,7 +217,7 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
             }
         }
         return result;
-    }, [campaignSteps, campaigns, columns]);
+    }, [campaignSteps, campaigns, columns, planningSteps]);
 
     const hasContent = visibleCampaignData.length > 0 || visibleMembers.length > 0 || visibleLabRows.length > 0;
 

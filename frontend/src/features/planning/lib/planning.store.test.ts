@@ -8,7 +8,7 @@ import { act, renderHook } from '@testing-library/react';
 import dayjs from 'dayjs';
 
 import { usePlanningStore } from './planning.store';
-import { DEFAULT_FILTERS, ETAPES } from './planning.constants';
+import { DEFAULT_FILTERS } from './planning.constants';
 
 // Reset store before each test
 beforeEach(() => {
@@ -179,7 +179,8 @@ describe('Filters', () => {
     it('initial filters match DEFAULT_FILTERS', () => {
         const { result } = renderHook(() => usePlanningStore());
         expect(result.current.filters.installations).toEqual(DEFAULT_FILTERS.installations);
-        expect(result.current.filters.etapeLabels).toEqual(ETAPES.map((e) => e.label));
+        // etapeLabels vide = toutes les étapes (filtre désactivé par défaut).
+        expect(result.current.filters.etapeLabels).toEqual([]);
         expect(result.current.filters.campaignUuid).toBeNull();
     });
 
