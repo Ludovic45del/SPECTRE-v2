@@ -10,27 +10,28 @@ import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { MainLayout } from '../layouts';
 import { useAuthStore } from '@features/auth';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
+import { pageLoaders } from './prefetch';
 
-// Lazy-loaded pages
-const LoginPage = lazy(() => import('@pages/login'));
-const SetInitialPasswordPage = lazy(() => import('@pages/set-initial-password'));
-const HomePage = lazy(() => import('@pages/home'));
-const AdminUsersPage = lazy(() => import('@pages/admin/users'));
-const ChangePasswordPage = lazy(() => import('@pages/change-password'));
-const CampaignsPage = lazy(() => import('@pages/campaigns'));
-const CampaignDetailsPage = lazy(() => import('@pages/campaign-details'));
-const FsecsPage = lazy(() => import('@pages/fsecs'));
-const FsecDetailsPage = lazy(() => import('@pages/fsec-details'));
-const FasPage = lazy(() => import('@pages/fas'));
-const FaDetailsPage = lazy(() => import('@pages/fa-details'));
-const EmbasesPage = lazy(() => import('@pages/embases'));
-const EmbaseDetailsPage = lazy(() => import('@pages/embase-details'));
-const PlanningPage = lazy(() => import('@pages/planning'));
-const IndicateursFaPage = lazy(() => import('@pages/indicateurs/fa'));
-const IndicateursFsecPage = lazy(() => import('@pages/indicateurs/fsec'));
-const StockPage = lazy(() => import('@pages/stock'));
-const MaterielPage = lazy(() => import('@pages/materiel'));
-const MaterielMachinesView = lazy(() => import('@pages/materiel/MachinesView'));
+// Lazy-loaded pages (loaders shared with the hover-prefetch map, see ./prefetch)
+const LoginPage = lazy(pageLoaders.login);
+const SetInitialPasswordPage = lazy(pageLoaders.setInitialPassword);
+const HomePage = lazy(pageLoaders.home);
+const AdminUsersPage = lazy(pageLoaders.adminUsers);
+const ChangePasswordPage = lazy(pageLoaders.changePassword);
+const CampaignsPage = lazy(pageLoaders.campaigns);
+const CampaignDetailsPage = lazy(pageLoaders.campaignDetails);
+const FsecsPage = lazy(pageLoaders.fsecs);
+const FsecDetailsPage = lazy(pageLoaders.fsecDetails);
+const FasPage = lazy(pageLoaders.fas);
+const FaDetailsPage = lazy(pageLoaders.faDetails);
+const EmbasesPage = lazy(pageLoaders.embases);
+const EmbaseDetailsPage = lazy(pageLoaders.embaseDetails);
+const PlanningPage = lazy(pageLoaders.planning);
+const IndicateursFaPage = lazy(pageLoaders.indicateursFa);
+const IndicateursFsecPage = lazy(pageLoaders.indicateursFsec);
+const StockPage = lazy(pageLoaders.stock);
+const MaterielPage = lazy(pageLoaders.materiel);
+const MaterielMachinesView = lazy(pageLoaders.materielMachines);
 
 // Minimal loader for login page Suspense
 function LoginLoader() {

@@ -325,18 +325,22 @@ interface NavItemComponentProps {
     isOpen: boolean;
     isActive: boolean;
     onNavigate: (path: string) => void;
+    onPrefetch?: (path: string) => void;
 }
 
 const NavSubItemComponent = memo(function NavSubItemComponent({
     item,
     isActive,
     onNavigate,
+    onPrefetch,
 }: {
     item: NavSubItem;
     isActive: boolean;
     onNavigate: (path: string) => void;
+    onPrefetch?: (path: string) => void;
 }) {
     const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
+    const handlePrefetch = useCallback(() => onPrefetch?.(item.path), [onPrefetch, item.path]);
 
     return (
         <ListItem
@@ -345,6 +349,8 @@ const NavSubItemComponent = memo(function NavSubItemComponent({
         >
             <ListItemButton
                 onClick={handleClick}
+                onMouseEnter={handlePrefetch}
+                onFocus={handlePrefetch}
                 sx={{
                     borderRadius: 2,
                     py: 0.75,
@@ -391,8 +397,15 @@ const NavSubItemComponent = memo(function NavSubItemComponent({
     );
 });
 
-const NavItemComponent = memo(function NavItemComponent({ item, isOpen, isActive, onNavigate }: NavItemComponentProps) {
+const NavItemComponent = memo(function NavItemComponent({
+    item,
+    isOpen,
+    isActive,
+    onNavigate,
+    onPrefetch,
+}: NavItemComponentProps) {
     const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
+    const handlePrefetch = useCallback(() => onPrefetch?.(item.path), [onPrefetch, item.path]);
 
     return (
         <ListItem
@@ -402,6 +415,8 @@ const NavItemComponent = memo(function NavItemComponent({ item, isOpen, isActive
             <Tooltip title={isOpen ? '' : item.label} placement="right" arrow>
                 <ListItemButton
                     onClick={handleClick}
+                    onMouseEnter={handlePrefetch}
+                    onFocus={handlePrefetch}
                     sx={{
                         borderRadius: 2,
                         py: 1.25,
@@ -466,9 +481,11 @@ export interface SidebarProps {
     roleLabels: Record<string, string>;
     /** Callback déclenché au clic sur la carte profil du footer. */
     onProfileClick?: () => void;
+    /** Précharge le chunk d'une rubrique au survol/focus de son entrée de menu. */
+    onPrefetch?: (path: string) => void;
 }
 
-function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps) {
+function SidebarComponent({ user: me, roleLabels, onProfileClick, onPrefetch }: SidebarProps) {
     const location = useLocation();
     const pathname = location.pathname;
     const navigate = useNavigate();
@@ -651,6 +668,7 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             isOpen={isOpen}
                             isActive={checkIsActive(idx)}
                             onNavigate={navigate}
+                            onPrefetch={onPrefetch}
                         />
                     ) : (
                         <NavSubItemComponent
@@ -658,6 +676,7 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             item={item}
                             isActive={checkIsActive(idx)}
                             onNavigate={navigate}
+                            onPrefetch={onPrefetch}
                         />
                     ),
                 )}

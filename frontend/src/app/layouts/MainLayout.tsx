@@ -18,6 +18,7 @@ import type { SidebarUserInfo } from '@widgets/sidebar';
 import { useMe, ROLE_LABELS } from '@entities/user';
 import { ProfileModal } from '@features/user/edit-profile';
 import { motionDuration, motionEasing } from '@shared/ui/motion';
+import { prefetchRoute } from '../router/prefetch';
 
 // Fallback Suspense — discret (pas de spinner intrusif quand le code-split
 // arrive en quelques ms). Affiche un cercle uniquement après 200 ms via
@@ -110,7 +111,12 @@ function MainLayoutComponent() {
             >
                 Aller au contenu principal
             </Box>
-            <Sidebar user={sidebarUser} roleLabels={ROLE_LABELS} onProfileClick={handleOpenProfile} />
+            <Sidebar
+                user={sidebarUser}
+                roleLabels={ROLE_LABELS}
+                onProfileClick={handleOpenProfile}
+                onPrefetch={prefetchRoute}
+            />
             <ProfileModal user={meData ?? null} open={profileOpen} onClose={handleCloseProfile} />
             <Box
                 id="main-content"
