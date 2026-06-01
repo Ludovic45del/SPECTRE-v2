@@ -43,3 +43,7 @@ class SealingStepEntity(models.Model):
     )
     interface_io = models.CharField(max_length=50, null=True, blank=True)
     comments = models.TextField(max_length=4000, null=True, blank=True)
+    # Liens fichiers (CharField plutôt qu'URLField : on accepte les chemins UNC
+    # \\serveur\share\... du réseau fermé en plus des URL HTTP internes).
+    metro_file_link = models.CharField(max_length=500, null=True, blank=True)
+    visrad_link = models.CharField(max_length=500, null=True, blank=True)

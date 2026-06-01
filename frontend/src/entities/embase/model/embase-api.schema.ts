@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 export const EmbaseApiSchema = z.object({
     uuid: z.string().uuid(),
+    // Slug d'URL calculé côté backend (slugify de l'identifier).
+    slug: z.string().optional(),
     identifier: z.string(),
     type: z.enum(['jet_de_gaz', 'hp', 'bp']),
     nombre_voies: z.number().default(1),

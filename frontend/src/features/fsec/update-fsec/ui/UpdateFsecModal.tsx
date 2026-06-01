@@ -310,20 +310,9 @@ export function UpdateFsecModal({ open, onClose, fsec }: UpdateFsecModalProps) {
 
                             <Grid item xs={12} md={6}>
                                 <Stack spacing={3}>
-                                    {/* Delivery Date */}
-                                    <Controller
-                                        name="deliveryDate"
-                                        control={control}
-                                        render={({ field: { value, onChange, ...field } }) => (
-                                            <DatePicker
-                                                {...field}
-                                                label="Date de livraison"
-                                                value={value ? dayjs(value) : null}
-                                                onChange={(date) => onChange(date?.toDate() || null)}
-                                                slotProps={{ textField: { fullWidth: true } }}
-                                            />
-                                        )}
-                                    />
+                                    {/* La date de livraison est gérée exclusivement
+                                        via la fiche de livraison (header FSEC) →
+                                        retirée du formulaire général. */}
 
                                     {/* Shooting Date */}
                                     <Controller

@@ -2,7 +2,7 @@
  * Stock Catalog Item — TanStack Query hooks.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@shared/api';
 import { QUERY_CACHE_CONFIG } from '@shared/lib';
 
@@ -16,7 +16,17 @@ import {
     type StockCatalogItemPatchPayload,
     type StockCatalogItemPayload,
 } from '../model/stock-item.schema';
-import { stockAlertKeys, stockCatalogKeys, type StockCatalogListFilters } from './stock-item.keys';
+import {
+    StockMovementSchema,
+    type StockMovement,
+    type StockMovementCreatePayload,
+} from '../model/stock-movement.schema';
+import {
+    stockAlertKeys,
+    stockCatalogKeys,
+    stockMovementKeys,
+    type StockCatalogListFilters,
+} from './stock-item.keys';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers internes
@@ -45,6 +55,9 @@ export function useCatalogItems(filters: StockCatalogListFilters) {
             const url = `/stock/catalog/${buildQueryString(filters)}`;
             return api.get(url, StockCatalogItemListSchema, signal);
         },
+        // Garde la liste précédente affichée pendant le fetch du nouveau filtre
+        // (la query key change à chaque pill) → plus de clignotement skeleton.
+        placeholderData: keepPreviousData,
         ...QUERY_CACHE_CONFIG,
     });
 }
@@ -122,6 +135,29 @@ export function useDeleteCatalogItem() {
             queryClient.removeQueries({ queryKey: stockCatalogKeys.detail(uuid) });
             queryClient.invalidateQueries({ queryKey: stockCatalogKeys.lists() });
             queryClient.invalidateQueries({ queryKey: stockAlertKeys.all });
+        },
+    });
+}
+
+/**
+ * Enregistre un mouvement de stock (entrée / sortie / ajustement).
+ * Le backend met à jour la quantité de l'item de façon atomique.
+ *
+ * Invalide : la liste catalogue, le détail de l'item concerné, les alertes
+ * et l'historique des mouvements de l'item.
+ */
+export function useCreateStockMovement() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload: StockMovementCreatePayload): Promise<StockMovement> => {
+            const response = await api.post('/stock/movements/', payload);
+            return StockMovementSchema.parse(response);
+        },
+        onSuccess: (_movement, vars) => {
+            queryClient.invalidateQueries({ queryKey: stockCatalogKeys.detail(vars.catalog_item_uuid) });
+            queryClient.invalidateQueries({ queryKey: stockCatalogKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: stockAlertKeys.all });
+            queryClient.invalidateQueries({ queryKey: stockMovementKeys.byItem(vars.catalog_item_uuid) });
         },
     });
 }

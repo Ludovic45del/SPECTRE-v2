@@ -5,6 +5,8 @@ export {
     StepDurationSchema,
     FaIndicatorsSchema,
     FsecIndicatorsSchema,
+    CampaignIndicatorsSchema,
+    CampaignVolumeSchema,
     OperatorWorkloadSchema,
 } from './model';
 export type {
@@ -12,5 +14,7 @@ export type {
     StepDuration,
     FaIndicators,
     FsecIndicators,
+    CampaignIndicators,
+    CampaignVolume,
     OperatorWorkload,
 } from './model';

@@ -69,6 +69,12 @@ def mock_fsec_entity():
     mock.experience_srxx = "SRXX-001"
     mock.localisation = "Zone A"
     mock.depressurization_failed = False
+    # Contexte campagne nécessaire au calcul du slug (campaign_id pré-chargé).
+    mock.campaign_id.year = 2025
+    mock.campaign_id.semester = "S1"
+    mock.campaign_id.name = "Campagne Test Mapper"
+    mock.campaign_id.installation_id_id = 0
+    mock.campaign_id.installation_id.label = "LMJ"
     return mock
 
 
@@ -97,6 +103,9 @@ class TestFsecMapperEntityToBean:
         assert result.is_active is True
         assert result.delivery_date == date(2025, 3, 1)
         assert result.preshooting_pressure == 10.5
+        # Slugs calculés depuis le contexte campagne préchargé.
+        assert result.campaign_slug == "2025-s1-lmj-campagne-test-mapper"
+        assert result.slug == "2025-s1-lmj-campagne-test-mapper-fsec-test-mapper"
 
     @pytest.mark.unit
     def test_entity_to_bean_nullable_fields(self):

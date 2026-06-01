@@ -24,7 +24,7 @@ import {
     useUpdateAssemblyStep,
     useDeleteAssemblyStep,
 } from '@entities/fsec/steps';
-import { UserSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
+import { UserMultiSelect, SPECTRE_OPERATOR_ROLES } from '@entities/user';
 import { MachineMultiSelect } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
@@ -38,7 +38,7 @@ interface AssemblyStepModalProps {
 }
 
 const AssemblyStepFormSchema = z.object({
-    operatorUserUuid: z.string().uuid('Assembleur requis'),
+    operatorUserUuids: z.array(z.string().uuid()).min(1, 'Au moins un assembleur requis'),
     startDate: z.date({ required_error: 'Date requise' }),
     endDate: z.date().nullable().optional(),
     comments: z.string().nullable().optional(),
@@ -60,7 +60,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
         mode: 'onBlur',
         resolver: zodResolver(AssemblyStepFormSchema),
         defaultValues: {
-            operatorUserUuid: '',
+            operatorUserUuids: [],
             startDate: undefined,
             endDate: null,
             comments: '',
@@ -72,7 +72,12 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
         if (open) {
             if (step) {
                 reset({
-                    operatorUserUuid: step.operatorUserUuid ?? '',
+                    // Fallback sur le singulier legacy si la liste n'est pas encore peuplée.
+                    operatorUserUuids: step.operatorUserUuids?.length
+                        ? step.operatorUserUuids
+                        : step.operatorUserUuid
+                          ? [step.operatorUserUuid]
+                          : [],
                     startDate: step.startDate ?? undefined,
                     endDate: step.endDate,
                     comments: step.comments ?? '',
@@ -80,7 +85,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                 });
             } else {
                 reset({
-                    operatorUserUuid: '',
+                    operatorUserUuids: [],
                     startDate: undefined,
                     endDate: null,
                     comments: '',
@@ -102,7 +107,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     await updateMutation.mutateAsync({
                         uuid: step.uuid,
                         fsecVersionId,
-                        operatorUserUuid: data.operatorUserUuid,
+                        operatorUserUuids: data.operatorUserUuids,
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
@@ -112,7 +117,7 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                 } else {
                     await createMutation.mutateAsync({
                         fsecVersionId,
-                        operatorUserUuid: data.operatorUserUuid,
+                        operatorUserUuids: data.operatorUserUuids,
                         startDate: data.startDate,
                         endDate: data.endDate,
                         comments: data.comments,
@@ -206,16 +211,16 @@ export function AssemblyStepModal({ open, onClose, fsecVersionId, step }: Assemb
                     </Grid2>
                 </Grid2>
 
-                {/* Assembleur */}
+                {/* Assembleurs (une étape peut être réalisée à plusieurs) */}
                 <Controller
-                    name="operatorUserUuid"
+                    name="operatorUserUuids"
                     control={control}
                     render={({ field, fieldState }) => (
-                        <UserSelect
-                            value={field.value || null}
-                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                        <UserMultiSelect
+                            value={field.value ?? []}
+                            onChange={field.onChange}
                             roles={[...SPECTRE_OPERATOR_ROLES]}
-                            label="Assembleur"
+                            label="Assembleurs"
                             required
                             error={Boolean(fieldState.error)}
                             helperText={fieldState.error?.message}

@@ -11,11 +11,11 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode } from 'react';
 
-import { api, ApiError } from '@shared/api';
+import { api } from '@shared/api';
 import {
     useFas,
     useFa,
-    useFaByFsec,
+    useFasByFsec,
     useCreateFa,
     useUpdateFa,
     useDeleteFa,
@@ -67,7 +67,6 @@ const createMockApiFA = (overrides = {}) => ({
     cause: null,
     experience_impact: null,
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,
@@ -219,15 +218,15 @@ describe('FA Query Hooks', () => {
     });
 
     // ========================================================================
-    // useFaByFsec
+    // useFasByFsec
     // ========================================================================
 
-    describe('useFaByFsec', () => {
-        it('should fetch FA by FSEC version ID', async () => {
+    describe('useFasByFsec', () => {
+        it('should fetch all FAs for a FSEC version ID', async () => {
             const mockFa = createMockApiFA();
-            vi.mocked(api.get).mockResolvedValueOnce(mockFa);
+            vi.mocked(api.get).mockResolvedValueOnce([mockFa]);
 
-            const { result } = renderHook(() => useFaByFsec('223e4567-e89b-12d3-a456-426614174001'), {
+            const { result } = renderHook(() => useFasByFsec('223e4567-e89b-12d3-a456-426614174001'), {
                 wrapper: createWrapper(),
             });
 
@@ -238,19 +237,20 @@ describe('FA Query Hooks', () => {
                 undefined,
                 expect.anything(),
             );
-            expect(result.current.data?.fsecVersionId).toBe('223e4567-e89b-12d3-a456-426614174001');
+            expect(result.current.data).toHaveLength(1);
+            expect(result.current.data?.[0]?.fsecVersionId).toBe('223e4567-e89b-12d3-a456-426614174001');
         });
 
-        it('should return null when no FA exists for FSEC', async () => {
-            vi.mocked(api.get).mockRejectedValueOnce(new ApiError(404, 'Not Found'));
+        it('should return empty array when no FA exists for FSEC', async () => {
+            vi.mocked(api.get).mockResolvedValueOnce([]);
 
-            const { result } = renderHook(() => useFaByFsec('no-fa-fsec-id'), {
+            const { result } = renderHook(() => useFasByFsec('no-fa-fsec-id'), {
                 wrapper: createWrapper(),
             });
 
             await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-            expect(result.current.data).toBeNull();
+            expect(result.current.data).toEqual([]);
         });
     });
 
@@ -474,7 +474,6 @@ describe('FA Query Hooks', () => {
             const mockValidatedFa = createMockApiFA({
                 status_id: 1,
                 iec_validation_progress: true,
-                iec_validation_progress_date: '2024-02-01',
                 iec_validation_progress_name: 'IEC Validator 2',
             });
             vi.mocked(api.post).mockResolvedValueOnce(mockValidatedFa);
@@ -646,7 +645,6 @@ describe('FA Complete Workflow', () => {
             uuid: WORKFLOW_FA_UUID,
             status_id: 1,
             iec_validation_progress: true,
-            iec_validation_progress_date: '2024-02-01',
             iec_validation_progress_name: 'IEC Validator 2',
         });
         vi.mocked(api.post).mockResolvedValueOnce(validatedProgressFa);

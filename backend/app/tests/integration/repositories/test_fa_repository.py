@@ -5,17 +5,30 @@ Ces tests utilisent la base de données Django pour vérifier
 les opérations CRUD réelles sur les FA.
 """
 
+import io
+import os
 import uuid
 from datetime import date
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from app.domain.campaign.models.campaign_bean import CampaignBean
 from app.domain.fa.models.fa_bean import FaBean
 from app.domain.fsec.models.fsec_bean import FsecBean
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
+from app.repository.fa.models.fa_photo_entity import FaPhotoEntity
+from app.repository.fa.repositories.fa_photo_repository import FaPhotoRepository
 from app.repository.fa.repositories.fa_repository import FaRepository
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
+
+
+def _png_upload(name="photo.png"):
+    """Construit un vrai PNG en mémoire pour les tests d'upload ImageField."""
+    buf = io.BytesIO()
+    Image.new("RGB", (2, 2), "red").save(buf, format="PNG")
+    return SimpleUploadedFile(name, buf.getvalue(), content_type="image/png")
 
 
 @pytest.fixture
@@ -97,6 +110,18 @@ class TestFaRepositoryCreate:
         assert len(result.uuid) == 36
         assert result.created_at is not None
         assert result.last_updated is not None
+
+    def test_create_duplicate_identifier_raises_conflict(
+        self, fa_repository, sample_fa_data
+    ):
+        """Collision sur identifier (course de séquence) → ConflictException (409), pas 500."""
+        from app.domain.exceptions import ConflictException
+
+        fa_repository.create(FaBean(**sample_fa_data))
+        duplicate = FaBean(**sample_fa_data)  # même identifier
+
+        with pytest.raises(ConflictException):
+            fa_repository.create(duplicate)
 
 
 @pytest.mark.integration
@@ -195,7 +220,9 @@ class TestFaRepositoryDelete:
     """Tests suppression de FA."""
 
     def test_delete_fa_success(self, fa_repository, sample_fa_data):
-        """Test suppression réussie."""
+        """Test suppression réussie — HARD delete : la ligne disparaît de la base."""
+        from app.repository.fa.models.fa_entity import FaEntity
+
         bean = FaBean(**sample_fa_data)
         created = fa_repository.create(bean)
 
@@ -203,9 +230,136 @@ class TestFaRepositoryDelete:
 
         assert result is True
         assert fa_repository.get_by_uuid(created.uuid) is None
+        # Hard delete (et non soft-delete) : aucune ligne résiduelle en base.
+        assert not FaEntity.objects.filter(uuid=created.uuid).exists()
 
     def test_delete_fa_not_found(self, fa_repository):
         """Test suppression d'un UUID inexistant retourne False."""
         fake_uuid = str(uuid.uuid4())
         result = fa_repository.delete(fake_uuid)
         assert result is False
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestFaRepositoryGetBySlug:
+    """Tests résolution d'une FA par son slug d'URL (slugify de l'identifier)."""
+
+    def test_get_by_slug_roundtrip(self, fa_repository, sample_fa_data):
+        from app.domain.shared.slug import slugify_text
+
+        created = fa_repository.create(FaBean(**sample_fa_data))
+        slug = slugify_text(created.identifier)
+
+        resolved = fa_repository.get_by_slug(slug)
+
+        assert resolved is not None
+        assert resolved.uuid == created.uuid
+
+    def test_get_by_slug_unknown_returns_none(self, fa_repository):
+        assert fa_repository.get_by_slug("fa-inexistante-9999") is None
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestFaRepositoryMaxSequence:
+    """Génération de séquence d'identifiant (anti-collision après hard delete)."""
+
+    def test_zero_when_no_fa(self, fa_repository, test_fsec_version_id):
+        assert fa_repository.max_sequence_by_fsec_version_id(test_fsec_version_id) == 0
+
+    def test_returns_max_suffix(self, fa_repository, sample_fa_data):
+        fsec_vid = sample_fa_data["fsec_version_id"]
+        for seq in (1, 2, 3):
+            data = sample_fa_data.copy()
+            data["identifier"] = f"FA_2025_Camp_FSEC_{seq:02d}"
+            fa_repository.create(FaBean(**data))
+
+        assert fa_repository.max_sequence_by_fsec_version_id(fsec_vid) == 3
+
+    def test_uses_trailing_suffix_not_digits_in_name(
+        self, fa_repository, sample_fa_data
+    ):
+        """La regex ne doit matcher que le suffixe _NN final, pas des chiffres du nom."""
+        fsec_vid = sample_fa_data["fsec_version_id"]
+        data = sample_fa_data.copy()
+        data["identifier"] = "FA_2025_Camp_FSEC123_07"
+        fa_repository.create(FaBean(**data))
+
+        assert fa_repository.max_sequence_by_fsec_version_id(fsec_vid) == 7
+
+    def test_after_delete_does_not_regress(self, fa_repository, sample_fa_data):
+        """Après suppression de _02 sur _01/_02/_03, le max reste 3 (pas de réutilisation)."""
+        fsec_vid = sample_fa_data["fsec_version_id"]
+        created = []
+        for seq in (1, 2, 3):
+            data = sample_fa_data.copy()
+            data["identifier"] = f"FA_2025_Camp_FSEC_{seq:02d}"
+            created.append(fa_repository.create(FaBean(**data)))
+
+        fa_repository.delete(created[1].uuid)  # supprime _02
+
+        assert fa_repository.max_sequence_by_fsec_version_id(fsec_vid) == 3
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestFaPhotoRepository:
+    """Galerie photos : ordre, suppression du fichier disque, CASCADE au hard delete."""
+
+    @pytest.fixture
+    def fa(self, fa_repository, sample_fa_data):
+        return fa_repository.create(FaBean(**sample_fa_data))
+
+    def test_add_increments_order(self, fa, tmp_path, settings):
+        settings.MEDIA_ROOT = str(tmp_path)
+        repo = FaPhotoRepository()
+
+        p1 = repo.add(fa.uuid, _png_upload("a.png"), None)
+        p2 = repo.add(fa.uuid, _png_upload("b.png"), "légende")
+
+        assert p1.order == 0
+        assert p2.order == 1
+        assert p2.caption == "légende"
+        assert p1.image_url  # URL servie via MEDIA_URL
+
+    def test_list_by_fa_ordered(self, fa, tmp_path, settings):
+        settings.MEDIA_ROOT = str(tmp_path)
+        repo = FaPhotoRepository()
+        repo.add(fa.uuid, _png_upload("a.png"), None)
+        repo.add(fa.uuid, _png_upload("b.png"), None)
+
+        photos = repo.list_by_fa(fa.uuid)
+
+        assert [p.order for p in photos] == [0, 1]
+
+    def test_delete_removes_row_and_file(self, fa, tmp_path, settings):
+        settings.MEDIA_ROOT = str(tmp_path)
+        repo = FaPhotoRepository()
+        photo = repo.add(fa.uuid, _png_upload("a.png"), None)
+        path = FaPhotoEntity.objects.get(uuid=photo.uuid).image.path
+        assert os.path.exists(path)
+
+        assert repo.delete(photo.uuid) is True
+
+        assert not FaPhotoEntity.objects.filter(uuid=photo.uuid).exists()
+        assert not os.path.exists(path)  # fichier nettoyé (pas d'orphelin)
+
+    def test_delete_unknown_returns_false(self, tmp_path, settings):
+        settings.MEDIA_ROOT = str(tmp_path)
+        assert FaPhotoRepository().delete(str(uuid.uuid4())) is False
+
+    def test_hard_delete_fa_cascades_photos_and_files(
+        self, fa, fa_repository, tmp_path, settings
+    ):
+        """Supprimer la FA supprime ses photos (CASCADE) ET leurs fichiers disque."""
+        settings.MEDIA_ROOT = str(tmp_path)
+        repo = FaPhotoRepository()
+        photo = repo.add(fa.uuid, _png_upload("a.png"), None)
+        path = FaPhotoEntity.objects.get(uuid=photo.uuid).image.path
+        assert os.path.exists(path)
+
+        fa_repository.delete(fa.uuid)
+
+        assert not FaPhotoEntity.objects.filter(uuid=photo.uuid).exists()
+        assert not os.path.exists(path)

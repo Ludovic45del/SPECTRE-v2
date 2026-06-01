@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFas, Fa, sortFas, type FaSortColumn } from '@entities/fa';
 import { FasToolbar, useFilterFasStore, type FaFilters, FaTableRow, CreateFaModal } from '@features/fa';
 import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
+import { paths } from '@shared/config';
 import { FasPageSkeleton } from './FasPageSkeleton';
 import { FaKpiBar } from './FaKpiBar';
 
@@ -122,12 +123,12 @@ export default function FasPage() {
 
     const paginatedFas = useMemo(() => paginate(processedFas), [paginate, processedFas]);
 
-    const handleNavigateFa = useCallback((uuid: string) => navigate(`/fa-details/${uuid}`), [navigate]);
+    const handleNavigateFa = useCallback((slug: string) => navigate(paths.fa.root(slug)), [navigate]);
 
     const handleNavigateFsec = useCallback(
-        (e: React.MouseEvent, fsecVersionId: string | null) => {
+        (e: React.MouseEvent, fsecSlug: string | null) => {
             e.stopPropagation();
-            if (fsecVersionId) navigate(`/fsec-details/${fsecVersionId}/overview`);
+            if (fsecSlug) navigate(paths.fsec.tab(fsecSlug, 'overview'));
         },
         [navigate],
     );

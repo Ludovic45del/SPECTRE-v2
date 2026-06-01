@@ -43,6 +43,7 @@ export const CampaignInstallationListSchema = z.array(CampaignInstallationApiSch
 // ============ Extended Campaign with nested objects ============
 export const CampaignWithRelationsApiSchema = z.object({
     uuid: z.string().uuid(),
+    slug: z.string().optional(),
     name: z.string().min(1),
     year: z.number().int(),
     semester: z.string(),
@@ -58,6 +59,7 @@ export const CampaignWithRelationsApiSchema = z.object({
 
 export const CampaignWithRelationsSchema = CampaignWithRelationsApiSchema.transform((api) => ({
     uuid: api.uuid,
+    slug: api.slug ?? '',
     name: api.name,
     year: api.year,
     semester: api.semester,

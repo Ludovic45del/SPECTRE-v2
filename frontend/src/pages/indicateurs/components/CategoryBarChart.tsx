@@ -15,7 +15,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { ChartTooltipCard } from './ChartTooltip';
+import { ChartTooltipCard } from '@shared/ui';
 
 export interface CategoryBarEntry {
     label: string;

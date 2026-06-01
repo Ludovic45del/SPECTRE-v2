@@ -41,6 +41,14 @@ def get_embase_by_uuid(repository: IEmbaseRepository, uuid: str) -> EmbaseBean:
     return bean
 
 
+def get_embase_by_slug(repository: IEmbaseRepository, slug: str) -> EmbaseBean:
+    """Récupère une Embase par son slug d'URL."""
+    bean = repository.get_by_slug(slug)
+    if bean is None:
+        raise NotFoundException("Embase", slug)
+    return bean
+
+
 def get_all_embases(
     repository: IEmbaseRepository, limit: Optional[int] = None, offset: int = 0
 ) -> List[EmbaseBean]:

@@ -172,7 +172,6 @@ const mockFasApi = [
         cause: null,
         experience_impact: null,
         iec_validation_progress: false,
-        iec_validation_progress_date: null,
         iec_validation_progress_name: null,
         closure_validation: null,
         closure_date: null,
@@ -185,6 +184,7 @@ const mockFasApi = [
 // Full FaApiSchema response for created FA
 const mockCreatedFaApi = {
     uuid: FA_UUID_NEW,
+    slug: 'fa-2025-new',
     fsec_version_id: FSEC_VERSION_UUID_2,
     status_id: 0,
     type_id: null,
@@ -204,7 +204,6 @@ const mockCreatedFaApi = {
     cause: null,
     experience_impact: null,
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,
@@ -473,7 +472,7 @@ describe('CreateFaModal', () => {
             expect(fsecInput.value).toBe('');
         });
 
-        it('should filter FSECs that already have a FA', async () => {
+        it('should list all FSECs of the campaign (multiple FA per FSEC allowed)', async () => {
             const user = userEvent.setup();
             openModal();
             renderWithProviders(<CreateFaModal />);
@@ -489,10 +488,9 @@ describe('CreateFaModal', () => {
 
             const listbox = await screen.findByRole('listbox');
 
-            // FSEC-001 has a FA, so it should not be in the list
-            expect(within(listbox).queryByText('FSEC-001')).not.toBeInTheDocument();
-
-            // FSEC-002 and FSEC-003 should be available
+            // Une FSEC peut désormais porter plusieurs FA : aucune n'est filtrée,
+            // y compris FSEC-001 qui a déjà une FA.
+            expect(within(listbox).getByText('FSEC-001')).toBeInTheDocument();
             expect(within(listbox).getByText('FSEC-002')).toBeInTheDocument();
             expect(within(listbox).getByText('FSEC-003')).toBeInTheDocument();
         });
@@ -652,7 +650,7 @@ describe('CreateFaModal', () => {
             await user.click(screen.getByRole('button', { name: /créer/i }));
 
             await waitFor(() => {
-                expect(mockNavigate).toHaveBeenCalledWith(`/fa-details/${FA_UUID_NEW}/phase1`);
+                expect(mockNavigate).toHaveBeenCalledWith('/fa-details/fa-2025-new/phase1');
             });
         });
 

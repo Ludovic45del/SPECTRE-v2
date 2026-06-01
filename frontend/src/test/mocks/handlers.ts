@@ -14,6 +14,7 @@ import { stockHandlers } from './stock-handlers';
 
 export const createMockCampaign = (overrides = {}) => ({
     uuid: crypto.randomUUID(),
+    slug: '2025-s1-lmj-campagne-test',
     type_id: 0,
     status_id: 0,
     installation_id: 0,
@@ -31,6 +32,8 @@ export const createMockCampaign = (overrides = {}) => ({
 export const createMockFsec = (overrides = {}) => ({
     version_uuid: crypto.randomUUID(),
     fsec_uuid: crypto.randomUUID(),
+    slug: '2025-s1-lmj-campagne-test-fsec-test',
+    campaign_slug: '2025-s1-lmj-campagne-test',
     campaign_id: crypto.randomUUID(),
     status_id: 0,
     category_id: 0,
@@ -49,6 +52,9 @@ export const createMockFsec = (overrides = {}) => ({
 
 export const createMockFa = (overrides = {}) => ({
     uuid: crypto.randomUUID(),
+    slug: 'fa-2025-0001',
+    fsec_slug: '2025-s1-lmj-campagne-test-fsec-test',
+    campaign_slug: '2025-s1-lmj-campagne-test',
     fsec_version_id: crypto.randomUUID(),
     status_id: 0,
     type_id: 0,
@@ -68,7 +74,6 @@ export const createMockFa = (overrides = {}) => ({
     cause: null,
     experience_impact: null,
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,
@@ -83,6 +88,7 @@ export const createMockAssemblyStep = (overrides = {}) => ({
     fsec_version_id: crypto.randomUUID(),
     operator: 'Assembleur Test',
     operator_user_uuid: null,
+    operator_user_uuids: [],
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Assemblage de test',
@@ -166,6 +172,7 @@ export const createMockFsecDocument = (overrides = {}) => ({
 
 export const createMockEmbase = (overrides = {}) => ({
     uuid: crypto.randomUUID(),
+    slug: 'emb-001',
     identifier: 'EMB-001',
     type: 'jet_de_gaz' as const,
     nombre_voies: 1,
@@ -227,6 +234,8 @@ export const createMockMetrologyStep = (overrides = {}) => ({
     fsec_version_id: crypto.randomUUID(),
     rack_id: 0,
     metrologist_name: 'Métrologue Test',
+    metrologist_user_uuid: null,
+    metrologist_user_uuids: [],
     date: '2025-03-01',
     comments: 'Métrologie de test',
     machine_uuids: [],
@@ -243,6 +252,8 @@ export const createMockSealingStep = (overrides = {}) => ({
     rack_id: 0,
     interface_io: 'IO-001',
     comments: 'Scellement de test',
+    metro_file_link: null,
+    visrad_link: null,
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
     ...overrides,
@@ -550,6 +561,15 @@ export const handlers = [
         return HttpResponse.json(mockCampaigns);
     }),
 
+    // Get campaign by slug
+    http.get('/api/v1/campaigns/by-slug/:slug/', ({ params }) => {
+        const campaign = mockCampaigns.find((c) => c.slug === params.slug) ?? mockCampaigns[0];
+        if (!campaign) {
+            return new HttpResponse(null, { status: 404 });
+        }
+        return HttpResponse.json(campaign);
+    }),
+
     // Get campaign by UUID
     http.get('/api/v1/campaigns/:uuid/', ({ params }) => {
         const campaign = mockCampaigns.find((c) => c.uuid === params.uuid);
@@ -600,6 +620,15 @@ export const handlers = [
         return HttpResponse.json(mockFsecs);
     }),
 
+    // Get FSEC by slug
+    http.get('/api/v1/fsecs/by-slug/:slug/', ({ params }) => {
+        const fsec = mockFsecs.find((f) => f.slug === params.slug) ?? mockFsecs[0];
+        if (!fsec) {
+            return new HttpResponse(null, { status: 404 });
+        }
+        return HttpResponse.json(fsec);
+    }),
+
     // Get FSEC by UUID
     http.get('/api/v1/fsecs/:uuid/', ({ params }) => {
         const fsec = mockFsecs.find((f) => f.version_uuid === params.uuid);
@@ -645,6 +674,15 @@ export const handlers = [
     http.get('/api/v1/fas/fsec/:fsecVersionId/', ({ params }) => {
         const fas = mockFas.filter((fa) => fa.fsec_version_id === params.fsecVersionId);
         return HttpResponse.json(fas);
+    }),
+
+    // Get FA by slug
+    http.get('/api/v1/fas/by-slug/:slug/', ({ params }) => {
+        const fa = mockFas.find((f) => f.slug === params.slug) ?? mockFas[0];
+        if (!fa) {
+            return new HttpResponse(null, { status: 404 });
+        }
+        return HttpResponse.json(fa);
     }),
 
     // Get FA by UUID
@@ -872,6 +910,12 @@ export const handlers = [
     // List embases
     http.get('/api/v1/embases/', () => {
         return HttpResponse.json(mockEmbases);
+    }),
+
+    // Get embase by slug
+    http.get('/api/v1/embases/by-slug/:slug/', ({ params }) => {
+        const embase = mockEmbases.find((e) => e.slug === params.slug);
+        return HttpResponse.json(embase ?? createMockEmbase({ slug: params.slug as string }));
     }),
 
     // Get embase by UUID

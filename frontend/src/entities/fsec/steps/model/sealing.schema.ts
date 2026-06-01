@@ -16,6 +16,9 @@ export const SealingStepApiSchema = z.object({
     rack_id: z.number().int().nullable(),
     interface_io: z.string().nullable(),
     comments: z.string().nullable(),
+    // Liens fichiers (URL HTTP ou chemin UNC) : fichier métro .txt et Visrad réalisé.
+    metro_file_link: z.string().nullable().optional(),
+    visrad_link: z.string().nullable().optional(),
 });
 
 export const SealingStepSchema = SealingStepApiSchema.transform((api) => ({
@@ -27,6 +30,8 @@ export const SealingStepSchema = SealingStepApiSchema.transform((api) => ({
     rackId: api.rack_id,
     interfaceIo: api.interface_io,
     comments: api.comments,
+    metroFileLink: api.metro_file_link ?? null,
+    visradLink: api.visrad_link ?? null,
 }));
 
 export type SealingStep = z.infer<typeof SealingStepSchema>;

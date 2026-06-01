@@ -6,12 +6,13 @@
  * Uses React Router for tab routing and memoization for performance.
  */
 
-import { memo, useMemo } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { memo, useMemo, useEffect } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Box, Container, Alert, Skeleton, Stack } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
-import { useCampaign } from '@entities/campaign';
+import { useCampaignBySlug } from '@entities/campaign';
 import { CampaignHeader } from '@features/campaign/campaign-header';
+import { paths } from '@shared/config';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
 import { RouteTransition } from '@shared/ui/RouteTransition';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
@@ -66,14 +67,23 @@ function getActiveTab(pathname: string): TabPath {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function CampaignDetailsPage() {
-    const { campaignUuid = '' } = useParams<{ campaignUuid: string }>();
+    const { campaignSlug = '' } = useParams<{ campaignSlug: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
 
-    // Fetch campaign details
-    const { data: campaign, isLoading, error, isError } = useCampaign(campaignUuid);
+    // Fetch campaign details by slug (rétro-compat UUID gérée dans le hook).
+    const { data: campaign, isLoading, error, isError } = useCampaignBySlug(campaignSlug);
 
     // Memoize active tab to prevent unnecessary re-renders
     const activeTab = useMemo(() => getActiveTab(location.pathname), [location.pathname]);
+
+    // Réécrit l'URL vers le slug canonique si on est arrivé par UUID (ancien lien)
+    // ou par un slug obsolète (entité renommée) — sans casser l'onglet courant.
+    useEffect(() => {
+        if (campaign?.slug && campaign.slug !== campaignSlug) {
+            navigate(paths.campaign.tab(campaign.slug, activeTab), { replace: true });
+        }
+    }, [campaign?.slug, campaignSlug, activeTab, navigate]);
 
     // Memoize tab content to avoid re-creation
     const tabContent = useMemo(() => {
@@ -133,7 +143,7 @@ function CampaignDetailsPage() {
 
             {/* Tabs Navigation */}
             <Box component="nav" aria-label="Navigation campagne" sx={{ mt: 3 }}>
-                <RoutedTabs tabs={TABS} baseUrl={`/campagne-details/${campaignUuid}`} />
+                <RoutedTabs tabs={TABS} baseUrl={paths.campaign.root(campaignSlug)} />
             </Box>
 
             {/* Tab Content */}

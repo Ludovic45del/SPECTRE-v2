@@ -14,6 +14,7 @@ from app.domain.embase.services.embase_service import (
     create_embase,
     delete_embase,
     get_all_embases,
+    get_embase_by_slug,
     get_embase_by_uuid,
     get_fsec_history,
     patch_embase,
@@ -59,6 +60,12 @@ class EmbaseController(PaginatedControllerMixin, ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """Récupère une Embase par UUID (GET /:uuid/)."""
         bean = get_embase_by_uuid(self.repository, uuid)
+        return JsonResponse(embase_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+
+    @action(detail=False, methods=["get"], url_path=r"by-slug/(?P<slug>[^/]+)")
+    def by_slug(self, request, slug=None) -> JsonResponse:
+        """Récupère une Embase par son slug d'URL (GET /by-slug/:slug/)."""
+        bean = get_embase_by_slug(self.repository, slug)
         return JsonResponse(embase_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
 
     def create(self, request) -> JsonResponse:

@@ -7,7 +7,7 @@
  */
 
 import { memo, useCallback, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useForm, Controller } from 'react-hook-form';
@@ -24,7 +24,6 @@ import { getErrorMessage } from '@shared/lib';
 
 const ClosePhaseFormSchema = z.object({
     validatorUserUuid: z.string().uuid('Validateur (IEC ou chef de labo) requis'),
-    closureValidation: z.string().max(4000).optional().default(''),
     closureDate: z.date({ required_error: 'La date de clôture est requise' }),
 });
 
@@ -61,7 +60,6 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
         resolver: zodResolver(ClosePhaseFormSchema),
         defaultValues: {
             validatorUserUuid: '',
-            closureValidation: '',
             closureDate: new Date(),
         },
     });
@@ -71,7 +69,6 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
         if (open) {
             reset({
                 validatorUserUuid: fa.closureValidatorUserUuid ?? '',
-                closureValidation: fa.closureValidation ?? '',
                 closureDate: fa.closureDate ? new Date(fa.closureDate) : new Date(),
             });
         }
@@ -89,7 +86,6 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                     await updateMutation.mutateAsync({
                         uuid: fa.uuid,
                         closureValidatorUserUuid: data.validatorUserUuid,
-                        closureValidation: data.closureValidation ?? '',
                         closureDate: data.closureDate,
                     });
                     showNotification('Données de clôture mises à jour', 'success');
@@ -97,7 +93,7 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                     await closeMutation.mutateAsync({
                         uuid: fa.uuid,
                         validatorUserUuid: data.validatorUserUuid,
-                        closureValidation: data.closureValidation ?? '',
+                        closureValidation: '',
                         closureDate: data.closureDate,
                     });
                     showNotification('FA clôturée avec succès', 'success');
@@ -148,24 +144,6 @@ export const ClosePhaseModal = memo(function ClosePhaseModal({ open, onClose, fa
                                             helperText: errors.closureDate?.message,
                                         },
                                     }}
-                                />
-                            )}
-                        />
-
-                        <Controller
-                            name="closureValidation"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Validation de clôture"
-                                    size="small"
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    error={Boolean(errors.closureValidation)}
-                                    helperText={errors.closureValidation?.message}
-                                    placeholder="Explication de la résolution de l'anomalie..."
                                 />
                             )}
                         />

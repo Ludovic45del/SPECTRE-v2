@@ -4,14 +4,28 @@ Tests unitaires pour les serializers FA.
 Vérifie la validation des entrées pour les Fiches d'Anomalie.
 """
 
+import io
+
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from app.api.fa.serializers import (
+    FA_PHOTO_MAX_BYTES,
     FaCloseSerializer,
     FaPatchSerializer,
+    FaPhotoUploadSerializer,
     FaSerializer,
     FaValidatePhaseSerializer,
 )
+
+
+def _png_upload(name="photo.png", content_type="image/png"):
+    """Construit un vrai PNG en mémoire (validé par Pillow côté ImageField)."""
+    buf = io.BytesIO()
+    Image.new("RGB", (2, 2), "blue").save(buf, format="PNG")
+    return SimpleUploadedFile(name, buf.getvalue(), content_type=content_type)
+
 
 SAMPLE_FSEC_VERSION_UUID = "00000000-0000-0000-0000-000000000001"
 
@@ -253,3 +267,56 @@ class TestFaCloseSerializer:
         serializer = FaCloseSerializer(data=data)
         assert not serializer.is_valid()
         assert "closure_date" in serializer.errors
+
+
+@pytest.mark.unit
+class TestFaPhotoUploadSerializer:
+    """Tests du serializer d'upload d'une photo de galerie FA."""
+
+    def test_valid_png_passes(self):
+        serializer = FaPhotoUploadSerializer(data={"image": _png_upload()})
+        assert serializer.is_valid(), serializer.errors
+
+    def test_caption_is_optional(self):
+        serializer = FaPhotoUploadSerializer(data={"image": _png_upload()})
+        assert serializer.is_valid(), serializer.errors
+
+    def test_caption_accepted(self):
+        serializer = FaPhotoUploadSerializer(
+            data={"image": _png_upload(), "caption": "Vue de l'anomalie"}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["caption"] == "Vue de l'anomalie"
+
+    def test_image_required(self):
+        serializer = FaPhotoUploadSerializer(data={"caption": "x"})
+        assert not serializer.is_valid()
+        assert "image" in serializer.errors
+
+    def test_rejects_non_image(self):
+        """Un fichier non-image est rejeté par Pillow (ImageField)."""
+        bad = SimpleUploadedFile("x.png", b"not-an-image", content_type="image/png")
+        serializer = FaPhotoUploadSerializer(data={"image": bad})
+        assert not serializer.is_valid()
+        assert "image" in serializer.errors
+
+    def test_rejects_disallowed_real_format(self):
+        """Un format réel non autorisé (GIF) est rejeté.
+
+        Le content_type vérifié est celui détecté par Pillow (et non l'en-tête
+        fourni par le client), donc un vrai GIF est bien rejeté.
+        """
+        buf = io.BytesIO()
+        Image.new("RGB", (2, 2), "blue").save(buf, format="GIF")
+        gif = SimpleUploadedFile("p.gif", buf.getvalue(), content_type="image/gif")
+        serializer = FaPhotoUploadSerializer(data={"image": gif})
+        assert not serializer.is_valid()
+        assert "image" in serializer.errors
+
+    def test_rejects_oversized_image(self):
+        """Une image dépassant la taille max est rejetée."""
+        upload = _png_upload()
+        upload.size = FA_PHOTO_MAX_BYTES + 1
+        serializer = FaPhotoUploadSerializer(data={"image": upload})
+        assert not serializer.is_valid()
+        assert "image" in serializer.errors

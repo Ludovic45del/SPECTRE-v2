@@ -42,7 +42,9 @@ export function FaWorkflowStepper({ fa }: FaWorkflowStepperProps) {
         },
         onSuccess: (updatedFa) => {
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: faKeys.detail(updatedFa.uuid) });
+            // Invalide le préfixe `details()` pour couvrir le cache par uuid ET par slug
+            // (la page détail charge la FA par slug via useFaBySlug).
+            queryClient.invalidateQueries({ queryKey: faKeys.details() });
             if (updatedFa.fsecVersionId) {
                 queryClient.invalidateQueries({ queryKey: faKeys.byFsec(updatedFa.fsecVersionId) });
             }

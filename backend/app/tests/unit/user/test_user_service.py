@@ -67,6 +67,67 @@ class TestModuleLevelAttributes:
 
 
 # ----------------------------------------------------------------------- #
+#  set_user_avatar / delete_user_avatar
+# ----------------------------------------------------------------------- #
+@pytest.mark.unit
+class TestAvatarService:
+    def test_set_user_avatar_processes_then_persists(
+        self, mock_user_repository, sample_user_bean
+    ):
+        uid = uuid.uuid4()
+        mock_user_repository.get_by_uuid.return_value = sample_user_bean
+        mock_user_repository.set_avatar.return_value = sample_user_bean
+        upload = MagicMock(name="uploaded_image")
+
+        with patch(
+            "app.core.avatar_image.process_avatar", return_value="processed-file"
+        ) as proc:
+            result = user_service.set_user_avatar(mock_user_repository, uid, upload)
+
+        proc.assert_called_once_with(upload)
+        mock_user_repository.set_avatar.assert_called_once_with(uid, "processed-file")
+        assert result is sample_user_bean
+
+    def test_set_user_avatar_not_found_raises(self, mock_user_repository):
+        mock_user_repository.get_by_uuid.return_value = None
+        with pytest.raises(NotFoundException):
+            user_service.set_user_avatar(
+                mock_user_repository, uuid.uuid4(), MagicMock()
+            )
+        mock_user_repository.set_avatar.assert_not_called()
+
+    def test_set_user_avatar_unreadable_image_raises_validation(
+        self, mock_user_repository, sample_user_bean
+    ):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        mock_user_repository.get_by_uuid.return_value = sample_user_bean
+        bad = SimpleUploadedFile(
+            "x.jpg", b"definitely not an image", content_type="image/jpeg"
+        )
+        with pytest.raises(ValidationException):
+            user_service.set_user_avatar(mock_user_repository, uuid.uuid4(), bad)
+        mock_user_repository.set_avatar.assert_not_called()
+
+    def test_delete_user_avatar_clears_via_set_avatar_none(
+        self, mock_user_repository, sample_user_bean
+    ):
+        uid = uuid.uuid4()
+        mock_user_repository.get_by_uuid.return_value = sample_user_bean
+        mock_user_repository.set_avatar.return_value = sample_user_bean
+
+        user_service.delete_user_avatar(mock_user_repository, uid)
+
+        mock_user_repository.set_avatar.assert_called_once_with(uid, None)
+
+    def test_delete_user_avatar_not_found_raises(self, mock_user_repository):
+        mock_user_repository.get_by_uuid.return_value = None
+        with pytest.raises(NotFoundException):
+            user_service.delete_user_avatar(mock_user_repository, uuid.uuid4())
+        mock_user_repository.set_avatar.assert_not_called()
+
+
+# ----------------------------------------------------------------------- #
 #  _validate_role
 # ----------------------------------------------------------------------- #
 @pytest.mark.unit

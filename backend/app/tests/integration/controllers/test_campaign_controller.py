@@ -292,3 +292,40 @@ class TestCampaignControllerDelete:
         response = admin_api_client.delete(f"/api/v1/campaigns/{fake_uuid}/")
 
         assert response.status_code in [404, 500]
+
+    def test_delete_campaign_with_team_member(
+        self, api_client, admin_api_client, sample_campaign_payload
+    ):
+        """Régression : une campagne avec équipe (FK PROTECT) doit se supprimer.
+
+        Avant le fix, le delete() Django levait ProtectedError -> 500 dès qu'un
+        membre d'équipe existait (cas courant RCE/IEC). Les enfants PROTECT sont
+        désormais supprimés en cascade par le service.
+        """
+        from app.repository.campaign.models.campaign_roles_entity import (
+            CampaignRolesEntity,
+        )
+        from app.repository.campaign.models.campaign_teams_entity import (
+            CampaignTeamsEntity,
+        )
+
+        create_response = api_client.post(
+            "/api/v1/campaigns/",
+            data=json.dumps(sample_campaign_payload),
+            content_type="application/json",
+        )
+        campaign_uuid = create_response.json()["uuid"]
+
+        role = CampaignRolesEntity.objects.first()
+        if role is None:
+            role = CampaignRolesEntity.objects.create(label="ROLE_TEST")
+        CampaignTeamsEntity.objects.create(
+            campaign_uuid_id=campaign_uuid, role_id_id=role.id, name="Externe"
+        )
+
+        response = admin_api_client.delete(f"/api/v1/campaigns/{campaign_uuid}/")
+
+        assert response.status_code == 204
+        assert not CampaignTeamsEntity.objects.filter(
+            campaign_uuid_id=campaign_uuid
+        ).exists()

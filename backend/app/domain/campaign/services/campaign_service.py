@@ -4,7 +4,11 @@ import logging
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from app.domain.campaign.interface.campaign_repository import ICampaignRepository
+from app.domain.campaign.interface.campaign_repository import (
+    ICampaignDocumentsRepository,
+    ICampaignRepository,
+    ICampaignTeamsRepository,
+)
 from app.domain.campaign.models.campaign_bean import CampaignBean
 from app.domain.exceptions import (
     ConflictException,
@@ -110,6 +114,14 @@ def get_campaign_by_uuid(repository: ICampaignRepository, uuid: str) -> Campaign
     return bean
 
 
+def get_campaign_by_slug(repository: ICampaignRepository, slug: str) -> CampaignBean:
+    """Récupère une campagne par son slug d'URL."""
+    bean = repository.get_by_slug(slug)
+    if bean is None:
+        raise NotFoundException("Campaign", slug)
+    return bean
+
+
 def get_all_campaigns(
     repository: ICampaignRepository, limit: Optional[int] = None, offset: int = 0
 ) -> List[CampaignBean]:
@@ -182,9 +194,20 @@ def patch_campaign(
 
 
 def delete_campaign(
-    repository: ICampaignRepository, uuid: str, fsec_repository: IFsecRepository
+    repository: ICampaignRepository,
+    uuid: str,
+    fsec_repository: IFsecRepository,
+    teams_repository: Optional[ICampaignTeamsRepository] = None,
+    documents_repository: Optional[ICampaignDocumentsRepository] = None,
 ) -> bool:
-    """Supprime une campagne après vérification qu'aucun FSEC n'y est rattaché."""
+    """Supprime une campagne et ses données rattachées.
+
+    Bloque si des FSEC y sont rattachés (artefacts majeurs : étapes, FA, etc.).
+    En revanche les membres d'équipe et documents — dont les FK sont en PROTECT —
+    sont supprimés explicitement AVANT la campagne : sans cela, le ``delete()`` de
+    Django lève ``ProtectedError`` (→ 500) dès qu'une campagne a une équipe, ce qui
+    est le cas courant (RCE/IEC). Les lignes de planning (FK CASCADE) partent seules.
+    """
     existing = repository.get_by_uuid(uuid)
     if existing is None:
         raise NotFoundException("Campaign", uuid)
@@ -194,6 +217,13 @@ def delete_campaign(
             "campaign",
             f"Impossible de supprimer : {len(linked_fsecs)} FSEC(s) rattaché(s) à cette campagne.",
         )
+    # Suppression des enfants PROTECT avant la campagne (sinon ProtectedError).
+    if teams_repository is not None:
+        for member in teams_repository.get_by_campaign_uuid(uuid):
+            teams_repository.delete(member.uuid)
+    if documents_repository is not None:
+        for document in documents_repository.get_by_campaign_uuid(uuid):
+            documents_repository.delete(document.uuid)
     logger.info(f"Deleting campaign uuid={uuid}")
     if not repository.delete(uuid):
         raise NotFoundException("Campaign", uuid)

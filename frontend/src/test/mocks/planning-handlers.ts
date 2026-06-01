@@ -55,6 +55,47 @@ export const DEFAULT_PLANNING_STEPS = [
     createMockPlanningStep({ id: 5, label: 'Tir', color: '#D4915C', display_order: 5, min_status_for_done: 7 }),
 ];
 
+/**
+ * Mutation handlers (POST/PATCH/DELETE) pour campaign-steps, lab-events et
+ * member-periods. Ils renvoient l'entité en écho (uuid + corps de requête),
+ * ce qui permet aux tests d'asserter le payload envoyé et au schéma Zod de
+ * parser la réponse. Les GET seuls étaient mockés jusqu'ici.
+ */
+export const planningMutationHandlers = [
+    // ----- Campaign steps -----
+    http.post('/api/v1/planning/campaign-steps/', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: crypto.randomUUID(), ...body }, { status: 201 });
+    }),
+    http.patch('/api/v1/planning/campaign-steps/:uuid/', async ({ params, request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: params.uuid, ...body });
+    }),
+    http.delete('/api/v1/planning/campaign-steps/:uuid/', () => new HttpResponse(null, { status: 204 })),
+
+    // ----- Lab events -----
+    http.post('/api/v1/planning/lab-events/', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: crypto.randomUUID(), ...body }, { status: 201 });
+    }),
+    http.patch('/api/v1/planning/lab-events/:uuid/', async ({ params, request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: params.uuid, ...body });
+    }),
+    http.delete('/api/v1/planning/lab-events/:uuid/', () => new HttpResponse(null, { status: 204 })),
+
+    // ----- Member periods -----
+    http.post('/api/v1/planning/member-periods/', async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: crypto.randomUUID(), ...body }, { status: 201 });
+    }),
+    http.patch('/api/v1/planning/member-periods/:uuid/', async ({ params, request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ uuid: params.uuid, ...body });
+    }),
+    http.delete('/api/v1/planning/member-periods/:uuid/', () => new HttpResponse(null, { status: 204 })),
+];
+
 /** Default planning handlers — return empty arrays (sauf le référentiel d'étapes) */
 export const planningHandlers = [
     http.get('/api/v1/planning/week-states/', () => HttpResponse.json([])),
@@ -66,6 +107,7 @@ export const planningHandlers = [
     http.get('/api/v1/planning/lab-events/', () => HttpResponse.json([])),
     http.get('/api/v1/campaigns/', () => HttpResponse.json([])),
     http.get('/api/v1/fsecs/', () => HttpResponse.json([])),
+    ...planningMutationHandlers,
 ];
 
 /** Planning handlers with custom data */
@@ -92,5 +134,6 @@ export function planningHandlersWithData(data: {
         http.get('/api/v1/planning/lab-events/', () => HttpResponse.json(data.labEvents ?? [])),
         http.get('/api/v1/campaigns/', () => HttpResponse.json(data.campaigns ?? [])),
         http.get('/api/v1/fsecs/', () => HttpResponse.json(data.fsecs ?? [])),
+        ...planningMutationHandlers,
     ];
 }

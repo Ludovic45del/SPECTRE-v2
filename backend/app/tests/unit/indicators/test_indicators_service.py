@@ -9,6 +9,7 @@ import pytest
 from django.core.cache import cache
 
 from app.domain.indicators.models.indicators_bean import (
+    CampaignIndicatorsBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
     OperatorWorkloadBean,
@@ -38,6 +39,9 @@ def mock_repo():
     repo.get_fa_indicators.return_value = FaIndicatorsBean(total_created_in_year=10)
     repo.get_fsec_indicators.return_value = FsecIndicatorsBean(
         total_created_in_year=20, total_shot_in_year=5
+    )
+    repo.get_campaign_indicators.return_value = CampaignIndicatorsBean(
+        total_in_period=3, total_fsec=20, total_fsec_shot=5
     )
     repo.get_step_durations.return_value = [
         StepDurationBean(
@@ -70,8 +74,12 @@ def mock_repo():
 def test_returns_bean_with_provided_year(mock_repo):
     bean = get_indicators(mock_repo, year=2024)
     assert bean.year == 2024
+    assert bean.campaign.total_in_period == 3
     mock_repo.get_fa_indicators.assert_called_once_with(2024, semester=None)
     mock_repo.get_fsec_indicators.assert_called_once_with(2024, semester=None)
+    mock_repo.get_campaign_indicators.assert_called_once_with(
+        2024, semester=None, limit=8
+    )
     mock_repo.get_step_durations.assert_called_once_with(2024, semester=None)
     mock_repo.get_top_operators.assert_called_once_with(2024, semester=None, limit=10)
 
@@ -87,6 +95,7 @@ def test_propagates_semester_when_valid(mock_repo):
     get_indicators(mock_repo, year=2025, semester=1)
     mock_repo.get_fa_indicators.assert_called_once_with(2025, semester=1)
     mock_repo.get_fsec_indicators.assert_called_once_with(2025, semester=1)
+    mock_repo.get_campaign_indicators.assert_called_once_with(2025, semester=1, limit=8)
     mock_repo.get_step_durations.assert_called_once_with(2025, semester=1)
     mock_repo.get_top_operators.assert_called_once_with(2025, semester=1, limit=10)
 

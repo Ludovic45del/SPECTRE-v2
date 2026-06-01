@@ -29,3 +29,12 @@ class AssemblyStepEntity(BaseStepEntity):
         related_name="assembly_steps",
         blank=True,
     )
+    # Assembleurs multiples : une étape peut être réalisée à plusieurs.
+    # Source de vérité de la liste ; `operator_user` (FK héritée) reste
+    # synchronisée sur le premier sélectionné pour la rétro-compatibilité.
+    operator_users = models.ManyToManyField(
+        "app.UserProfileEntity",
+        db_table="ASSEMBLY_STEP_OPERATOR",
+        related_name="+",
+        blank=True,
+    )

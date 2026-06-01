@@ -9,6 +9,8 @@
  * - rack_id (referential)
  * - interface_io
  * - comments
+ * - metro_file_link (lien "Fichier métro .txt" : URL HTTP ou chemin UNC)
+ * - visrad_link (lien "Visrad réalisé" : URL HTTP ou chemin UNC)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,6 +45,8 @@ const SealingStepFormSchema = z.object({
     rackId: z.number().nullable().optional(),
     interfaceIo: z.string().nullable().optional(),
     comments: z.string().nullable().optional(),
+    metroFileLink: z.string().max(500, 'Lien trop long (max 500)').nullable().optional(),
+    visradLink: z.string().max(500, 'Lien trop long (max 500)').nullable().optional(),
 });
 
 type SealingStepForm = z.infer<typeof SealingStepFormSchema>;
@@ -65,6 +69,8 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
             rackId: null,
             interfaceIo: '',
             comments: '',
+            metroFileLink: '',
+            visradLink: '',
         },
     });
 
@@ -77,6 +83,8 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                     rackId: step.rackId,
                     interfaceIo: step.interfaceIo ?? '',
                     comments: step.comments ?? '',
+                    metroFileLink: step.metroFileLink ?? '',
+                    visradLink: step.visradLink ?? '',
                 });
             } else {
                 reset({
@@ -85,6 +93,8 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                     rackId: null,
                     interfaceIo: '',
                     comments: '',
+                    metroFileLink: '',
+                    visradLink: '',
                 });
             }
             setShowDeleteConfirm(false);
@@ -107,6 +117,8 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                         rackId: data.rackId,
                         interfaceIo: data.interfaceIo,
                         comments: data.comments,
+                        metroFileLink: data.metroFileLink?.trim() || null,
+                        visradLink: data.visradLink?.trim() || null,
                     });
                     showNotification('Scellement mis à jour', 'success');
                 } else {
@@ -117,6 +129,8 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                         rackId: data.rackId,
                         interfaceIo: data.interfaceIo,
                         comments: data.comments,
+                        metroFileLink: data.metroFileLink?.trim() || null,
+                        visradLink: data.visradLink?.trim() || null,
                     });
                     showNotification('Scellement créé', 'success');
                 }
@@ -241,6 +255,44 @@ export function SealingStepModal({ open, onClose, metrologyStepId, step }: Seali
                             size="small"
                             fullWidth
                             inputProps={{ 'aria-label': 'Interface I0' }}
+                        />
+                    )}
+                />
+
+                {/* Lien fichier métro .txt (URL HTTP ou chemin UNC \\serveur\…) */}
+                <Controller
+                    name="metroFileLink"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <TextField
+                            {...field}
+                            value={field.value ?? ''}
+                            label="Fichier métro .txt"
+                            size="small"
+                            fullWidth
+                            placeholder="https://… ou \\serveur\share\…"
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
+                            inputProps={{ 'aria-label': 'Lien vers le fichier métro .txt' }}
+                        />
+                    )}
+                />
+
+                {/* Lien Visrad réalisé (URL HTTP ou chemin UNC \\serveur\…) */}
+                <Controller
+                    name="visradLink"
+                    control={control}
+                    render={({ field, fieldState }) => (
+                        <TextField
+                            {...field}
+                            value={field.value ?? ''}
+                            label="Visrad réalisé"
+                            size="small"
+                            fullWidth
+                            placeholder="https://… ou \\serveur\share\…"
+                            error={Boolean(fieldState.error)}
+                            helperText={fieldState.error?.message}
+                            inputProps={{ 'aria-label': 'Lien vers le Visrad réalisé' }}
                         />
                     )}
                 />

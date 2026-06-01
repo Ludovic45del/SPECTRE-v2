@@ -6,7 +6,7 @@
  */
 
 import { memo, useState } from 'react';
-import { Box, IconButton, Paper, Typography, Stack, Grid } from '@mui/material';
+import { IconButton, Paper, Typography, Stack, Grid } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { Fa } from '@entities/fa';
 import { UserChip } from '@entities/user';
@@ -60,17 +60,6 @@ export const PhaseClosSection = memo(function PhaseClosSection({ fa }: PhaseClos
                         )}
                     </Grid>
                 </Grid>
-
-                <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                        Validation de clôture
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'grey.50', borderRadius: 1, mt: 0.5 }}>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                            {fa.closureValidation || '-'}
-                        </Typography>
-                    </Paper>
-                </Box>
             </Stack>
 
             <ClosePhaseModal open={modalOpen} onClose={() => setModalOpen(false)} fa={fa} />

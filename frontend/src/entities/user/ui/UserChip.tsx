@@ -14,7 +14,7 @@
  */
 
 import { memo, useCallback, useState } from 'react';
-import { Box, Chip, CircularProgress, Divider, Link, Popover, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Chip, CircularProgress, Divider, Link, Popover, Stack, Typography } from '@mui/material';
 import { useUserLookup } from '../core/api/user.queries';
 import { formatUserDisplayName } from '../core/lib/format-user-display-name';
 import type { UserLookup } from '../core/model/user-lookup.schema';
@@ -34,6 +34,9 @@ export interface UserChipProps {
 const PopoverContent = memo(function PopoverContent({ user }: { user: UserLookup }) {
     const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.username;
     const roleLabel = ROLE_LABELS[user.role] ?? user.role;
+    const initials =
+        `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() ||
+        user.username.slice(0, 2).toUpperCase();
 
     const rows: ReadonlyArray<{ label: string; value: string }> = [
         { label: 'Matricule', value: user.username },
@@ -46,11 +49,20 @@ const PopoverContent = memo(function PopoverContent({ user }: { user: UserLookup
 
     return (
         <Box sx={{ p: 2, minWidth: 240, maxWidth: 320 }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                <Typography variant="subtitle1" fontWeight={700}>
-                    {fullName}
-                </Typography>
-                <Chip label={roleLabel} size="small" />
+            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1 }}>
+                <Avatar
+                    src={user.avatarUrl ?? undefined}
+                    alt={fullName}
+                    sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontSize: '0.9rem', fontWeight: 700 }}
+                >
+                    {initials}
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="subtitle1" fontWeight={700} noWrap>
+                        {fullName}
+                    </Typography>
+                    <Chip label={roleLabel} size="small" />
+                </Box>
             </Stack>
             <Divider sx={{ mb: 1 }} />
             {visibleRows.length === 0 ? (

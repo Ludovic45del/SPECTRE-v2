@@ -31,8 +31,7 @@ export const FaIndicatorsApiSchema = z.object({
     by_discovery_step: z.record(z.string(), z.number().int().nonnegative()),
     open_stock_all_years: z.number().int().nonnegative(),
     avg_event_to_open_days: z.number().nullable(),
-    avg_open_to_progress_days: z.number().nullable(),
-    avg_progress_to_closure_days: z.number().nullable(),
+    avg_open_to_closure_days: z.number().nullable(),
     avg_total_lifecycle_days: z.number().nullable(),
     created_per_month: z.record(z.string(), z.number().int().nonnegative()),
 });
@@ -49,6 +48,27 @@ export const FsecIndicatorsApiSchema = z.object({
     shot_per_month: z.record(z.string(), z.number().int().nonnegative()),
 });
 
+// ---------- Campaign indicators ----------
+
+export const CampaignVolumeApiSchema = z.object({
+    uuid: z.string(),
+    name: z.string(),
+    fsec_count: z.number().int().nonnegative(),
+});
+
+export const CampaignIndicatorsApiSchema = z.object({
+    total_in_period: z.number().int().nonnegative(),
+    by_status: z.record(z.string(), z.number().int().nonnegative()),
+    by_type: z.record(z.string(), z.number().int().nonnegative()),
+    by_installation: z.record(z.string(), z.number().int().nonnegative()),
+    total_fsec: z.number().int().nonnegative(),
+    total_fsec_shot: z.number().int().nonnegative(),
+    avg_fsec_per_campaign: z.number().nullable(),
+    avg_duration_days: z.number().nullable(),
+    started_per_month: z.record(z.string(), z.number().int().nonnegative()),
+    top_by_volume: z.array(CampaignVolumeApiSchema),
+});
+
 // ---------- Operator workload ----------
 
 export const OperatorWorkloadApiSchema = z.object({
@@ -63,6 +83,7 @@ export const IndicatorsApiSchema = z.object({
     year: z.number().int(),
     fa: FaIndicatorsApiSchema,
     fsec: FsecIndicatorsApiSchema,
+    campaign: CampaignIndicatorsApiSchema,
     step_durations: z.array(StepDurationApiSchema),
     top_operators: z.array(OperatorWorkloadApiSchema),
     bottleneck_step_key: z.string().nullable(),

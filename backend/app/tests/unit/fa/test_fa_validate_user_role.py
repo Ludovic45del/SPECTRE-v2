@@ -68,7 +68,6 @@ def fa_in_progress():
         status_id=FaStatus.IN_PROGRESS,
         iec_validation_open_date=date(2024, 1, 5),
         iec_validation_progress=True,
-        iec_validation_progress_date=date(2024, 1, 10),
     )
 
 
@@ -164,7 +163,6 @@ class TestValidateProgressPhaseUserRole:
     def test_iec_accepted(self, fa_in_progress):
         # Reset progress flags pour simuler IN_PROGRESS sans validation faite
         fa_in_progress.iec_validation_progress = False
-        fa_in_progress.iec_validation_progress_date = None
 
         fa_repo = _make_fa_repo(fa_in_progress)
         user_repo = _make_user_repo(_make_user(ROLE_IEC))
@@ -181,7 +179,6 @@ class TestValidateProgressPhaseUserRole:
 
     def test_assembleur_rejected(self, fa_in_progress):
         fa_in_progress.iec_validation_progress = False
-        fa_in_progress.iec_validation_progress_date = None
 
         fa_repo = _make_fa_repo(fa_in_progress)
         user_repo = _make_user_repo(_make_user(ROLE_ASSEMBLEUR))

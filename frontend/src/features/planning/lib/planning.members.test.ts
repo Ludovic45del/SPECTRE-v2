@@ -17,6 +17,8 @@ function makeUser(overrides: Partial<User> = {}): User {
         service: '',
         numero: '',
         bureau: '',
+        avatarUrl: null,
+        signatureUrl: null,
         isActive: true,
         forcePasswordChange: false,
         lastLogin: null,

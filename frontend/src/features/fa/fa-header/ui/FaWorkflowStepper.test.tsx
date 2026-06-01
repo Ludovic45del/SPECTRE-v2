@@ -14,6 +14,9 @@ import type { Fa } from '@entities/fa';
 
 // Mock FA data
 const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
+    slug: 'fa-2025-test-fsec01',
+    fsecSlug: null,
+    campaignSlug: null,
     uuid: '00000000-0000-0000-0000-000000000001',
     fsecVersionId: '00000000-0000-0000-0000-000000000002',
     identifier: 'FA_2025_Test_FSEC01',
@@ -36,7 +39,6 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     cause: null,
     experienceImpact: null,
     iecValidationProgress: false,
-    iecValidationProgressDate: null,
     iecValidationProgressName: null,
     iecValidationProgressUserUuid: null,
     closureValidation: null,
@@ -73,7 +75,6 @@ const createMockFaApiResponse = (overrides: Record<string, unknown> = {}) => ({
     cause: null,
     experience_impact: null,
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,

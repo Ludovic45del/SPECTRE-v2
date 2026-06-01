@@ -20,6 +20,7 @@ import { assignLanes, laneRowHeight } from '../lib/planning.lane-utils';
 import type { PlanningData } from '../lib/planning.hooks';
 import type { LabEventsMap } from '../lib/planning.hooks';
 import { usePlanningStore } from '../lib/planning.store';
+import { paths } from '@shared/config';
 import type { TimelineColumn } from '../lib/planning.utils';
 import type { VisibleColumnRange } from '../lib/useColumnVirtualization';
 import { CampaignGroup } from './campaign/CampaignGroup';
@@ -118,7 +119,7 @@ export const PlanningCampaignRows = memo(function PlanningCampaignRows({
                         salles={salles}
                         labEvents={labEvents}
                         visibleRange={visibleRange}
-                        onNavigate={() => navigate(`/campagne-details/${campagne.uuid}/overview`)}
+                        onNavigate={() => navigate(paths.campaign.tab(campagne.slug, 'overview'))}
                     />
                 ))}
             </>
@@ -259,7 +260,7 @@ function VirtualizedCampaignRows({
                         salles={salles}
                         labEvents={labEvents}
                         visibleRange={visibleRange}
-                        onNavigate={() => navigate(`/campagne-details/${campagne.uuid}/overview`)}
+                        onNavigate={() => navigate(paths.campaign.tab(campagne.slug, 'overview'))}
                     />
                 );
             })}

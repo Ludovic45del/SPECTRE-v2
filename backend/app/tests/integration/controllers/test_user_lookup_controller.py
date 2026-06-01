@@ -100,7 +100,9 @@ class TestUserLookupEndpoint:
         data = response.json()
         assert data, "expected at least one user"
         keys = set(data[0].keys())
-        # Annuaire : identite + role + is_active + coordonnees pratiques.
+        # Annuaire : identite + role + is_active + coordonnees pratiques + avatar
+        # (affiché dans les chips/dropdowns). Pas la signature (exposée uniquement
+        # sur le profil complet /me, jamais dans l'annuaire).
         assert keys == {
             "uuid",
             "username",
@@ -112,7 +114,9 @@ class TestUserLookupEndpoint:
             "service",
             "numero",
             "bureau",
+            "avatar_url",
         }
+        assert "signature_url" not in keys
         # Pas de fuite des champs sensibles.
         assert "password" not in keys
         assert "dashboard_preferences" not in keys

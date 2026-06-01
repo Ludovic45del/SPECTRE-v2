@@ -18,6 +18,7 @@ import { useNotification } from '@shared/ui';
 import { Fa, useDeleteFa, getCriticalityInfo } from '@entities/fa';
 import { useFsec } from '@entities/fsec';
 import { useCampaign } from '@entities/campaign';
+import { paths } from '@shared/config';
 
 import { DataChip } from '@widgets/data-chip';
 
@@ -177,7 +178,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                 {fsec && (
                                     <Box
                                         component={Link}
-                                        to={`/fsec-details/${fsec.versionUuid}/overview`}
+                                        to={paths.fsec.tab(fsec.slug, 'overview')}
                                         sx={{
                                             display: 'inline-flex',
                                             alignItems: 'center',
@@ -203,7 +204,7 @@ function FaHeaderComponent({ fa }: FaHeaderProps) {
                                 {campaign && (
                                     <Box
                                         component={Link}
-                                        to={`/campagne-details/${campaign.uuid}/overview`}
+                                        to={paths.campaign.tab(campaign.slug, 'overview')}
                                         sx={{
                                             display: 'inline-flex',
                                             alignItems: 'center',

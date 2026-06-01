@@ -5,11 +5,13 @@
  * Tabbed layout aligned with FSEC Details: Phase 1 and Phases 2 & 3
  */
 
-import { Box, Container, CircularProgress, Alert } from '@mui/material';
+import { useEffect } from 'react';
+import { Box, Container, Skeleton, Stack, Alert } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
-import { useParams, useLocation } from 'react-router-dom';
-import { useFa } from '@entities/fa';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useFaBySlug } from '@entities/fa';
 import { FaHeader } from '@features/fa';
+import { paths } from '@shared/config';
 import { RouteTransition } from '@shared/ui/RouteTransition';
 import { RoutedTabs, TabItem } from '@widgets/routed-tabs';
 import { Phase1Tab } from './tabs/Phase1Tab';
@@ -30,17 +32,35 @@ const FA_TABS: TabItem[] = [
 // ============================================================================
 
 export default function FaDetailsPage() {
-    const { uuid = '' } = useParams<{ uuid: string }>();
+    const { faSlug = '' } = useParams<{ faSlug: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
 
-    const { data: fa, isLoading, error } = useFa(uuid);
+    const { data: fa, isLoading, error } = useFaBySlug(faSlug);
 
-    // Loading state
+    // Réécrit l'URL vers le slug canonique (arrivée par UUID ancien lien ou slug
+    // obsolète), en préservant l'onglet courant.
+    useEffect(() => {
+        if (fa?.slug && fa.slug !== faSlug) {
+            navigate(location.pathname.replace(`/fa-details/${faSlug}`, `/fa-details/${fa.slug}`), {
+                replace: true,
+            });
+        }
+    }, [fa?.slug, faSlug, location.pathname, navigate]);
+
+    // Loading state — skeleton calé sur le layout (header + tabs + contenu)
+    // pour éviter le saut visuel. Le plus souvent court-circuité par le seeding
+    // depuis le cache liste ; couvre surtout l'accès direct par URL.
     if (isLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                <CircularProgress />
-            </Box>
+            <Container maxWidth={false} sx={{ py: 3 }}>
+                <Skeleton variant="rounded" height={120} sx={{ mb: 3 }} />
+                <Skeleton variant="rounded" height={48} width={300} sx={{ mb: 3 }} />
+                <Stack spacing={3}>
+                    <Skeleton variant="rounded" height={200} />
+                    <Skeleton variant="rounded" height={150} />
+                </Stack>
+            </Container>
         );
     }
 
@@ -62,7 +82,7 @@ export default function FaDetailsPage() {
 
             {/* Tab bar */}
             <Box sx={{ mt: 3 }}>
-                <RoutedTabs tabs={FA_TABS} baseUrl={`/fa-details/${uuid}`} />
+                <RoutedTabs tabs={FA_TABS} baseUrl={paths.fa.root(faSlug)} />
             </Box>
 
             {/* Tab content */}
@@ -70,7 +90,7 @@ export default function FaDetailsPage() {
                 {({ reset }) => (
                     <RouteTransition>
                         <Box sx={{ mt: 3 }}>
-                            {(location.pathname.includes('/phase1') || location.pathname.endsWith(uuid)) && (
+                            {(location.pathname.includes('/phase1') || location.pathname.endsWith(faSlug)) && (
                                 <Phase1Tab fa={fa} onReset={reset} />
                             )}
                             {location.pathname.includes('/phase23') && <Phase23Tab fa={fa} onReset={reset} />}

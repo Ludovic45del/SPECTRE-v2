@@ -38,6 +38,8 @@ const ActivityItemApiSchema = z.object({
     id: z.string(),
     type: z.enum(['campaign', 'fsec', 'fa', 'embase', 'planning']),
     name: z.string(),
+    // Slug d'URL calculé (null pour le type "planning" qui pointe vers /planning).
+    slug: z.string().nullable().optional(),
     status_id: z.number().int().nullable(),
     last_updated: z.string().nullable(),
     // Campaign-specific
@@ -64,6 +66,7 @@ const ActivityItemSchema = ActivityItemApiSchema.transform((api) => ({
     id: api.id,
     type: api.type,
     name: api.name,
+    slug: api.slug ?? null,
     statusId: api.status_id,
     lastUpdated: api.last_updated,
     // Campaign-specific

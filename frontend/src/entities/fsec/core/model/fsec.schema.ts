@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { parsePlanAnnotations } from './assembly-plan.schema';
 
 /**
  * Raw API response schema (snake_case from Backend)
@@ -15,6 +16,11 @@ export const FsecApiSchema = z.object({
     // Versioning
     version_uuid: z.string().uuid(),
     fsec_uuid: z.string().uuid(),
+
+    // Slug d'URL calculé (préfixé du contexte campagne) + slug de la campagne
+    // parente pour la navigation croisée (null si FSEC orphelin).
+    slug: z.string().optional(),
+    campaign_slug: z.string().nullable().optional(),
 
     // Foreign Keys
     campaign_id: z.string().uuid().nullable(),
@@ -36,6 +42,28 @@ export const FsecApiSchema = z.object({
     experience_srxx: z.string().nullable(),
     localisation: z.string().nullable(),
     depressurization_failed: z.boolean().nullable(),
+
+    // Photo de la vue d'ensemble (URL relative servie via MEDIA_URL).
+    // optional() pour rester rétro-compatible avec les FSECs sérialisés avant
+    // l'ajout du champ (caches navigateur, snapshots de tests).
+    overview_image: z.string().nullable().optional(),
+
+    // Plan d'assemblage annotable (rubrique Assemblage).
+    // `assembly_plan_image` : URL relative MEDIA ou null. `assembly_plan_annotations` :
+    // calque brut toléré tel quel ici (validé/coercé via parsePlanAnnotations) pour
+    // qu'une annotation corrompue ne casse pas le parsing du FSEC.
+    assembly_plan_image: z.string().nullable().optional(),
+    assembly_plan_annotations: z.array(z.unknown()).nullable().optional(),
+
+    // Liens vers fichiers métiers (URL HTTP interne ou chemin UNC).
+    alignment_file_link: z.string().nullable().optional(),
+    fdie_link: z.string().nullable().optional(),
+
+    // Fiche de livraison phase 2 (TCI : OK/KO + remarques + signature).
+    delivery_validation: z.string().nullable().optional(),
+    delivery_remarques: z.string().nullable().optional(),
+    delivery_validated_by_username: z.string().nullable().optional(),
+    delivery_validated_at: z.string().nullable().optional(),
 });
 
 /**
@@ -45,6 +73,10 @@ export const FsecSchema = FsecApiSchema.transform((api) => ({
     // Versioning
     versionUuid: api.version_uuid,
     fsecUuid: api.fsec_uuid,
+
+    // Slugs d'URL
+    slug: api.slug ?? '',
+    campaignSlug: api.campaign_slug ?? null,
 
     // Foreign Keys
     campaignId: api.campaign_id,
@@ -66,6 +98,23 @@ export const FsecSchema = FsecApiSchema.transform((api) => ({
     experienceSrxx: api.experience_srxx,
     localisation: api.localisation,
     depressurizationFailed: api.depressurization_failed,
+
+    // Photo de la vue d'ensemble (null si absente).
+    overviewImage: api.overview_image ?? null,
+
+    // Plan d'assemblage annotable.
+    assemblyPlanImage: api.assembly_plan_image ?? null,
+    assemblyPlanAnnotations: parsePlanAnnotations(api.assembly_plan_annotations),
+
+    // Liens vers fichiers métiers.
+    alignmentFileLink: api.alignment_file_link ?? null,
+    fdieLink: api.fdie_link ?? null,
+
+    // Fiche de livraison phase 2.
+    deliveryValidation: api.delivery_validation ?? null,
+    deliveryRemarques: api.delivery_remarques ?? null,
+    deliveryValidatedByUsername: api.delivery_validated_by_username ?? null,
+    deliveryValidatedAt: api.delivery_validated_at ? new Date(api.delivery_validated_at) : null,
 }));
 
 export type Fsec = z.infer<typeof FsecSchema>;
@@ -92,6 +141,8 @@ export const FsecCreateSchema = z.object({
     experienceSrxx: z.string().nullable().optional(),
     localisation: z.string().nullable().optional(),
     depressurizationFailed: z.boolean().nullable().optional(),
+    alignmentFileLink: z.string().nullable().optional(),
+    fdieLink: z.string().nullable().optional(),
 });
 
 export type FsecCreate = z.infer<typeof FsecCreateSchema>;
@@ -121,5 +172,7 @@ export function fsecCreateToApi(data: FsecCreate): Record<string, unknown> {
         experience_srxx: data.experienceSrxx ?? null,
         localisation: data.localisation ?? null,
         depressurization_failed: data.depressurizationFailed ?? null,
+        alignment_file_link: data.alignmentFileLink ?? null,
+        fdie_link: data.fdieLink ?? null,
     };
 }

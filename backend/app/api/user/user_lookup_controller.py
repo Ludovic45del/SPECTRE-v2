@@ -1,8 +1,8 @@
 """Endpoint lecture seule des utilisateurs pour les dropdowns + popovers metier.
 
 Expose les champs publics d'annuaire interne (uuid, username, first_name,
-last_name, role, is_active, laboratoire, service, numero, bureau) pour
-alimenter :
+last_name, role, is_active, laboratoire, service, numero, bureau, avatar_url)
+pour alimenter :
 - les dropdowns UserSelect (selection d'un operateur),
 - les popovers UserChip (carte d'identite affichee au clic sur un nom).
 
@@ -41,6 +41,7 @@ def _user_bean_to_lookup(bean: UserBean) -> dict:
         "service": bean.service or "",
         "numero": bean.numero or "",
         "bureau": bean.bureau or "",
+        "avatar_url": bean.avatar_url,
     }
 
 

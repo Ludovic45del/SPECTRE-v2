@@ -57,6 +57,22 @@ class IUserRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def set_avatar(self, uuid: uuid_lib.UUID, image_file) -> UserBean:
+        """Remplace (image_file fourni) ou supprime (None) la photo de profil.
+
+        L'ancien fichier physique est libéré avant la nouvelle assignation.
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_signature(self, uuid: uuid_lib.UUID, image_file) -> UserBean:
+        """Remplace (image_file fourni) ou supprime (None) la signature.
+
+        L'ancien fichier physique est libéré avant la nouvelle assignation.
+        """
+        pass
+
+    @abc.abstractmethod
     def exists_by_username(self, username: str) -> bool:
         pass
 

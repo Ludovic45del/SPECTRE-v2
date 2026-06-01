@@ -188,6 +188,7 @@ export default function WelcomeHeader() {
                 displayName={displayName}
                 today={today}
                 roleLabel={roleLabel}
+                avatarUrl={user?.avatarUrl}
                 user={user ?? null}
             />
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>

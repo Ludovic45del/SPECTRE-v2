@@ -253,3 +253,50 @@ class TestCampaignRepositoryDuplicateCheck:
         )
 
         assert result is False
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestCampaignRepositoryGetBySlug:
+    """Tests résolution d'une campagne par son slug d'URL calculé."""
+
+    def test_get_by_slug_roundtrip(self, campaign_repository, sample_campaign_data):
+        from app.domain.shared.slug import build_campaign_slug
+
+        created = campaign_repository.create(CampaignBean(**sample_campaign_data))
+        slug = build_campaign_slug(
+            created.year, created.semester, created.installation_label, created.name
+        )
+
+        resolved = campaign_repository.get_by_slug(slug)
+
+        assert resolved is not None
+        assert resolved.uuid == created.uuid
+
+    def test_get_by_slug_unknown_returns_none(self, campaign_repository):
+        assert campaign_repository.get_by_slug("2099-s1-lmj-inexistante") is None
+
+    def test_get_by_slug_disambiguates_semester(self, campaign_repository):
+        """Deux campagnes même nom/année/installation, semestres différents :
+        chaque slug résout vers la bonne campagne grâce au semestre."""
+        from app.domain.shared.slug import build_campaign_slug
+
+        name = f"Recurrente {uuid.uuid4().hex[:8]}"
+        s1 = campaign_repository.create(
+            CampaignBean(
+                type_id=0, status_id=0, installation_id=0,
+                name=name, year=2026, semester="S1",
+            )
+        )
+        s2 = campaign_repository.create(
+            CampaignBean(
+                type_id=0, status_id=0, installation_id=0,
+                name=name, year=2026, semester="S2",
+            )
+        )
+        slug_s1 = build_campaign_slug(2026, "S1", s1.installation_label, name)
+        slug_s2 = build_campaign_slug(2026, "S2", s2.installation_label, name)
+
+        assert slug_s1 != slug_s2
+        assert campaign_repository.get_by_slug(slug_s1).uuid == s1.uuid
+        assert campaign_repository.get_by_slug(slug_s2).uuid == s2.uuid

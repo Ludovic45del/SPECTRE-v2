@@ -1,0 +1,110 @@
+# SPECTRE — déploiement production sur VPS OVH
+# Usage : docker compose -f deploy/docker-compose.prod.yml up -d --build
+#
+# Le fichier .env (à la racine du projet sur le VPS) fournit :
+#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+#   DJANGO_SECRET_KEY, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS
+#   VPS_PUBLIC_IP (pour le CN du cert TLS auto-signé)
+
+name: spectre
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 5432
+      STATIC_ROOT: /app/staticfiles
+      SECURE_SSL_REDIRECT: "False"
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    command:
+      - sh
+      - -c
+      - |
+        python manage.py migrate --noinput &&
+        python manage.py initdb &&
+        python manage.py collectstatic --noinput &&
+        exec gunicorn config.wsgi:application \
+          --bind 0.0.0.0:8000 \
+          --workers 3 \
+          --threads 2 \
+          --timeout 60 \
+          --access-logfile - \
+          --error-logfile -
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      VPS_PUBLIC_IP: ${VPS_PUBLIC_IP}
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - static_files:/srv/static:ro
+      - media_files:/srv/media:ro
+      - tls_certs:/etc/nginx/tls
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot
+
+  # Renouvellement automatique des certificats Let's Encrypt.
+  # La première émission se fait via deploy/scripts/init-letsencrypt.sh.
+  # Ce conteneur tente un renew toutes les 12h (no-op tant que le cert est valide).
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c 'trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $${!};
+      done'
+
+volumes:
+  postgres_data:
+  static_files:
+  media_files:
+  tls_certs:
+  letsencrypt:
+  certbot_www:

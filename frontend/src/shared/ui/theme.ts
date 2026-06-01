@@ -115,6 +115,45 @@ const darkPalette = {
     },
 };
 
+// Crème : variante CLAIRE chaude (parchemin). Surfaces FRANCHEMENT crème — le
+// `paper` (#F6EDD8) habille la sidebar, les tableaux (Paper), cartes et dialogs,
+// donc il doit être nettement parchemin et non quasi-blanc. La page (#ECE0C4)
+// est un cran plus profonde pour que les surfaces ressortent (hiérarchie type
+// carte-blanche-sur-page-grise du mode clair, mais en chaud). Échelle de gris
+// teintée jaune-beige (R>=G>=B), contrastes validés AAA (texte primaire
+// 13.45:1 / 11.96:1, secondaire 5.78:1 / 5.14:1 sur paper / page).
+const creamGrey = {
+    50: '#F0E6CE',
+    100: '#EADFC6',
+    200: '#DCCDA9',
+    300: '#CBB892',
+    400: '#AC9A75',
+    500: '#7B6E54',
+    600: '#5B523F',
+    700: '#443D2F',
+    800: '#312C22',
+    900: '#252119',
+};
+
+const creamPalette = {
+    ...sharedColors,
+    grey: creamGrey,
+    background: {
+        default: '#ECE0C4',
+        paper: '#F6EDD8',
+    },
+    text: {
+        primary: '#2A2218',
+        secondary: '#675A43',
+        disabled: '#A7997F',
+    },
+    divider: 'rgba(74, 58, 30, 0.15)',
+    action: {
+        hover: 'rgba(74, 58, 30, 0.05)',
+        selected: 'rgba(74, 58, 30, 0.10)',
+    },
+};
+
 // ============================================================================
 // Shadows
 // ============================================================================
@@ -172,17 +211,23 @@ const typography = {
 // Theme factory
 // ============================================================================
 
-type ThemeMode = 'light' | 'dark';
+type ThemeMode = 'light' | 'dark' | 'cream';
 
 export function createAppTheme(mode: ThemeMode) {
     const isDark = mode === 'dark';
-    const palette = isDark ? darkPalette : lightPalette;
+    const isCream = mode === 'cream';
+    // MUI ne connaît que 'light' | 'dark'. « crème » est une variante claire :
+    // on la déclare 'light' auprès de MUI (toutes les branches
+    // `palette.mode === 'dark'` des composants la traitent donc comme claire),
+    // tout en lui injectant sa propre palette/échelle de gris chaude.
+    const muiMode: 'light' | 'dark' = isDark ? 'dark' : 'light';
+    const palette = isDark ? darkPalette : isCream ? creamPalette : lightPalette;
     const shadows = isDark ? darkShadows : lightShadows;
-    const grey = isDark ? darkGrey : lightGrey;
+    const grey = isDark ? darkGrey : isCream ? creamGrey : lightGrey;
 
     return createTheme({
         palette: {
-            mode,
+            mode: muiMode,
             ...palette,
         },
         shadows: shadows as unknown as typeof createTheme extends (options: { shadows: infer S }) => unknown
@@ -252,8 +297,8 @@ export function createAppTheme(mode: ThemeMode) {
                         borderRadius: 12,
                         boxShadow: 'none',
                         border: '1px solid',
-                        borderColor: isDark ? grey[200] : grey[200],
-                        backgroundColor: isDark ? grey[50] : '#fff',
+                        borderColor: grey[200],
+                        backgroundColor: isDark ? grey[50] : palette.background.paper,
                         transition: `border-color ${motionDuration.base}ms ${motionEasing.standard}, box-shadow ${motionDuration.medium}ms ${motionEasing.standard}, transform ${motionDuration.medium}ms ${motionEasing.standard}`,
                     },
                 },
@@ -421,6 +466,12 @@ export function createAppTheme(mode: ThemeMode) {
             // ----------------------------------------------------------------
             MuiCssBaseline: {
                 styleOverrides: {
+                    // Réserve la gouttière de scrollbar en permanence : passer
+                    // d'une page courte (sans scrollbar) à une page longue ne
+                    // décale plus le contenu de ~15px horizontalement.
+                    html: {
+                        scrollbarGutter: 'stable',
+                    },
                     '@media (prefers-reduced-motion: reduce)': {
                         '*, *::before, *::after': {
                             animationDuration: '0.01ms !important',
@@ -440,7 +491,7 @@ export const theme = createAppTheme('light');
 
 // Glassmorphism utility
 export function getGlassEffect(mode: ThemeMode = 'light') {
-    const base = mode === 'dark' ? '#1A1D27' : '#FFFFFF';
+    const base = mode === 'dark' ? '#1A1D27' : mode === 'cream' ? '#F6EDD8' : '#FFFFFF';
     return {
         background: alpha(base, 0.8),
         backdropFilter: 'blur(20px)',

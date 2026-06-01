@@ -5,11 +5,12 @@
  * Style: Aligned with CampaignDetailsPage
  */
 
-import { useMemo } from 'react';
-import { Box, Container, CircularProgress, Alert } from '@mui/material';
+import { useMemo, useEffect } from 'react';
+import { Box, Container, Skeleton, Stack, Alert } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
-import { useParams, useLocation } from 'react-router-dom';
-import { useFsec } from '@entities/fsec';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useFsecBySlug } from '@entities/fsec';
+import { paths } from '@shared/config';
 import { ErrorBoundary, RouteTransition } from '@shared/ui';
 import { useCampaignTeam } from '@entities/campaign/team';
 import { useFsecDocumentsByFsec } from '@entities/fsec/document';
@@ -39,18 +40,32 @@ function getTabs(categoryId: number | null | undefined): TabItem[] {
 }
 
 export default function FsecDetailsPage() {
-    const { versionUuid = '' } = useParams<{ versionUuid: string }>();
+    const { fsecSlug = '' } = useParams<{ fsecSlug: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
 
-    const { data: fsec, isLoading, error } = useFsec(versionUuid);
+    const { data: fsec, isLoading, error } = useFsecBySlug(fsecSlug);
+    // version_uuid canonique : les onglets enfants requêtent par version_uuid,
+    // pas par slug. Disponible une fois le FSEC chargé.
+    const versionUuid = fsec?.versionUuid ?? '';
     const { data: campaignTeam } = useCampaignTeam(fsec?.campaignId ?? '');
     const { data: documents } = useFsecDocumentsByFsec(versionUuid);
 
     const tabs = useMemo(() => getTabs(fsec?.categoryId ?? null), [fsec?.categoryId]);
     const hasGas = fsec?.categoryId != null && fsec?.categoryId !== 0;
 
+    // Réécrit l'URL vers le slug canonique (arrivée par UUID ancien lien ou slug
+    // obsolète), en préservant l'onglet courant.
+    useEffect(() => {
+        if (fsec?.slug && fsec.slug !== fsecSlug) {
+            navigate(location.pathname.replace(`/fsec-details/${fsecSlug}`, `/fsec-details/${fsec.slug}`), {
+                replace: true,
+            });
+        }
+    }, [fsec?.slug, fsecSlug, location.pathname, navigate]);
+
     // Guard clause AFTER all hooks (React Rules of Hooks)
-    if (!versionUuid) {
+    if (!fsecSlug) {
         return (
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Alert severity="error">Identifiant FSEC manquant dans l'URL</Alert>
@@ -58,11 +73,18 @@ export default function FsecDetailsPage() {
         );
     }
 
+    // Skeleton calé sur le layout (header + barre d'onglets + contenu) → pas de
+    // saut visuel. Souvent court-circuité par le seeding depuis le cache liste.
     if (isLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                <CircularProgress />
-            </Box>
+            <Container maxWidth={false} sx={{ py: 3 }}>
+                <Skeleton variant="rounded" height={120} sx={{ mb: 3 }} />
+                <Skeleton variant="rounded" height={48} width={420} sx={{ mb: 3 }} />
+                <Stack spacing={3}>
+                    <Skeleton variant="rounded" height={220} />
+                    <Skeleton variant="rounded" height={160} />
+                </Stack>
+            </Container>
         );
     }
 
@@ -83,7 +105,7 @@ export default function FsecDetailsPage() {
 
             {/* Tabs */}
             <Box sx={{ mt: 3 }}>
-                <RoutedTabs tabs={tabs} baseUrl={`/fsec-details/${versionUuid}`} />
+                <RoutedTabs tabs={tabs} baseUrl={paths.fsec.root(fsecSlug)} />
             </Box>
 
             {/* Content - EB-1 fix: each tab wrapped in ErrorBoundary */}
@@ -91,18 +113,14 @@ export default function FsecDetailsPage() {
                 {({ reset }) => (
                     <RouteTransition>
                         <Box sx={{ mt: 3 }}>
-                            {(location.pathname.includes('/overview') || location.pathname.endsWith(versionUuid)) && (
+                            {(location.pathname.includes('/overview') || location.pathname.endsWith(fsecSlug)) && (
                                 <ErrorBoundary compact onReset={reset}>
                                     <OverviewTab fsec={fsec} campaignTeam={campaignTeam} documents={documents} />
                                 </ErrorBoundary>
                             )}
                             {location.pathname.includes('/assemblage') && (
                                 <ErrorBoundary compact onReset={reset}>
-                                    <AssemblyTab
-                                        fsecVersionId={versionUuid}
-                                        fsecUuid={fsec.fsecUuid}
-                                        fsecStatusId={fsec.statusId ?? 0}
-                                    />
+                                    <AssemblyTab fsec={fsec} />
                                 </ErrorBoundary>
                             )}
                             {location.pathname.includes('/controle') && (

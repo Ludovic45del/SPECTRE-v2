@@ -61,10 +61,15 @@ def _format_validator_legacy_name(user) -> str:
     return full or user.username
 
 
-def generate_fa_identifier(campaign_name: str, fsec_name: str, year: int) -> str:
+def generate_fa_identifier(
+    campaign_name: str, fsec_name: str, year: int, sequence: int = 1
+) -> str:
     """Génère l'identifiant unique de la FA.
 
-    Format: FA_{année}_{campagne}_{fsec}
+    Format: FA_{année}_{campagne}_{fsec}_{sequence:02d}
+
+    Une FSEC peut avoir plusieurs FA ; le suffixe séquentiel (01, 02, ...)
+    distingue chaque FA pour la même FSEC sur une même année/campagne.
     """
     # Nettoyer les noms pour l'identifiant : remplacer espaces/tirets
     # et supprimer tout caractère spécial non alphanumérique/underscore
@@ -72,7 +77,60 @@ def generate_fa_identifier(campaign_name: str, fsec_name: str, year: int) -> str
     clean_campaign = re.sub(r"[^A-Za-z0-9_]", "", clean_campaign)
     clean_fsec = fsec_name.replace(" ", "_").replace("-", "_")
     clean_fsec = re.sub(r"[^A-Za-z0-9_]", "", clean_fsec)
-    return f"FA_{year}_{clean_campaign}_{clean_fsec}"
+    return f"FA_{year}_{clean_campaign}_{clean_fsec}_{sequence:02d}"
+
+
+def _parse_fa_sequence(identifier: str) -> int:
+    """Extrait le suffixe séquentiel ``_NN`` d'un identifiant FA (1 par défaut).
+
+    Le nom de campagne et de FSEC peuvent contenir des underscores : on lit donc
+    uniquement le groupe de chiffres en fin de chaîne, jamais par split.
+    """
+    match = re.search(r"_(\d{2,})$", identifier or "")
+    return int(match.group(1)) if match else 1
+
+
+def regenerate_fa_identifiers_for_fsec(
+    repository: IFaRepository,
+    fsec_version_id: str,
+    campaign_name: str,
+    fsec_name: str,
+    year: int,
+) -> int:
+    """Réaligne l'identifiant des FA d'une version FSEC sur le contexte courant.
+
+    L'identifiant FA encode ``(année, campagne, nom FSEC, séquence)`` et sert de
+    « nom » à la FA (affiché tel quel côté front). Quand la FSEC est renommée ou
+    rattachée à une autre campagne, on régénère les identifiants pour que ce nom
+    suive — en PRÉSERVANT le numéro de séquence de chaque FA (son rang historique
+    pour cette FSEC ne change pas).
+
+    Retourne le nombre de FA effectivement réécrites.
+    """
+    fas = repository.get_all_by_fsec_version_id(fsec_version_id)
+    updated = 0
+    for fa in fas:
+        sequence = _parse_fa_sequence(fa.identifier)
+        new_identifier = generate_fa_identifier(campaign_name, fsec_name, year, sequence)
+        if new_identifier == fa.identifier:
+            continue
+        # Contrainte unique sur l'identifier : collision très improbable (la paire
+        # campagne+nom FSEC est unique), mais on bascule sur le prochain numéro
+        # libre si jamais, pour ne pas faire échouer le renommage de la FSEC.
+        if repository.exists_by_identifier(new_identifier):
+            next_seq = repository.max_sequence_by_fsec_version_id(fsec_version_id) + 1
+            new_identifier = generate_fa_identifier(
+                campaign_name, fsec_name, year, next_seq
+            )
+        repository.update_identifier(fa.uuid, new_identifier)
+        updated += 1
+    if updated:
+        logger.info(
+            "Réaligné %d identifiant(s) FA sur le contexte FSEC version_uuid=%s",
+            updated,
+            fsec_version_id,
+        )
+    return updated
 
 
 def create_fa(
@@ -95,20 +153,25 @@ def create_fa(
         Le bean FA créé
 
     Raises:
-        ConflictException: Si une FA existe déjà pour cette FSEC
+        ConflictException: Si l'identifiant généré entre en collision (race condition rare)
     """
-    # Vérifier qu'il n'y a pas déjà une FA pour cette FSEC
-    if repository.exists_by_fsec_version_id(bean.fsec_version_id):
-        raise ConflictException("fsec_version_id", bean.fsec_version_id)
+    # Calcule le prochain numéro de séquence pour cette FSEC à partir du plus
+    # grand suffixe existant (+1). On n'utilise pas un count de lignes : une FA
+    # supprimée définitivement ne doit jamais voir son identifier réutilisé.
+    sequence = repository.max_sequence_by_fsec_version_id(bean.fsec_version_id) + 1
+    bean.identifier = generate_fa_identifier(campaign_name, fsec_name, year, sequence)
 
-    # Générer l'identifiant automatiquement
-    bean.identifier = generate_fa_identifier(campaign_name, fsec_name, year)
-
-    # Vérifier que l'identifiant est unique
+    # Garde-fou : si l'identifiant existe déjà (cas extrême d'incrémentation
+    # concurrente), on remonte un 409 propre.
     if repository.exists_by_identifier(bean.identifier):
         raise ConflictException("identifier", bean.identifier)
 
     bean.status_id = FaStatus.OPEN
+
+    # Date d'ouverture = date de création de la FA. Si le client en a fourni
+    # une explicitement (cas rare : import, backfill), on la respecte.
+    if bean.iec_validation_open_date is None:
+        bean.iec_validation_open_date = date.today()
 
     result = repository.create(bean)
     logger.info("FA créée: %s (fsec=%s)", result.identifier, result.fsec_version_id)
@@ -173,6 +236,14 @@ def get_fa_by_uuid(repository: IFaRepository, uuid: str) -> FaBean:
     return bean
 
 
+def get_fa_by_slug(repository: IFaRepository, slug: str) -> FaBean:
+    """Récupère une FA par son slug d'URL."""
+    bean = repository.get_by_slug(slug)
+    if bean is None:
+        raise NotFoundException("FA", slug)
+    return bean
+
+
 def get_all_fas(
     repository: IFaRepository, limit: Optional[int] = None, offset: int = 0
 ) -> List[FaBean]:
@@ -185,14 +256,15 @@ def count_all_fas(repository: IFaRepository) -> int:
     return repository.count_all()
 
 
-def get_fa_by_fsec_version_id(
+def get_fas_by_fsec_version_id(
     repository: IFaRepository, fsec_version_id: str
-) -> FaBean:
-    """Récupère la FA associée à une FSEC."""
-    bean = repository.get_by_fsec_version_id(fsec_version_id)
-    if bean is None:
-        raise NotFoundException("FA for FSEC", fsec_version_id)
-    return bean
+) -> List[FaBean]:
+    """Récupère toutes les FA actives associées à une FSEC.
+
+    Une FSEC peut avoir 0, 1 ou plusieurs FA. Retourne une liste vide si
+    aucune FA n'existe (pas d'exception).
+    """
+    return repository.get_all_by_fsec_version_id(fsec_version_id)
 
 
 _PROTECTED_MERGE_FIELDS = {
@@ -205,7 +277,6 @@ _PROTECTED_MERGE_FIELDS = {
     "iec_validation_open_name",
     "iec_validation_open_user_uuid",
     "iec_validation_progress",
-    "iec_validation_progress_date",
     "iec_validation_progress_name",
     "iec_validation_progress_user_uuid",
     "closure_validation",
@@ -214,7 +285,6 @@ _PROTECTED_MERGE_FIELDS = {
     "closure_validator_user_uuid",
     "created_at",
     "last_updated",
-    "is_active",
 }
 
 
@@ -266,10 +336,10 @@ def update_fa(repository: IFaRepository, bean: FaBean) -> FaBean:
 
 
 def delete_fa(repository: IFaRepository, uuid: str) -> bool:
-    """Supprime une FA (soft-delete)."""
+    """Supprime définitivement une FA (hard delete)."""
     if not repository.delete(uuid):
         raise NotFoundException("FA", uuid)
-    logger.info("FA supprimée (soft-delete): %s", uuid)
+    logger.info("FA supprimée définitivement: %s", uuid)
     return True
 
 
@@ -456,9 +526,12 @@ def validate_progress_phase(
     """Valide la phase En cours et passe à Clos.
 
     Voir validate_open_phase pour la sémantique des paramètres et exceptions.
+
+    `validation_date` est accepté pour compatibilité historique mais n'est plus
+    persisté : la chronologie des FA se limite à ouverture → clôture.
     """
-    if validation_date is None:
-        validation_date = date.today()
+    # Le paramètre est conservé pour ne pas casser les appelants existants.
+    del validation_date
 
     user_uuid, name = _resolve_validator_inputs(
         user_repository, validator_user_uuid, validator_name
@@ -474,18 +547,7 @@ def validate_progress_phase(
             f"La FA doit être au statut 'En cours' pour être validée. Statut actuel : {bean.status_id}",
         )
 
-    # Vérifier la cohérence chronologique avec la validation de la phase Ouvert
-    if (
-        bean.iec_validation_open_date
-        and validation_date < bean.iec_validation_open_date
-    ):
-        raise InvalidDataException(
-            f"La date de validation 'En cours' ({validation_date}) ne peut pas être antérieure "
-            f"à la date de validation 'Ouvert' ({bean.iec_validation_open_date})"
-        )
-
     bean.iec_validation_progress = True
-    bean.iec_validation_progress_date = validation_date
     bean.iec_validation_progress_name = name
     bean.iec_validation_progress_user_uuid = user_uuid
 
@@ -534,14 +596,13 @@ def close_fa(
             "La validation IEC de la phase 'En cours' est requise avant la fermeture",
         )
 
-    # Vérifier la cohérence chronologique avec la validation de la phase En cours
-    if (
-        bean.iec_validation_progress_date
-        and closure_date < bean.iec_validation_progress_date
-    ):
+    # Cohérence chronologique : fermeture >= ouverture.
+    # On ne contraint plus contre une "date de passage en cours" — ce champ a
+    # été supprimé, seuls ouverture et clôture importent.
+    if bean.iec_validation_open_date and closure_date < bean.iec_validation_open_date:
         raise InvalidDataException(
             f"La date de fermeture ({closure_date}) ne peut pas être antérieure "
-            f"à la date de validation 'En cours' ({bean.iec_validation_progress_date})"
+            f"à la date d'ouverture ({bean.iec_validation_open_date})"
         )
 
     bean.closure_validation = closure_validation

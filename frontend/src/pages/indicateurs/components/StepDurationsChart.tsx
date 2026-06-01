@@ -29,7 +29,7 @@ import {
     YAxis,
 } from 'recharts';
 import type { StepDuration } from '@entities/indicators';
-import { ChartTooltipCard } from './ChartTooltip';
+import { ChartTooltipCard } from '@shared/ui';
 
 interface StepDurationsChartProps {
     title: string;

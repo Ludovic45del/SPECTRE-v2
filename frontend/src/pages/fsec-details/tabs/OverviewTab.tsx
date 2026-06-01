@@ -65,22 +65,27 @@ export function OverviewTab({ fsec, campaignTeam, documents }: OverviewTabProps)
     return (
         <Box>
             <Grid container spacing={3}>
-                {/* Left Column: General Info & Team */}
+                {/* Colonne gauche : informations générales (avec photo) */}
                 <Grid item xs={12} md={8}>
+                    <GeneralInfoSection
+                        fsec={fsec}
+                        campaign={campaign}
+                        paperSx={paperSx}
+                        editButtonSx={editButtonSx}
+                    />
+                </Grid>
+
+                {/* Colonne droite : pièces jointes + équipe projet, pour
+                    tenir sur une seule page sans scroll vertical. */}
+                <Grid item xs={12} md={4}>
                     <Stack spacing={3}>
-                        <GeneralInfoSection
-                            fsec={fsec}
-                            campaign={campaign}
+                        <DocumentsSection
+                            fsecVersionUuid={fsec.versionUuid}
+                            documents={documents}
                             paperSx={paperSx}
-                            editButtonSx={editButtonSx}
                         />
                         <TeamSection campaignTeam={campaignTeam} paperSx={paperSx} />
                     </Stack>
-                </Grid>
-
-                {/* Right Column: Documents */}
-                <Grid item xs={12} md={4}>
-                    <DocumentsSection fsecVersionUuid={fsec.versionUuid} documents={documents} paperSx={paperSx} />
                 </Grid>
             </Grid>
         </Box>

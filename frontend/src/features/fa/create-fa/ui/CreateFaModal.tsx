@@ -8,7 +8,7 @@
  * - Phase Ouvert fields (discoverer, event_date, observation, etc.)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, Dialog, DialogActions, DialogContent, Divider, IconButton, Tab, Tabs } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useForm } from 'react-hook-form';
@@ -17,10 +17,11 @@ import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 import { useCampaigns } from '@entities/campaign';
-import { useCreateFa, useFas, FSEC_STEP_ID } from '@entities/fa';
+import { useCreateFa, FSEC_STEP_ID } from '@entities/fa';
 import { useFsecsByCampaign } from '@entities/fsec';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
+import { paths } from '@shared/config';
 
 import { useCreateFaStore, CreateFaFormSchema, type CreateFaForm } from '../model';
 import { CreateFaFormFields } from './CreateFaFormFields';
@@ -36,9 +37,6 @@ export function CreateFaModal() {
 
     // Fetch FSECs for selected campaign
     const { data: fsecs } = useFsecsByCampaign(selectedCampaignId);
-
-    // Fetch all FAs to filter out FSECs that already have a FA
-    const { data: allFas } = useFas();
 
     const {
         control,
@@ -84,17 +82,8 @@ export function CreateFaModal() {
         }
     }, [isOpen, preselectedCampaignId, preselectedFsecVersionId, setValue]);
 
-    // Filter FSECs that don't already have a FA
-    const availableFsecs = useMemo(() => {
-        if (!fsecs) return [];
-        if (!allFas || allFas.length === 0) return fsecs;
-
-        // Get set of FSEC version IDs that already have a FA
-        const fsecIdsWithFa = new Set(allFas.map((fa) => fa.fsecVersionId));
-
-        // Filter out FSECs that already have a FA
-        return fsecs.filter((fsec) => !fsecIdsWithFa.has(fsec.versionUuid));
-    }, [fsecs, allFas]);
+    // Une FSEC peut désormais porter plusieurs FA : aucune n'est filtrée.
+    const availableFsecs = fsecs ?? [];
 
     const onSubmit = useCallback(
         async (data: CreateFaForm) => {
@@ -118,7 +107,7 @@ export function CreateFaModal() {
                 setSelectedCampaignId('');
                 reset();
 
-                navigate(`/fa-details/${newFa.uuid}/phase1`);
+                navigate(paths.fa.tab(newFa.slug, 'phase1'));
             } catch (err: unknown) {
                 showNotification(getErrorMessage(err, 'Erreur lors de la création de la FA'), 'error');
             }

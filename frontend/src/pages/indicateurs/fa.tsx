@@ -80,8 +80,7 @@ export default function IndicateursFaPage() {
         if (!data) return [];
         const items = [
             { label: 'Événement → Ouverture', value: data.fa.avgEventToOpenDays },
-            { label: 'Ouverture → En cours', value: data.fa.avgOpenToProgressDays },
-            { label: 'En cours → Clôture', value: data.fa.avgProgressToClosureDays },
+            { label: 'Ouverture → Clôture', value: data.fa.avgOpenToClosureDays },
             { label: 'Cycle total (event → clôture)', value: data.fa.avgTotalLifecycleDays },
         ];
         return items
@@ -115,7 +114,7 @@ export default function IndicateursFaPage() {
                     gridTemplateColumns: {
                         xs: 'repeat(2, 1fr)',
                         sm: 'repeat(3, 1fr)',
-                        md: 'repeat(6, 1fr)',
+                        md: 'repeat(5, 1fr)',
                     },
                     gap: 2,
                     mb: 3,
@@ -150,16 +149,9 @@ export default function IndicateursFaPage() {
                     loading={isLoading}
                 />
                 <KpiCard
-                    title="Ouverture → en cours"
-                    value={isLoading ? '…' : formatDays(data?.fa.avgOpenToProgressDays ?? null)}
-                    subtitle="délai moyen"
-                    color={COLORS.delay}
-                    loading={isLoading}
-                />
-                <KpiCard
-                    title="En cours → clôture"
-                    value={isLoading ? '…' : formatDays(data?.fa.avgProgressToClosureDays ?? null)}
-                    subtitle="délai moyen"
+                    title="Ouverture → clôture"
+                    value={isLoading ? '…' : formatDays(data?.fa.avgOpenToClosureDays ?? null)}
+                    subtitle="délai moyen de traitement"
                     color={COLORS.delay}
                     loading={isLoading}
                 />

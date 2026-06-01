@@ -13,6 +13,10 @@ describe('AssemblyStepSchema', () => {
             fsec_version_id: '223e4567-e89b-12d3-a456-426614174001',
             operator: 'Assembleur Dupont',
             operator_user_uuid: '323e4567-e89b-12d3-a456-426614174002',
+            operator_user_uuids: [
+                '323e4567-e89b-12d3-a456-426614174002',
+                '623e4567-e89b-12d3-a456-426614174005',
+            ],
             start_date: '2024-01-15',
             end_date: '2024-01-20',
             comments: 'Step completed',
@@ -28,6 +32,10 @@ describe('AssemblyStepSchema', () => {
         expect(result.fsecVersionId).toBe('223e4567-e89b-12d3-a456-426614174001');
         expect(result.operator).toBe('Assembleur Dupont');
         expect(result.operatorUserUuid).toBe('323e4567-e89b-12d3-a456-426614174002');
+        expect(result.operatorUserUuids).toEqual([
+            '323e4567-e89b-12d3-a456-426614174002',
+            '623e4567-e89b-12d3-a456-426614174005',
+        ]);
         expect(result.startDate).toBeInstanceOf(Date);
         expect(result.endDate).toBeInstanceOf(Date);
         expect(result.machineUuids).toEqual([
@@ -52,6 +60,7 @@ describe('AssemblyStepSchema', () => {
 
         expect(result.operator).toBeNull();
         expect(result.operatorUserUuid).toBeNull();
+        expect(result.operatorUserUuids).toEqual([]);
         expect(result.startDate).toBeNull();
         expect(result.endDate).toBeNull();
         expect(result.comments).toBeNull();

@@ -36,6 +36,11 @@ class IEmbaseRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_by_slug(self, slug: str) -> Optional[EmbaseBean]:
+        """Récupère une Embase par son slug d'URL calculé."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def update(self, bean: EmbaseBean) -> EmbaseBean:
         """Met à jour une Embase."""
         raise NotImplementedError

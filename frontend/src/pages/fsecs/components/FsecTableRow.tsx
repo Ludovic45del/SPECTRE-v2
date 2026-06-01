@@ -6,8 +6,9 @@
 import { memo, useCallback } from 'react';
 import { TableRow, TableCell, Typography, IconButton, Tooltip, alpha, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { getStatusInfo, getCategoryInfo } from '@entities/fsec';
+import { getStatusInfo, getCategoryInfo, usePrefetchFsec } from '@entities/fsec';
 import { DataChip } from '@widgets/data-chip';
+import { useHoverPrefetch } from '@shared/lib';
 import type { FsecWithCampaign } from '../fsec-list-utils';
 import { motion } from '@shared/ui/motion';
 
@@ -31,12 +32,17 @@ export const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate, onNav
     const category = getCategoryInfo(fsec.categoryId);
 
     const handleDoubleClick = useCallback(() => {
-        onNavigate(fsec.versionUuid);
-    }, [fsec.versionUuid, onNavigate]);
+        onNavigate(fsec.slug);
+    }, [fsec.slug, onNavigate]);
 
     const handleButtonClick = useCallback(() => {
-        onNavigate(fsec.versionUuid);
-    }, [fsec.versionUuid, onNavigate]);
+        onNavigate(fsec.slug);
+    }, [fsec.slug, onNavigate]);
+
+    const prefetchFsec = usePrefetchFsec();
+    const hoverPrefetch = useHoverPrefetch(
+        useCallback(() => prefetchFsec(fsec.versionUuid), [prefetchFsec, fsec.versionUuid]),
+    );
 
     return (
         <TableRow
@@ -49,6 +55,7 @@ export const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate, onNav
                 },
             }}
             onDoubleClick={handleDoubleClick}
+            {...hoverPrefetch}
         >
             <TableCell>
                 <Typography fontWeight={500}>{fsec.name}</Typography>
@@ -57,7 +64,7 @@ export const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate, onNav
                 {fsec.campaignId ? (
                     <Typography
                         component="span"
-                        onClick={(e) => onNavigateCampaign(e, fsec.campaignId)}
+                        onClick={(e) => onNavigateCampaign(e, fsec.campaignSlug)}
                         sx={{
                             color: 'primary.main',
                             fontWeight: 500,

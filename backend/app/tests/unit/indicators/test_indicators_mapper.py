@@ -3,6 +3,8 @@
 import pytest
 
 from app.domain.indicators.models.indicators_bean import (
+    CampaignIndicatorsBean,
+    CampaignVolumeBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
     IndicatorsBean,
@@ -10,6 +12,8 @@ from app.domain.indicators.models.indicators_bean import (
     StepDurationBean,
 )
 from app.mapper.indicators.indicators_mapper import (
+    campaign_indicators_bean_to_api,
+    campaign_volume_bean_to_api,
     fa_indicators_bean_to_api,
     fsec_indicators_bean_to_api,
     indicators_bean_to_api,
@@ -62,8 +66,7 @@ def test_fa_indicators_bean_to_api_includes_all_fields():
         by_discovery_step={"3": 4},
         open_stock_all_years=42,
         avg_event_to_open_days=1.5,
-        avg_open_to_progress_days=3.0,
-        avg_progress_to_closure_days=10.2,
+        avg_open_to_closure_days=13.2,
         avg_total_lifecycle_days=14.7,
         created_per_month={"2026-01": 3, "2026-02": 7},
     )
@@ -74,8 +77,7 @@ def test_fa_indicators_bean_to_api_includes_all_fields():
     assert api["by_discovery_step"] == {"3": 4}
     assert api["open_stock_all_years"] == 42
     assert api["avg_event_to_open_days"] == 1.5
-    assert api["avg_open_to_progress_days"] == 3.0
-    assert api["avg_progress_to_closure_days"] == 10.2
+    assert api["avg_open_to_closure_days"] == 13.2
     assert api["avg_total_lifecycle_days"] == 14.7
     assert api["created_per_month"] == {"2026-01": 3, "2026-02": 7}
 
@@ -100,6 +102,50 @@ def test_fsec_indicators_bean_to_api_includes_all_fields():
     assert api["shot_per_month"] == {"2026-01": 3, "2026-02": 5}
 
 
+def test_campaign_volume_bean_to_api():
+    bean = CampaignVolumeBean(uuid="c1", name="Campagne 1", fsec_count=12)
+    assert campaign_volume_bean_to_api(bean) == {
+        "uuid": "c1",
+        "name": "Campagne 1",
+        "fsec_count": 12,
+    }
+
+
+def test_campaign_indicators_bean_to_api_includes_all_fields():
+    bean = CampaignIndicatorsBean(
+        total_in_period=4,
+        by_status={"2": 3, "3": 1},
+        by_type={"0": 2, "1": 2},
+        by_installation={"0": 3, "1": 1},
+        total_fsec=30,
+        total_fsec_shot=11,
+        avg_fsec_per_campaign=7.5,
+        avg_duration_days=42.0,
+        started_per_month={"2026-01": 2, "2026-02": 2},
+        top_by_volume=[CampaignVolumeBean(uuid="c1", name="Campagne 1", fsec_count=20)],
+    )
+    api = campaign_indicators_bean_to_api(bean)
+    assert api["total_in_period"] == 4
+    assert api["by_status"] == {"2": 3, "3": 1}
+    assert api["by_type"] == {"0": 2, "1": 2}
+    assert api["by_installation"] == {"0": 3, "1": 1}
+    assert api["total_fsec"] == 30
+    assert api["total_fsec_shot"] == 11
+    assert api["avg_fsec_per_campaign"] == 7.5
+    assert api["avg_duration_days"] == 42.0
+    assert api["started_per_month"] == {"2026-01": 2, "2026-02": 2}
+    assert api["top_by_volume"] == [
+        {"uuid": "c1", "name": "Campagne 1", "fsec_count": 20}
+    ]
+
+
+def test_campaign_indicators_bean_to_api_preserves_nulls():
+    api = campaign_indicators_bean_to_api(CampaignIndicatorsBean())
+    assert api["avg_fsec_per_campaign"] is None
+    assert api["avg_duration_days"] is None
+    assert api["top_by_volume"] == []
+
+
 def test_operator_workload_bean_to_api():
     bean = OperatorWorkloadBean(user_uuid="u1", name="Alice", steps_count=12)
     assert operator_workload_bean_to_api(bean) == {
@@ -114,6 +160,7 @@ def test_indicators_bean_to_api_aggregates_everything():
         year=2026,
         fa=FaIndicatorsBean(total_created_in_year=1),
         fsec=FsecIndicatorsBean(total_created_in_year=2),
+        campaign=CampaignIndicatorsBean(total_in_period=3),
         step_durations=[
             StepDurationBean(key="k", label="l", count=0),
         ],
@@ -126,6 +173,7 @@ def test_indicators_bean_to_api_aggregates_everything():
     assert api["year"] == 2026
     assert api["fa"]["total_created_in_year"] == 1
     assert api["fsec"]["total_created_in_year"] == 2
+    assert api["campaign"]["total_in_period"] == 3
     assert len(api["step_durations"]) == 1
     assert len(api["top_operators"]) == 1
     assert api["bottleneck_step_key"] == "k"

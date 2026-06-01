@@ -1,7 +1,7 @@
 """Interface IFsecRepository - Repository abstrait pour FSEC."""
 
 import abc
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from app.domain.fsec.models.fsec_bean import FsecBean
 from app.domain.fsec.models.fsec_documents_bean import FsecDocumentsBean
@@ -19,6 +19,11 @@ class IFsecRepository(abc.ABC):
     @abc.abstractmethod
     def get_by_version_uuid(self, version_uuid: str) -> Optional[FsecBean]:
         """Récupère un FSEC par son version_uuid (PK)."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_by_slug(self, slug: str) -> Optional[FsecBean]:
+        """Récupère un FSEC par son slug d'URL calculé."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -81,6 +86,70 @@ class IFsecRepository(abc.ABC):
         """Désactive toutes les versions existantes et crée la nouvelle version active.
 
         Doit être exécuté dans une seule transaction atomique.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_overview_image(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Remplace (ou supprime) la photo de vue d'ensemble.
+
+        - image_file non None : nouveau fichier upload (UploadedFile-like). L'ancien
+          fichier est supprimé du stockage avant assignation.
+        - image_file None : suppression de la photo existante.
+
+        Retourne le bean mis à jour, ou None si version_uuid introuvable.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_assembly_plan_image(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Remplace (ou supprime) l'image du plan d'assemblage.
+
+        - image_file non None : nouveau fichier upload (UploadedFile-like).
+          L'ancien fichier est supprimé du stockage avant assignation ; le calque
+          d'annotations existant est conservé.
+        - image_file None : suppression du plan ET du calque d'annotations
+          (coordonnées relatives au plan : sans support elles n'ont plus de sens).
+
+        Retourne le bean mis à jour, ou None si version_uuid introuvable.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_assembly_plan_annotations(
+        self, version_uuid: str, annotations: Any
+    ) -> Optional[FsecBean]:
+        """Remplace le calque d'annotations du plan d'assemblage.
+
+        `annotations` est la liste complète d'annotations (remplacement total,
+        sémantique PUT). Retourne le bean mis à jour, ou None si version_uuid
+        introuvable.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_delivery_acceptor_signature(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Fige (copie) ou supprime la signature de l'accepteur (phase 1).
+
+        L'ancien fichier est libéré avant assignation. Retourne le bean mis à
+        jour, ou None si version_uuid introuvable.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def set_delivery_validator_signature(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Fige (copie) ou supprime la signature du validateur TCI (phase 2).
+
+        L'ancien fichier est libéré avant assignation. Retourne le bean mis à
+        jour, ou None si version_uuid introuvable.
         """
         raise NotImplementedError
 

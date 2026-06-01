@@ -6,6 +6,7 @@ from django.db import transaction
 
 from app.domain.campaign.interface.campaign_repository import ICampaignRepository
 from app.domain.campaign.models.campaign_bean import CampaignBean
+from app.domain.shared.slug import build_campaign_slug, extract_leading_year
 from app.mapper.campaign.campaign_mapper import (
     campaign_mapper_bean_to_entity,
     campaign_mapper_entity_to_bean,
@@ -34,6 +35,28 @@ class CampaignRepository(ICampaignRepository):
             return campaign_mapper_entity_to_bean(entity)
         except CampaignEntity.DoesNotExist:
             return None
+
+    def get_by_slug(self, slug: str) -> Optional[CampaignBean]:
+        """Récupère une campagne par son slug calculé.
+
+        Le slug (``année-semestre-installation-nom``) n'étant pas stocké, on
+        filtre par année (préfixe du slug) puis on recalcule le slug de chaque
+        candidat pour comparaison — O(n) sur les campagnes d'une année.
+        """
+        query = CampaignEntity.objects.select_related(*self.SELECT_RELATED)
+        year = extract_leading_year(slug)
+        if year is not None:
+            query = query.filter(year=year)
+        for entity in query:
+            bean = campaign_mapper_entity_to_bean(entity)
+            if (
+                build_campaign_slug(
+                    bean.year, bean.semester, bean.installation_label, bean.name
+                )
+                == slug
+            ):
+                return bean
+        return None
 
     def get_all(
         self, limit: Optional[int] = None, offset: int = 0

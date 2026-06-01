@@ -56,7 +56,10 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
             },
             {
                 label: 'Validation IEC - Phase En cours',
-                date: fa.iecValidationProgressDate,
+                // Pas de date dédiée pour la phase En cours : seules les dates
+                // d'ouverture et de clôture sont suivies. On affiche uniquement
+                // le validateur et l'état de la validation.
+                date: null,
                 validatorName: fa.iecValidationProgressName,
                 validatorUserUuid: fa.iecValidationProgressUserUuid,
                 isCompleted: fa.iecValidationProgress === true,
@@ -119,14 +122,18 @@ export const FaTimeline = memo(function FaTimeline({ fa }: FaTimelineProps) {
                             </Typography>
                             {event.isCompleted && (
                                 <Stack direction="row" spacing={1} alignItems="center">
-                                    <Typography variant="caption" color="text.secondary">
-                                        {formatDateShort(event.date)}
-                                    </Typography>
+                                    {event.date && (
+                                        <Typography variant="caption" color="text.secondary">
+                                            {formatDateShort(event.date)}
+                                        </Typography>
+                                    )}
                                     {(event.validatorUserUuid || event.validatorName) && (
                                         <>
-                                            <Typography variant="caption" color="text.secondary">
-                                                —
-                                            </Typography>
+                                            {event.date && (
+                                                <Typography variant="caption" color="text.secondary">
+                                                    —
+                                                </Typography>
+                                            )}
                                             <UserChip
                                                 userUuid={event.validatorUserUuid}
                                                 fallbackText={event.validatorName}

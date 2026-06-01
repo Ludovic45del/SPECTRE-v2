@@ -77,6 +77,7 @@ const mockCampaigns = [
 const mockCreatedFsec = {
     version_uuid: '00000000-0000-0000-0000-000000000010',
     fsec_uuid: '00000000-0000-0000-0000-000000000011',
+    slug: '2025-s1-lmj-campagne-fsec-test',
     name: 'FSEC Test',
     campaign_id: '00000000-0000-0000-0000-000000000001',
     category_id: 0,
@@ -487,9 +488,9 @@ describe('CreateFsecModal', () => {
             await user.click(submitButton);
 
             await waitFor(() => {
-                // versionUuid from mockCreatedFsec after FsecSchema.parse() transforms version_uuid -> versionUuid
+                // slug from mockCreatedFsec drives the navigation URL
                 expect(mockNavigate).toHaveBeenCalledWith(
-                    '/fsec-details/00000000-0000-0000-0000-000000000010/overview',
+                    '/fsec-details/2025-s1-lmj-campagne-fsec-test/overview',
                 );
             });
         });

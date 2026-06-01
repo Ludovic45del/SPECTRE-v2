@@ -23,3 +23,9 @@ export const stockCatalogKeys = {
 export const stockAlertKeys = {
     all: ['stock-alerts'] as const,
 };
+
+export const stockMovementKeys = {
+    all: ['stock-movements'] as const,
+    /** Historique des mouvements d'un item du catalogue. */
+    byItem: (uuid: string) => [...stockMovementKeys.all, uuid] as const,
+};

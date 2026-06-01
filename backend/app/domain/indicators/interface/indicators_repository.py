@@ -4,6 +4,7 @@ import abc
 from typing import List, Optional
 
 from app.domain.indicators.models.indicators_bean import (
+    CampaignIndicatorsBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
     OperatorWorkloadBean,
@@ -31,6 +32,13 @@ class IIndicatorsRepository(abc.ABC):
         self, year: int, semester: Optional[int] = None
     ) -> FsecIndicatorsBean:
         """Indicateurs FSEC : volumétrie, ventilations, cycle time, throughput."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_campaign_indicators(
+        self, year: int, semester: Optional[int] = None, limit: int = 8
+    ) -> CampaignIndicatorsBean:
+        """Indicateurs campagnes : volumétrie, ventilations, densité FSEC, durée."""
         raise NotImplementedError
 
     @abc.abstractmethod

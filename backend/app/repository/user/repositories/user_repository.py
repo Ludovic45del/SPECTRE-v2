@@ -148,6 +148,35 @@ class UserRepository(IUserRepository):
         )
         return user_mapper_entity_to_bean(user, profile)
 
+    @transaction.atomic
+    def set_avatar(self, uuid, image_file) -> UserBean:
+        # of=("self",) : ne verrouille que la ligne user_profile, pas la ligne
+        # auth_user jointe par select_related (on ne mute que le profil).
+        profile = self._base_queryset().select_for_update(of=("self",)).get(uuid=uuid)
+
+        # delete(save=False) : libère le fichier disque sans persister tout de
+        # suite l'ImageField — le save() final écrit le nouvel état en une fois
+        # (même mécanisme que FsecRepository.set_overview_image).
+        if profile.avatar:
+            profile.avatar.delete(save=False)
+
+        profile.avatar = image_file if image_file is not None else None
+        profile.save(update_fields=["avatar", "updated_at"])
+        return user_mapper_entity_to_bean(profile.user, profile)
+
+    @transaction.atomic
+    def set_signature(self, uuid, image_file) -> UserBean:
+        # Même mécanisme que set_avatar : verrou ciblé sur user_profile et
+        # libération de l'ancien fichier disque avant réassignation.
+        profile = self._base_queryset().select_for_update(of=("self",)).get(uuid=uuid)
+
+        if profile.signature:
+            profile.signature.delete(save=False)
+
+        profile.signature = image_file if image_file is not None else None
+        profile.save(update_fields=["signature", "updated_at"])
+        return user_mapper_entity_to_bean(profile.user, profile)
+
     def exists_by_username(self, username: str) -> bool:
         return User.objects.filter(username=username).exists()
 

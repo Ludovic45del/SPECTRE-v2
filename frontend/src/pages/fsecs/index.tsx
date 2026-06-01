@@ -27,6 +27,7 @@ import { useCampaigns } from '@entities/campaign';
 import { FsecsToolbar, useFilterFsecsStore } from '@features/fsec/filter-fsecs';
 import { CreateFsecModal } from '@features/fsec/create-fsec';
 import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
+import { paths } from '@shared/config';
 import { COLUMNS, COLUMN_WIDTHS } from './constants';
 import { FsecTableRow } from './components/FsecTableRow';
 import { FsecsPageSkeleton } from './components/FsecsPageSkeleton';
@@ -64,17 +65,17 @@ export default function FsecsPage() {
 
     // Event handlers
     const handleNavigateFsec = useCallback(
-        (versionUuid: string) => {
-            navigate(`/fsec-details/${versionUuid}/overview`);
+        (slug: string) => {
+            navigate(paths.fsec.tab(slug, 'overview'));
         },
         [navigate],
     );
 
     const handleNavigateCampaign = useCallback(
-        (e: React.MouseEvent, campaignId: string | null) => {
+        (e: React.MouseEvent, campaignSlug: string | null) => {
             e.stopPropagation();
-            if (campaignId) {
-                navigate(`/campagne-details/${campaignId}/overview`);
+            if (campaignSlug) {
+                navigate(paths.campaign.tab(campaignSlug, 'overview'));
             }
         },
         [navigate],

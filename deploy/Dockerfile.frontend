@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+# Frontend SPECTRE — build Vite + nginx (reverse proxy + static)
+
+# ---- Stage 1 : build ----
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci --no-audit --no-fund
+
+COPY frontend/ ./
+
+# VITE_API_BASE_URL est embarqué dans le bundle au build.
+# /api/v1 est servi par nginx en reverse proxy vers le backend.
+ARG VITE_API_BASE_URL=/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+RUN npm run build
+
+# ---- Stage 2 : runtime nginx ----
+FROM nginx:1.27-alpine AS runtime
+
+RUN apk add --no-cache openssl
+
+COPY deploy/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY deploy/nginx/allowed_ips.conf /etc/nginx/conf.d/allowed_ips.conf
+COPY deploy/scripts/entrypoint-nginx.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80 443
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -3,6 +3,7 @@
 from typing import Any, Dict, List
 
 from app.domain.fa.models.fa_bean import FaBean
+from app.domain.shared.slug import build_campaign_slug, build_fsec_slug, slugify_text
 from app.mapper.type_conversion import parse_date_string
 from app.repository.fa.models.fa_entity import FaEntity
 
@@ -17,29 +18,46 @@ def _user_fk_uuid(entity: FaEntity, attr: str):
 
 
 def _resolve_fsec_derived_fields(entity: FaEntity) -> tuple:
-    """Extrait fsec_name + installation depuis les FK pré-chargées par select_related.
+    """Extrait fsec_name + installation + slugs parents depuis les FK pré-chargées.
 
     FaRepository.SELECT_RELATED inclut `fsec_version_id__campaign_id__installation_id`
     pour éviter tout N+1 ; en cas d'usage hors repository, l'accès attribut peut
     déclencher des requêtes supplémentaires.
+
+    Retourne ``(fsec_name, installation, campaign_slug, fsec_slug)`` ; les slugs
+    sont None si la FSEC parente n'a pas de campagne.
     """
     fsec = (
         entity.fsec_version_id
-    )  # OneToOne required, jamais None pour une FA persistée
+    )  # FK obligatoire (PROTECT), jamais None pour une FA persistée
     fsec_name = getattr(fsec, "name", None) if fsec is not None else None
     installation = None
+    campaign_slug = None
+    fsec_slug = None
     if fsec is not None:
         campaign = getattr(fsec, "campaign_id", None)
         if campaign is not None:
             inst = getattr(campaign, "installation_id", None)
             if inst is not None:
                 installation = getattr(inst, "label", None)
-    return fsec_name, installation
+            campaign_slug = build_campaign_slug(
+                campaign.year, campaign.semester, installation, campaign.name
+            )
+            fsec_slug = build_fsec_slug(
+                campaign.year,
+                campaign.semester,
+                installation,
+                campaign.name,
+                fsec_name,
+            )
+    return fsec_name, installation, campaign_slug, fsec_slug
 
 
 def fa_mapper_entity_to_bean(entity: FaEntity) -> FaBean:
     """Convertit une FaEntity en FaBean."""
-    fsec_name, installation = _resolve_fsec_derived_fields(entity)
+    fsec_name, installation, campaign_slug, fsec_slug = _resolve_fsec_derived_fields(
+        entity
+    )
     return FaBean(
         uuid=str(entity.uuid),
         fsec_version_id=(
@@ -65,11 +83,10 @@ def fa_mapper_entity_to_bean(entity: FaEntity) -> FaBean:
         iec_validation_open_date=entity.iec_validation_open_date,
         iec_validation_open_name=entity.iec_validation_open_name,
         iec_validation_open_user_uuid=_user_fk_uuid(entity, "iec_validation_open_user"),
-        # Phase En cours
+        # Phase En cours (sans date de passage en cours)
         cause=entity.cause,
         experience_impact=entity.experience_impact,
         iec_validation_progress=entity.iec_validation_progress,
-        iec_validation_progress_date=entity.iec_validation_progress_date,
         iec_validation_progress_name=entity.iec_validation_progress_name,
         iec_validation_progress_user_uuid=_user_fk_uuid(
             entity, "iec_validation_progress_user"
@@ -79,14 +96,15 @@ def fa_mapper_entity_to_bean(entity: FaEntity) -> FaBean:
         closure_date=entity.closure_date,
         closure_validator_name=entity.closure_validator_name,
         closure_validator_user_uuid=_user_fk_uuid(entity, "closure_validator_user"),
-        # Soft delete
-        is_active=entity.is_active,
         # Metadata
         created_at=entity.created_at,
         last_updated=entity.last_updated,
         # Champs dérivés
         fsec_name=fsec_name,
         installation=installation,
+        slug=slugify_text(entity.identifier),
+        fsec_slug=fsec_slug,
+        campaign_slug=campaign_slug,
     )
 
 
@@ -116,11 +134,10 @@ def fa_mapper_bean_to_entity(bean: FaBean) -> FaEntity:
     entity.iec_validation_open_date = bean.iec_validation_open_date
     entity.iec_validation_open_name = bean.iec_validation_open_name
     entity.iec_validation_open_user_id = bean.iec_validation_open_user_uuid
-    # Phase En cours
+    # Phase En cours (sans date de passage en cours)
     entity.cause = bean.cause
     entity.experience_impact = bean.experience_impact
     entity.iec_validation_progress = bean.iec_validation_progress
-    entity.iec_validation_progress_date = bean.iec_validation_progress_date
     entity.iec_validation_progress_name = bean.iec_validation_progress_name
     entity.iec_validation_progress_user_id = bean.iec_validation_progress_user_uuid
     # Phase Clos
@@ -128,7 +145,6 @@ def fa_mapper_bean_to_entity(bean: FaBean) -> FaEntity:
     entity.closure_date = bean.closure_date
     entity.closure_validator_name = bean.closure_validator_name
     entity.closure_validator_user_id = bean.closure_validator_user_uuid
-    entity.is_active = bean.is_active
     return entity
 
 
@@ -170,13 +186,10 @@ def fa_mapper_api_to_bean(data: Dict[str, Any]) -> FaBean:
         iec_validation_open_user_uuid=_opt_uuid_str(
             data.get("iec_validation_open_user_uuid")
         ),
-        # Phase En cours
+        # Phase En cours (sans date de passage en cours)
         cause=data.get("cause"),
         experience_impact=data.get("experience_impact"),
         iec_validation_progress=data.get("iec_validation_progress", False),
-        iec_validation_progress_date=parse_date_string(
-            data.get("iec_validation_progress_date")
-        ),
         iec_validation_progress_name=data.get("iec_validation_progress_name"),
         iec_validation_progress_user_uuid=_opt_uuid_str(
             data.get("iec_validation_progress_user_uuid")
@@ -218,15 +231,10 @@ def fa_mapper_bean_to_api(bean: FaBean) -> Dict[str, Any]:
         ),
         "iec_validation_open_name": bean.iec_validation_open_name,
         "iec_validation_open_user_uuid": bean.iec_validation_open_user_uuid,
-        # Phase En cours
+        # Phase En cours (sans date de passage en cours)
         "cause": bean.cause,
         "experience_impact": bean.experience_impact,
         "iec_validation_progress": bean.iec_validation_progress,
-        "iec_validation_progress_date": (
-            bean.iec_validation_progress_date.isoformat()
-            if bean.iec_validation_progress_date
-            else None
-        ),
         "iec_validation_progress_name": bean.iec_validation_progress_name,
         "iec_validation_progress_user_uuid": bean.iec_validation_progress_user_uuid,
         # Phase Clos
@@ -241,6 +249,10 @@ def fa_mapper_bean_to_api(bean: FaBean) -> Dict[str, Any]:
         # côté frontend pour résoudre le nom de la FSEC associée et l'installation.
         "fsec_name": bean.fsec_name,
         "installation": bean.installation,
+        # Slugs d'URL (lecture seule) : la FA et ses parents, pour la navigation.
+        "slug": bean.slug,
+        "fsec_slug": bean.fsec_slug,
+        "campaign_slug": bean.campaign_slug,
     }
 
 

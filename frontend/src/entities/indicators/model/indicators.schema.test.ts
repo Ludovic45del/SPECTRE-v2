@@ -18,8 +18,7 @@ const validPayload = {
         by_discovery_step: { '3': 2 },
         open_stock_all_years: 7,
         avg_event_to_open_days: 1.5,
-        avg_open_to_progress_days: 2.0,
-        avg_progress_to_closure_days: 5.0,
+        avg_open_to_closure_days: 7.0,
         avg_total_lifecycle_days: 8.5,
         created_per_month: { '2026-01': 1, '2026-02': 4 },
     },
@@ -31,6 +30,18 @@ const validPayload = {
         avg_cycle_time_days: 42.0,
         median_cycle_time_days: 40.0,
         shot_per_month: { '2026-01': 1, '2026-02': 2 },
+    },
+    campaign: {
+        total_in_period: 3,
+        by_status: { '2': 2, '3': 1 },
+        by_type: { '0': 2, '1': 1 },
+        by_installation: { '0': 2, '1': 1 },
+        total_fsec: 20,
+        total_fsec_shot: 7,
+        avg_fsec_per_campaign: 6.67,
+        avg_duration_days: 42.0,
+        started_per_month: { '2026-01': 1, '2026-02': 2 },
+        top_by_volume: [{ uuid: 'c1', name: 'Campagne 1', fsec_count: 12 }],
     },
     step_durations: [
         {
@@ -58,6 +69,15 @@ describe('IndicatorsSchema', () => {
         expect(parsed.fa.createdPerMonth).toEqual({ '2026-01': 1, '2026-02': 4 });
         expect(parsed.fsec.totalShotInYear).toBe(3);
         expect(parsed.fsec.shotPerMonth).toEqual({ '2026-01': 1, '2026-02': 2 });
+        expect(parsed.campaign.totalInPeriod).toBe(3);
+        expect(parsed.campaign.byStatus).toEqual({ '2': 2, '3': 1 });
+        expect(parsed.campaign.byType).toEqual({ '0': 2, '1': 1 });
+        expect(parsed.campaign.totalFsec).toBe(20);
+        expect(parsed.campaign.avgFsecPerCampaign).toBe(6.67);
+        expect(parsed.campaign.avgDurationDays).toBe(42.0);
+        expect(parsed.campaign.topByVolume).toHaveLength(1);
+        expect(parsed.campaign.topByVolume[0].fsecCount).toBe(12);
+        expect(parsed.campaign.startedPerMonth).toEqual({ '2026-01': 1, '2026-02': 2 });
         expect(parsed.stepDurations).toHaveLength(1);
         expect(parsed.stepDurations[0].avgDays).toBe(4.5);
         expect(parsed.stepDurations[0].isGas).toBe(false);

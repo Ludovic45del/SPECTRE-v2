@@ -38,6 +38,7 @@ vi.mock('@entities/campaign', () => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const mockCampaign: CampaignWithRelations = {
+    slug: 'campagne-test',
     uuid: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Campagne Test',
     year: 2024,

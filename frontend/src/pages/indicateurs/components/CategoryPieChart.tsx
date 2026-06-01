@@ -6,7 +6,7 @@
 import { memo } from 'react';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { ChartTooltipCard } from './ChartTooltip';
+import { ChartTooltipCard } from '@shared/ui';
 
 export interface CategoryPieEntry {
     label: string;

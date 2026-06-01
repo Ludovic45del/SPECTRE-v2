@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type EmbaseCreate, EmbaseCreateSchema, useCreateEmbase } from '@entities/embase';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
+import { paths } from '@shared/config';
 import { useNavigate } from 'react-router-dom';
 import { useCreateEmbaseStore } from '../model';
 import { GeneralTab, VoieV1FormTab, MecaniqueFormTab, VoieV2FormTab } from './tabs';
@@ -146,7 +147,7 @@ export const CreateEmbaseModal = memo(function CreateEmbaseModal() {
                 resetForm();
                 setTabValue(0);
                 reset();
-                navigate(`/embase-details/${newEmbase.uuid}/voie-v1`);
+                navigate(paths.embase.tab(newEmbase.slug, 'voie-v1'));
             } catch (err: unknown) {
                 showNotification(getErrorMessage(err, "Erreur lors de la création de l'embase"), 'error');
             }

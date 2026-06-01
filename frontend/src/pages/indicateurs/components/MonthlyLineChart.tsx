@@ -14,7 +14,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { ChartTooltipCard } from './ChartTooltip';
+import { ChartTooltipCard } from '@shared/ui';
 
 interface TooltipEntry {
     value?: number | string;

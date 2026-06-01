@@ -365,15 +365,18 @@ class TestFaControllerByFsec:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["fsec_version_id"] == str(sample_fsec_version.version_uuid)
+        # Une FSEC peut avoir plusieurs FA : l'endpoint renvoie une liste.
+        assert isinstance(data, list)
+        assert data[0]["fsec_version_id"] == str(sample_fsec_version.version_uuid)
 
-    def test_get_fa_by_fsec_not_found(self, api_client):
-        """Test 404 pour FSEC sans FA."""
+    def test_get_fa_by_fsec_empty_list(self, api_client):
+        """Une FSEC sans FA renvoie une liste vide (200), pas un 404."""
         fake_fsec_uuid = str(uuid.uuid4())
 
         response = api_client.get(f"/api/v1/fas/fsec/{fake_fsec_uuid}/")
 
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert response.json() == []
 
 
 # ============================================================================

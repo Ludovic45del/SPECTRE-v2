@@ -9,6 +9,8 @@
 
 import { z } from 'zod';
 import {
+    CampaignIndicatorsApiSchema,
+    CampaignVolumeApiSchema,
     FaIndicatorsApiSchema,
     FsecIndicatorsApiSchema,
     IndicatorsApiSchema,
@@ -39,8 +41,7 @@ export const FaIndicatorsSchema = FaIndicatorsApiSchema.transform((api) => ({
     byDiscoveryStep: api.by_discovery_step,
     openStockAllYears: api.open_stock_all_years,
     avgEventToOpenDays: api.avg_event_to_open_days,
-    avgOpenToProgressDays: api.avg_open_to_progress_days,
-    avgProgressToClosureDays: api.avg_progress_to_closure_days,
+    avgOpenToClosureDays: api.avg_open_to_closure_days,
     avgTotalLifecycleDays: api.avg_total_lifecycle_days,
     createdPerMonth: api.created_per_month,
 }));
@@ -59,6 +60,29 @@ export const FsecIndicatorsSchema = FsecIndicatorsApiSchema.transform((api) => (
 }));
 export type FsecIndicators = z.infer<typeof FsecIndicatorsSchema>;
 
+// ---------- Campaign indicators ----------
+
+export const CampaignVolumeSchema = CampaignVolumeApiSchema.transform((api) => ({
+    uuid: api.uuid,
+    name: api.name,
+    fsecCount: api.fsec_count,
+}));
+export type CampaignVolume = z.infer<typeof CampaignVolumeSchema>;
+
+export const CampaignIndicatorsSchema = CampaignIndicatorsApiSchema.transform((api) => ({
+    totalInPeriod: api.total_in_period,
+    byStatus: api.by_status,
+    byType: api.by_type,
+    byInstallation: api.by_installation,
+    totalFsec: api.total_fsec,
+    totalFsecShot: api.total_fsec_shot,
+    avgFsecPerCampaign: api.avg_fsec_per_campaign,
+    avgDurationDays: api.avg_duration_days,
+    startedPerMonth: api.started_per_month,
+    topByVolume: api.top_by_volume.map((c) => CampaignVolumeSchema.parse(c)),
+}));
+export type CampaignIndicators = z.infer<typeof CampaignIndicatorsSchema>;
+
 // ---------- Operator workload ----------
 
 export const OperatorWorkloadSchema = OperatorWorkloadApiSchema.transform((api) => ({
@@ -74,6 +98,7 @@ export const IndicatorsSchema = IndicatorsApiSchema.transform((api) => ({
     year: api.year,
     fa: FaIndicatorsSchema.parse(api.fa),
     fsec: FsecIndicatorsSchema.parse(api.fsec),
+    campaign: CampaignIndicatorsSchema.parse(api.campaign),
     stepDurations: api.step_durations.map((sd) => StepDurationSchema.parse(sd)),
     topOperators: api.top_operators.map((o) => OperatorWorkloadSchema.parse(o)),
     bottleneckStepKey: api.bottleneck_step_key,

@@ -6,6 +6,7 @@
 import { memo, useCallback, useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+    Avatar,
     Box,
     Chip,
     IconButton,
@@ -14,6 +15,8 @@ import {
     ListItemButton,
     ListItemIcon,
     ListItemText,
+    Menu,
+    MenuItem,
     Typography,
     Tooltip,
     type SxProps,
@@ -22,10 +25,11 @@ import {
 import HomeIcon from '@mui/icons-material/Home';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import LocalCafeRoundedIcon from '@mui/icons-material/LocalCafeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import { useSidebarStore } from './sidebar.store';
 import { useThemeStore } from '@shared/lib/theme.store';
@@ -170,10 +174,10 @@ const MaterielCircleIcon = memo(function MaterielCircleIcon({ isActive }: { isAc
     );
 });
 
-const AdminCircleIcon = memo(function AdminCircleIcon({ isActive }: { isActive?: boolean }) {
+const TeamCircleIcon = memo(function TeamCircleIcon({ isActive }: { isActive?: boolean }) {
     return (
         <CircleIcon isActive={isActive}>
-            <AdminPanelSettingsIcon
+            <GroupsRoundedIcon
                 sx={{
                     color: getIconColor(isActive),
                     fontSize: '1rem',
@@ -222,14 +226,26 @@ const BASE_NAV_ITEMS: NavItem[] = [
         icon: (isActive) => <TextCircleIcon isActive={isActive} label="FA" fontSize="0.7rem" />,
     },
     { path: '/embases', label: 'Embases', icon: (isActive) => <TextCircleIcon isActive={isActive} label="E" /> },
+    {
+        path: '/equipe',
+        label: 'Équipe et Carte',
+        icon: (isActive) => <TeamCircleIcon isActive={isActive} />,
+        children: [
+            { path: '/equipe/annuaire', label: 'Équipe' },
+            { path: '/equipe/carte', label: 'Carte' },
+        ],
+    },
     { path: '/planning', label: 'Planning', icon: (isActive) => <TextCircleIcon isActive={isActive} label="P" /> },
     {
         path: '/indicateurs',
         label: 'Indicateurs',
-        icon: (isActive) => <TextCircleIcon isActive={isActive} label="KPI" fontSize="0.55rem" letterSpacing="-0.3px" />,
+        icon: (isActive) => (
+            <TextCircleIcon isActive={isActive} label="KPI" fontSize="0.55rem" letterSpacing="-0.3px" />
+        ),
         children: [
             { path: '/indicateurs/fa', label: 'FA' },
             { path: '/indicateurs/fsec', label: 'FSEC' },
+            { path: '/indicateurs/campagne', label: 'Campagne' },
         ],
     },
     {
@@ -248,12 +264,6 @@ const BASE_NAV_ITEMS: NavItem[] = [
         ],
     },
 ];
-
-const ADMIN_NAV_ITEM: NavItem = {
-    path: '/admin/utilisateurs',
-    label: 'Administration',
-    icon: (isActive) => <AdminCircleIcon isActive={isActive} />,
-};
 
 // ============================================================================
 // Sliding Indicator Component
@@ -324,19 +334,32 @@ interface NavItemComponentProps {
     item: NavItem;
     isOpen: boolean;
     isActive: boolean;
+    /**
+     * Sidebar repliée : chemin du sous-item courant (s'il y en a un) pour le
+     * surligner dans le flyout. `undefined` pour les rubriques non actives →
+     * la mémoïsation reste efficace (la valeur ne change que pour la rubrique
+     * active lors d'une navigation).
+     */
+    activeChildPath?: string;
     onNavigate: (path: string) => void;
+    onPrefetch?: (path: string) => void;
 }
 
 const NavSubItemComponent = memo(function NavSubItemComponent({
     item,
     isActive,
     onNavigate,
+    onPrefetch,
 }: {
     item: NavSubItem;
     isActive: boolean;
     onNavigate: (path: string) => void;
+    onPrefetch?: (path: string) => void;
 }) {
     const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
+    // Prefetch d'intention : au survol/focus, on précharge le chunk de la page
+    // ciblée pour qu'il soit déjà en cache au moment du clic.
+    const handlePrefetch = useCallback(() => onPrefetch?.(item.path), [onPrefetch, item.path]);
 
     return (
         <ListItem
@@ -345,6 +368,8 @@ const NavSubItemComponent = memo(function NavSubItemComponent({
         >
             <ListItemButton
                 onClick={handleClick}
+                onMouseEnter={handlePrefetch}
+                onFocus={handlePrefetch}
                 sx={{
                     borderRadius: 2,
                     py: 0.75,
@@ -391,17 +416,57 @@ const NavSubItemComponent = memo(function NavSubItemComponent({
     );
 });
 
-const NavItemComponent = memo(function NavItemComponent({ item, isOpen, isActive, onNavigate }: NavItemComponentProps) {
-    const handleClick = useCallback(() => onNavigate(item.path), [onNavigate, item.path]);
+const NavItemComponent = memo(function NavItemComponent({
+    item,
+    isOpen,
+    isActive,
+    activeChildPath,
+    onNavigate,
+    onPrefetch,
+}: NavItemComponentProps) {
+    // Sidebar repliée + rubrique à sous-items → le clic n'effectue plus de
+    // navigation directe mais ouvre un flyout pour choisir le sous-item
+    // (cf. demande UX : « faire un choix puis être redirigé »).
+    const isCollapsedWithChildren = !isOpen && !!item.children?.length;
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const menuOpen = Boolean(anchorEl);
+
+    const handleClick = useCallback(
+        (event: React.MouseEvent<HTMLElement>) => {
+            if (isCollapsedWithChildren) {
+                setAnchorEl(event.currentTarget);
+            } else {
+                onNavigate(item.path);
+            }
+        },
+        [isCollapsedWithChildren, onNavigate, item.path],
+    );
+
+    const handleCloseMenu = useCallback(() => setAnchorEl(null), []);
+
+    const handleSelectChild = useCallback(
+        (path: string) => {
+            setAnchorEl(null);
+            onNavigate(path);
+        },
+        [onNavigate],
+    );
+
+    const handlePrefetch = useCallback(() => onPrefetch?.(item.path), [onPrefetch, item.path]);
 
     return (
         <ListItem
             disablePadding
             sx={{ height: NAV_ITEM_HEIGHT, mb: `${NAV_ITEM_GAP}px`, position: 'relative', zIndex: 1 }}
         >
-            <Tooltip title={isOpen ? '' : item.label} placement="right" arrow>
+            <Tooltip title={isOpen || menuOpen ? '' : item.label} placement="right" arrow>
                 <ListItemButton
                     onClick={handleClick}
+                    onMouseEnter={handlePrefetch}
+                    onFocus={handlePrefetch}
+                    aria-label={isOpen ? undefined : item.label}
+                    aria-haspopup={isCollapsedWithChildren ? 'menu' : undefined}
+                    aria-expanded={isCollapsedWithChildren ? menuOpen : undefined}
                     sx={{
                         borderRadius: 2,
                         py: 1.25,
@@ -444,6 +509,53 @@ const NavItemComponent = memo(function NavItemComponent({ item, isOpen, isActive
                     )}
                 </ListItemButton>
             </Tooltip>
+
+            {isCollapsedWithChildren && (
+                <Menu
+                    anchorEl={anchorEl}
+                    open={menuOpen}
+                    onClose={handleCloseMenu}
+                    anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+                    slotProps={{
+                        paper: { sx: { ml: 1, minWidth: 184, borderRadius: 2 } },
+                        list: { dense: true, 'aria-label': item.label, sx: { py: 0.5 } },
+                    }}
+                >
+                    {item.children?.map((child) => {
+                        const childActive = child.path === activeChildPath;
+                        return (
+                            <MenuItem
+                                key={child.path}
+                                selected={childActive}
+                                onClick={() => handleSelectChild(child.path)}
+                                onMouseEnter={() => onPrefetch?.(child.path)}
+                                sx={{ mx: 0.5, borderRadius: 1.5, gap: 1 }}
+                            >
+                                <ListItemText
+                                    primary={child.label}
+                                    slotProps={{
+                                        primary: {
+                                            sx: {
+                                                fontSize: '0.85rem',
+                                                fontWeight: childActive ? 600 : 400,
+                                                color: childActive ? 'primary.main' : 'text.primary',
+                                            },
+                                        },
+                                    }}
+                                />
+                                {child.badgeCount !== undefined && child.badgeCount > 0 && (
+                                    <Chip
+                                        label={child.badgeCount}
+                                        color="error"
+                                        sx={{ height: 18, minWidth: 22, fontSize: '0.68rem' }}
+                                    />
+                                )}
+                            </MenuItem>
+                        );
+                    })}
+                </Menu>
+            )}
         </ListItem>
     );
 });
@@ -457,6 +569,8 @@ export interface SidebarUserInfo {
     firstName?: string;
     lastName?: string;
     role: string;
+    /** URL de la photo de profil (sous /media/). Absent → initiales. */
+    avatarUrl?: string | null;
 }
 
 export interface SidebarProps {
@@ -466,21 +580,32 @@ export interface SidebarProps {
     roleLabels: Record<string, string>;
     /** Callback déclenché au clic sur la carte profil du footer. */
     onProfileClick?: () => void;
+    /** Prefetch d'intention : appelé au survol/focus d'une entrée (chemin ciblé). */
+    onPrefetch?: (path: string) => void;
 }
 
-function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps) {
+/**
+ * Métadonnées du PROCHAIN thème pour chaque mode courant (libellé + icône).
+ * Suit le cycle clair → sombre → crème → clair (cf. THEME_CYCLE). L'icône et le
+ * libellé décrivent la cible de la bascule, comme l'ancienne logique binaire.
+ */
+const NEXT_THEME = {
+    light: { label: 'Mode sombre', Icon: DarkModeRoundedIcon },
+    dark: { label: 'Mode crème', Icon: LocalCafeRoundedIcon },
+    cream: { label: 'Mode clair', Icon: LightModeRoundedIcon },
+} as const;
+
+function SidebarComponent({ user: me, roleLabels, onProfileClick, onPrefetch }: SidebarProps) {
     const location = useLocation();
     const pathname = location.pathname;
     const navigate = useNavigate();
     const { isOpen, toggle } = useSidebarStore();
     const { mode, toggleMode } = useThemeStore();
     const logout = useAuthStore((s) => s.logout);
-    const role = useAuthStore((s) => s.role);
 
-    const NAV_ITEMS = useMemo(
-        () => (role === 'chef_labo' ? [...BASE_NAV_ITEMS, ADMIN_NAV_ITEM] : BASE_NAV_ITEMS),
-        [role],
-    );
+    // Toutes les entrées sont visibles par tous : la gestion des utilisateurs
+    // (réservée au chef de labo) vit désormais dans la section « Équipe et Carte ».
+    const NAV_ITEMS = BASE_NAV_ITEMS;
 
     // Compteur d'alertes Stock (cf. CDC §5.4) — affiché en badge sur le sous-item Alertes.
     const { data: stockAlerts } = useStockAlerts();
@@ -489,26 +614,42 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
         : 0;
 
     /**
+     * Items enrichis des badges dynamiques (compteur d'alertes Stock) — partagés
+     * par le rendu inline (sidebar ouverte) ET le flyout (sidebar repliée).
+     */
+    const ENRICHED_NAV_ITEMS = useMemo<NavItem[]>(
+        () =>
+            NAV_ITEMS.map((item) =>
+                item.children
+                    ? {
+                          ...item,
+                          children: item.children.map((child) =>
+                              child.path === '/stock/alertes' ? { ...child, badgeCount: stockAlertsCount } : child,
+                          ),
+                      }
+                    : item,
+            ),
+        [NAV_ITEMS, stockAlertsCount],
+    );
+
+    /**
      * Liste linéaire pour le rendu : 1 entrée = 1 ligne (NAV_ITEM_HEIGHT).
      * Les sous-items d'un parent ne sont insérés que si la sidebar est ouverte
-     * ET que la section parent est active (chemin commence par /parent).
+     * ET que la section parent est active (chemin commence par /parent). Repliée,
+     * les sous-items vivent dans le flyout du parent (cf. NavItemComponent).
      */
     const FLAT_NAV_ITEMS = useMemo<FlatNavItem[]>(() => {
         const flat: FlatNavItem[] = [];
-        for (const item of NAV_ITEMS) {
+        for (const item of ENRICHED_NAV_ITEMS) {
             flat.push({ kind: 'parent', ...item });
-            if (isOpen && pathname.startsWith(item.path)) {
-                if (item.children) {
-                    for (const child of item.children) {
-                        const enriched: NavSubItem =
-                            child.path === '/stock/alertes' ? { ...child, badgeCount: stockAlertsCount } : child;
-                        flat.push({ kind: 'child', ...enriched });
-                    }
+            if (isOpen && pathname.startsWith(item.path) && item.children) {
+                for (const child of item.children) {
+                    flat.push({ kind: 'child', ...child });
                 }
             }
         }
         return flat;
-    }, [NAV_ITEMS, isOpen, pathname, stockAlertsCount]);
+    }, [ENRICHED_NAV_ITEMS, isOpen, pathname]);
 
     const handleLogout = useCallback(async () => {
         await logout();
@@ -650,7 +791,13 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             item={item}
                             isOpen={isOpen}
                             isActive={checkIsActive(idx)}
+                            activeChildPath={
+                                !isOpen && item.children
+                                    ? item.children.find((c) => pathname.startsWith(c.path))?.path
+                                    : undefined
+                            }
                             onNavigate={navigate}
+                            onPrefetch={onPrefetch}
                         />
                     ) : (
                         <NavSubItemComponent
@@ -658,6 +805,7 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             item={item}
                             isActive={checkIsActive(idx)}
                             onNavigate={navigate}
+                            onPrefetch={onPrefetch}
                         />
                     ),
                 )}
@@ -718,17 +866,15 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             },
                         }}
                     >
-                        {/* Avatar initiales */}
-                        <Box
+                        {/* Avatar : photo de profil si présente, sinon initiales. */}
+                        <Avatar
+                            src={me?.avatarUrl ?? undefined}
+                            alt={me ? `${me.firstName ?? ''} ${me.lastName ?? ''}`.trim() || me.username : ''}
                             sx={{
                                 width: 32,
                                 height: 32,
-                                borderRadius: '50%',
                                 bgcolor: 'primary.main',
                                 color: 'primary.contrastText',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
                                 flexShrink: 0,
                                 fontSize: '0.8rem',
                                 fontWeight: 700,
@@ -743,7 +889,7 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                             ) : (
                                 <PersonRoundedIcon sx={{ fontSize: 18 }} />
                             )}
-                        </Box>
+                        </Avatar>
                         {isOpen && me && (
                             <Box sx={{ minWidth: 0, flex: 1 }}>
                                 <Typography
@@ -788,10 +934,10 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                     }}
                 >
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <Tooltip title={mode === 'light' ? 'Mode sombre' : 'Mode clair'} placement="top" arrow>
+                        <Tooltip title={NEXT_THEME[mode].label} placement="top" arrow>
                             <IconButton
                                 onClick={toggleMode}
-                                aria-label={mode === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+                                aria-label={`Activer le ${NEXT_THEME[mode].label.toLowerCase()}`}
                                 size="small"
                                 sx={{
                                     color: 'text.secondary',
@@ -799,11 +945,10 @@ function SidebarComponent({ user: me, roleLabels, onProfileClick }: SidebarProps
                                     '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
                                 }}
                             >
-                                {mode === 'light' ? (
-                                    <DarkModeRoundedIcon sx={{ fontSize: 18 }} />
-                                ) : (
-                                    <LightModeRoundedIcon sx={{ fontSize: 18 }} />
-                                )}
+                                {(() => {
+                                    const NextIcon = NEXT_THEME[mode].Icon;
+                                    return <NextIcon sx={{ fontSize: 18 }} />;
+                                })()}
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Se deconnecter" placement="top" arrow>

@@ -9,6 +9,9 @@ export {
 
 export type { Fsec, FsecApi, FsecCreate } from './fsec.schema';
 
+export { ANNOTATION_TYPES, PlanAnnotationSchema, parsePlanAnnotations } from './assembly-plan.schema';
+export type { AnnotationType, PlanAnnotation } from './assembly-plan.schema';
+
 export {
     FSEC_STATUS_ID,
     FSEC_STATUSES,

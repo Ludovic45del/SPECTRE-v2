@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
+import { STEP_LABELS } from '@entities/planning/core/model/planning.schema';
 import {
     PERIODES,
     PERIODES_MAP,
@@ -14,6 +15,8 @@ import {
     LAB_EVENT_CATEGORIES,
     LAB_EVENT_CATEGORIES_MAP,
     getEventCategoryMeta,
+    STEP_AVAILABILITY_CONFIG,
+    getStepAvailabilityConfig,
 } from './planning.constants';
 
 // ====================== getPeriodeMeta ======================
@@ -75,6 +78,43 @@ describe('PERIODES_MAP', () => {
         for (const periode of PERIODES) {
             expect(PERIODES_MAP.has(periode.value)).toBe(true);
             expect(PERIODES_MAP.get(periode.value)).toBe(periode);
+        }
+    });
+});
+
+// ====================== getStepAvailabilityConfig ======================
+
+describe('getStepAvailabilityConfig', () => {
+    it('returns the Assemblage config (salle B1)', () => {
+        expect(getStepAvailabilityConfig('Assemblage')).toEqual({
+            fonctionFilter: 'Assembleur',
+            fonctionLabel: 'Assembleurs',
+            salleName: 'B1',
+        });
+    });
+
+    it('returns the Métrologie config (salle B2)', () => {
+        expect(getStepAvailabilityConfig('Métrologie')).toEqual({
+            fonctionFilter: 'Métrologue',
+            fonctionLabel: 'Métrologues',
+            salleName: 'B2',
+        });
+    });
+
+    it('returns undefined for steps without an availability block', () => {
+        for (const label of ['Réception cibles', 'Gaz', 'Livraison', 'Tir']) {
+            expect(getStepAvailabilityConfig(label)).toBeUndefined();
+        }
+    });
+
+    it('is accent-strict (a label without accents has no config)', () => {
+        expect(getStepAvailabilityConfig('Metrologie')).toBeUndefined();
+        expect(getStepAvailabilityConfig('')).toBeUndefined();
+    });
+
+    it('every config key is a real PLANNING_STEP label (guards accent typos)', () => {
+        for (const key of Object.keys(STEP_AVAILABILITY_CONFIG)) {
+            expect(STEP_LABELS).toContain(key);
         }
     });
 });

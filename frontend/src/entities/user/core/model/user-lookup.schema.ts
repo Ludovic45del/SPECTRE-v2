@@ -4,10 +4,10 @@
  *
  * Source of Truth: backend/app/api/user/user_lookup_controller.py
  *
- * Champs exposés : identité (uuid, username, first_name, last_name) + rôle +
- * is_active + coordonnées pratiques (laboratoire, service, numero, bureau).
- * Les champs sensibles (password, dashboard_preferences, force_password_change)
- * restent hors de cette projection.
+ * Champs exposés : identité (uuid, username, first_name, last_name, avatar_url)
+ * + rôle + is_active + coordonnées pratiques (laboratoire, service, numero,
+ * bureau). Les champs sensibles (password, dashboard_preferences,
+ * force_password_change) restent hors de cette projection.
  */
 
 import { z } from 'zod';
@@ -24,6 +24,7 @@ const UserLookupApiSchema = z.object({
     service: z.string().default(''),
     numero: z.string().default(''),
     bureau: z.string().default(''),
+    avatar_url: z.string().nullable().default(null),
 });
 
 export const UserLookupSchema = UserLookupApiSchema.transform((api) => ({
@@ -37,6 +38,7 @@ export const UserLookupSchema = UserLookupApiSchema.transform((api) => ({
     service: api.service,
     numero: api.numero,
     bureau: api.bureau,
+    avatarUrl: api.avatar_url,
 }));
 
 export type UserLookup = z.infer<typeof UserLookupSchema>;

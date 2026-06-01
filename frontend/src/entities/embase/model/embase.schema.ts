@@ -12,6 +12,7 @@ import { EmbaseApiSchema } from './embase-api.schema';
 
 export const EmbaseSchema = EmbaseApiSchema.transform((api) => ({
     uuid: api.uuid,
+    slug: api.slug ?? '',
     identifier: api.identifier,
     type: api.type as 'jet_de_gaz' | 'hp' | 'bp',
     nombreVoies: api.nombre_voies as 1 | 2,

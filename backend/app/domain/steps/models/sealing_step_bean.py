@@ -17,3 +17,6 @@ class SealingStepBean:
     rack_id: Optional[int] = None
     interface_io: Optional[str] = None
     comments: Optional[str] = None
+    # Liens fichiers (URL HTTP ou chemin UNC \\serveur\...) : fichier métro .txt et Visrad réalisé.
+    metro_file_link: Optional[str] = None
+    visrad_link: Optional[str] = None

@@ -2,21 +2,20 @@
  * FSEC Pictures Tab
  * @module pages/fsec-details/tabs
  *
- * Displays the photo session with:
- * - Session info (operator, date) - one per FSEC
- * - List of views/photos with names and links
+ * Affiche la session photo (opérateur, date, commentaires) — une seule par FSEC.
+ * Dès qu'une session existe, le chemin du dossier photo réseau est affiché et
+ * copiable. Le chemin est construit à partir de la campagne et de la racine UNC
+ * configurable (ENV.PHOTO_FOLDER_ROOT) ; il n'y a plus de liens saisis manuellement.
  */
 
-import { useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState } from 'react';
 import {
     Box,
     Button,
     Chip,
+    Divider,
     Grid,
     IconButton,
-    List,
-    ListItem,
-    ListItemText,
     Paper,
     Skeleton,
     Stack,
@@ -24,25 +23,18 @@ import {
     Typography,
 } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import ImageIcon from '@mui/icons-material/Image';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import dayjs from 'dayjs';
-import {
-    PicturesStep,
-    PhotoView,
-    usePicturesStepsByFsec,
-    usePhotoViewsByPicturesStep,
-    useCreatePicturesStep,
-} from '@entities/fsec/steps';
+import { PicturesStep, usePicturesStepsByFsec, useCreatePicturesStep } from '@entities/fsec/steps';
 import { useFsec } from '@entities/fsec';
 import { useCampaign } from '@entities/campaign';
-import { PicturesSessionModal, PhotoViewModal } from '@features/fsec/edit-pictures';
+import { PicturesSessionModal } from '@features/fsec/edit-pictures';
 import { UserChip } from '@entities/user';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
-import { motion } from '@shared/ui/motion';
+import { ENV } from '@shared/config/env';
 
 const slugify = (value: string) =>
     value
@@ -52,20 +44,24 @@ const slugify = (value: string) =>
         .replace(/^_+|_+$/g, '')
         .toLowerCase();
 
-function buildViewLink(
+/**
+ * Construit le chemin UNC du dossier photo réseau de la FSEC.
+ * Racine configurable via ENV.PHOTO_FOLDER_ROOT (VITE_PHOTO_FOLDER_ROOT).
+ * Ex : \\serveur\photos\ma_campagne\2026\installation_a\photos
+ */
+function buildPhotoFolderPath(
     campaignName: string | null | undefined,
     year: number | null | undefined,
     installationLabel: string | null | undefined,
-    viewName: string,
 ): string {
-    const parts = [
+    const segments = [
         campaignName ? slugify(campaignName) : 'campagne',
         year ?? 'annee',
         installationLabel ? slugify(installationLabel) : 'installation',
         'photos',
-        slugify(viewName) || 'vue',
     ];
-    return parts.join('/');
+    const root = ENV.PHOTO_FOLDER_ROOT.replace(/[\\/]+$/, '');
+    return [root, ...segments].join('\\');
 }
 
 interface PicturesTabProps {
@@ -79,12 +75,15 @@ function SessionCard({
     onEdit,
     onCreate,
     isCreating,
+    folderPath,
 }: {
     picturesStep: PicturesStep | null;
     onEdit: () => void;
     onCreate: () => void;
     isCreating: boolean;
+    folderPath: string | null;
 }) {
+    const { showNotification } = useNotification();
     const hasSession = Boolean(picturesStep);
     const isComplete = Boolean(picturesStep?.operator && picturesStep?.date);
 
@@ -106,6 +105,12 @@ function SessionCard({
             </Paper>
         );
     }
+
+    const handleCopyFolder = () => {
+        if (!folderPath) return;
+        navigator.clipboard.writeText(folderPath);
+        showNotification('Chemin du dossier copié !', 'success');
+    };
 
     return (
         <Paper
@@ -161,131 +166,31 @@ function SessionCard({
                         </Typography>
                     </Box>
                 )}
-            </Box>
-        </Paper>
-    );
-}
 
-// ============ Photo View Item ============
-
-function PhotoViewItem({
-    view,
-    isLast,
-    onEdit,
-    fallbackLink,
-}: {
-    view: PhotoView;
-    isLast: boolean;
-    onEdit: () => void;
-    fallbackLink: string;
-}) {
-    const { showNotification } = useNotification();
-
-    const handleCopy = (e: ReactMouseEvent) => {
-        e.stopPropagation();
-        navigator.clipboard.writeText(view.link || fallbackLink);
-        showNotification('Lien copié !', 'success');
-    };
-
-    return (
-        <ListItem
-            divider={!isLast}
-            secondaryAction={
-                <Tooltip title="Copier le lien" arrow>
-                    <IconButton size="small" onClick={handleCopy}>
-                        <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-            }
-            sx={{
-                py: 1.5,
-                transition: `background-color ${motion.base}`,
-                cursor: 'pointer',
-                '&:hover': {
-                    bgcolor: 'action.hover',
-                },
-            }}
-            onClick={onEdit}
-        >
-            <ListItemText
-                primary={
-                    <Typography variant="body2" fontWeight={600}>
-                        {view.name}
-                    </Typography>
-                }
-            />
-        </ListItem>
-    );
-}
-
-// ============ Photo Views List ============
-
-function PhotoViewsList({
-    views,
-    onAdd,
-    onEdit,
-    buildFallbackLink,
-}: {
-    views?: PhotoView[];
-    onAdd: () => void;
-    onEdit: (view: PhotoView) => void;
-    buildFallbackLink: (viewName: string) => string;
-}) {
-    if (!views?.length) {
-        return (
-            <Paper
-                variant="outlined"
-                sx={{
-                    p: 3,
-                    borderRadius: 1,
-                    bgcolor: 'background.paper',
-                    borderColor: 'divider',
-                    borderStyle: 'dashed',
-                    textAlign: 'center',
-                }}
-            >
-                <ImageIcon sx={{ fontSize: 36, color: 'text.secondary', mb: 1 }} />
-                <Typography variant="body1" gutterBottom>
-                    Aucune vue ajoutée
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Ajoutez des vues pour référencer les photos
-                </Typography>
-                <Button variant="outlined" startIcon={<AddIcon />} onClick={onAdd}>
-                    Ajouter une vue
-                </Button>
-            </Paper>
-        );
-    }
-
-    return (
-        <Paper variant="outlined" sx={{ borderRadius: 1, bgcolor: 'background.paper', overflow: 'hidden' }}>
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <ImageIcon color="primary" />
-                        <Typography variant="subtitle1" fontWeight={600}>
-                            Vues / Photos
+                {/* Chemin du dossier photo réseau — affiché et copiable dès que la
+                    session existe (chemin UNC construit automatiquement). */}
+                {folderPath && (
+                    <Box sx={{ mt: 2 }}>
+                        <Divider sx={{ mb: 1.5 }} />
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                            Dossier photo
                         </Typography>
-                        <Chip label={views.length} color="primary" />
-                    </Stack>
-                    <Button size="small" startIcon={<AddIcon />} onClick={onAdd}>
-                        Ajouter
-                    </Button>
-                </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Typography
+                                variant="body2"
+                                sx={{ wordBreak: 'break-all', fontFamily: 'monospace', flexGrow: 1 }}
+                            >
+                                {folderPath}
+                            </Typography>
+                            <Tooltip title="Copier le chemin" arrow>
+                                <IconButton size="small" onClick={handleCopyFolder}>
+                                    <ContentCopyIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        </Stack>
+                    </Box>
+                )}
             </Box>
-
-            <List disablePadding>
-                {views.map((view, index) => (
-                    <PhotoViewItem
-                        key={view.uuid}
-                        view={view}
-                        isLast={index === views.length - 1}
-                        onEdit={() => onEdit(view)}
-                        fallbackLink={buildFallbackLink(view.name)}
-                    />
-                ))}
-            </List>
         </Paper>
     );
 }
@@ -300,19 +205,17 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
     // Session modal state
     const [sessionModalOpen, setSessionModalOpen] = useState(false);
 
-    // View modal state
-    const [viewModalOpen, setViewModalOpen] = useState(false);
-    const [selectedView, setSelectedView] = useState<PhotoView | null>(null);
-
     // Get the first (and only) pictures step for this FSEC
     const picturesStep = picturesSteps?.[0] ?? null;
-
-    // Fetch photo views if session exists
-    const { data: photoViews, isLoading: isLoadingViews } = usePhotoViewsByPicturesStep(picturesStep?.uuid ?? '');
 
     // Create session mutation (for empty state)
     const createSessionMutation = useCreatePicturesStep();
     const { showNotification } = useNotification();
+
+    // Chemin du dossier photo réseau (disponible dès que la campagne est chargée).
+    const folderPath = campaign
+        ? buildPhotoFolderPath(campaign.name, campaign.year, campaign.installation?.label)
+        : null;
 
     const handleCreateSession = async () => {
         try {
@@ -333,21 +236,6 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
         setSessionModalOpen(false);
     };
 
-    const handleAddView = () => {
-        setSelectedView(null);
-        setViewModalOpen(true);
-    };
-
-    const handleEditView = (view: PhotoView) => {
-        setSelectedView(view);
-        setViewModalOpen(true);
-    };
-
-    const handleCloseViewModal = () => {
-        setViewModalOpen(false);
-        setSelectedView(null);
-    };
-
     return (
         <Box>
             <Stack spacing={3}>
@@ -360,41 +248,18 @@ export function PicturesTab({ fsecVersionId }: PicturesTabProps) {
                         onEdit={handleEditSession}
                         onCreate={handleCreateSession}
                         isCreating={createSessionMutation.isPending}
+                        folderPath={folderPath}
                     />
                 )}
-
-                {/* Photo Views List - Only show if session exists */}
-                {picturesStep &&
-                    (isLoadingViews ? (
-                        <Skeleton variant="rounded" height={120} sx={{ borderRadius: 1 }} />
-                    ) : (
-                        <PhotoViewsList
-                            views={photoViews}
-                            onAdd={handleAddView}
-                            onEdit={handleEditView}
-                            buildFallbackLink={(viewName) =>
-                                buildViewLink(campaign?.name, campaign?.year, campaign?.installation?.label, viewName)
-                            }
-                        />
-                    ))}
             </Stack>
 
-            {/* Modals */}
+            {/* Modal session */}
             <PicturesSessionModal
                 open={sessionModalOpen}
                 onClose={handleCloseSessionModal}
                 fsecVersionId={fsecVersionId}
                 step={picturesStep}
             />
-
-            {picturesStep && (
-                <PhotoViewModal
-                    open={viewModalOpen}
-                    onClose={handleCloseViewModal}
-                    picturesStepId={picturesStep.uuid}
-                    view={selectedView}
-                />
-            )}
         </Box>
     );
 }

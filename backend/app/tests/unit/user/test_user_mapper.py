@@ -38,6 +38,7 @@ class TestEntityToBean:
         profile.numero = overrides.get("numero", "001")
         profile.bureau = overrides.get("bureau", "B12")
         profile.force_password_change = overrides.get("force_password_change", False)
+        profile.avatar = overrides.get("avatar", None)
         profile.created_at = overrides.get("created_at", datetime(2025, 1, 1, 12, 0))
         profile.updated_at = overrides.get("updated_at", datetime(2025, 6, 1, 12, 0))
         return profile
@@ -60,6 +61,7 @@ class TestEntityToBean:
         assert bean.bureau == "B12"
         assert bean.is_active is True
         assert bean.force_password_change is False
+        assert bean.avatar_url is None
         assert bean.last_login is None
         assert bean.created_at == datetime(2025, 1, 1, 12, 0)
         assert bean.updated_at == datetime(2025, 6, 1, 12, 0)
@@ -96,6 +98,24 @@ class TestEntityToBean:
         bean = user_mapper_entity_to_bean(user, profile)
 
         assert bean.is_active is False
+
+    def test_avatar_url_from_image_field(self):
+        avatar = MagicMock()
+        avatar.url = "/api/media/users/avatars/abc.jpg"
+        user = self._make_user()
+        profile = self._make_profile(avatar=avatar)
+
+        bean = user_mapper_entity_to_bean(user, profile)
+
+        assert bean.avatar_url == "/api/media/users/avatars/abc.jpg"
+
+    def test_avatar_url_none_when_no_avatar(self):
+        user = self._make_user()
+        profile = self._make_profile(avatar=None)
+
+        bean = user_mapper_entity_to_bean(user, profile)
+
+        assert bean.avatar_url is None
 
 
 # ============================================================================
@@ -175,6 +195,18 @@ class TestBeanToApi:
         assert result["service"] == ""
         assert result["numero"] == ""
         assert result["bureau"] == ""
+
+    def test_avatar_url_passthrough(self):
+        bean = self._make_bean(avatar_url="/api/media/users/avatars/abc.jpg")
+
+        result = user_mapper_bean_to_api(bean)
+
+        assert result["avatar_url"] == "/api/media/users/avatars/abc.jpg"
+
+    def test_avatar_url_none(self):
+        result = user_mapper_bean_to_api(self._make_bean())
+
+        assert result["avatar_url"] is None
 
 
 # ============================================================================

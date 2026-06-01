@@ -3,9 +3,9 @@
  * sur des couloirs (lane packing) au lieu d'occuper chacune une ligne entière.
  *
  * Remplace l'ancienne boucle de `FsecRow` (une ligne pleine par FSEC).
- * Drag-to-move, resize, popover de création/édition par barre.
+ * Drag-to-move et resize sur place ; le clic ouvre la modale de planification.
  */
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 import { Check } from '@mui/icons-material';
 import dayjs from 'dayjs';
@@ -13,7 +13,6 @@ import { useUpdateCampaignStep } from '@entities/planning/core/api/planning.quer
 import type { PlanningCampaignStep } from '@entities/planning/core/model/planning.schema';
 import type { Etape } from '../../lib/planning.constants';
 import { usePlanningColors } from '../../lib/planning.hooks';
-import { usePlanningStore } from '../../lib/planning.store';
 import { type TimelineColumn, isFsecStepDone } from '../../lib/planning.utils';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
 import {
@@ -26,8 +25,6 @@ import { assignLanes, LANE_HEIGHT, LANE_ROW_VPAD, laneRowHeight } from '../../li
 import { useDragToMove } from '../../lib/useDragToMove';
 import { useResizeBar } from '../../lib/useResizeBar';
 import { HoverTd, StickyLabelCell } from '../PlanningCell';
-import { AssemblageInfoPopover } from '../AssemblageInfoPopover';
-import { FsecStepPopover, type FsecOption } from './FsecStepPopover';
 import { useCampaignContext } from './CampaignContext';
 import type { FsecInfo } from './types';
 
@@ -63,14 +60,9 @@ interface StepLanesRowProps {
 // ====================== Component ======================
 
 export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, stepsForEtape }: StepLanesRowProps) {
-    const { campagne, columns, planningData, membres, salles, labEvents, visibleRange } = useCampaignContext();
+    const { columns, planningData, visibleRange, onOpenStepDialog } = useCampaignContext();
     const colors = usePlanningColors();
-    const selectedYear = usePlanningStore((s) => s.selectedYear);
     const updateStep = useUpdateCampaignStep();
-
-    const isAssemblage = etape.label === 'Assemblage';
-    const isMetrologie = etape.label === 'Métrologie';
-    const hasAvailabilityDialog = isAssemblage || isMetrologie;
 
     // ── Lane packing ──
     const { laneByStep, laneCount } = useMemo(() => assignLanes(stepsForEtape), [stepsForEtape]);
@@ -82,26 +74,6 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
         () => new Map(stepsForEtape.map((s) => [s.fsecUuid, s])),
         [stepsForEtape],
     );
-    /** FSEC sans step planifié — proposées à la création. */
-    const unscheduledFsecOptions: FsecOption[] = useMemo(
-        () =>
-            etapeFsecs
-                .filter((f) => !stepByFsec.has(f.versionUuid))
-                .map((f) => ({ versionUuid: f.versionUuid, name: f.name })),
-        [etapeFsecs, stepByFsec],
-    );
-
-    // ── Popover / dialog state ──
-    const [popover, setPopover] = useState<{
-        anchorEl: HTMLElement;
-        defaultDate: string;
-        existingStep?: PlanningCampaignStep;
-        fsec?: FsecInfo;
-    } | null>(null);
-    const [availabilityDialog, setAvailabilityDialog] = useState<{
-        column: TimelineColumn;
-        fsecs: FsecInfo[];
-    } | null>(null);
 
     // ── Drag-to-move ──
     const onMove = useCallback(
@@ -166,32 +138,17 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
         (e: React.MouseEvent<HTMLElement>, step: PlanningCampaignStep, col: TimelineColumn) => {
             e.stopPropagation();
             if (consumeSkip()) return;
-            const fsec = fsecByUuid.get(step.fsecUuid);
-            if (hasAvailabilityDialog) {
-                setAvailabilityDialog({ column: col, fsecs: fsec ? [fsec] : [] });
-            } else {
-                setPopover({
-                    anchorEl: e.currentTarget,
-                    defaultDate: step.startDate ?? col.start.format('YYYY-MM-DD'),
-                    existingStep: step,
-                    fsec,
-                });
-            }
+            onOpenStepDialog(etape, step.startDate ?? col.start.format('YYYY-MM-DD'));
         },
-        [consumeSkip, fsecByUuid, hasAvailabilityDialog],
+        [consumeSkip, onOpenStepDialog, etape],
     );
 
     const handleEmptyClick = useCallback(
-        (e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn) => {
+        (_e: React.MouseEvent<HTMLTableCellElement>, col: TimelineColumn) => {
             if (consumeSkip()) return;
-            if (hasAvailabilityDialog) {
-                setAvailabilityDialog({ column: col, fsecs: etapeFsecs });
-                return;
-            }
-            if (unscheduledFsecOptions.length === 0) return;
-            setPopover({ anchorEl: e.currentTarget, defaultDate: col.start.format('YYYY-MM-DD') });
+            onOpenStepDialog(etape, col.start.format('YYYY-MM-DD'));
         },
-        [consumeSkip, hasAvailabilityDialog, etapeFsecs, unscheduledFsecOptions.length],
+        [consumeSkip, onOpenStepDialog, etape],
     );
 
     // ── Timeline cells ──
@@ -360,40 +317,6 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
             </StickyLabelCell>
 
             {timelineCells}
-
-            {popover && !hasAvailabilityDialog && (
-                <FsecStepPopover
-                    anchorEl={popover.anchorEl}
-                    existingStep={popover.existingStep}
-                    defaultDate={popover.defaultDate}
-                    campaignUuid={campagne.uuid}
-                    fsecUuid={popover.existingStep?.fsecUuid}
-                    fsecName={popover.fsec?.name}
-                    fsecOptions={popover.existingStep ? undefined : unscheduledFsecOptions}
-                    stepLabel={etape.label}
-                    stepColor={etape.color}
-                    year={selectedYear}
-                    onClose={() => setPopover(null)}
-                />
-            )}
-
-            {availabilityDialog && hasAvailabilityDialog && (
-                <AssemblageInfoPopover
-                    column={availabilityDialog.column}
-                    membres={membres}
-                    salles={salles}
-                    labEvents={labEvents}
-                    planningData={planningData}
-                    campaignUuid={campagne.uuid}
-                    campaignFsecs={availabilityDialog.fsecs}
-                    onClose={() => setAvailabilityDialog(null)}
-                    stepLabel={etape.label}
-                    stepColor={etape.color}
-                    fonctionFilter={isAssemblage ? 'Assembleur' : 'Métrologue'}
-                    fonctionLabel={isAssemblage ? 'Assembleurs' : 'Métrologues'}
-                    salleName={isAssemblage ? 'B1' : 'B2'}
-                />
-            )}
         </tr>
     );
 });

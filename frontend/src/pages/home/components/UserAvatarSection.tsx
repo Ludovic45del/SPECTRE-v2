@@ -17,6 +17,7 @@ interface UserAvatarSectionProps {
     displayName: string;
     today: string;
     roleLabel: string;
+    avatarUrl?: string | null;
     user: { service?: string; bureau?: string } | null;
 }
 
@@ -27,6 +28,7 @@ export default memo<UserAvatarSectionProps>(function UserAvatarSection({
     displayName,
     today,
     roleLabel,
+    avatarUrl,
     user,
 }) {
     return (
@@ -35,6 +37,8 @@ export default memo<UserAvatarSectionProps>(function UserAvatarSection({
                 <Skeleton variant="circular" width={56} height={56} />
             ) : (
                 <Avatar
+                    src={avatarUrl ?? undefined}
+                    alt={displayName}
                     sx={{
                         width: 56,
                         height: 56,

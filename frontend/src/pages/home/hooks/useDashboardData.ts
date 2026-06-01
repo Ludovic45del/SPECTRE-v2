@@ -19,6 +19,7 @@ import {
 } from '@entities/fa/core/model/fa.constants';
 
 import { ACTIVITY_FEED_LIMIT, safeColor, type ActivityItem, type DonutSegment } from '../constants';
+import { paths } from '@shared/config';
 
 // ============================================================================
 // KPIs
@@ -111,7 +112,7 @@ function useRecentActivity(recentActivity: Dashboard['recentActivity'] | undefin
                     date: item.lastUpdated ? new Date(item.lastUpdated) : null,
                     statusLabel: statusInfo?.label ?? '—',
                     statusColor: safeColor(statusInfo?.color),
-                    link: `/campagne-details/${item.id}`,
+                    link: paths.campaign.root(item.slug ?? item.id),
                 };
             }
 
@@ -129,7 +130,7 @@ function useRecentActivity(recentActivity: Dashboard['recentActivity'] | undefin
                     date: item.lastUpdated ? new Date(item.lastUpdated) : null,
                     statusLabel: status.label,
                     statusColor: status.color,
-                    link: `/fsec-details/${item.id}`,
+                    link: paths.fsec.root(item.slug ?? item.id),
                 };
             }
 
@@ -149,7 +150,7 @@ function useRecentActivity(recentActivity: Dashboard['recentActivity'] | undefin
                 date: item.lastUpdated ? new Date(item.lastUpdated) : null,
                 statusLabel: status.label,
                 statusColor: status.color,
-                link: `/fa-details/${item.id}`,
+                link: paths.fa.root(item.slug ?? item.id),
             };
         });
     }, [recentActivity]);

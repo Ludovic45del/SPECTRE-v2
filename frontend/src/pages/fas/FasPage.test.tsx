@@ -7,6 +7,9 @@ import { sortFas } from '@entities/fa';
 // ============================================================================
 
 const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
+    slug: 'fa-2025-fsec01',
+    fsecSlug: null,
+    campaignSlug: null,
     uuid: '00000000-0000-0000-0000-000000000001',
     fsecVersionId: '00000000-0000-0000-0000-000000000010',
     identifier: 'FA_2025_FSEC01',
@@ -29,7 +32,6 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     cause: null,
     experienceImpact: null,
     iecValidationProgress: false,
-    iecValidationProgressDate: null,
     iecValidationProgressName: null,
     iecValidationProgressUserUuid: null,
     closureValidation: null,

@@ -1,8 +1,8 @@
 """Bean Fsec - FSEC (Édifice Cible) principal avec versioning."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -21,6 +21,11 @@ class FsecBean:
 
     # Champs de base
     name: str = ""
+    # Slugs d'URL calculés (non persistés), renseignés par le mapper entity→bean :
+    # `slug` du FSEC (préfixé par le contexte campagne) et `campaign_slug` de la
+    # campagne parente (pour la navigation croisée vers la campagne).
+    slug: Optional[str] = None
+    campaign_slug: Optional[str] = None
     comments: Optional[str] = None
     last_updated: Optional[datetime] = None
     is_active: bool = True
@@ -33,3 +38,43 @@ class FsecBean:
     experience_srxx: Optional[str] = None
     localisation: Optional[str] = None
     depressurization_failed: Optional[bool] = None
+
+    # URL relative (servie via MEDIA_URL) ou None si pas de photo.
+    overview_image: Optional[str] = None
+
+    # Plan d'assemblage annotable (rubrique Assemblage).
+    # `assembly_plan_image` : URL relative MEDIA ou None si pas de plan.
+    # `assembly_plan_annotations` : calque d'annotations (format maison rendu en
+    # SVG côté front) ; [] si aucune annotation.
+    assembly_plan_image: Optional[str] = None
+    assembly_plan_annotations: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Liens vers fichiers métiers (URL HTTP interne ou chemin UNC).
+    alignment_file_link: Optional[str] = None
+    fdie_link: Optional[str] = None
+
+    # Fiche de livraison phase 2 (TCI signe avec OK/KO + remarques).
+    delivery_validation: Optional[str] = None
+    delivery_remarques: Optional[str] = None
+    delivery_validated_by_id: Optional[int] = None
+    delivery_validated_by_username: Optional[str] = None
+    delivery_validated_at: Optional[datetime] = None
+
+    # Fiche de livraison phase 1 : nom de l'accepteur sélectionné via dropdown.
+    # `user_id` est l'id auth.User (FK locale) ; `user_uuid` est l'uuid
+    # UserProfile correspondant (exposé/consommé par le frontend qui parle
+    # uuid UserProfile via UserSelect).
+    delivery_acceptor_user_id: Optional[int] = None
+    delivery_acceptor_user_uuid: Optional[str] = None
+    delivery_acceptor_username: Optional[str] = None
+
+    # Fiche de livraison phase 2 : nom et date du réceptionnaire (saisis libre
+    # car la personne peut ne pas avoir de compte SPECTRE).
+    delivery_receiver_name: Optional[str] = None
+    delivery_receiver_date: Optional[date] = None
+
+    # Signatures figées de la fiche (URL relative MEDIA, ou None) : copie du
+    # fichier de profil au moment de signer (cf. FsecEntity). acceptor = phase 1
+    # (colonne RECEPTION 1), validator = phase 2 (colonne RECEPTION 2).
+    delivery_acceptor_signature: Optional[str] = None
+    delivery_validator_signature: Optional[str] = None

@@ -24,9 +24,14 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { DataChip } from '@widgets/data-chip';
 import { Fsec, useDeleteFsec } from '@entities/fsec';
 import { useCampaign } from '@entities/campaign';
+import { paths } from '@shared/config';
+import { CreateFaModal, useCreateFaStore } from '@features/fa';
+import { GenerateDeliverySheetModal } from '@features/fsec/generate-delivery-sheet';
 import { FsecWorkflowStepper } from './FsecWorkflowStepper';
 import { useNotification } from '@shared/ui';
 import dayjs from 'dayjs';
@@ -43,7 +48,9 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const deleteMutation = useDeleteFsec();
+    const openCreateFa = useCreateFaStore((state) => state.open);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeliverySheetOpen, setIsDeliverySheetOpen] = useState(false);
 
     // Fetch campaign data
     const { data: campaign } = useCampaign(fsec.campaignId ?? '');
@@ -78,6 +85,10 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
             showNotification('Erreur lors de la suppression', 'error');
         }
     }, [fsec.versionUuid, deleteMutation, showNotification, navigate]);
+
+    const handleCreateFa = useCallback(() => {
+        openCreateFa(fsec.versionUuid, fsec.campaignId ?? undefined);
+    }, [openCreateFa, fsec.versionUuid, fsec.campaignId]);
 
     return (
         <Paper
@@ -174,7 +185,7 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                             {campaign && (
                                 <Box
                                     component={Link}
-                                    to={`/campagne-details/${campaign.uuid}/overview`}
+                                    to={paths.campaign.tab(campaign.slug, 'overview')}
                                     sx={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
@@ -213,8 +224,54 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                     <FsecWorkflowStepper fsec={fsec} />
                 </Box>
 
-                {/* Right: Delete action */}
-                <Box>
+                {/* Right: Actions (créer FA + fiche de livraison + suppression) */}
+                <Stack direction="row" spacing={1}>
+                    <Tooltip title="Créer une Fiche d'Anomalie">
+                        <IconButton
+                            onClick={handleCreateFa}
+                            aria-label="Créer une Fiche d'Anomalie"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: '50%',
+                                bgcolor: 'background.paper',
+                                color: 'text.secondary',
+                                transition: `all ${motion.base}`,
+                                '&:hover': {
+                                    bgcolor: 'primary.50',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                },
+                            }}
+                        >
+                            <AddCircleOutlineIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Générer la fiche de livraison">
+                        <IconButton
+                            onClick={() => setIsDeliverySheetOpen(true)}
+                            aria-label="Générer la fiche de livraison"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: '50%',
+                                bgcolor: 'background.paper',
+                                color: 'text.secondary',
+                                transition: `all ${motion.base}`,
+                                '&:hover': {
+                                    bgcolor: 'primary.50',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                },
+                            }}
+                        >
+                            <PictureAsPdfOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Supprimer le FSEC">
                         <IconButton
                             onClick={handleOpenDeleteDialog}
@@ -238,8 +295,16 @@ function FsecHeaderComponent({ fsec }: FsecHeaderProps) {
                             <DeleteOutlineIcon sx={{ fontSize: 20 }} />
                         </IconButton>
                     </Tooltip>
-                </Box>
+                </Stack>
             </Stack>
+
+            <GenerateDeliverySheetModal
+                open={isDeliverySheetOpen}
+                onClose={() => setIsDeliverySheetOpen(false)}
+                fsec={fsec}
+            />
+
+            <CreateFaModal />
 
             {/* Delete Confirmation Dialog */}
             <Dialog

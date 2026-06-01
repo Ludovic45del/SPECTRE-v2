@@ -46,6 +46,7 @@ interface CreateMetrologyStepInput {
     rackId?: number | null;
     metrologistName?: string | null;
     metrologistUserUuid?: string | null;
+    metrologistUserUuids?: string[];
     date?: Date | null;
     comments?: string | null;
     machineUuids?: string[];
@@ -61,6 +62,7 @@ function metrologyStepToApi(input: CreateMetrologyStepInput) {
         rack_id: input.rackId ?? null,
         metrologist_name: input.metrologistName ?? null,
         metrologist_user_uuid: input.metrologistUserUuid ?? null,
+        metrologist_user_uuids: input.metrologistUserUuids ?? [],
         date: input.date?.toISOString().split('T')[0] ?? null,
         comments: input.comments ?? null,
         machine_uuids: input.machineUuids ?? [],

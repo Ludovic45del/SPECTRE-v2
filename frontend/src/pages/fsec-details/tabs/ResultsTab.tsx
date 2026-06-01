@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { Box, Stack, alpha, useTheme } from '@mui/material';
 import { Fsec } from '@entities/fsec';
 import { DeliveryDatesSection } from './components/DeliveryDatesSection';
+import { AlignmentLinksSection } from './components/AlignmentLinksSection';
 
 interface ResultsTabProps {
     fsec: Fsec;
@@ -47,6 +48,7 @@ export function ResultsTab({ fsec }: ResultsTabProps) {
         <Box>
             <Stack spacing={3}>
                 <DeliveryDatesSection fsec={fsec} paperSx={paperSx} editButtonSx={editButtonSx} />
+                <AlignmentLinksSection fsec={fsec} paperSx={paperSx} editButtonSx={editButtonSx} />
             </Stack>
         </Box>
     );

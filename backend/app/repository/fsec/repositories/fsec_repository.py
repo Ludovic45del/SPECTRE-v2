@@ -1,11 +1,13 @@
 """Repository FSEC - Implémentation IFsecRepository."""
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.fsec.models.fsec_bean import FsecBean
+from app.domain.shared.slug import extract_leading_year
 from app.mapper.fsec.fsec_mapper import (
     fsec_mapper_bean_to_entity,
     fsec_mapper_entity_to_bean,
@@ -16,7 +18,18 @@ from app.repository.fsec.models.fsec_entity import FsecEntity
 class FsecRepository(IFsecRepository):
     """Implémentation du repository FSEC."""
 
-    SELECT_RELATED = ("campaign_id", "status_id", "category_id", "rack_id")
+    SELECT_RELATED = (
+        "campaign_id",
+        # Installation de la campagne parente : nécessaire au calcul du slug
+        # (label d'installation) sans requête N+1.
+        "campaign_id__installation_id",
+        "status_id",
+        "category_id",
+        "rack_id",
+        "delivery_validated_by",
+        "delivery_acceptor_user",
+        "delivery_acceptor_user__profile",
+    )
 
     def _base_queryset(self):
         """Queryset de base avec select_related sur les FK."""
@@ -36,6 +49,26 @@ class FsecRepository(IFsecRepository):
             return fsec_mapper_entity_to_bean(entity)
         except FsecEntity.DoesNotExist:
             return None
+
+    def get_by_slug(self, slug: str) -> Optional[FsecBean]:
+        """Récupère un FSEC par son slug calculé (préfixé du contexte campagne).
+
+        Filtre par année de campagne (préfixe du slug) puis compare le slug
+        recalculé de chaque candidat. Privilégie la version active si plusieurs
+        versions partagent le même nom.
+        """
+        year = extract_leading_year(slug)
+        query = self._base_queryset()
+        if year is not None:
+            query = query.filter(campaign_id__year=year)
+        fallback: Optional[FsecBean] = None
+        for entity in query:
+            bean = fsec_mapper_entity_to_bean(entity)
+            if bean.slug == slug:
+                if entity.is_active:
+                    return bean
+                fallback = fallback or bean
+        return fallback
 
     def get_by_fsec_uuid(self, fsec_uuid: str) -> List[FsecBean]:
         """Récupère toutes les versions d'un FSEC par son fsec_uuid."""
@@ -90,18 +123,60 @@ class FsecRepository(IFsecRepository):
         entity.experience_srxx = bean.experience_srxx
         entity.localisation = bean.localisation
         entity.depressurization_failed = bean.depressurization_failed
+        entity.alignment_file_link = bean.alignment_file_link
+        entity.fdie_link = bean.fdie_link
+        # Champs workflow Fiche de livraison (assignés explicitement par les
+        # services delivery_workflow ; on les écrit en write-through ici car
+        # le bean a été chargé puis muté juste avant l'appel).
+        entity.delivery_validation = bean.delivery_validation
+        entity.delivery_remarques = bean.delivery_remarques
+        entity.delivery_validated_by_id = bean.delivery_validated_by_id
+        entity.delivery_validated_at = bean.delivery_validated_at
+        entity.delivery_acceptor_user_id = bean.delivery_acceptor_user_id
+        entity.delivery_receiver_name = bean.delivery_receiver_name
+        entity.delivery_receiver_date = bean.delivery_receiver_date
         entity.save()
         return fsec_mapper_entity_to_bean(entity)
 
     @transaction.atomic
     def delete(self, version_uuid: str) -> bool:
-        """Supprime un FSEC par son version_uuid."""
+        """Supprime un FSEC et toutes les données rattachées à cette version.
+
+        Les enfants directs d'une version FSEC — étapes de vie labo, FA,
+        documents, équipes — sont déclarés en `on_delete=PROTECT` : c'est un
+        garde-fou contre les suppressions accidentelles par d'autres voies
+        (admin Django, shell). La suppression d'un FSEC est, elle, une action
+        admin explicite et assumée irréversible (cf. dialog de confirmation
+        côté front). On vide donc d'abord toutes les lignes qui référencent
+        cette version — sinon Django lève `ProtectedError` (→ 500) — puis on
+        supprime le FSEC, le tout dans une seule transaction.
+
+        L'itération sur `_meta.related_objects` couvre l'ensemble des relations
+        inverses sans liste en dur : elle reste correcte quand de nouveaux types
+        d'étapes sont ajoutés (le référentiel de vie labo évolue). Les liens
+        planning (CASCADE) sont inclus ; les petits-enfants en CASCADE (sealing
+        via metrology, photo_views via pictures) sont gérés par le collector
+        Django lors du `.delete()` du queryset parent. Les `FsecAssemblyItem` ne
+        sont pas touchés : ils sont reliés par `fsec_uuid` (partagé entre
+        versions), pas par une FK vers la version supprimée.
+        """
         try:
             entity = FsecEntity.objects.get(version_uuid=version_uuid)
-            entity.delete()
-            return True
         except FsecEntity.DoesNotExist:
             return False
+
+        for relation in entity._meta.related_objects:
+            accessor = relation.get_accessor_name()
+            if relation.one_to_one:
+                try:
+                    getattr(entity, accessor).delete()
+                except ObjectDoesNotExist:
+                    pass
+            else:
+                getattr(entity, accessor).all().delete()
+
+        entity.delete()
+        return True
 
     def exists_by_campaign_and_name(self, campaign_id: str, name: str) -> bool:
         """Vérifie si un FSEC existe pour cette campagne avec ce nom."""
@@ -139,3 +214,95 @@ class FsecRepository(IFsecRepository):
         entity = fsec_mapper_bean_to_entity(bean)
         entity.save()
         return fsec_mapper_entity_to_bean(entity)
+
+    @transaction.atomic
+    def _replace_image_field(
+        self, version_uuid: str, field_name: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Remplace ou supprime un ImageField du FSEC en libérant l'ancien fichier.
+
+        Mutualise la logique des photos/signatures : verrou ligne, suppression du
+        fichier disque existant (delete(save=False) pour n'écrire qu'une fois),
+        puis assignation du nouveau fichier (ou None). Retourne None si la version
+        est introuvable.
+        """
+        try:
+            entity = FsecEntity.objects.select_for_update().get(
+                version_uuid=version_uuid
+            )
+        except FsecEntity.DoesNotExist:
+            return None
+
+        current = getattr(entity, field_name)
+        if current:
+            current.delete(save=False)
+
+        setattr(entity, field_name, image_file if image_file is not None else None)
+        entity.save()
+        return fsec_mapper_entity_to_bean(entity)
+
+    def set_overview_image(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Remplace ou supprime la photo de vue d'ensemble."""
+        return self._replace_image_field(version_uuid, "overview_image", image_file)
+
+    @transaction.atomic
+    def set_assembly_plan_image(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Remplace ou supprime l'image du plan d'assemblage.
+
+        Méthode dédiée (vs `_replace_image_field`) car la suppression du plan
+        doit aussi vider le calque d'annotations : leurs coordonnées sont
+        relatives au plan, elles n'ont plus de sens sans support. Le remplacement
+        (image_file non None) conserve les annotations existantes.
+        """
+        try:
+            entity = FsecEntity.objects.select_for_update().get(
+                version_uuid=version_uuid
+            )
+        except FsecEntity.DoesNotExist:
+            return None
+
+        current = entity.assembly_plan_image
+        if current:
+            current.delete(save=False)
+
+        entity.assembly_plan_image = image_file if image_file is not None else None
+        if image_file is None:
+            entity.assembly_plan_annotations = []
+        entity.save()
+        return fsec_mapper_entity_to_bean(entity)
+
+    @transaction.atomic
+    def set_assembly_plan_annotations(
+        self, version_uuid: str, annotations: Any
+    ) -> Optional[FsecBean]:
+        """Remplace le calque d'annotations du plan d'assemblage (sémantique PUT)."""
+        try:
+            entity = FsecEntity.objects.select_for_update().get(
+                version_uuid=version_uuid
+            )
+        except FsecEntity.DoesNotExist:
+            return None
+
+        entity.assembly_plan_annotations = annotations or []
+        entity.save()
+        return fsec_mapper_entity_to_bean(entity)
+
+    def set_delivery_acceptor_signature(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Fige (copie) ou supprime la signature de l'accepteur (phase 1)."""
+        return self._replace_image_field(
+            version_uuid, "delivery_acceptor_signature", image_file
+        )
+
+    def set_delivery_validator_signature(
+        self, version_uuid: str, image_file: Optional[Any]
+    ) -> Optional[FsecBean]:
+        """Fige (copie) ou supprime la signature du validateur TCI (phase 2)."""
+        return self._replace_image_field(
+            version_uuid, "delivery_validator_signature", image_file
+        )

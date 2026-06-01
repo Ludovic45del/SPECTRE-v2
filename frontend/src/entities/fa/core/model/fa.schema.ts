@@ -14,6 +14,11 @@ import { z } from 'zod';
 export const FaApiSchema = z.object({
     // Identifiant
     uuid: z.string().uuid(),
+    // Slug d'URL calculé (slugify de l'identifier) + slugs des parents pour la
+    // navigation croisée (null si FSEC/campagne parente sans contexte).
+    slug: z.string().optional(),
+    fsec_slug: z.string().nullable().optional(),
+    campaign_slug: z.string().nullable().optional(),
 
     // Foreign Keys
     fsec_version_id: z.string(),
@@ -39,11 +44,10 @@ export const FaApiSchema = z.object({
     iec_validation_open_name: z.string().nullable(),
     iec_validation_open_user_uuid: z.string().uuid().nullable().optional(),
 
-    // Phase En cours
+    // Phase En cours (sans date de passage en cours)
     cause: z.string().nullable(),
     experience_impact: z.string().nullable(),
     iec_validation_progress: z.boolean(),
-    iec_validation_progress_date: z.string().nullable(),
     iec_validation_progress_name: z.string().nullable(),
     iec_validation_progress_user_uuid: z.string().uuid().nullable().optional(),
 
@@ -69,6 +73,9 @@ export const FaApiSchema = z.object({
 export const FaSchema = FaApiSchema.transform((api) => ({
     // Identifiant
     uuid: api.uuid,
+    slug: api.slug ?? '',
+    fsecSlug: api.fsec_slug ?? null,
+    campaignSlug: api.campaign_slug ?? null,
 
     // Foreign Keys
     fsecVersionId: api.fsec_version_id,
@@ -94,11 +101,10 @@ export const FaSchema = FaApiSchema.transform((api) => ({
     iecValidationOpenName: api.iec_validation_open_name,
     iecValidationOpenUserUuid: api.iec_validation_open_user_uuid ?? null,
 
-    // Phase En cours
+    // Phase En cours (sans date de passage en cours)
     cause: api.cause,
     experienceImpact: api.experience_impact,
     iecValidationProgress: api.iec_validation_progress,
-    iecValidationProgressDate: api.iec_validation_progress_date ? new Date(api.iec_validation_progress_date) : null,
     iecValidationProgressName: api.iec_validation_progress_name,
     iecValidationProgressUserUuid: api.iec_validation_progress_user_uuid ?? null,
 
@@ -245,3 +251,29 @@ export function faUpdateToApi(data: FaUpdate): Record<string, unknown> {
 
     return result;
 }
+
+/**
+ * Photo de galerie FA (phase Ouvert).
+ * Source of Truth: backend/app/domain/fa/models/fa_photo_bean.py
+ */
+export const FaPhotoApiSchema = z.object({
+    uuid: z.string().uuid(),
+    fa_uuid: z.string(),
+    image: z.string().nullable(),
+    caption: z.string().nullable().optional(),
+    order: z.number().int(),
+    created_at: z.string().nullable(),
+});
+
+export const FaPhotoSchema = FaPhotoApiSchema.transform((api) => ({
+    uuid: api.uuid,
+    faUuid: api.fa_uuid,
+    imageUrl: api.image,
+    caption: api.caption ?? null,
+    order: api.order,
+    createdAt: api.created_at,
+}));
+
+export const FaPhotoListSchema = z.array(FaPhotoSchema);
+
+export type FaPhoto = z.infer<typeof FaPhotoSchema>;

@@ -4,10 +4,20 @@
  * Tests for TanStack Query hooks for FSEC operations using MSW.
  */
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useFsecs, useFsec, useFsecsByCampaign, useCreateFsec, useUpdateFsec, useDeleteFsec } from './fsec.queries';
-import { createQueryWrapper, server } from '@test/test-utils';
+import {
+    useFsecs,
+    useFsec,
+    useFsecBySlug,
+    useFsecsByCampaign,
+    useCreateFsec,
+    useUpdateFsec,
+    useDeleteFsec,
+} from './fsec.queries';
+import { fsecKeys } from './fsec.keys';
+import { createQueryWrapper, createTestQueryClient, server } from '@test/test-utils';
 
 // Mock data matching FsecApiSchema
 const mockFsec = {
@@ -504,7 +514,7 @@ describe('Cache Invalidation', () => {
         await waitFor(() => expect(fetchCount).toBeGreaterThan(initialFetchCount));
     });
 
-    it('should invalidate FSEC detail query after update', async () => {
+    it('should write the FSEC detail cache after update without refetching', async () => {
         let detailFetchCount = 0;
 
         server.use(
@@ -517,7 +527,8 @@ describe('Cache Invalidation', () => {
             }),
         );
 
-        const wrapper = createQueryWrapper();
+        const client = createTestQueryClient();
+        const wrapper = createQueryWrapper(client);
 
         // First, fetch the detail
         const { result: detailResult } = renderHook(() => useFsec(versionUuid), { wrapper });
@@ -541,8 +552,78 @@ describe('Cache Invalidation', () => {
 
         await waitFor(() => expect(updateResult.current.isSuccess).toBe(true));
 
-        // The detail should be refetched due to invalidation
-        await waitFor(() => expect(detailFetchCount).toBeGreaterThan(initialFetchCount));
+        // La réponse PUT (source de vérité, slug recalculé côté serveur) est
+        // écrite directement dans le cache détail : la query reflète le nouveau
+        // nom SANS relancer de GET. Éviter un refetch est précisément ce qui
+        // empêche le 404 sur l'ancien slug quand le nom/la campagne change.
+        await waitFor(() =>
+            expect(client.getQueryData<{ name: string }>(fsecKeys.detail(versionUuid))?.name).toBe(
+                'Updated',
+            ),
+        );
+        expect(detailFetchCount).toBe(initialFetchCount);
+    });
+
+    it('seeds the new slug and never refetches the old slug after a rename', async () => {
+        // Régression : renommer (ou réaffecter) un FSEC change son slug calculé.
+        // L'ancienne implémentation invalidait tout le préfixe `details()`, ce qui
+        // relançait la query encore keyée sur l'ANCIEN slug d'URL → 404 (le slug
+        // n'existe plus). La nouvelle écrit le cache du nouveau slug et laisse
+        // l'ancien tranquille.
+        const oldSlug = '2026-s1-lmj-omega-1';
+        const newSlug = '2026-s1-lmj-omega-baptiste';
+        let oldSlugFetchCount = 0;
+
+        server.use(
+            http.get(`/api/v1/fsecs/by-slug/${oldSlug}/`, () => {
+                oldSlugFetchCount++;
+                return HttpResponse.json({ ...mockFsec, slug: oldSlug });
+            }),
+            http.put(`/api/v1/fsecs/${versionUuid}/`, () =>
+                HttpResponse.json({ ...mockFsec, name: 'Baptiste', slug: newSlug }),
+            ),
+        );
+
+        // gcTime > 0 : l'entrée du NOUVEAU slug, seedée mais pas encore observée
+        // (la page observe l'ancien slug jusqu'à la navigation), doit survivre au
+        // garbage collector — comme en prod (gcTime 10 min). createTestQueryClient
+        // force gcTime:0, qui la supprimerait aussitôt.
+        const client = new QueryClient({
+            defaultOptions: {
+                queries: { retry: false, gcTime: 60_000, staleTime: 0 },
+                mutations: { retry: false },
+            },
+        });
+        const wrapper = createQueryWrapper(client);
+
+        // Page chargée par l'ancien slug.
+        const { result: bySlug } = renderHook(() => useFsecBySlug(oldSlug), { wrapper });
+        await waitFor(() => expect(bySlug.current.isSuccess).toBe(true));
+        const fetchCountAfterLoad = oldSlugFetchCount;
+
+        // Renommage : le slug bascule sur newSlug.
+        const { result: updateResult } = renderHook(() => useUpdateFsec(), { wrapper });
+        updateResult.current.mutate({
+            versionUuid: versionUuid,
+            data: {
+                name: 'Baptiste',
+                campaignId: campaignUuid,
+                statusId: 0,
+                categoryId: 0,
+                rackId: null,
+                comments: null,
+            },
+        });
+        await waitFor(() => expect(updateResult.current.isSuccess).toBe(true));
+
+        // Le cache du NOUVEAU slug est peuplé → navigation instantanée, pas de 404.
+        await waitFor(() =>
+            expect(client.getQueryData<{ name: string }>(fsecKeys.detailBySlug(newSlug))?.name).toBe(
+                'Baptiste',
+            ),
+        );
+        // L'ANCIEN slug n'est jamais relancé (sinon 404 côté serveur).
+        expect(oldSlugFetchCount).toBe(fetchCountAfterLoad);
     });
 
     it('should invalidate campaign FSECs query after create', async () => {

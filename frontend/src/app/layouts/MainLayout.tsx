@@ -10,14 +10,19 @@
  * propre `<RouteTransition>` plus localisé.
  */
 
-import { Suspense, memo, useCallback, useMemo, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Suspense, lazy, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { Sidebar, SIDEBAR_WIDTH_OPEN, SIDEBAR_WIDTH_CLOSED, useSidebarStore } from '@widgets/sidebar';
 import type { SidebarUserInfo } from '@widgets/sidebar';
 import { useMe, ROLE_LABELS } from '@entities/user';
 import { ProfileModal } from '@features/user/edit-profile';
 import { motionDuration, motionEasing } from '@shared/ui/motion';
+import { prefetchPage, prefetchPageByPath, type PageKey } from '../router/page-loaders';
+
+// Fournit le contexte date (@mui/x-date-pickers + dayjs) à toutes les pages
+// authentifiées, en lazy → date-vendor reste hors du bundle de /login.
+const DateLocalizationProvider = lazy(() => import('@shared/ui/DateLocalizationProvider'));
 
 // Fallback Suspense — discret (pas de spinner intrusif quand le code-split
 // arrive en quelques ms). Affiche un cercle uniquement après 200 ms via
@@ -67,6 +72,43 @@ function MainLayoutComponent() {
     const handleOpenProfile = useCallback(() => setProfileOpen(true), []);
     const handleCloseProfile = useCallback(() => setProfileOpen(false), []);
 
+    // Prefetch idle des sections les plus visitées après le 1er paint : leurs
+    // chunks sont alors déjà en cache navigateur quand l'utilisateur clique.
+    // On cible des PAGES (légères), jamais charts-vendor/date-vendor.
+    useEffect(() => {
+        const prefetchFrequent = () => {
+            prefetchPage('campaigns');
+            prefetchPage('fsecs');
+            prefetchPage('fas');
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+            const id = window.requestIdleCallback(prefetchFrequent, { timeout: 2000 });
+            return () => window.cancelIdleCallback?.(id);
+        }
+        const timer = setTimeout(prefetchFrequent, 1200);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Sur une page liste, précharge en idle le chunk de la page détail
+    // correspondante : ouvrir une ligne n'attend alors plus le download du JS
+    // détail (la donnée, elle, est seedée depuis le cache liste / prefetchée au survol).
+    useEffect(() => {
+        const listToDetail: Record<string, PageKey> = {
+            '/campagnes': 'campaignDetails',
+            '/fsecs': 'fsecDetails',
+            '/fas': 'faDetails',
+            '/embases': 'embaseDetails',
+        };
+        const key = listToDetail[location.pathname];
+        if (!key) return;
+        if (typeof window.requestIdleCallback === 'function') {
+            const id = window.requestIdleCallback(() => prefetchPage(key), { timeout: 2000 });
+            return () => window.cancelIdleCallback?.(id);
+        }
+        const timer = setTimeout(() => prefetchPage(key), 800);
+        return () => clearTimeout(timer);
+    }, [location.pathname]);
+
     const sidebarUser = useMemo<SidebarUserInfo | undefined>(
         () =>
             meData
@@ -75,6 +117,7 @@ function MainLayoutComponent() {
                       firstName: meData.firstName,
                       lastName: meData.lastName,
                       role: meData.role,
+                      avatarUrl: meData.avatarUrl,
                   }
                 : undefined,
         [meData],
@@ -82,6 +125,13 @@ function MainLayoutComponent() {
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+            {/*
+             * Restauration du scroll par SECTION (même clé que l'animation
+             * pageEnter) : changer de section/page → scroll en haut ; changer
+             * d'onglet interne d'une page détail → scroll préservé ; back →
+             * position restaurée. Réutilise getSectionKey pour rester cohérent.
+             */}
+            <ScrollRestoration getKey={(location) => getSectionKey(location.pathname)} />
             <Box
                 component="a"
                 href="#main-content"
@@ -110,7 +160,12 @@ function MainLayoutComponent() {
             >
                 Aller au contenu principal
             </Box>
-            <Sidebar user={sidebarUser} roleLabels={ROLE_LABELS} onProfileClick={handleOpenProfile} />
+            <Sidebar
+                user={sidebarUser}
+                roleLabels={ROLE_LABELS}
+                onProfileClick={handleOpenProfile}
+                onPrefetch={prefetchPageByPath}
+            />
             <ProfileModal user={meData ?? null} open={profileOpen} onClose={handleCloseProfile} />
             <Box
                 id="main-content"
@@ -129,6 +184,10 @@ function MainLayoutComponent() {
             >
                 <Suspense fallback={<PageLoader />}>
                     {/*
+                     * Le DateLocalizationProvider (lazy) enveloppe toutes les
+                     * pages authentifiées : son chunk se charge une fois, ici,
+                     * sous le même Suspense que les pages lazy.
+                     *
                      * `key={getSectionKey(...)}` force un remount du wrapper
                      * uniquement à chaque changement de SECTION top-level
                      * (pas à chaque sous-route d'une page détail). Sinon le
@@ -137,22 +196,24 @@ function MainLayoutComponent() {
                      * imperceptible et désagréable. Les rubriques internes
                      * sont animées par <RouteTransition>.
                      */}
-                    <Box
-                        key={getSectionKey(location.pathname)}
-                        sx={{
-                            animation: `pageEnter ${motionDuration.medium}ms ${motionEasing.apple} both`,
-                            willChange: 'opacity, transform',
-                            '@keyframes pageEnter': {
-                                '0%': { opacity: 0, transform: 'translateY(8px)' },
-                                '100%': { opacity: 1, transform: 'translateY(0)' },
-                            },
-                            '@media (prefers-reduced-motion: reduce)': {
-                                animation: 'none',
-                            },
-                        }}
-                    >
-                        <Outlet />
-                    </Box>
+                    <DateLocalizationProvider>
+                        <Box
+                            key={getSectionKey(location.pathname)}
+                            sx={{
+                                animation: `pageEnter ${motionDuration.medium}ms ${motionEasing.apple} both`,
+                                willChange: 'opacity, transform',
+                                '@keyframes pageEnter': {
+                                    '0%': { opacity: 0, transform: 'translateY(8px)' },
+                                    '100%': { opacity: 1, transform: 'translateY(0)' },
+                                },
+                                '@media (prefers-reduced-motion: reduce)': {
+                                    animation: 'none',
+                                },
+                            }}
+                        >
+                            <Outlet />
+                        </Box>
+                    </DateLocalizationProvider>
                 </Suspense>
             </Box>
         </Box>

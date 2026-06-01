@@ -45,6 +45,7 @@ interface CreateAssemblyStepInput {
     fsecVersionId: string;
     operator?: string | null;
     operatorUserUuid?: string | null;
+    operatorUserUuids?: string[];
     startDate?: Date | null;
     endDate?: Date | null;
     comments?: string | null;
@@ -55,6 +56,19 @@ interface UpdateAssemblyStepInput extends CreateAssemblyStepInput {
     uuid: string;
 }
 
+function assemblyStepToApi(input: CreateAssemblyStepInput) {
+    return {
+        fsec_version_id: input.fsecVersionId,
+        operator: input.operator ?? null,
+        operator_user_uuid: input.operatorUserUuid ?? null,
+        operator_user_uuids: input.operatorUserUuids ?? [],
+        start_date: input.startDate?.toISOString().split('T')[0] ?? null,
+        end_date: input.endDate?.toISOString().split('T')[0] ?? null,
+        comments: input.comments ?? null,
+        machine_uuids: input.machineUuids ?? [],
+    };
+}
+
 /**
  * Create assembly step
  */
@@ -63,16 +77,7 @@ export function useCreateAssemblyStep() {
 
     return useMutation({
         mutationFn: async (input: CreateAssemblyStepInput): Promise<AssemblyStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                operator_user_uuid: input.operatorUserUuid ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                end_date: input.endDate?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-                machine_uuids: input.machineUuids ?? [],
-            };
-            const response = await api.post('/assembly-steps/', apiData);
+            const response = await api.post('/assembly-steps/', assemblyStepToApi(input));
             return AssemblyStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {
@@ -91,16 +96,7 @@ export function useUpdateAssemblyStep() {
 
     return useMutation({
         mutationFn: async (input: UpdateAssemblyStepInput): Promise<AssemblyStep> => {
-            const apiData = {
-                fsec_version_id: input.fsecVersionId,
-                operator: input.operator ?? null,
-                operator_user_uuid: input.operatorUserUuid ?? null,
-                start_date: input.startDate?.toISOString().split('T')[0] ?? null,
-                end_date: input.endDate?.toISOString().split('T')[0] ?? null,
-                comments: input.comments ?? null,
-                machine_uuids: input.machineUuids ?? [],
-            };
-            const response = await api.put(`/assembly-steps/${input.uuid}/`, apiData);
+            const response = await api.put(`/assembly-steps/${input.uuid}/`, assemblyStepToApi(input));
             return AssemblyStepSchema.parse(response);
         },
         onSuccess: (_, variables) => {

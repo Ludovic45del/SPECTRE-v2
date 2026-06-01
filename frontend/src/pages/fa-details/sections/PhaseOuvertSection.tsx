@@ -12,6 +12,7 @@ import { Fa } from '@entities/fa';
 
 import { FaSectionHeader, PAPER_BASE_SX, EDIT_BUTTON_SX } from '../components';
 import { useFaPhaseOuvertForm } from '../hooks';
+import { FaPhotoGallery } from './FaPhotoGallery';
 import { PhaseOuvertEditMode } from './PhaseOuvertEditMode';
 import { PhaseOuvertViewMode } from './PhaseOuvertViewMode';
 
@@ -61,6 +62,9 @@ export const PhaseOuvertSection = memo(function PhaseOuvertSection({ fa }: Phase
             ) : (
                 <PhaseOuvertViewMode fa={fa} />
             )}
+
+            {/* Galerie de photos : auto-gérée (mutations propres), visible en lecture comme en édition. */}
+            <FaPhotoGallery faUuid={fa.uuid} />
         </Paper>
     );
 });

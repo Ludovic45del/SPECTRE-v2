@@ -17,6 +17,7 @@ INDICATORS_CACHE_TTL = 60
 _INDICATORS_CACHE_KEY = "indicators:data:v1"
 
 _TOP_OPERATORS_LIMIT = 10
+_CAMPAIGN_TOP_LIMIT = 8
 
 # Valeurs autorisées pour `semester` côté domaine. None = année entière.
 _VALID_SEMESTERS = (None, 1, 2)
@@ -60,6 +61,9 @@ def get_indicators(
 
     fa = repository.get_fa_indicators(target_year, semester=target_semester)
     fsec = repository.get_fsec_indicators(target_year, semester=target_semester)
+    campaign = repository.get_campaign_indicators(
+        target_year, semester=target_semester, limit=_CAMPAIGN_TOP_LIMIT
+    )
     step_durations = repository.get_step_durations(
         target_year, semester=target_semester
     )
@@ -79,6 +83,7 @@ def get_indicators(
         year=target_year,
         fa=fa,
         fsec=fsec,
+        campaign=campaign,
         step_durations=step_durations,
         top_operators=top_operators,
         bottleneck_step_key=bottleneck_key,

@@ -4,7 +4,6 @@
  */
 
 import { useMemo } from 'react';
-import { useTheme } from '@mui/material/styles';
 import {
     useCampaignSteps,
     useCellAnnotations,
@@ -23,14 +22,25 @@ import type {
 
 /** Map from machineUuid -> array of lab events for that machine. */
 export type LabEventsMap = Map<string, LabEvent[]>;
-import { type PlanningColors, PLANNING_COLORS_DARK, PLANNING_COLORS_LIGHT } from './planning.constants';
+import {
+    type PlanningColors,
+    PLANNING_COLORS_CREAM,
+    PLANNING_COLORS_DARK,
+    PLANNING_COLORS_LIGHT,
+} from './planning.constants';
 import { type TimelineData, computeTimeline } from './planning.utils';
+import { useThemeStore } from '@shared/lib/theme.store';
 
 // ====================== Theme-aware Colors ======================
 
+// On lit le mode applicatif depuis le store (et non `theme.palette.mode`) :
+// MUI réduit « crème » à 'light', donc seule la source `useThemeStore` permet
+// de distinguer crème du clair et de servir le bon référentiel de couleurs.
 export function usePlanningColors(): PlanningColors {
-    const theme = useTheme();
-    return theme.palette.mode === 'dark' ? PLANNING_COLORS_DARK : PLANNING_COLORS_LIGHT;
+    const mode = useThemeStore((s) => s.mode);
+    if (mode === 'dark') return PLANNING_COLORS_DARK;
+    if (mode === 'cream') return PLANNING_COLORS_CREAM;
+    return PLANNING_COLORS_LIGHT;
 }
 
 // ====================== Timeline Hook ======================

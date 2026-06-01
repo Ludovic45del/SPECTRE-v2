@@ -61,6 +61,8 @@ class UserBean:
     service: Optional[str] = None
     numero: Optional[str] = None
     bureau: Optional[str] = None
+    avatar_url: Optional[str] = None
+    signature_url: Optional[str] = None
     is_active: Optional[bool] = True
     force_password_change: Optional[bool] = True
     dashboard_preferences: Optional[dict] = None

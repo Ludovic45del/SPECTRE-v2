@@ -62,6 +62,10 @@ export function useUserLookup(roles?: readonly SpectreRole[]) {
         queryKey: userKeys.lookup(roles),
         queryFn: ({ signal }): Promise<UserLookup[]> => api.get(url, UserLookupListSchema, signal),
         ...QUERY_CACHE_CONFIG,
+        // Lookup quasi-statique (dropdowns) consommé partout : on évite le
+        // refetch background à chaque nav. Fini (pas Infinity) car les
+        // utilisateurs restent éditables via l'admin front.
+        staleTime: 1000 * 60 * 30,
     });
 }
 
@@ -114,6 +118,95 @@ export function useUpdateMe() {
         mutationFn: async (data: SelfProfileUpdateForm): Promise<User> => {
             const apiData = selfProfileUpdateToApi(data);
             const response = await api.put('/auth/me/update/', apiData);
+            return UserSchema.parse(response);
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(userKeys.me(), updatedUser);
+            queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
+                old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
+            );
+        },
+    });
+}
+
+/**
+ * Upload (POST multipart) de la photo de profil de l'utilisateur connecté.
+ * Le fichier doit déjà être compressé côté caller (cf. shared/lib/compressImage) ;
+ * le serveur le re-normalise (carré 256px, JPEG). Renvoie le profil complet.
+ */
+export function useUploadAvatar() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (image: File): Promise<User> => {
+            const form = new FormData();
+            form.append('image', image, image.name);
+            const response = await api.post('/auth/me/avatar/', form);
+            return UserSchema.parse(response);
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(userKeys.me(), updatedUser);
+            queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
+                old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
+            );
+            // Les chips/avatars d'autres écrans lisent l'avatar via le lookup.
+            queryClient.invalidateQueries({ queryKey: [...userKeys.all, 'lookup'] });
+        },
+    });
+}
+
+/**
+ * Suppression de la photo de profil (retour aux initiales). Renvoie le profil
+ * complet avec `avatarUrl: null`.
+ */
+export function useDeleteAvatar() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (): Promise<User> => {
+            const response = await api.delete<unknown>('/auth/me/avatar/');
+            return UserSchema.parse(response);
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(userKeys.me(), updatedUser);
+            queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
+                old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
+            );
+            queryClient.invalidateQueries({ queryKey: [...userKeys.all, 'lookup'] });
+        },
+    });
+}
+
+/**
+ * Upload (POST multipart) de la signature de l'utilisateur connecté.
+ * Le fichier est envoyé brut (PAS de compression client : elle aplatirait
+ * l'alpha en JPEG) ; le serveur le normalise en PNG transparent. Renvoie le
+ * profil complet avec `signatureUrl` à jour.
+ */
+export function useUploadSignature() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (image: File): Promise<User> => {
+            const form = new FormData();
+            form.append('image', image, image.name);
+            const response = await api.post('/auth/me/signature/', form);
+            return UserSchema.parse(response);
+        },
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(userKeys.me(), updatedUser);
+            queryClient.setQueryData<User[]>(userKeys.lists(), (old) =>
+                old?.map((u) => (u.uuid === updatedUser.uuid ? updatedUser : u)),
+            );
+        },
+    });
+}
+
+/**
+ * Suppression de la signature. Renvoie le profil avec `signatureUrl: null`.
+ */
+export function useDeleteSignature() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (): Promise<User> => {
+            const response = await api.delete<unknown>('/auth/me/signature/');
             return UserSchema.parse(response);
         },
         onSuccess: (updatedUser) => {

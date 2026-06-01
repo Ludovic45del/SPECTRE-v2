@@ -4,25 +4,33 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.viewsets import ViewSet
 
 from app.api.fa.serializers import (
     FaCloseSerializer,
     FaPatchSerializer,
+    FaPhotoUploadSerializer,
     FaSerializer,
     FaValidatePhaseSerializer,
 )
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.exceptions import InvalidDataException
+from app.domain.fa.services.fa_photo_service import (
+    add_fa_photo,
+    delete_fa_photo,
+    list_fa_photos,
+)
 from app.domain.fa.services.fa_service import (
     close_fa,
     count_all_fas,
     create_fa,
     delete_fa,
     get_all_fas,
-    get_fa_by_fsec_version_id,
+    get_fa_by_slug,
     get_fa_by_uuid,
+    get_fas_by_fsec_version_id,
     patch_fa,
     resolve_fa_creation_context,
     update_fa,
@@ -30,8 +38,10 @@ from app.domain.fa.services.fa_service import (
     validate_progress_phase,
 )
 from app.mapper.fa.fa_mapper import fa_mapper_api_to_bean, fa_mapper_bean_to_api
+from app.mapper.fa.fa_photo_mapper import fa_photo_mapper_bean_to_api
 from app.mapper.type_conversion import parse_date_string
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
+from app.repository.fa.repositories.fa_photo_repository import FaPhotoRepository
 from app.repository.fa.repositories.fa_repository import FaRepository
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
 from app.repository.user.repositories.user_repository import UserRepository
@@ -53,6 +63,7 @@ class FaController(PaginatedControllerMixin, ViewSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.repository = FaRepository()
+        self.fa_photo_repository = FaPhotoRepository()
         self.fsec_repository = FsecRepository()
         self.campaign_repository = CampaignRepository()
         self.user_repository = UserRepository()
@@ -82,6 +93,12 @@ class FaController(PaginatedControllerMixin, ViewSet):
     def retrieve(self, request, uuid=None) -> JsonResponse:
         """Récupère une FA par UUID (GET /:uuid/)."""
         bean = get_fa_by_uuid(self.repository, uuid)
+        return JsonResponse(fa_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+
+    @action(detail=False, methods=["get"], url_path=r"by-slug/(?P<slug>[^/]+)")
+    def by_slug(self, request, slug=None) -> JsonResponse:
+        """Récupère une FA par son slug d'URL (GET /by-slug/:slug/)."""
+        bean = get_fa_by_slug(self.repository, slug)
         return JsonResponse(fa_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
 
     def create(self, request) -> JsonResponse:
@@ -145,9 +162,16 @@ class FaController(PaginatedControllerMixin, ViewSet):
 
     @action(detail=False, methods=["get"], url_path="fsec/(?P<fsec_version_id>[^/.]+)")
     def get_by_fsec(self, request, fsec_version_id=None) -> JsonResponse:
-        """Récupère la FA associée à une FSEC (GET /fsec/:fsec_version_id/)."""
-        bean = get_fa_by_fsec_version_id(self.repository, fsec_version_id)
-        return JsonResponse(fa_mapper_bean_to_api(bean), encoder=DjangoJSONEncoder)
+        """Récupère toutes les FA actives associées à une FSEC (GET /fsec/:fsec_version_id/).
+
+        Retourne une liste (potentiellement vide). Une FSEC peut avoir plusieurs FA.
+        """
+        beans = get_fas_by_fsec_version_id(self.repository, fsec_version_id)
+        return JsonResponse(
+            [fa_mapper_bean_to_api(b) for b in beans],
+            safe=False,
+            encoder=DjangoJSONEncoder,
+        )
 
     @action(detail=True, methods=["post"], url_path="validate-open")
     def validate_open(self, request, uuid=None) -> JsonResponse:
@@ -175,6 +199,58 @@ class FaController(PaginatedControllerMixin, ViewSet):
             user_repository=self.user_repository,
         )
         return JsonResponse(fa_mapper_bean_to_api(result), encoder=DjangoJSONEncoder)
+
+    @action(
+        detail=True,
+        methods=["get", "post"],
+        url_path="photos",
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
+    )
+    def photos(self, request, uuid=None) -> JsonResponse:
+        """Galerie de photos de la phase Ouvert (GET liste / POST upload).
+
+        GET  /:uuid/photos/  → liste ordonnée des photos.
+        POST /:uuid/photos/  → upload multipart (champ `image`, `caption?`).
+        """
+        if request.method == "GET":
+            beans = list_fa_photos(self.fa_photo_repository, uuid)
+            return JsonResponse(
+                [fa_photo_mapper_bean_to_api(b) for b in beans],
+                safe=False,
+                encoder=DjangoJSONEncoder,
+            )
+
+        serializer = FaPhotoUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise InvalidDataException(str(serializer.errors))
+
+        result = add_fa_photo(
+            self.fa_photo_repository,
+            self.repository,
+            uuid,
+            serializer.validated_data["image"],
+            serializer.validated_data.get("caption"),
+        )
+        return JsonResponse(
+            fa_photo_mapper_bean_to_api(result), status=201, encoder=DjangoJSONEncoder
+        )
+
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path=r"photos/(?P<photo_uuid>[^/.]+)",
+    )
+    def delete_photo(self, request, uuid=None, photo_uuid=None) -> HttpResponse:
+        """Supprime une photo de la galerie (DELETE /:uuid/photos/:photo_uuid/).
+
+        Volontairement accessible aux opérateurs (permission par défaut) : une
+        photo est du contenu de la FA au même titre que les champs de la phase
+        Ouvert qu'un opérateur édite, et c'est cohérent avec l'upload/suppression
+        de la photo de vue d'ensemble FSEC. Seule la suppression de la FA
+        elle-même (destroy) reste réservée aux admins.
+        """
+        delete_fa_photo(self.fa_photo_repository, uuid, photo_uuid)
+        return HttpResponse(status=204)
 
     @action(detail=True, methods=["post"], url_path="validate-progress")
     def validate_progress(self, request, uuid=None) -> JsonResponse:

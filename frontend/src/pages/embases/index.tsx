@@ -27,6 +27,7 @@ import { useEmbases } from '@entities/embase';
 import { EmbasesToolbar, useFilterEmbasesStore, useCreateEmbaseStore } from '@features/embase';
 import { CreateEmbaseModal } from '@features/embase';
 import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
+import { paths } from '@shared/config';
 import { type SortColumn, filterEmbases, sortEmbases } from './embase-list-utils';
 import { EmbaseTableRow } from './components/EmbaseTableRow';
 import { EmbaseTableSkeleton } from './components/EmbaseTableSkeleton';
@@ -126,7 +127,7 @@ export default function EmbasesPage() {
 
     const paginatedEmbases = useMemo(() => paginate(processedEmbases), [paginate, processedEmbases]);
 
-    const handleNavigate = useCallback((uuid: string) => navigate(`/embase-details/${uuid}/voie-v1`), [navigate]);
+    const handleNavigate = useCallback((slug: string) => navigate(paths.embase.tab(slug, 'voie-v1')), [navigate]);
 
     // Loading state - Skeleton table
     if (isLoading) {

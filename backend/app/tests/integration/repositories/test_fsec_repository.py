@@ -277,6 +277,71 @@ class TestFsecRepositoryDelete:
 
         assert result is False
 
+    def test_delete_fsec_cascades_children(self, fsec_repository, sample_fsec_data):
+        """La suppression d'un FSEC efface en cascade toutes ses données rattachées.
+
+        Régression : avant, les FK `on_delete=PROTECT` (étapes, FA, documents,
+        équipes) faisaient lever un `ProtectedError` (→ 500) dès qu'un FSEC avait
+        le moindre enfant. La suppression doit désormais purger toute la version :
+        - enfants PROTECT directs (assembly step, FA) ;
+        - petit-enfant CASCADE (sealing via metrology) ;
+        - lien planning CASCADE référençant la version.
+        """
+        from app.repository.fa.models.fa_entity import FaEntity
+        from app.repository.fsec.models.fsec_entity import FsecEntity
+        from app.repository.planning.models.planning_fsec_cell_link_entity import (
+            PlanningFsecCellLinkEntity,
+        )
+        from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
+        from app.repository.steps.models.metrology_step_entity import (
+            MetrologyStepEntity,
+        )
+        from app.repository.steps.models.sealing_step_entity import SealingStepEntity
+
+        created = fsec_repository.create(FsecBean(**sample_fsec_data))
+        version_uuid = created.version_uuid
+        fsec_entity = FsecEntity.objects.get(version_uuid=version_uuid)
+
+        # Enfant PROTECT direct : bloquait la suppression auparavant.
+        AssemblyStepEntity.objects.create(fsec_version_id=fsec_entity)
+        # FA PROTECT : donnée de traçabilité, doit aussi partir en cascade.
+        FaEntity.objects.create(
+            fsec_version_id=fsec_entity,
+            status_id_id=0,
+            identifier=f"FA-{uuid.uuid4().hex[:8]}",
+            discoverer="Testeur",
+            event_date=date(2025, 3, 1),
+            observation="Observation de test",
+            quick_analysis="Analyse de test",
+        )
+        # Chaîne metrology -> sealing : petit-enfant O2O CASCADE.
+        metrology = MetrologyStepEntity.objects.create(fsec_version_id=fsec_entity)
+        sealing = SealingStepEntity.objects.create(metrology_step_id=metrology)
+        # Lien planning (CASCADE) référencé par version_uuid.
+        planning_link = PlanningFsecCellLinkEntity.objects.create(
+            campaign_id=sample_fsec_data["campaign_id"],
+            step_label="Assemblage",
+            year=2025,
+            week_num=1,
+            fsec_uuid=fsec_entity,
+        )
+
+        result = fsec_repository.delete(version_uuid)
+
+        assert result is True
+        assert fsec_repository.get_by_version_uuid(version_uuid) is None
+        assert not AssemblyStepEntity.objects.filter(
+            fsec_version_id=version_uuid
+        ).exists()
+        assert not FaEntity.objects.filter(fsec_version_id=version_uuid).exists()
+        assert not MetrologyStepEntity.objects.filter(
+            fsec_version_id=version_uuid
+        ).exists()
+        assert not SealingStepEntity.objects.filter(pk=sealing.pk).exists()
+        assert not PlanningFsecCellLinkEntity.objects.filter(
+            pk=planning_link.pk
+        ).exists()
+
 
 # ============================================================================
 # DUPLICATE CHECK TESTS
@@ -308,3 +373,22 @@ class TestFsecRepositoryDuplicateCheck:
         )
 
         assert result is False
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestFsecRepositoryGetBySlug:
+    """Tests résolution d'un FSEC par son slug d'URL calculé."""
+
+    def test_get_by_slug_roundtrip(self, fsec_repository, sample_fsec_data):
+        created = fsec_repository.create(FsecBean(**sample_fsec_data))
+
+        # Le slug (préfixé du contexte campagne) est calculé et exposé sur le bean.
+        assert created.slug is not None
+        resolved = fsec_repository.get_by_slug(created.slug)
+
+        assert resolved is not None
+        assert resolved.version_uuid == created.version_uuid
+
+    def test_get_by_slug_unknown_returns_none(self, fsec_repository):
+        assert fsec_repository.get_by_slug("2099-s1-lmj-x-y") is None

@@ -82,6 +82,34 @@ export const PLANNING_COLORS_DARK: PlanningColors = {
     barText: '#E8EAED',
 };
 
+// Variante « crème » : surfaces ivoire chaudes dérivées de creamGrey/creamPalette
+// (cf. shared/ui/theme.ts), pour que la grille planning suive le thème crème au
+// lieu de retomber sur le set clair froid. Teintes de statut volontairement
+// réparties sur des familles de couleur distinctes (ambre / abricot / sauge /
+// mauve / greige) mais désaturées vers le beige : lisibilité du texte foncé
+// (#2B2118) validée à 10.9–12.8:1 sur chaque fond de statut.
+export const PLANNING_COLORS_CREAM: PlanningColors = {
+    white: '#F6EDD8',
+    bg: '#ECE0C4',
+    border: '#DCCDA9',
+    borderStrong: '#CBB892',
+    accent: '#443D2F',
+    accentLight: '#5B523F',
+    blue: '#007AFF',
+    orange: '#F7D9A0',
+    headerBg: '#EADFC6',
+    sectionBg: '#DCCDA9',
+    dragHighlight: 'rgba(0, 122, 255, 0.12)',
+    vacances: '#CBDFC9',
+    fermeture: '#E7D2D9',
+    currentDay: '#FBE6B0',
+    weekend: '#EEE4CB',
+    cellBg: '#F6EDD8',
+    textPrimary: '#2A2218',
+    textSecondary: '#675A43',
+    barText: '#2A2218',
+};
+
 // ====================== Bar Position ======================
 
 export type BarPosition = 'start' | 'middle' | 'end' | 'single';
@@ -144,6 +172,38 @@ export function getPeriodeMeta(value: string): Periode | undefined {
  * éditable via l'admin Django. Remplace l'ancienne constante figée `ETAPES`.
  */
 export type Etape = PlanningStep;
+
+// ====================== Disponibilité par étape ======================
+
+/**
+ * Config d'affichage du bloc de disponibilité d'une étape dans la modale de
+ * planification : rôle (fonction membre) et salle de machines à présenter.
+ */
+export interface StepAvailabilityConfig {
+    /** Fonction membre à filtrer (ex. 'Assembleur', 'Métrologue'). */
+    fonctionFilter: string;
+    /** Libellé de la section rôle (ex. 'Assembleurs', 'Métrologues'). */
+    fonctionLabel: string;
+    /** Code de la salle dont on affiche les machines (ex. 'B1', 'B2'). */
+    salleName: string;
+}
+
+/**
+ * Étapes disposant d'un bloc de disponibilité dans la modale de planification.
+ *
+ * Les clés sont les `label` accentués du référentiel `PLANNING_STEP`
+ * (cf. `STEP_LABELS`). La présence d'une étape ici remplace l'ancien garde
+ * `hasAvailabilityDialog` codé en dur dans `StepLanesRow`/`StepHeaderRow` ;
+ * une étape absente n'affiche pas de bloc dispo.
+ */
+export const STEP_AVAILABILITY_CONFIG: Record<string, StepAvailabilityConfig> = {
+    Assemblage: { fonctionFilter: 'Assembleur', fonctionLabel: 'Assembleurs', salleName: 'B1' },
+    Métrologie: { fonctionFilter: 'Métrologue', fonctionLabel: 'Métrologues', salleName: 'B2' },
+};
+
+export function getStepAvailabilityConfig(label: string): StepAvailabilityConfig | undefined {
+    return STEP_AVAILABILITY_CONFIG[label];
+}
 
 // ====================== Membre type ======================
 

@@ -11,6 +11,11 @@ from app.domain.dashboard.models.dashboard_bean import (
     FaCountsBean,
     RecentActivityItemBean,
 )
+from app.domain.shared.slug import (
+    build_campaign_slug,
+    build_fsec_slug,
+    slugify_text,
+)
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.fa.models.fa_entity import FaEntity
@@ -104,11 +109,17 @@ class DashboardRepository(IDashboardRepository):
         for c in CampaignEntity.objects.select_related(
             *self.CAMPAIGN_RELATIONS
         ).order_by("-last_updated")[:limit]:
+            installation_label = (
+                c.installation_id.label if c.installation_id_id is not None else None
+            )
             items.append(
                 RecentActivityItemBean(
                     id=str(c.uuid),
                     type="campaign",
                     name=c.name,
+                    slug=build_campaign_slug(
+                        c.year, c.semester, installation_label, c.name
+                    ),
                     status_id=c.status_id_id,
                     last_updated=c.last_updated.isoformat() if c.last_updated else None,
                     type_id=c.type_id_id,
@@ -124,17 +135,34 @@ class DashboardRepository(IDashboardRepository):
         items = []
         for f in (
             FsecEntity.objects.filter(is_active=True)
-            .select_related("campaign_id")
+            .select_related("campaign_id", "campaign_id__installation_id")
             .order_by("-last_updated")[:limit]
         ):
+            campaign = f.campaign_id
+            if campaign is not None:
+                installation_label = (
+                    campaign.installation_id.label
+                    if campaign.installation_id_id is not None
+                    else None
+                )
+                slug = build_fsec_slug(
+                    campaign.year,
+                    campaign.semester,
+                    installation_label,
+                    campaign.name,
+                    f.name,
+                )
+            else:
+                slug = slugify_text(f.name) or None
             items.append(
                 RecentActivityItemBean(
                     id=str(f.version_uuid),
                     type="fsec",
                     name=f.name,
+                    slug=slug,
                     status_id=f.status_id_id,
                     last_updated=f.last_updated.isoformat() if f.last_updated else None,
-                    campaign_name=f.campaign_id.name if f.campaign_id else None,
+                    campaign_name=campaign.name if campaign else None,
                     localisation=f.localisation,
                 )
             )
@@ -151,6 +179,7 @@ class DashboardRepository(IDashboardRepository):
                     id=str(fa.uuid),
                     type="fa",
                     name=fa.identifier or "FA sans identifiant",
+                    slug=slugify_text(fa.identifier) or None,
                     status_id=fa.status_id_id,
                     last_updated=(
                         fa.last_updated.isoformat() if fa.last_updated else None
@@ -170,6 +199,7 @@ class DashboardRepository(IDashboardRepository):
                     id=str(e.uuid),
                     type="embase",
                     name=e.identifier,
+                    slug=slugify_text(e.identifier) or None,
                     last_updated=(e.updated_at.isoformat() if e.updated_at else None),
                     embase_type=e.type,
                     localisation_actuelle=e.localisation_actuelle or None,

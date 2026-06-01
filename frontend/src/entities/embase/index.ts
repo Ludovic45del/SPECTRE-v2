@@ -2,6 +2,8 @@ export { embaseKeys } from './api/embase.keys';
 export {
     useEmbases,
     useEmbase,
+    useEmbaseBySlug,
+    usePrefetchEmbase,
     useCreateEmbase,
     useUpdateEmbase,
     useDeleteEmbase,

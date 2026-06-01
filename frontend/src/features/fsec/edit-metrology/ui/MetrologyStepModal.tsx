@@ -25,7 +25,7 @@ import {
     useDeleteMetrologyStep,
     FSEC_RACKS_LIST,
 } from '@entities/fsec/steps';
-import { UserSelect } from '@entities/user';
+import { UserMultiSelect } from '@entities/user';
 import { MachineMultiSelect } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
@@ -40,7 +40,7 @@ interface MetrologyStepModalProps {
 
 const MetrologyStepFormSchema = z.object({
     rackId: z.number().nullable().optional(),
-    metrologistUserUuid: z.string().uuid('Métrologue requis'),
+    metrologistUserUuids: z.array(z.string().uuid()).min(1, 'Au moins un métrologue requis'),
     date: z.date({ required_error: 'Date requise' }),
     comments: z.string().nullable().optional(),
     machineUuids: z.array(z.string().uuid()),
@@ -62,7 +62,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
         resolver: zodResolver(MetrologyStepFormSchema),
         defaultValues: {
             rackId: null,
-            metrologistUserUuid: '',
+            metrologistUserUuids: [],
             date: undefined,
             comments: '',
             machineUuids: [],
@@ -74,7 +74,12 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
             if (step) {
                 reset({
                     rackId: step.rackId,
-                    metrologistUserUuid: step.metrologistUserUuid ?? '',
+                    // Fallback sur le singulier legacy si la liste n'est pas encore peuplée.
+                    metrologistUserUuids: step.metrologistUserUuids?.length
+                        ? step.metrologistUserUuids
+                        : step.metrologistUserUuid
+                          ? [step.metrologistUserUuid]
+                          : [],
                     date: step.date ?? undefined,
                     comments: step.comments ?? '',
                     machineUuids: step.machineUuids ?? [],
@@ -82,7 +87,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
             } else {
                 reset({
                     rackId: null,
-                    metrologistUserUuid: '',
+                    metrologistUserUuids: [],
                     date: undefined,
                     comments: '',
                     machineUuids: [],
@@ -104,7 +109,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                         uuid: step.uuid,
                         fsecVersionId,
                         rackId: data.rackId,
-                        metrologistUserUuid: data.metrologistUserUuid,
+                        metrologistUserUuids: data.metrologistUserUuids,
                         date: data.date,
                         comments: data.comments,
                         machineUuids: data.machineUuids,
@@ -114,7 +119,7 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                     await createMutation.mutateAsync({
                         fsecVersionId,
                         rackId: data.rackId,
-                        metrologistUserUuid: data.metrologistUserUuid,
+                        metrologistUserUuids: data.metrologistUserUuids,
                         date: data.date,
                         comments: data.comments,
                         machineUuids: data.machineUuids,
@@ -182,16 +187,16 @@ export function MetrologyStepModal({ open, onClose, fsecVersionId, step }: Metro
                     )}
                 />
 
-                {/* Métrologue (dropdown connecté à la base users) */}
+                {/* Métrologues (une étape peut être réalisée à plusieurs) */}
                 <Controller
-                    name="metrologistUserUuid"
+                    name="metrologistUserUuids"
                     control={control}
                     render={({ field, fieldState }) => (
-                        <UserSelect
-                            value={field.value || null}
-                            onChange={(uuid) => field.onChange(uuid ?? '')}
+                        <UserMultiSelect
+                            value={field.value ?? []}
+                            onChange={field.onChange}
                             roles={['metrologue']}
-                            label="Métrologue"
+                            label="Métrologues"
                             required
                             error={Boolean(fieldState.error)}
                             helperText={fieldState.error?.message}

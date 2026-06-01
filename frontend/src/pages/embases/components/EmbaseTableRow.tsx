@@ -6,8 +6,9 @@
 import { useCallback, memo } from 'react';
 import { Box, Typography, TableCell, TableRow, IconButton, Tooltip, alpha, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { type Embase, EMBASE_TYPE_LABELS, getEtalonnageStatus } from '@entities/embase';
+import { type Embase, EMBASE_TYPE_LABELS, getEtalonnageStatus, usePrefetchEmbase } from '@entities/embase';
 import { DataChip } from '@widgets/data-chip';
+import { useHoverPrefetch } from '@shared/lib';
 import { getStatut, getEtancheiteStatus, getMccStatus, TYPE_COLORS } from '../embase-list-utils';
 import { motion } from '@shared/ui/motion';
 
@@ -93,8 +94,13 @@ export const EmbaseTableRow = memo(function EmbaseTableRow({ embase, onNavigate 
     const etancheiteV2 = getEtancheiteStatus(embase.testEtancheiteHeV2);
     const mcc = getMccStatus(embase.chargementMcc);
 
-    const handleDoubleClick = useCallback(() => onNavigate(embase.uuid), [embase.uuid, onNavigate]);
-    const handleButtonClick = useCallback(() => onNavigate(embase.uuid), [embase.uuid, onNavigate]);
+    const handleDoubleClick = useCallback(() => onNavigate(embase.slug), [embase.slug, onNavigate]);
+    const handleButtonClick = useCallback(() => onNavigate(embase.slug), [embase.slug, onNavigate]);
+
+    const prefetchEmbase = usePrefetchEmbase();
+    const hoverPrefetch = useHoverPrefetch(
+        useCallback(() => prefetchEmbase(embase.uuid), [prefetchEmbase, embase.uuid]),
+    );
 
     return (
         <TableRow
@@ -105,6 +111,7 @@ export const EmbaseTableRow = memo(function EmbaseTableRow({ embase, onNavigate 
                 '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.08) },
             }}
             onDoubleClick={handleDoubleClick}
+            {...hoverPrefetch}
         >
             <TableCell>
                 <Typography fontWeight={500}>{embase.identifier}</Typography>

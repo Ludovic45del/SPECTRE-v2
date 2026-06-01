@@ -25,6 +25,8 @@ def sealing_step_mapper_entity_to_bean(entity: SealingStepEntity) -> SealingStep
         rack_id=entity.rack_id_id if entity.rack_id_id is not None else None,
         interface_io=entity.interface_io,
         comments=entity.comments,
+        metro_file_link=entity.metro_file_link,
+        visrad_link=entity.visrad_link,
     )
 
 
@@ -41,6 +43,8 @@ def sealing_step_mapper_bean_to_entity(bean: SealingStepBean) -> SealingStepEnti
     entity.rack_id_id = bean.rack_id
     entity.interface_io = bean.interface_io
     entity.comments = bean.comments
+    entity.metro_file_link = bean.metro_file_link
+    entity.visrad_link = bean.visrad_link
     return entity
 
 
@@ -56,6 +60,8 @@ def sealing_step_mapper_api_to_bean(data: Dict[str, Any]) -> SealingStepBean:
         rack_id=data.get("rack_id"),
         interface_io=data.get("interface_io"),
         comments=data.get("comments"),
+        metro_file_link=data.get("metro_file_link"),
+        visrad_link=data.get("visrad_link"),
     )
 
 
@@ -70,4 +76,6 @@ def sealing_step_mapper_bean_to_api(bean: SealingStepBean) -> Dict[str, Any]:
         "rack_id": bean.rack_id,
         "interface_io": bean.interface_io,
         "comments": bean.comments,
+        "metro_file_link": bean.metro_file_link,
+        "visrad_link": bean.visrad_link,
     }

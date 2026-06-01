@@ -17,18 +17,21 @@ Choix de modélisation pour les délais entre étapes :
 
 import statistics
 from collections import Counter
-from datetime import date
+from datetime import date, datetime
 from typing import Dict, List, Optional
 
 from django.db.models import Count, Max, Q
 
 from app.domain.indicators.interface.indicators_repository import IIndicatorsRepository
 from app.domain.indicators.models.indicators_bean import (
+    CampaignIndicatorsBean,
+    CampaignVolumeBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
     OperatorWorkloadBean,
     StepDurationBean,
 )
+from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.fa.models.fa_entity import FaEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
 from app.repository.steps.models.airtightness_test_lp_step_entity import (
@@ -132,6 +135,15 @@ def _campaign_filter(year: int, semester: Optional[int]) -> Q:
     return _campaign_q(year, semester)
 
 
+def _campaign_entity_filter(year: int, semester: Optional[int]) -> Q:
+    """Filtre direct sur CampaignEntity (qui porte `year` et `semester`)."""
+    q = Q(year=year)
+    sem_label = _semester_label(semester)
+    if sem_label is not None:
+        q &= Q(semester=sem_label)
+    return q
+
+
 def _campaign_filter_via_fsec(year: int, semester: Optional[int]) -> Q:
     """Filtre pour FaEntity / Step liée 1-FSEC."""
     return _campaign_q(year, semester, prefix="fsec_version_id__")
@@ -164,9 +176,7 @@ class IndicatorsRepository(IIndicatorsRepository):
         sur une FSEC d'une campagne S1 est comptée en S1, peu importe quand
         elle a été créée. Les FA dont la FSEC n'a pas de campagne sont exclues.
         """
-        in_year = FaEntity.objects.filter(
-            _campaign_filter_via_fsec(year, semester), is_active=True
-        )
+        in_year = FaEntity.objects.filter(_campaign_filter_via_fsec(year, semester))
 
         total = in_year.count()
 
@@ -189,10 +199,8 @@ class IndicatorsRepository(IIndicatorsRepository):
             step_id, count = row[0], row[1]
             by_discovery_step[str(step_id)] = count
 
-        # Stock ouvert = FA actives non clôturées (toutes années confondues).
-        open_stock = FaEntity.objects.filter(
-            is_active=True, closure_date__isnull=True
-        ).count()
+        # Stock ouvert = FA non clôturées (toutes années confondues).
+        open_stock = FaEntity.objects.filter(closure_date__isnull=True).count()
 
         # Délais (en jours). On ne moyenne que sur les FA pour lesquelles les
         # deux dates concernées sont renseignées.
@@ -203,18 +211,14 @@ class IndicatorsRepository(IIndicatorsRepository):
             from_field="event_date",
             to_field="iec_validation_open_date",
         )
-        avg_open_to_progress = self._avg_days(
+        # Délai ouverture → clôture : remplace les anciennes étapes
+        # open→progress et progress→closure (la date de passage en cours n'est
+        # plus persistée). C'est le KPI DCP de "temps de traitement" d'une FA.
+        avg_open_to_closure = self._avg_days(
             in_year.exclude(iec_validation_open_date__isnull=True).exclude(
-                iec_validation_progress_date__isnull=True
-            ),
-            from_field="iec_validation_open_date",
-            to_field="iec_validation_progress_date",
-        )
-        avg_progress_to_closure = self._avg_days(
-            in_year.exclude(iec_validation_progress_date__isnull=True).exclude(
                 closure_date__isnull=True
             ),
-            from_field="iec_validation_progress_date",
+            from_field="iec_validation_open_date",
             to_field="closure_date",
         )
         avg_total_lifecycle = self._avg_days(
@@ -240,8 +244,7 @@ class IndicatorsRepository(IIndicatorsRepository):
             by_discovery_step=by_discovery_step,
             open_stock_all_years=open_stock,
             avg_event_to_open_days=avg_event_to_open,
-            avg_open_to_progress_days=avg_open_to_progress,
-            avg_progress_to_closure_days=avg_progress_to_closure,
+            avg_open_to_closure_days=avg_open_to_closure,
             avg_total_lifecycle_days=avg_total_lifecycle,
             created_per_month=created_per_month,
         )
@@ -300,6 +303,89 @@ class IndicatorsRepository(IIndicatorsRepository):
             avg_cycle_time_days=avg_cycle,
             median_cycle_time_days=median_cycle,
             shot_per_month=shot_per_month,
+        )
+
+    # ------------------------------------------------------------ Campaign
+    def get_campaign_indicators(
+        self, year: int, semester: Optional[int] = None, limit: int = 8
+    ) -> CampaignIndicatorsBean:
+        """Indicateurs campagnes de la période + densité FSEC + durée moyenne.
+
+        Le filtrage est direct sur la campagne (elle porte `year`/`semester`).
+        Les FSEC rattachées sont comptées par campagne (versions actives) pour
+        dériver la densité moyenne et le top des campagnes les plus volumineuses.
+        """
+        campaigns = CampaignEntity.objects.filter(
+            _campaign_entity_filter(year, semester)
+        )
+        total = campaigns.count()
+
+        by_status = self._counter_dict(
+            campaigns.values_list("status_id").annotate(c=Count("uuid"))
+        )
+        by_type = self._counter_dict(
+            campaigns.values_list("type_id").annotate(c=Count("uuid"))
+        )
+        by_installation = self._counter_dict(
+            campaigns.values_list("installation_id").annotate(c=Count("uuid"))
+        )
+
+        # FSEC (versions actives) rattachées, groupées par campagne.
+        fsec_rows = (
+            FsecEntity.objects.filter(_campaign_filter(year, semester), is_active=True)
+            .values("campaign_id")
+            .annotate(
+                count=Count("version_uuid"),
+                shot=Count("version_uuid", filter=Q(shooting_date__isnull=False)),
+            )
+        )
+        fsec_by_campaign = {row["campaign_id"]: row for row in fsec_rows}
+        total_fsec = sum(row["count"] for row in fsec_by_campaign.values())
+        total_fsec_shot = sum(row["shot"] for row in fsec_by_campaign.values())
+        avg_fsec = round(total_fsec / total, 2) if total else None
+
+        # Durée (start_date → end_date) + démarrages mensuels + libellés campagne.
+        durations: List[float] = []
+        started_per_month: Dict[str, int] = _month_buckets(year, semester)
+        name_by_uuid: Dict = {}
+        for row in campaigns.values("uuid", "name", "start_date", "end_date"):
+            name_by_uuid[row["uuid"]] = row["name"]
+            start, end = row["start_date"], row["end_date"]
+            if start and end:
+                delta = (end - start).days
+                if delta >= 0:
+                    durations.append(float(delta))
+            if start:
+                key = f"{start.year:04d}-{start.month:02d}"
+                started_per_month[key] = started_per_month.get(key, 0) + 1
+        avg_duration = _safe_mean(durations)
+
+        # Top campagnes par volume de FSEC (densité décroissante).
+        top_sorted = sorted(
+            fsec_by_campaign.items(),
+            key=lambda kv: kv[1]["count"],
+            reverse=True,
+        )[:limit]
+        top_by_volume = [
+            CampaignVolumeBean(
+                uuid=str(campaign_id),
+                name=name_by_uuid.get(campaign_id, "Campagne inconnue"),
+                fsec_count=row["count"],
+            )
+            for campaign_id, row in top_sorted
+        ]
+
+        return CampaignIndicatorsBean(
+            total_in_period=total,
+            by_status=by_status,
+            by_type=by_type,
+            by_installation=by_installation,
+            total_fsec=total_fsec,
+            total_fsec_shot=total_fsec_shot,
+            avg_fsec_per_campaign=avg_fsec,
+            avg_duration_days=avg_duration,
+            started_per_month=started_per_month,
+            top_by_volume=top_by_volume,
         )
 
     # --------------------------------------------------------- Step durations
@@ -451,8 +537,9 @@ class IndicatorsRepository(IIndicatorsRepository):
                 if user_uuid is not None:
                     counts[user_uuid] += count
 
-        add(AssemblyStepEntity.objects.all(), "operator_user", step_q)
-        add(MetrologyStepEntity.objects.all(), "metrologist_user", step_q)
+        # Assemblage / métrologie : opérateurs multiples (M2M) → chacun crédité.
+        add(AssemblyStepEntity.objects.all(), "operator_users__uuid", step_q)
+        add(MetrologyStepEntity.objects.all(), "metrologist_users__uuid", step_q)
         add(SealingStepEntity.objects.all(), "metrologist_user", sealing_q)
         add(PicturesStepEntity.objects.all(), "operator_user", step_q)
         add(PermeationStepEntity.objects.all(), "operator_user", step_q)
@@ -548,8 +635,14 @@ def _agg_min_across(querysets, group_field: str, date_field: str) -> Dict:
 
 
 def _as_date(value) -> date:
-    """Convertit DateTime → date si besoin."""
-    if hasattr(value, "date") and not isinstance(value, date):
+    """Convertit datetime → date si besoin.
+
+    `datetime` est une sous-classe de `date` : tester `isinstance(value, date)`
+    est donc toujours vrai pour un datetime. On teste explicitement `datetime`
+    pour réellement convertir (sinon `date - datetime` lève une TypeError, ce qui
+    cassait les transitions impliquant `permeation.start_date`, un DateTimeField).
+    """
+    if isinstance(value, datetime):
         return value.date()
     return value
 

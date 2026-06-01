@@ -8,6 +8,7 @@ from django.db.models import Case, Max, When
 from app.domain.embase.interface.embase_repository import IEmbaseRepository
 from app.domain.embase.models.embase_bean import EmbaseBean
 from app.domain.embase.models.fsec_history_bean import FsecHistoryEntryBean
+from app.domain.shared.slug import slugify_text
 from app.mapper.embase.embase_mapper import (
     embase_mapper_bean_to_entity,
     embase_mapper_entity_to_bean,
@@ -76,6 +77,19 @@ class EmbaseRepository(IEmbaseRepository):
             return embase_mapper_entity_to_bean(entity)
         except EmbaseEntity.DoesNotExist:
             return None
+
+    def get_by_slug(self, slug: str) -> Optional[EmbaseBean]:
+        """Recupere une Embase par son slug d'URL (slugify de l'identifier unique).
+
+        La slugification (minuscules) n'etant pas reversible, on compare le slug
+        recalcule de chaque identifier puis on charge l'Embase correspondante.
+        """
+        for embase_uuid, identifier in EmbaseEntity.objects.values_list(
+            "uuid", "identifier"
+        ):
+            if slugify_text(identifier) == slug:
+                return self.get_by_uuid(str(embase_uuid))
+        return None
 
     @transaction.atomic
     def update(self, bean: EmbaseBean) -> EmbaseBean:

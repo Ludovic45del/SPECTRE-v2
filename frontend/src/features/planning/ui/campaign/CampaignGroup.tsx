@@ -1,7 +1,7 @@
 /**
  * CampaignGroup — Groupe de lignes pour une campagne (étapes + FSECs).
  */
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Typography } from '@mui/material';
 import type { CampaignWithRelations } from '@entities/campaign/core/model/referential.schema';
 import type { PlanningSalle } from '../../lib/planning.lab';
@@ -14,6 +14,7 @@ import type { VisibleColumnRange } from '../../lib/useColumnVirtualization';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
 import { HoverTd, StickyLabelCell } from '../PlanningCell';
 import { CampaignContext } from './CampaignContext';
+import { CampaignStepDialog } from './CampaignStepDialog';
 import { StepHeaderRow } from './StepHeaderRow';
 import { StepLanesRow } from './StepLanesRow';
 import type { FsecInfo } from './types';
@@ -58,6 +59,13 @@ export const CampaignGroup = memo(function CampaignGroup({
     const colors = usePlanningColors();
     const collapsedStepGroups = usePlanningStore((s) => s.collapsedStepGroups);
 
+    // Modale de planification campagne (1 instance par campagne, étape active + jour cliqué).
+    const [dialogStep, setDialogStep] = useState<{ etape: Etape; defaultDate?: string } | null>(null);
+    const onOpenStepDialog = useCallback(
+        (etape: Etape, defaultDate?: string) => setDialogStep({ etape, defaultDate }),
+        [],
+    );
+
     const contextValue = useMemo(
         () => ({
             campagne,
@@ -68,8 +76,9 @@ export const CampaignGroup = memo(function CampaignGroup({
             labEvents,
             visibleRange,
             onNavigate,
+            onOpenStepDialog,
         }),
-        [campagne, columns, planningData, membres, salles, labEvents, visibleRange, onNavigate],
+        [campagne, columns, planningData, membres, salles, labEvents, visibleRange, onNavigate, onOpenStepDialog],
     );
 
     const campaignFsecs: FsecInfo[] = useMemo(
@@ -191,6 +200,22 @@ export const CampaignGroup = memo(function CampaignGroup({
 
                 return rows;
             })}
+
+            {dialogStep && (
+                <CampaignStepDialog
+                    campagne={campagne}
+                    etapes={visibleEtapes}
+                    campaignFsecs={campaignFsecs}
+                    gasFsecs={gasFsecs}
+                    planningData={planningData}
+                    membres={membres}
+                    salles={salles}
+                    labEvents={labEvents}
+                    initialStepLabel={dialogStep.etape.label}
+                    defaultDate={dialogStep.defaultDate}
+                    onClose={() => setDialogStep(null)}
+                />
+            )}
         </CampaignContext.Provider>
     );
 });

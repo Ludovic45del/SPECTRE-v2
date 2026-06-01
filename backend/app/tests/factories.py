@@ -192,7 +192,6 @@ class FaBeanFactory(Factory):
     cause = None
     experience_impact = None
     iec_validation_progress = False
-    iec_validation_progress_date = None
     iec_validation_progress_name = None
     closure_validation = None
     closure_date = None
@@ -222,6 +221,7 @@ class AssemblyStepBeanFactory(Factory):
     fsec_version_id = LazyFunction(lambda: str(uuid.uuid4()))
     operator = "Assembleur Test"
     operator_user_uuid = None
+    operator_user_uuids = factory.LazyFunction(list)
     start_date = LazyFunction(lambda: date(2025, 2, 1))
     end_date = LazyFunction(lambda: date(2025, 2, 15))
     comments = "Assemblage de test"
@@ -244,6 +244,7 @@ class MetrologyStepBeanFactory(Factory):
 
     uuid = LazyFunction(lambda: str(uuid.uuid4()))
     fsec_version_id = LazyFunction(lambda: str(uuid.uuid4()))
+    metrologist_user_uuids = factory.LazyFunction(list)
     machine_uuids = factory.LazyFunction(list)
     date = LazyFunction(lambda: date(2025, 2, 20))
     comments = "Métrologie de test"

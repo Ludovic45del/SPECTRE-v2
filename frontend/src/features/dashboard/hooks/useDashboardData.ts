@@ -19,6 +19,7 @@ import { getCampaignType, getCampaignInstallation } from '@entities/campaign/cor
 import { getStatusInfo as getFsecStatusInfo } from '@entities/fsec/core/model/fsec.constants';
 import { getFaStatusInfo, getFaTypeInfo, getFaCriticalityInfo } from '@entities/fa/core/model/fa.constants';
 import { EMBASE_TYPE_LABELS } from '@entities/embase';
+import { paths } from '@shared/config';
 
 // ============================================================================
 // KPIs
@@ -71,7 +72,7 @@ function mapCampaignActivity(item: ActivityItem): DashboardActivityItem {
         date: parseDate(item.lastUpdated),
         statusLabel: statusInfo?.label ?? '—',
         statusColor: safeColor(statusInfo?.color),
-        link: `/campagne-details/${item.id}`,
+        link: paths.campaign.root(item.slug ?? item.id),
     };
 }
 
@@ -89,7 +90,7 @@ function mapFsecActivity(item: ActivityItem): DashboardActivityItem {
         date: parseDate(item.lastUpdated),
         statusLabel: status.label,
         statusColor: status.color,
-        link: `/fsec-details/${item.id}`,
+        link: paths.fsec.root(item.slug ?? item.id),
     };
 }
 
@@ -109,7 +110,7 @@ function mapFaActivity(item: ActivityItem): DashboardActivityItem {
         date: parseDate(item.lastUpdated),
         statusLabel: status.label,
         statusColor: status.color,
-        link: `/fa-details/${item.id}`,
+        link: paths.fa.root(item.slug ?? item.id),
     };
 }
 
@@ -129,7 +130,7 @@ function mapEmbaseActivity(item: ActivityItem): DashboardActivityItem {
         date: parseDate(item.lastUpdated),
         statusLabel: typeLabel || 'Embase',
         statusColor: BRAND_COLORS.embase,
-        link: `/embase-details/${item.id}`,
+        link: paths.embase.root(item.slug ?? item.id),
     };
 }
 

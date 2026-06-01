@@ -45,5 +45,14 @@ class MetrologyStepEntity(BaseStepEntity):
         blank=True,
         related_name="+",
     )
+    # Métrologues multiples : une étape peut être réalisée à plusieurs.
+    # Source de vérité de la liste ; `metrologist_user` (FK) reste synchronisée
+    # sur le premier sélectionné pour la rétro-compatibilité.
+    metrologist_users = models.ManyToManyField(
+        "app.UserProfileEntity",
+        db_table="METROLOGY_STEP_METROLOGIST",
+        related_name="+",
+        blank=True,
+    )
     date = models.DateField(null=True, blank=True)
     comments = models.TextField(max_length=4000, null=True, blank=True)

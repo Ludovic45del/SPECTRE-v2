@@ -15,6 +15,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import { useDashboardPreferences, useUpdateDashboardPreferences, type Shortcut } from '@entities/dashboard-preferences';
 import SectionCard from '@widgets/SectionCard';
 import { Button } from '@shared/ui/Button';
+import { normalizeHref } from '@shared/lib';
 import { ICON_MAP } from '../../lib/iconMap';
 import { useDashboardStore } from '../../model/dashboard.store';
 import ShortcutFormDialog from '../ShortcutFormDialog';
@@ -94,7 +95,7 @@ const ShortcutCard = memo(function ShortcutCard({ shortcut, isEditMode, onEdit, 
     const accentBg = `hsla(${hue}, 70%, ${isDark ? 55 : 45}%, ${isDark ? 0.18 : 0.12})`;
     const accentFg = `hsl(${hue}, 70%, ${isDark ? 70 : 38}%)`;
 
-    const handleClick = useCallback(() => window.open(shortcut.url, '_blank'), [shortcut.url]);
+    const handleClick = useCallback(() => window.open(normalizeHref(shortcut.url), '_blank'), [shortcut.url]);
     const handleEdit = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();

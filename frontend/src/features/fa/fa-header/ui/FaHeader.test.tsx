@@ -17,6 +17,9 @@ const MOCK_FSEC_UUID = '00000000-0000-0000-0000-000000000002';
 const MOCK_CAMPAIGN_UUID = '00000000-0000-0000-0000-000000000003';
 
 const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
+    slug: 'fa-2025-fsec01',
+    fsecSlug: null,
+    campaignSlug: null,
     uuid: MOCK_FA_UUID,
     fsecVersionId: MOCK_FSEC_UUID,
     identifier: 'FA_2025_FSEC01',
@@ -39,7 +42,6 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     cause: null,
     experienceImpact: null,
     iecValidationProgress: false,
-    iecValidationProgressDate: null,
     iecValidationProgressName: null,
     iecValidationProgressUserUuid: null,
     closureValidation: null,
@@ -56,6 +58,8 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
 const mockFsecApiResponse = {
     version_uuid: MOCK_FSEC_UUID,
     fsec_uuid: '00000000-0000-0000-0000-000000000099',
+    slug: 'fsec-test-01',
+    campaign_slug: 'campagne-alpha',
     campaign_id: MOCK_CAMPAIGN_UUID,
     name: 'FSEC-TEST-01',
     status_id: 0,
@@ -75,6 +79,7 @@ const mockFsecApiResponse = {
 
 const mockCampaignApiResponse = {
     uuid: MOCK_CAMPAIGN_UUID,
+    slug: 'campagne-alpha',
     name: 'Campagne Alpha',
     year: 2025,
     semester: 'S1',
@@ -182,7 +187,7 @@ describe('FaHeader', () => {
             renderWithProviders(<FaHeader fa={createMockFa()} />);
             await waitFor(() => {
                 const link = screen.getByText(/FSEC : FSEC-TEST-01/);
-                expect(link.closest('a')).toHaveAttribute('href', `/fsec-details/${MOCK_FSEC_UUID}/overview`);
+                expect(link.closest('a')).toHaveAttribute('href', '/fsec-details/fsec-test-01/overview');
             });
         });
 
@@ -197,7 +202,7 @@ describe('FaHeader', () => {
             renderWithProviders(<FaHeader fa={createMockFa()} />);
             await waitFor(() => {
                 const link = screen.getByText(/Campagne : 2025-LMJ_Campagne Alpha/);
-                expect(link.closest('a')).toHaveAttribute('href', `/campagne-details/${MOCK_CAMPAIGN_UUID}/overview`);
+                expect(link.closest('a')).toHaveAttribute('href', '/campagne-details/campagne-alpha/overview');
             });
         });
 

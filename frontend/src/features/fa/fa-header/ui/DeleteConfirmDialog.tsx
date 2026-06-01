@@ -43,8 +43,8 @@ export const DeleteConfirmDialog = memo(function DeleteConfirmDialog({
             <DialogTitle id="delete-dialog-title">Supprimer la Fiche d'Anomalie</DialogTitle>
             <DialogContent>
                 <DialogContentText id="delete-dialog-description">
-                    Êtes-vous sûr de vouloir supprimer la FA <strong>{identifier}</strong> ? Cette action est
-                    irréversible.
+                    Êtes-vous sûr de vouloir supprimer la FA <strong>{identifier}</strong> ? La fiche et ses photos
+                    seront définitivement supprimées.
                 </DialogContentText>
             </DialogContent>
             <DialogActions sx={{ p: 2, pt: 0 }}>

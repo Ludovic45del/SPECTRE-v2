@@ -148,6 +148,90 @@ def update_user_self_profile(
     return updated
 
 
+def set_user_avatar(
+    repository: IUserRepository, uuid: uuid_lib.UUID, uploaded_image
+) -> UserBean:
+    """Normalise puis enregistre la photo de profil de l'utilisateur.
+
+    L'image est re-traitée côté serveur (carré 256px, JPEG compressé, EXIF
+    strippé) avant stockage — cf. `app.core.avatar_image.process_avatar`.
+    """
+    # Import local : Pillow est lourd, on ne le charge qu'au moment de l'upload.
+    from PIL import Image, UnidentifiedImageError
+
+    from app.core.avatar_image import process_avatar
+
+    existing = repository.get_by_uuid(uuid)
+    if not existing:
+        raise NotFoundException("USER", str(uuid))
+
+    # Le serializer valide l'en-tête mais pas l'intégrité des pixels : un fichier
+    # tronqué peut échouer ici au décodage complet → 400 propre plutôt qu'un 500.
+    try:
+        processed = process_avatar(uploaded_image)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+        raise ValidationException(
+            "image", "Fichier image illisible ou corrompu."
+        ) from exc
+
+    updated = repository.set_avatar(uuid, processed)
+    logger.debug("Avatar mis à jour pour: %s", updated.username)
+    return updated
+
+
+def delete_user_avatar(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
+    """Supprime la photo de profil (retour aux initiales côté UI)."""
+    existing = repository.get_by_uuid(uuid)
+    if not existing:
+        raise NotFoundException("USER", str(uuid))
+
+    updated = repository.set_avatar(uuid, None)
+    logger.debug("Avatar supprimé pour: %s", updated.username)
+    return updated
+
+
+def set_user_signature(
+    repository: IUserRepository, uuid: uuid_lib.UUID, uploaded_image
+) -> UserBean:
+    """Normalise puis enregistre la signature de l'utilisateur.
+
+    L'image est re-traitée côté serveur (PNG transparent, rectangulaire 600x300,
+    EXIF strippé) avant stockage — cf. `app.core.signature_image.process_signature`.
+    """
+    # Import local : Pillow est lourd, on ne le charge qu'au moment de l'upload.
+    from PIL import Image, UnidentifiedImageError
+
+    from app.core.signature_image import process_signature
+
+    existing = repository.get_by_uuid(uuid)
+    if not existing:
+        raise NotFoundException("USER", str(uuid))
+
+    # Le serializer valide l'en-tête mais pas l'intégrité des pixels : un fichier
+    # tronqué peut échouer ici au décodage complet → 400 propre plutôt qu'un 500.
+    try:
+        processed = process_signature(uploaded_image)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+        raise ValidationException(
+            "image", "Fichier image illisible ou corrompu."
+        ) from exc
+
+    updated = repository.set_signature(uuid, processed)
+    logger.debug("Signature mise à jour pour: %s", updated.username)
+    return updated
+
+
+def delete_user_signature(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
+    """Supprime la signature de l'utilisateur."""
+    existing = repository.get_by_uuid(uuid)
+    if not existing:
+        raise NotFoundException("USER", str(uuid))
+
+    updated = repository.set_signature(uuid, None)
+    logger.debug("Signature supprimée pour: %s", updated.username)
+    return updated
+
+
 def toggle_active(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
     existing = repository.get_by_uuid(uuid)
     if not existing:

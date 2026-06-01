@@ -2,6 +2,12 @@
 
 from rest_framework import serializers
 
+# Limite et formats acceptés pour les photos de galerie FA (mêmes valeurs que
+# la photo de vue d'ensemble FSEC : la compression Canvas côté client sort en
+# JPEG, on tolère jusqu'à 5 Mo pour les rares cas non compressés).
+FA_PHOTO_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+FA_PHOTO_ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
 
 class FaSerializer(serializers.Serializer):
     """Serializer pour la validation des Fiches d'Anomalie (FA)."""
@@ -55,9 +61,6 @@ class FaSerializer(serializers.Serializer):
         max_length=4000, required=False, allow_blank=True, allow_null=True
     )
     iec_validation_progress = serializers.BooleanField(required=False, default=False)
-    iec_validation_progress_date = serializers.DateField(
-        required=False, allow_null=True
-    )
     iec_validation_progress_name = serializers.CharField(
         max_length=100, required=False, allow_blank=True, allow_null=True
     )
@@ -119,18 +122,52 @@ class FaValidatePhaseSerializer(serializers.Serializer):
     """
 
     validator_name = serializers.CharField(
-        max_length=100, required=False, allow_blank=True
+        max_length=100, required=False, allow_blank=True, allow_null=True
     )
     validator_user_uuid = serializers.UUIDField(required=False, allow_null=True)
-    validation_date = serializers.DateField(required=False)
+    validation_date = serializers.DateField(required=False, allow_null=True)
 
 
 class FaCloseSerializer(serializers.Serializer):
-    """Serializer pour la fermeture d'une FA."""
+    """Serializer pour la fermeture d'une FA.
+
+    `validator_name` accepte null pour rester compatible avec le hook frontend
+    qui envoie systématiquement la clé (à null quand seul l'UUID est connu).
+    `closure_validation` idem : la modale peut omettre le texte de validation.
+    """
 
     validator_name = serializers.CharField(
-        max_length=100, required=False, allow_blank=True
+        max_length=100, required=False, allow_blank=True, allow_null=True
     )
     validator_user_uuid = serializers.UUIDField(required=False, allow_null=True)
-    closure_validation = serializers.CharField(max_length=4000, required=False)
-    closure_date = serializers.DateField(required=False)
+    closure_validation = serializers.CharField(
+        max_length=4000, required=False, allow_blank=True, allow_null=True
+    )
+    closure_date = serializers.DateField(required=False, allow_null=True)
+
+
+class FaPhotoUploadSerializer(serializers.Serializer):
+    """Serializer de l'upload d'une photo de galerie FA.
+
+    Calqué sur FsecOverviewImageSerializer : JPEG/PNG/WebP, max 5 Mo, plus une
+    légende optionnelle.
+    """
+
+    image = serializers.ImageField(required=True, allow_null=False)
+    caption = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, allow_null=True
+    )
+
+    def validate_image(self, value):
+        if value.size > FA_PHOTO_MAX_BYTES:
+            raise serializers.ValidationError(
+                f"Image trop volumineuse ({value.size} octets, "
+                f"max {FA_PHOTO_MAX_BYTES})."
+            )
+        content_type = getattr(value, "content_type", None)
+        if content_type and content_type not in FA_PHOTO_ALLOWED_CONTENT_TYPES:
+            raise serializers.ValidationError(
+                f"Type d'image non supporté ({content_type}). "
+                f"Formats acceptés : JPEG, PNG, WebP."
+            )
+        return value

@@ -14,6 +14,8 @@ import dayjs, { Dayjs } from 'dayjs';
  */
 export const CampaignApiSchema = z.object({
     uuid: z.string().uuid(),
+    // Slug d'URL calculé côté backend (année-semestre-installation-nom).
+    slug: z.string().optional(),
     type_id: z.number().int().nullable(),
     status_id: z.number().int().nullable(),
     installation_id: z.number().int().nullable(),
@@ -32,6 +34,7 @@ export const CampaignApiSchema = z.object({
  */
 export const CampaignSchema = CampaignApiSchema.transform((api) => ({
     uuid: api.uuid,
+    slug: api.slug ?? '',
     typeId: api.type_id,
     statusId: api.status_id,
     installationId: api.installation_id,

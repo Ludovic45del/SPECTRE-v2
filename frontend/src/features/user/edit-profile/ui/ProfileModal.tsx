@@ -30,6 +30,8 @@ import {
     useUpdateMe,
 } from '@entities/user';
 import { useModalSubmit } from '@shared/lib';
+import { AvatarEditor } from './AvatarEditor';
+import { SignatureEditor } from './SignatureEditor';
 
 interface ProfileModalProps {
     user: User | null;
@@ -89,13 +91,7 @@ function ProfileModalComponent({ user, open, onClose }: ProfileModalProps) {
     );
 
     return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 2 } }}
-        >
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
             <Box
                 sx={{
                     display: 'flex',
@@ -117,6 +113,12 @@ function ProfileModalComponent({ user, open, onClose }: ProfileModalProps) {
             <form onSubmit={handleSubmit(onSubmit)}>
                 <DialogContent sx={{ p: 3 }}>
                     <Stack spacing={3}>
+                        {/* Photo de profil — upload immédiat, indépendant du formulaire texte. */}
+                        <AvatarEditor user={user} />
+                        <Divider />
+                        {/* Signature — upload immédiat ; sert à signer la fiche de livraison. */}
+                        <SignatureEditor user={user} />
+                        <Divider />
                         <Stack direction="row" spacing={2}>
                             <TextField
                                 label="Matricule"

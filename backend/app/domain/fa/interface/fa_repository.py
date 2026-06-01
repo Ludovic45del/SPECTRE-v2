@@ -20,6 +20,11 @@ class IFaRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_by_slug(self, slug: str) -> Optional[FaBean]:
+        """Récupère une FA par son slug d'URL calculé."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[FaBean]:
         """Récupère toutes les FA (avec pagination optionnelle)."""
         raise NotImplementedError
@@ -30,8 +35,11 @@ class IFaRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_fsec_version_id(self, fsec_version_id: str) -> Optional[FaBean]:
-        """Récupère la FA associée à une FSEC."""
+    def get_all_by_fsec_version_id(self, fsec_version_id: str) -> List[FaBean]:
+        """Récupère toutes les FA associées à une FSEC.
+
+        Une FSEC peut avoir plusieurs FA depuis la migration 0072.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -40,8 +48,18 @@ class IFaRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def update_identifier(self, uuid: str, identifier: str) -> bool:
+        """Met à jour uniquement l'identifiant d'une FA.
+
+        L'identifiant est normalement immuable (clé unique de référence) : cette
+        méthode dédiée est l'unique voie sanctionnée pour le réaligner quand la
+        FSEC parente est renommée ou rattachée à une autre campagne.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def delete(self, uuid: str) -> bool:
-        """Soft-delete une FA par son UUID (is_active=False)."""
+        """Supprime définitivement une FA par son UUID (hard delete)."""
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -50,6 +68,11 @@ class IFaRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def exists_by_fsec_version_id(self, fsec_version_id: str) -> bool:
-        """Vérifie si une FA existe déjà pour cette FSEC."""
+    def max_sequence_by_fsec_version_id(self, fsec_version_id: str) -> int:
+        """Retourne le plus grand suffixe séquentiel `_NN` utilisé pour cette FSEC.
+
+        Utilisé pour générer le prochain numéro de séquence dans l'identifier.
+        On se base sur le max des suffixes existants (et non sur un count) pour
+        ne jamais réutiliser un identifier après une suppression définitive.
+        """
         raise NotImplementedError

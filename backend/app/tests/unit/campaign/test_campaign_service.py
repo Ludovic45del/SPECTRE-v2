@@ -320,6 +320,63 @@ class TestCampaignServiceDelete:
 
         mock_repo.delete.assert_not_called()
 
+    @pytest.mark.unit
+    def test_delete_campaign_cascades_teams_and_documents(self, sample_campaign_bean):
+        """Les membres d'équipe et documents (FK PROTECT) sont supprimés avant la
+        campagne — sinon Django lève ProtectedError -> 500 (régression couloirs)."""
+        mock_repo = MagicMock()
+        mock_repo.get_by_uuid.return_value = sample_campaign_bean
+        mock_repo.delete.return_value = True
+        mock_fsec_repo = MagicMock()
+        mock_fsec_repo.get_by_campaign_id.return_value = []
+        mock_teams_repo = MagicMock()
+        mock_teams_repo.get_by_campaign_uuid.return_value = [
+            MagicMock(uuid="team-1"),
+            MagicMock(uuid="team-2"),
+        ]
+        mock_docs_repo = MagicMock()
+        mock_docs_repo.get_by_campaign_uuid.return_value = [MagicMock(uuid="doc-1")]
+
+        result = delete_campaign(
+            mock_repo,
+            sample_campaign_bean.uuid,
+            fsec_repository=mock_fsec_repo,
+            teams_repository=mock_teams_repo,
+            documents_repository=mock_docs_repo,
+        )
+
+        assert result is True
+        assert mock_teams_repo.delete.call_count == 2
+        mock_teams_repo.delete.assert_any_call("team-1")
+        mock_teams_repo.delete.assert_any_call("team-2")
+        mock_docs_repo.delete.assert_called_once_with("doc-1")
+        mock_repo.delete.assert_called_once_with(sample_campaign_bean.uuid)
+
+    @pytest.mark.unit
+    def test_delete_campaign_with_fsecs_does_not_touch_children(
+        self, sample_campaign_bean
+    ):
+        """Le blocage FSEC intervient AVANT toute suppression d'enfant."""
+        mock_repo = MagicMock()
+        mock_repo.get_by_uuid.return_value = sample_campaign_bean
+        mock_fsec_repo = MagicMock()
+        mock_fsec_repo.get_by_campaign_id.return_value = [MagicMock()]
+        mock_teams_repo = MagicMock()
+        mock_docs_repo = MagicMock()
+
+        with pytest.raises(ValidationException):
+            delete_campaign(
+                mock_repo,
+                sample_campaign_bean.uuid,
+                fsec_repository=mock_fsec_repo,
+                teams_repository=mock_teams_repo,
+                documents_repository=mock_docs_repo,
+            )
+
+        mock_teams_repo.delete.assert_not_called()
+        mock_docs_repo.delete.assert_not_called()
+        mock_repo.delete.assert_not_called()
+
 
 class TestCampaignServiceCount:
     """Tests pour le comptage de campagnes."""

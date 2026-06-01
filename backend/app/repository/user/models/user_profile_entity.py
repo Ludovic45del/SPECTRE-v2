@@ -25,6 +25,30 @@ class UserProfileEntity(models.Model):
     service = models.CharField(max_length=100, blank=True, default="")
     numero = models.CharField(max_length=30, blank=True, default="")
     bureau = models.CharField(max_length=50, blank=True, default="")
+    # Photo de profil — normalisée côté serveur (carré 256px, JPEG compressé,
+    # EXIF strippé) avant stockage sous MEDIA_ROOT/users/avatars/. Même mécanisme
+    # que la photo de vue d'ensemble FSEC ; le fichier disque est nettoyé par
+    # UserRepository.set_avatar lors d'un remplacement ou d'une suppression.
+    avatar = models.ImageField(
+        upload_to="users/avatars/",
+        max_length=500,
+        null=True,
+        blank=True,
+    )
+    # Signature manuscrite — normalisée côté serveur (PNG transparent,
+    # rectangulaire 600x300 max, EXIF strippé) avant stockage sous
+    # MEDIA_ROOT/users/signatures/. Réutilisée pour signer la fiche de livraison
+    # FSEC : au moment de signer, une COPIE figée du fichier est apposée sur le
+    # FSEC (cf. FsecEntity.delivery_acceptor_signature / delivery_validator_signature)
+    # pour préserver la valeur probante même si l'utilisateur la change ensuite.
+    # Le fichier disque est nettoyé par UserRepository.set_signature lors d'un
+    # remplacement ou d'une suppression.
+    signature = models.ImageField(
+        upload_to="users/signatures/",
+        max_length=500,
+        null=True,
+        blank=True,
+    )
     force_password_change = models.BooleanField(default=True)
     # Incrémenté à chaque émission d'un jeton d'activation — permet le single-use :
     # un jeton n'est valide que si sa version == version courante du profil.

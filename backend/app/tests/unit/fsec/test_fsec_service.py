@@ -26,6 +26,9 @@ from app.domain.fsec.services.fsec_service import (
     get_fsec_versions,
     get_fsecs_by_campaign,
     patch_fsec,
+    set_fsec_assembly_plan_annotations,
+    set_fsec_assembly_plan_image,
+    set_fsec_overview_image,
     update_fsec,
 )
 
@@ -523,6 +526,173 @@ class TestFsecServiceDelete:
         delete_fsec(mock_repo, version_uuid)
 
         mock_repo.delete.assert_called_once_with(version_uuid)
+
+
+# ============================================================================
+# OVERVIEW IMAGE TESTS
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestFsecServiceOverviewImage:
+    """Tests upload/suppression de la photo de vue d'ensemble."""
+
+    def test_set_overview_image_delegates_to_repo(self, sample_fsec):
+        mock_repo = MagicMock()
+        updated = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            overview_image="/media/fsec/overview/test.jpg",
+        )
+        mock_repo.set_overview_image.return_value = updated
+        fake_file = MagicMock(name="UploadedFile")
+
+        result = set_fsec_overview_image(
+            mock_repo, sample_fsec.version_uuid, fake_file
+        )
+
+        mock_repo.set_overview_image.assert_called_once_with(
+            sample_fsec.version_uuid, fake_file
+        )
+        assert result is updated
+        assert result.overview_image == "/media/fsec/overview/test.jpg"
+
+    def test_set_overview_image_to_none_clears(self, sample_fsec):
+        mock_repo = MagicMock()
+        cleared = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            overview_image=None,
+        )
+        mock_repo.set_overview_image.return_value = cleared
+
+        result = set_fsec_overview_image(mock_repo, sample_fsec.version_uuid, None)
+
+        mock_repo.set_overview_image.assert_called_once_with(
+            sample_fsec.version_uuid, None
+        )
+        assert result.overview_image is None
+
+    def test_set_overview_image_404_when_repo_returns_none(self):
+        mock_repo = MagicMock()
+        mock_repo.set_overview_image.return_value = None
+        fake_uuid = str(uuid.uuid4())
+
+        with pytest.raises(NotFoundException) as exc_info:
+            set_fsec_overview_image(mock_repo, fake_uuid, MagicMock())
+
+        assert exc_info.value.resource == "FSEC"
+        assert exc_info.value.identifier == fake_uuid
+
+
+# ============================================================================
+# ASSEMBLY PLAN TESTS
+# ============================================================================
+
+
+@pytest.mark.unit
+class TestFsecServiceAssemblyPlan:
+    """Tests upload/suppression du plan d'assemblage et de son calque."""
+
+    def test_set_assembly_plan_image_delegates_to_repo(self, sample_fsec):
+        mock_repo = MagicMock()
+        updated = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            assembly_plan_image="/media/fsec/assembly-plan/plan.png",
+        )
+        mock_repo.set_assembly_plan_image.return_value = updated
+        fake_file = MagicMock(name="UploadedFile")
+
+        result = set_fsec_assembly_plan_image(
+            mock_repo, sample_fsec.version_uuid, fake_file
+        )
+
+        mock_repo.set_assembly_plan_image.assert_called_once_with(
+            sample_fsec.version_uuid, fake_file
+        )
+        assert result is updated
+        assert result.assembly_plan_image == "/media/fsec/assembly-plan/plan.png"
+
+    def test_set_assembly_plan_image_to_none_clears(self, sample_fsec):
+        mock_repo = MagicMock()
+        cleared = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            assembly_plan_image=None,
+            assembly_plan_annotations=[],
+        )
+        mock_repo.set_assembly_plan_image.return_value = cleared
+
+        result = set_fsec_assembly_plan_image(mock_repo, sample_fsec.version_uuid, None)
+
+        mock_repo.set_assembly_plan_image.assert_called_once_with(
+            sample_fsec.version_uuid, None
+        )
+        assert result.assembly_plan_image is None
+        assert result.assembly_plan_annotations == []
+
+    def test_set_assembly_plan_image_404_when_repo_returns_none(self):
+        mock_repo = MagicMock()
+        mock_repo.set_assembly_plan_image.return_value = None
+        fake_uuid = str(uuid.uuid4())
+
+        with pytest.raises(NotFoundException) as exc_info:
+            set_fsec_assembly_plan_image(mock_repo, fake_uuid, MagicMock())
+
+        assert exc_info.value.resource == "FSEC"
+        assert exc_info.value.identifier == fake_uuid
+
+    def test_set_assembly_plan_annotations_delegates_to_repo(self, sample_fsec):
+        mock_repo = MagicMock()
+        annotations = [{"id": "a1", "type": "arrow", "x1": 0, "y1": 0, "x2": 1, "y2": 1}]
+        updated = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            assembly_plan_annotations=annotations,
+        )
+        mock_repo.set_assembly_plan_annotations.return_value = updated
+
+        result = set_fsec_assembly_plan_annotations(
+            mock_repo, sample_fsec.version_uuid, annotations
+        )
+
+        mock_repo.set_assembly_plan_annotations.assert_called_once_with(
+            sample_fsec.version_uuid, annotations
+        )
+        assert result.assembly_plan_annotations == annotations
+
+    def test_set_assembly_plan_annotations_404_when_repo_returns_none(self):
+        mock_repo = MagicMock()
+        mock_repo.set_assembly_plan_annotations.return_value = None
+        fake_uuid = str(uuid.uuid4())
+
+        with pytest.raises(NotFoundException) as exc_info:
+            set_fsec_assembly_plan_annotations(mock_repo, fake_uuid, [])
+
+        assert exc_info.value.resource == "FSEC"
+        assert exc_info.value.identifier == fake_uuid
+
+    def test_set_assembly_plan_annotations_handles_none_count_in_log(self, sample_fsec):
+        """`annotations=None` ne casse pas le log (len sur None protégé)."""
+        mock_repo = MagicMock()
+        mock_repo.set_assembly_plan_annotations.return_value = FsecBean(
+            version_uuid=sample_fsec.version_uuid,
+            fsec_uuid=sample_fsec.fsec_uuid,
+            name=sample_fsec.name,
+            assembly_plan_annotations=[],
+        )
+
+        result = set_fsec_assembly_plan_annotations(
+            mock_repo, sample_fsec.version_uuid, None
+        )
+
+        assert result.assembly_plan_annotations == []
 
 
 # ============================================================================

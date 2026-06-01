@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCampaigns } from '@entities/campaign/core/api/campaign.queries';
 import { CAMPAIGN_INSTALLATIONS } from '@entities/campaign';
 import { softChipSx } from '@shared/lib';
+import { paths } from '@shared/config';
 import {
     useCampaignSteps,
     useLabEvents,
@@ -228,7 +229,8 @@ export function WeekDayGrid({ weekNum, year, onCampaignClick }: WeekDayGridProps
         return c.cellBg;
     };
 
-    const handleCampaignClick = onCampaignClick ?? ((uuid: string) => navigate(`/campagne-details/${uuid}/overview`));
+    const handleCampaignClick =
+        onCampaignClick ?? ((uuid: string) => navigate(paths.campaign.tab(uuid, 'overview')));
 
     if (!hasContent) {
         return (

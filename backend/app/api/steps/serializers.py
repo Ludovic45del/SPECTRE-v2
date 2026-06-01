@@ -11,7 +11,12 @@ class AssemblyStepSerializer(serializers.Serializer):
     operator = serializers.CharField(
         max_length=200, required=False, allow_blank=True, allow_null=True
     )
+    # Champ singulier conservé pour la rétro-compat (= premier assembleur).
     operator_user_uuid = serializers.UUIDField(required=False, allow_null=True)
+    # Liste des assembleurs : une étape peut être réalisée à plusieurs.
+    operator_user_uuids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, allow_empty=True
+    )
     start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     comments = serializers.CharField(
@@ -33,7 +38,12 @@ class MetrologyStepSerializer(serializers.Serializer):
     metrologist_name = serializers.CharField(
         max_length=255, required=False, allow_blank=True, allow_null=True
     )
+    # Champ singulier conservé pour la rétro-compat (= premier métrologue).
     metrologist_user_uuid = serializers.UUIDField(required=False, allow_null=True)
+    # Liste des métrologues : une étape peut être réalisée à plusieurs.
+    metrologist_user_uuids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, allow_empty=True
+    )
     date = serializers.DateField(required=False, allow_null=True)
     comments = serializers.CharField(
         max_length=4000, required=False, allow_blank=True, allow_null=True
@@ -61,6 +71,13 @@ class SealingStepSerializer(serializers.Serializer):
     )
     comments = serializers.CharField(
         max_length=4000, required=False, allow_blank=True, allow_null=True
+    )
+    # Liens fichiers (URL HTTP ou chemin UNC) : fichier métro .txt et Visrad réalisé.
+    metro_file_link = serializers.CharField(
+        max_length=500, required=False, allow_blank=True, allow_null=True
+    )
+    visrad_link = serializers.CharField(
+        max_length=500, required=False, allow_blank=True, allow_null=True
     )
 
 

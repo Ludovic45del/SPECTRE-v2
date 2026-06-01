@@ -7,6 +7,9 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { faKeys } from '@entities/fa/core/api/fa.keys';
 import {
     Autocomplete,
     Box,
@@ -29,6 +32,7 @@ import { useCampaigns, CampaignWithRelations } from '@entities/campaign';
 import { useNotification } from '@shared/ui';
 import { DataChip } from '@widgets/data-chip';
 import { ChipSelect } from '@widgets/chip-select';
+import { OverviewImageSection } from './OverviewImageSection';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -72,6 +76,10 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
     const { showNotification } = useNotification();
     const updateMutation = useUpdateFsec();
     const { data: campaigns } = useCampaigns();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const queryClient = useQueryClient();
+    const { fsecSlug = '' } = useParams<{ fsecSlug: string }>();
 
     const [isEditing, setIsEditing] = useState(false);
     const [form, setForm] = useState<GeneralInfoForm>(() => buildInitialForm(fsec));
@@ -106,7 +114,7 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
         }
 
         try {
-            await updateMutation.mutateAsync({
+            const updated = await updateMutation.mutateAsync({
                 versionUuid: fsec.versionUuid,
                 data: {
                     name: form.name.trim(),
@@ -125,10 +133,36 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
             });
             showNotification('Informations générales mises à jour', 'success');
             setIsEditing(false);
+            // Renommer / changer de campagne change le slug calculé : l'URL pointe
+            // encore sur l'ancien slug, dont la query 404 désormais. On rebascule
+            // sur le slug canonique renvoyé par l'API (cache déjà peuplé par la
+            // mutation), en préservant l'onglet courant.
+            if (updated.slug && updated.slug !== fsecSlug) {
+                // Le backend a réaligné l'identifiant des FA de cette FSEC sur le
+                // nouveau contexte (nom/campagne) : on invalide les caches FA pour
+                // que leur « nom » se rafraîchisse partout (liste, détail, par FSEC).
+                queryClient.invalidateQueries({ queryKey: faKeys.all });
+                navigate(
+                    location.pathname.replace(
+                        `/fsec-details/${fsecSlug}`,
+                        `/fsec-details/${updated.slug}`,
+                    ),
+                    { replace: true },
+                );
+            }
         } catch {
             showNotification('Erreur lors de la mise à jour', 'error');
         }
-    }, [fsec, form, updateMutation, showNotification]);
+    }, [
+        fsec,
+        form,
+        updateMutation,
+        showNotification,
+        navigate,
+        location.pathname,
+        fsecSlug,
+        queryClient,
+    ]);
 
     const selectedCampaign = campaigns?.find((c) => c.uuid === form.campaignId) ?? null;
 
@@ -272,6 +306,13 @@ export function GeneralInfoSection({ fsec, campaign, paperSx, editButtonSx }: Ge
                             Remarques
                         </Typography>
                         <Typography variant="body1">{fsec.comments || 'Aucune remarque'}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <OverviewImageSection
+                            versionUuid={fsec.versionUuid}
+                            fsecName={fsec.name}
+                            imageUrl={fsec.overviewImage ?? null}
+                        />
                     </Grid>
                 </Grid>
             )}

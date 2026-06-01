@@ -143,6 +143,8 @@ def sample_sealing_step_bean(sample_fsec_version_uuid):
         metrologist_name="Jean Dupont",
         interface_io="INTERFACE_01",
         comments="Scellement validé",
+        metro_file_link="\\\\serveur\\metro\\fsec.txt",
+        visrad_link="https://intranet/visrad/fsec",
     )
 
 

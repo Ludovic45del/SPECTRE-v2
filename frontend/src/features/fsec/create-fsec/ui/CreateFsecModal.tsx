@@ -9,7 +9,7 @@
  * - Comments (optional)
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -34,6 +34,7 @@ import { useCreateFsec } from '@entities/fsec';
 import { useCampaigns, CampaignWithRelations } from '@entities/campaign';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
+import { paths } from '@shared/config';
 import { useCreateFsecStore } from '../model';
 import { DataChip } from '@widgets/data-chip';
 import { ChipSelect } from '@widgets/chip-select';
@@ -59,7 +60,7 @@ const FSEC_CATEGORIES = [
 
 export function CreateFsecModal() {
     const navigate = useNavigate();
-    const { isOpen, close, reset } = useCreateFsecStore();
+    const { isOpen, preselectedCampaignId, close, reset } = useCreateFsecStore();
     const createMutation = useCreateFsec();
     const { showNotification } = useNotification();
     const { data: campaigns } = useCampaigns();
@@ -70,6 +71,7 @@ export function CreateFsecModal() {
         handleSubmit,
         formState: { errors },
         reset: resetForm,
+        setValue,
     } = useForm<CreateFsecForm>({
         mode: 'onBlur',
         resolver: zodResolver(CreateFsecFormSchema),
@@ -80,6 +82,13 @@ export function CreateFsecModal() {
             comments: null,
         },
     });
+
+    // Pre-fill campaign when opened from a campaign context
+    useEffect(() => {
+        if (isOpen && preselectedCampaignId) {
+            setValue('campaignId', preselectedCampaignId);
+        }
+    }, [isOpen, preselectedCampaignId, setValue]);
 
     const onSubmit = async (data: CreateFsecForm) => {
         try {
@@ -97,7 +106,7 @@ export function CreateFsecModal() {
             reset();
 
             // Navigate to FSEC details page
-            navigate(`/fsec-details/${newFsec.versionUuid}/overview`);
+            navigate(paths.fsec.tab(newFsec.slug, 'overview'));
         } catch (err: unknown) {
             showNotification(getErrorMessage(err, 'Erreur lors de la création du FSEC'), 'error');
         }
@@ -159,6 +168,7 @@ export function CreateFsecModal() {
                                         options={campaigns ?? []}
                                         value={campaigns?.find((c) => c.uuid === field.value) ?? null}
                                         onChange={(_, value) => field.onChange(value?.uuid ?? '')}
+                                        disabled={Boolean(preselectedCampaignId)}
                                         getOptionLabel={formatCampaignLabel}
                                         isOptionEqualToValue={(option, value) => option.uuid === value?.uuid}
                                         renderInput={(params) => (

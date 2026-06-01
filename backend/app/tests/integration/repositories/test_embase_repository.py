@@ -280,3 +280,28 @@ class TestEmbaseRepositoryDuplicateCheck:
         # e2 essaie de prendre l'identifiant de e1
         result = embase_repository.exists_duplicate(e2.uuid, e1.identifier)
         assert result is True
+
+
+# ============================================================================
+# GET BY SLUG
+# ============================================================================
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestEmbaseRepositoryGetBySlug:
+    """Tests résolution d'une embase par son slug d'URL (slugify de l'identifier)."""
+
+    def test_get_by_slug_roundtrip(self, embase_repository, sample_embase_data):
+        from app.domain.shared.slug import slugify_text
+
+        created = embase_repository.create(EmbaseBean(**sample_embase_data))
+        slug = slugify_text(created.identifier)
+
+        resolved = embase_repository.get_by_slug(slug)
+
+        assert resolved is not None
+        assert resolved.uuid == created.uuid
+
+    def test_get_by_slug_unknown_returns_none(self, embase_repository):
+        assert embase_repository.get_by_slug("gzzzz-inexistante") is None

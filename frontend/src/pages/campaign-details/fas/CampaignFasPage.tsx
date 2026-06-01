@@ -22,6 +22,7 @@ import {
     Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { paths } from '@shared/config';
 import { useFsecsByCampaign, Fsec } from '@entities/fsec';
 import { useFas, Fa, sortFas, type FaSortColumn } from '@entities/fa';
 import { CampaignWithRelations } from '@entities/campaign';
@@ -99,16 +100,16 @@ function CampaignFasPageComponent({ campaign }: CampaignFasPageProps) {
 
     // Event handlers
     const handleNavigate = useCallback(
-        (uuid: string) => {
-            navigate(`/fa-details/${uuid}`);
+        (slug: string) => {
+            navigate(paths.fa.root(slug));
         },
         [navigate],
     );
 
     const handleNavigateFsec = useCallback(
-        (e: React.MouseEvent, fsecVersionId: string | null) => {
+        (e: React.MouseEvent, fsecSlug: string | null) => {
             e.stopPropagation();
-            if (fsecVersionId) navigate(`/fsec-details/${fsecVersionId}/overview`);
+            if (fsecSlug) navigate(paths.fsec.tab(fsecSlug, 'overview'));
         },
         [navigate],
     );

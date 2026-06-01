@@ -29,6 +29,9 @@ db.sqlite3
 db.sqlite3-journal
 staticfiles/
 
+# Uploads runtime (signatures, avatars, photos FA/FSEC)
+backend/media/
+
 # JS/TS
 node_modules/
 dist/

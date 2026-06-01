@@ -31,15 +31,17 @@ from app.domain.fa.services import fa_service
 from app.domain.fa.services.fa_service import (
     _PROTECTED_MERGE_FIELDS,
     _merge_fa_beans,
+    _parse_fa_sequence,
     close_fa,
     count_all_fas,
     create_fa,
     delete_fa,
     generate_fa_identifier,
     get_all_fas,
-    get_fa_by_fsec_version_id,
     get_fa_by_uuid,
+    get_fas_by_fsec_version_id,
     patch_fa,
+    regenerate_fa_identifiers_for_fsec,
     resolve_fa_creation_context,
     update_fa,
     validate_open_phase,
@@ -94,7 +96,6 @@ def sample_fa():
         cause=None,
         experience_impact=None,
         iec_validation_progress=False,
-        iec_validation_progress_date=None,
         iec_validation_progress_name=None,
         closure_validation=None,
         closure_date=None,
@@ -113,7 +114,6 @@ def fa_en_cours(sample_fa):
     sample_fa.criticality_id = 1
     sample_fa.cause = "Cause identifiée"
     sample_fa.iec_validation_progress = True
-    sample_fa.iec_validation_progress_date = date(2024, 1, 23)
     sample_fa.iec_validation_progress_name = "Validator IEC Progress"
     return sample_fa
 
@@ -126,7 +126,6 @@ def fa_en_cours_no_progress_validation(sample_fa):
     sample_fa.iec_validation_open_date = date(2024, 1, 20)
     sample_fa.iec_validation_open_name = "Validator IEC"
     sample_fa.iec_validation_progress = False
-    sample_fa.iec_validation_progress_date = None
     sample_fa.iec_validation_progress_name = None
     return sample_fa
 
@@ -165,26 +164,26 @@ class TestGenerateFaIdentifier:
     def test_basic_generation(self):
         """Format de base : FA_{year}_{campaign}_{fsec}."""
         result = generate_fa_identifier("CampA", "FsecB", 2024)
-        assert result == "FA_2024_CampA_FsecB"
+        assert result == "FA_2024_CampA_FsecB_01"
 
     def test_spaces_replaced_by_underscores(self):
         """Les espaces dans les noms sont remplacés par des underscores."""
         result = generate_fa_identifier("Camp A", "Fsec B", 2024)
-        assert result == "FA_2024_Camp_A_Fsec_B"
+        assert result == "FA_2024_Camp_A_Fsec_B_01"
         # Vérifie qu'il n'y a PAS d'espace dans le résultat
         assert " " not in result
 
     def test_dashes_replaced_by_underscores(self):
         """Les tirets dans les noms sont remplacés par des underscores."""
         result = generate_fa_identifier("Camp-A", "Fsec-B", 2024)
-        assert result == "FA_2024_Camp_A_Fsec_B"
+        assert result == "FA_2024_Camp_A_Fsec_B_01"
         # Vérifie qu'il n'y a PAS de tiret dans le résultat
         assert "-" not in result
 
     def test_special_characters_stripped(self):
         """Les caractères spéciaux sont supprimés (regex mutation killer)."""
         result = generate_fa_identifier("Camp@#$A", "Fsec!%&B", 2025)
-        assert result == "FA_2025_CampA_FsecB"
+        assert result == "FA_2025_CampA_FsecB_01"
         # Aucun caractère spécial ne doit rester
         assert "@" not in result
         assert "#" not in result
@@ -196,26 +195,26 @@ class TestGenerateFaIdentifier:
     def test_special_chars_with_spaces_and_dashes(self):
         """Combinaison espaces + tirets + caractères spéciaux."""
         result = generate_fa_identifier("Camp Test-01!@#", "FSEC Test-02$%^", 2025)
-        assert result == "FA_2025_Camp_Test_01_FSEC_Test_02"
+        assert result == "FA_2025_Camp_Test_01_FSEC_Test_02_01"
 
     def test_regex_replaces_with_empty_string_not_xxxx(self):
         """Kill mutant: regex substitution replacement "" mutated to "XXXX"."""
         result = generate_fa_identifier("A@B", "C!D", 2024)
         # If mutant replaced "" with "XXXX", result would contain "XXXX"
         assert "XXXX" not in result
-        assert result == "FA_2024_AB_CD"
+        assert result == "FA_2024_AB_CD_01"
 
     def test_parentheses_stripped(self):
         """Les parenthèses sont supprimées."""
         result = generate_fa_identifier("Camp(A)", "Fsec(B)", 2024)
-        assert result == "FA_2024_CampA_FsecB"
+        assert result == "FA_2024_CampA_FsecB_01"
         assert "(" not in result
         assert ")" not in result
 
     def test_dots_stripped(self):
         """Les points sont supprimés."""
         result = generate_fa_identifier("Camp.A", "Fsec.B", 2024)
-        assert result == "FA_2024_CampA_FsecB"
+        assert result == "FA_2024_CampA_FsecB_01"
         assert "." not in result
 
     def test_year_in_result(self):
@@ -261,12 +260,12 @@ class TestGenerateFaIdentifier:
     def test_empty_campaign_name(self):
         """Nom de campagne vide produit un identifiant sans partie campagne."""
         result = generate_fa_identifier("", "Fsec", 2024)
-        assert result == "FA_2024__Fsec"
+        assert result == "FA_2024__Fsec_01"
 
     def test_empty_fsec_name(self):
         """Nom de FSEC vide produit un identifiant sans partie FSEC."""
         result = generate_fa_identifier("Camp", "", 2024)
-        assert result == "FA_2024_Camp_"
+        assert result == "FA_2024_Camp__01"
 
 
 # ============================================================================
@@ -280,7 +279,7 @@ class TestCreateFa:
 
     def test_create_success_returns_result(self, repo, sample_fa):
         """Test que create_fa retourne le résultat du repository.create."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
         repo.create.return_value = sample_fa
 
@@ -291,7 +290,7 @@ class TestCreateFa:
 
     def test_create_sets_status_to_open(self, repo, sample_fa):
         """Le statut est forcé à FaStatus.OPEN (0) avant la création."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
         sample_fa.status_id = FaStatus.CLOSED  # Tentative de tricher
 
@@ -311,7 +310,7 @@ class TestCreateFa:
 
     def test_create_generates_identifier(self, repo, sample_fa):
         """L'identifiant est généré automatiquement à partir des paramètres."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
 
         captured = {}
@@ -322,32 +321,13 @@ class TestCreateFa:
 
         repo.create.side_effect = capture
 
-        create_fa(repo, sample_fa, "Campagne Test", "FSEC 01", 2024)
+        create_fa(repo, sample_fa, "Campagne Test", "FSEC", 2024)
 
         assert captured["identifier"] == "FA_2024_Campagne_Test_FSEC_01"
 
-    def test_create_duplicate_fsec_raises_conflict(self, repo, sample_fa):
-        """ConflictException si une FA existe déjà pour cette FSEC."""
-        repo.exists_by_fsec_version_id.return_value = True
-
-        with pytest.raises(ConflictException) as exc_info:
-            create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
-
-        assert exc_info.value.field == "fsec_version_id"
-        assert exc_info.value.value == sample_fa.fsec_version_id
-
-    def test_create_duplicate_fsec_exception_field_name(self, repo, sample_fa):
-        """Kill mutant: champ d'exception est exactement 'fsec_version_id'."""
-        repo.exists_by_fsec_version_id.return_value = True
-
-        with pytest.raises(ConflictException) as exc_info:
-            create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
-
-        assert "fsec_version_id" in str(exc_info.value)
-
     def test_create_duplicate_identifier_raises_conflict(self, repo, sample_fa):
         """ConflictException si un identifiant généré existe déjà."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = True
 
         with pytest.raises(ConflictException) as exc_info:
@@ -356,30 +336,9 @@ class TestCreateFa:
         assert exc_info.value.field == "identifier"
         assert "identifier" in str(exc_info.value)
 
-    def test_create_checks_fsec_before_identifier(self, repo, sample_fa):
-        """La vérification fsec_version_id est faite AVANT la vérification identifier."""
-        repo.exists_by_fsec_version_id.return_value = True
-        # identifier check should not be reached
-        repo.exists_by_identifier.side_effect = RuntimeError("Should not be called")
-
-        with pytest.raises(ConflictException) as exc_info:
-            create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
-
-        assert exc_info.value.field == "fsec_version_id"
-        repo.exists_by_identifier.assert_not_called()
-
-    def test_create_does_not_call_create_on_fsec_conflict(self, repo, sample_fa):
-        """repository.create n'est PAS appelé si fsec_version_id existe déjà."""
-        repo.exists_by_fsec_version_id.return_value = True
-
-        with pytest.raises(ConflictException):
-            create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
-
-        repo.create.assert_not_called()
-
     def test_create_does_not_call_create_on_identifier_conflict(self, repo, sample_fa):
         """repository.create n'est PAS appelé si identifier existe déjà."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = True
 
         with pytest.raises(ConflictException):
@@ -387,23 +346,59 @@ class TestCreateFa:
 
         repo.create.assert_not_called()
 
-    def test_create_calls_exists_by_fsec_version_id_with_bean_value(
-        self, repo, sample_fa
-    ):
-        """Vérifie que exists_by_fsec_version_id est appelé avec le bon argument."""
-        repo.exists_by_fsec_version_id.return_value = False
+    def test_create_uses_max_sequence_with_bean_value(self, repo, sample_fa):
+        """max_sequence_by_fsec_version_id est appelé avec le fsec_version_id du bean."""
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
         repo.create.return_value = sample_fa
 
         create_fa(repo, sample_fa, "C", "F", 2024)
 
-        repo.exists_by_fsec_version_id.assert_called_once_with(
+        repo.max_sequence_by_fsec_version_id.assert_called_once_with(
             sample_fa.fsec_version_id
         )
 
+    def test_create_second_fa_increments_sequence(self, repo, sample_fa):
+        """Une 2e FA sur la même FSEC reçoit le suffixe suivant (multi-FA assumé)."""
+        repo.max_sequence_by_fsec_version_id.return_value = 1
+        repo.exists_by_identifier.return_value = False
+
+        captured = {}
+
+        def capture(bean):
+            captured["identifier"] = bean.identifier
+            return bean
+
+        repo.create.side_effect = capture
+
+        create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
+
+        assert captured["identifier"].endswith("_02")
+
+    def test_create_sequence_no_collision_after_delete(self, repo, sample_fa):
+        """Après hard-delete d'une FA du milieu, le max-suffixe évite la collision.
+
+        FSEC avec _01/_02/_03, _02 supprimée → max=3 → la FA suivante est _04
+        (pas _03, qui réutiliserait un identifier détruit).
+        """
+        repo.max_sequence_by_fsec_version_id.return_value = 3
+        repo.exists_by_identifier.return_value = False
+
+        captured = {}
+
+        def capture(bean):
+            captured["identifier"] = bean.identifier
+            return bean
+
+        repo.create.side_effect = capture
+
+        create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
+
+        assert captured["identifier"].endswith("_04")
+
     def test_create_return_value_is_from_repository(self, repo, sample_fa):
         """Kill mutant: return value changed — vérifie que le résultat vient bien de repo.create."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
         expected = FaBean(uuid="returned-uuid")
         repo.create.return_value = expected
@@ -411,7 +406,47 @@ class TestCreateFa:
         result = create_fa(repo, sample_fa, "C", "F", 2024)
 
         assert result is expected
-        assert result.uuid == "returned-uuid"
+
+    def test_create_sets_opening_date_to_today_when_missing(self, repo, sample_fa):
+        """La date d'ouverture est posée à aujourd'hui à la création si absente."""
+        from datetime import date
+
+        repo.max_sequence_by_fsec_version_id.return_value = 0
+        repo.exists_by_identifier.return_value = False
+        sample_fa.iec_validation_open_date = None
+
+        captured = {}
+
+        def capture(bean):
+            captured["opening_date"] = bean.iec_validation_open_date
+            return bean
+
+        repo.create.side_effect = capture
+
+        create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
+
+        assert captured["opening_date"] == date.today()
+
+    def test_create_preserves_provided_opening_date(self, repo, sample_fa):
+        """Une date d'ouverture fournie explicitement (ex: backfill) est respectée."""
+        from datetime import date
+
+        repo.max_sequence_by_fsec_version_id.return_value = 0
+        repo.exists_by_identifier.return_value = False
+        fixed = date(2020, 1, 15)
+        sample_fa.iec_validation_open_date = fixed
+
+        captured = {}
+
+        def capture(bean):
+            captured["opening_date"] = bean.iec_validation_open_date
+            return bean
+
+        repo.create.side_effect = capture
+
+        create_fa(repo, sample_fa, "Camp", "FSEC", 2024)
+
+        assert captured["opening_date"] == fixed
 
 
 # ============================================================================
@@ -752,40 +787,29 @@ class TestCountAllFas:
 class TestGetFaByFsecVersionId:
     """Tests récupération par FSEC version ID."""
 
-    def test_success_returns_bean(self, repo, sample_fa):
-        """Retourne le bean si trouvé."""
-        repo.get_by_fsec_version_id.return_value = sample_fa
+    def test_returns_list_of_beans(self, repo, sample_fa):
+        """Retourne la liste des FA de la FSEC (une FSEC peut en avoir plusieurs)."""
+        repo.get_all_by_fsec_version_id.return_value = [sample_fa]
 
-        result = get_fa_by_fsec_version_id(repo, "fsec-version-001")
+        result = get_fas_by_fsec_version_id(repo, "fsec-version-001")
 
-        assert result is sample_fa
+        assert result == [sample_fa]
 
-    def test_not_found_raises_exception(self, repo):
-        """NotFoundException si aucune FA pour cette FSEC."""
-        repo.get_by_fsec_version_id.return_value = None
+    def test_returns_empty_list_when_none(self, repo):
+        """Liste vide si aucune FA pour cette FSEC (pas d'exception)."""
+        repo.get_all_by_fsec_version_id.return_value = []
 
-        with pytest.raises(NotFoundException) as exc_info:
-            get_fa_by_fsec_version_id(repo, "nonexistent-fsec")
+        result = get_fas_by_fsec_version_id(repo, "nonexistent-fsec")
 
-        assert "FA for FSEC" in str(exc_info.value)
-        assert exc_info.value.resource == "FA for FSEC"
-
-    def test_not_found_exception_contains_fsec_id(self, repo):
-        """L'exception contient le fsec_version_id recherché."""
-        repo.get_by_fsec_version_id.return_value = None
-
-        with pytest.raises(NotFoundException) as exc_info:
-            get_fa_by_fsec_version_id(repo, "specific-fsec-id")
-
-        assert exc_info.value.identifier == "specific-fsec-id"
+        assert result == []
 
     def test_calls_repository_with_correct_id(self, repo, sample_fa):
         """Le repository est appelé avec le bon fsec_version_id."""
-        repo.get_by_fsec_version_id.return_value = sample_fa
+        repo.get_all_by_fsec_version_id.return_value = [sample_fa]
 
-        get_fa_by_fsec_version_id(repo, "my-fsec-id")
+        get_fas_by_fsec_version_id(repo, "my-fsec-id")
 
-        repo.get_by_fsec_version_id.assert_called_once_with("my-fsec-id")
+        repo.get_all_by_fsec_version_id.assert_called_once_with("my-fsec-id")
 
 
 # ============================================================================
@@ -821,9 +845,6 @@ class TestProtectedMergeFields:
     def test_iec_validation_progress_is_protected(self):
         assert "iec_validation_progress" in _PROTECTED_MERGE_FIELDS
 
-    def test_iec_validation_progress_date_is_protected(self):
-        assert "iec_validation_progress_date" in _PROTECTED_MERGE_FIELDS
-
     def test_iec_validation_progress_name_is_protected(self):
         assert "iec_validation_progress_name" in _PROTECTED_MERGE_FIELDS
 
@@ -842,16 +863,13 @@ class TestProtectedMergeFields:
     def test_last_updated_is_protected(self):
         assert "last_updated" in _PROTECTED_MERGE_FIELDS
 
-    def test_is_active_is_protected(self):
-        assert "is_active" in _PROTECTED_MERGE_FIELDS
-
     def test_exact_field_count(self):
         """Vérifie le nombre exact de champs protégés (kill ajout/suppression mutants).
 
-        19 = 16 historiques + 3 FK *_user_uuid (iec_open/iec_progress/closure).
+        17 champs : is_active a été retiré (passage de la FA en hard delete).
         discoverer_user_uuid n'est pas protégé (le découvreur reste modifiable).
         """
-        assert len(_PROTECTED_MERGE_FIELDS) == 19
+        assert len(_PROTECTED_MERGE_FIELDS) == 17
 
     def test_no_mutated_field_names(self):
         """Kill mutant: aucun nom de champ ne contient 'XX'."""
@@ -878,7 +896,6 @@ class TestMergeFaBeans:
             iec_validation_open=True,
             iec_validation_open_date=date(2024, 1, 20),
             iec_validation_open_name="IEC User",
-            is_active=True,
         )
         updated = FaBean(
             uuid="changed-uuid",
@@ -888,7 +905,6 @@ class TestMergeFaBeans:
             iec_validation_open=False,
             iec_validation_open_date=date(2099, 1, 1),
             iec_validation_open_name="Hacker",
-            is_active=False,
         )
 
         merged = _merge_fa_beans(existing, updated)
@@ -900,7 +916,6 @@ class TestMergeFaBeans:
         assert merged.iec_validation_open is True
         assert merged.iec_validation_open_date == date(2024, 1, 20)
         assert merged.iec_validation_open_name == "IEC User"
-        assert merged.is_active is True
 
     def test_non_protected_fields_updated_when_not_none(self):
         """Les champs non-protégés sont mis à jour quand non None."""
@@ -978,20 +993,17 @@ class TestMergeFaBeans:
         existing = FaBean(
             uuid="uuid-1",
             iec_validation_progress=True,
-            iec_validation_progress_date=date(2024, 3, 1),
             iec_validation_progress_name="Validator Progress",
         )
         updated = FaBean(
             uuid="uuid-1",
             iec_validation_progress=False,
-            iec_validation_progress_date=None,
             iec_validation_progress_name=None,
         )
 
         merged = _merge_fa_beans(existing, updated)
 
         assert merged.iec_validation_progress is True
-        assert merged.iec_validation_progress_date == date(2024, 3, 1)
         assert merged.iec_validation_progress_name == "Validator Progress"
 
 
@@ -1133,7 +1145,6 @@ class TestDeleteFa:
         result = delete_fa(repo, "uuid")
 
         assert result is True
-        assert result is not False
 
 
 # ============================================================================
@@ -1316,7 +1327,6 @@ class TestPatchFa:
             sample_fa.uuid,
             {
                 "iec_validation_progress": True,
-                "iec_validation_progress_date": date(2099, 1, 1),
                 "iec_validation_progress_name": "Hacker",
             },
         )
@@ -1324,10 +1334,6 @@ class TestPatchFa:
         assert (
             captured["bean"].iec_validation_progress
             == sample_fa.iec_validation_progress
-        )
-        assert (
-            captured["bean"].iec_validation_progress_date
-            == sample_fa.iec_validation_progress_date
         )
         assert (
             captured["bean"].iec_validation_progress_name
@@ -1452,22 +1458,6 @@ class TestPatchFa:
         ]
         assert bypass_calls == []
 
-    def test_ignores_is_active_field(self, repo, sample_fa):
-        """Le champ 'is_active' est protégé et ignoré via PATCH."""
-        repo.get_by_uuid.return_value = sample_fa
-
-        captured = {}
-
-        def capture_update(bean):
-            captured["bean"] = bean
-            return bean
-
-        repo.update.side_effect = capture_update
-
-        patch_fa(repo, sample_fa.uuid, {"is_active": False})
-
-        assert captured["bean"].is_active is True
-
     def test_ignores_nonexistent_fields(self, repo, sample_fa):
         """Les champs inexistants sur le bean sont ignorés (pas d'erreur)."""
         repo.get_by_uuid.return_value = sample_fa
@@ -1508,12 +1498,10 @@ class TestPatchFa:
             "identifier",
             "created_at",
             "last_updated",
-            "is_active",
             "iec_validation_open",
             "iec_validation_open_date",
             "iec_validation_open_name",
             "iec_validation_progress",
-            "iec_validation_progress_date",
             "iec_validation_progress_name",
             "closure_validation",
             "closure_date",
@@ -1766,22 +1754,6 @@ class TestValidateProgressPhase:
 
         assert captured["bean"].iec_validation_progress is True
 
-    def test_success_sets_validation_date(self, repo, fa_en_cours):
-        """La date de validation est enregistrée."""
-        repo.get_by_uuid.return_value = fa_en_cours
-
-        captured = {}
-
-        def capture_update(bean):
-            captured["bean"] = bean
-            return bean
-
-        repo.update.side_effect = capture_update
-
-        validate_progress_phase(repo, fa_en_cours.uuid, "V2", date(2024, 5, 15))
-
-        assert captured["bean"].iec_validation_progress_date == date(2024, 5, 15)
-
     def test_success_sets_validator_name(self, repo, fa_en_cours):
         """Le nom du valideur est enregistré."""
         repo.get_by_uuid.return_value = fa_en_cours
@@ -1794,9 +1766,7 @@ class TestValidateProgressPhase:
 
         repo.update.side_effect = capture_update
 
-        validate_progress_phase(
-            repo, fa_en_cours.uuid, "Marie Curie", date(2024, 5, 15)
-        )
+        validate_progress_phase(repo, fa_en_cours.uuid, "Marie Curie")
 
         assert captured["bean"].iec_validation_progress_name == "Marie Curie"
 
@@ -1805,7 +1775,7 @@ class TestValidateProgressPhase:
         repo.get_by_uuid.return_value = None
 
         with pytest.raises(NotFoundException) as exc_info:
-            validate_progress_phase(repo, "missing", "V", date(2024, 1, 25))
+            validate_progress_phase(repo, "missing", "V")
 
         assert exc_info.value.resource == "FA"
 
@@ -1814,7 +1784,7 @@ class TestValidateProgressPhase:
         repo.get_by_uuid.return_value = sample_fa  # status_id = OPEN
 
         with pytest.raises(ConflictException) as exc_info:
-            validate_progress_phase(repo, sample_fa.uuid, "V", date(2024, 1, 25))
+            validate_progress_phase(repo, sample_fa.uuid, "V")
 
         assert exc_info.value.field == "status"
         assert "En cours" in str(exc_info.value)
@@ -1825,59 +1795,9 @@ class TestValidateProgressPhase:
         repo.get_by_uuid.return_value = closed_fa
 
         with pytest.raises(ConflictException) as exc_info:
-            validate_progress_phase(repo, "closed", "V", date(2024, 1, 25))
+            validate_progress_phase(repo, "closed", "V")
 
         assert exc_info.value.field == "status"
-
-    def test_date_before_open_validation_raises(self, repo, fa_en_cours):
-        """InvalidDataException si validation_date < iec_validation_open_date."""
-        fa_en_cours.iec_validation_open_date = date(2024, 3, 1)
-        repo.get_by_uuid.return_value = fa_en_cours
-
-        with pytest.raises(InvalidDataException) as exc_info:
-            validate_progress_phase(repo, fa_en_cours.uuid, "V", date(2024, 2, 15))
-
-        assert "antérieure" in str(exc_info.value)
-
-    def test_date_equal_to_open_validation_does_not_raise(self, repo, fa_en_cours):
-        """Si validation_date == iec_validation_open_date, pas d'exception."""
-        fa_en_cours.iec_validation_open_date = date(2024, 3, 1)
-        repo.get_by_uuid.return_value = fa_en_cours
-        repo.update.return_value = fa_en_cours
-
-        validate_progress_phase(repo, fa_en_cours.uuid, "V", date(2024, 3, 1))
-
-        repo.update.assert_called_once()
-
-    def test_no_open_validation_date_skips_check(self, repo, fa_en_cours):
-        """Si iec_validation_open_date est None, le contrôle chronologique est sauté."""
-        fa_en_cours.iec_validation_open_date = None
-        repo.get_by_uuid.return_value = fa_en_cours
-        repo.update.return_value = fa_en_cours
-
-        validate_progress_phase(repo, fa_en_cours.uuid, "V", date(2024, 1, 1))
-
-        repo.update.assert_called_once()
-
-    @patch("app.domain.fa.services.fa_service.date")
-    def test_none_date_defaults_to_today(self, mock_date, repo, fa_en_cours):
-        """Si validation_date est None, date.today() est utilisé."""
-        mock_date.today.return_value = date(2024, 6, 15)
-        mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
-        fa_en_cours.iec_validation_open_date = date(2024, 1, 1)
-        repo.get_by_uuid.return_value = fa_en_cours
-
-        captured = {}
-
-        def capture_update(bean):
-            captured["bean"] = bean
-            return bean
-
-        repo.update.side_effect = capture_update
-
-        validate_progress_phase(repo, fa_en_cours.uuid, "V2")
-
-        assert captured["bean"].iec_validation_progress_date == date(2024, 6, 15)
 
     def test_return_value_from_repository(self, repo, fa_en_cours):
         """Kill mutant: return value is from repository.update."""
@@ -1885,7 +1805,7 @@ class TestValidateProgressPhase:
         expected = FaBean(uuid="progress-result")
         repo.update.return_value = expected
 
-        result = validate_progress_phase(repo, fa_en_cours.uuid, "V", date(2024, 2, 1))
+        result = validate_progress_phase(repo, fa_en_cours.uuid, "V")
 
         assert result is expected
 
@@ -2012,29 +1932,31 @@ class TestCloseFa:
         assert exc_info.value.field == "iec_validation_progress"
         assert "iec_validation_progress" in str(exc_info.value)
 
-    def test_date_before_progress_validation_raises(self, repo, fa_en_cours):
-        """InvalidDataException si closure_date < iec_validation_progress_date."""
-        fa_en_cours.iec_validation_progress_date = date(2024, 3, 1)
-        repo.get_by_uuid.return_value = fa_en_cours
+    def test_date_before_open_validation_raises(self, repo, fa_en_cours):
+        """InvalidDataException si closure_date < iec_validation_open_date.
+
+        La chronologie ne dépend plus de la phase intermédiaire 'En cours'
+        (date supprimée) — seule la date d'ouverture borne la clôture.
+        """
+        repo.get_by_uuid.return_value = fa_en_cours  # open_date = 2024-01-20
 
         with pytest.raises(InvalidDataException) as exc_info:
-            close_fa(repo, fa_en_cours.uuid, "Chef", "Text", date(2024, 2, 15))
+            close_fa(repo, fa_en_cours.uuid, "Chef", "Text", date(2024, 1, 15))
 
         assert "antérieure" in str(exc_info.value)
 
-    def test_date_equal_to_progress_validation_does_not_raise(self, repo, fa_en_cours):
-        """Si closure_date == iec_validation_progress_date, pas d'exception."""
-        fa_en_cours.iec_validation_progress_date = date(2024, 3, 1)
-        repo.get_by_uuid.return_value = fa_en_cours
+    def test_date_equal_to_open_validation_does_not_raise(self, repo, fa_en_cours):
+        """Si closure_date == iec_validation_open_date, pas d'exception."""
+        repo.get_by_uuid.return_value = fa_en_cours  # open_date = 2024-01-20
         repo.update.return_value = fa_en_cours
 
-        close_fa(repo, fa_en_cours.uuid, "Chef", "Text", date(2024, 3, 1))
+        close_fa(repo, fa_en_cours.uuid, "Chef", "Text", date(2024, 1, 20))
 
         repo.update.assert_called_once()
 
-    def test_no_progress_date_skips_check(self, repo, fa_en_cours):
-        """Si iec_validation_progress_date est None, le contrôle chronologique est sauté."""
-        fa_en_cours.iec_validation_progress_date = None
+    def test_no_open_date_skips_check(self, repo, fa_en_cours):
+        """Si iec_validation_open_date est None, le contrôle chronologique est sauté."""
+        fa_en_cours.iec_validation_open_date = None
         repo.get_by_uuid.return_value = fa_en_cours
         repo.update.return_value = fa_en_cours
 
@@ -2123,31 +2045,31 @@ class TestEdgeCases:
     def test_generate_identifier_only_special_chars_campaign(self):
         """Un nom de campagne composé uniquement de caractères spéciaux → vide après nettoyage."""
         result = generate_fa_identifier("@#$%", "FSEC", 2024)
-        assert result == "FA_2024__FSEC"
+        assert result == "FA_2024__FSEC_01"
 
     def test_generate_identifier_only_special_chars_fsec(self):
         """Un nom de FSEC composé uniquement de caractères spéciaux → vide après nettoyage."""
         result = generate_fa_identifier("CAMP", "!@#$", 2024)
-        assert result == "FA_2024_CAMP_"
+        assert result == "FA_2024_CAMP__01"
 
     def test_generate_identifier_numbers_preserved(self):
         """Les chiffres sont préservés dans les noms."""
         result = generate_fa_identifier("Camp123", "FSEC456", 2024)
-        assert result == "FA_2024_Camp123_FSEC456"
+        assert result == "FA_2024_Camp123_FSEC456_01"
 
     def test_generate_identifier_underscore_preserved(self):
         """Les underscores existants sont préservés."""
         result = generate_fa_identifier("Camp_A", "FSEC_B", 2024)
-        assert result == "FA_2024_Camp_A_FSEC_B"
+        assert result == "FA_2024_Camp_A_FSEC_B_01"
 
     def test_create_fa_identifier_is_set_on_bean_before_create(self, repo):
         """Vérifie que l'identifiant est mis sur le bean AVANT l'appel à exists_by_identifier."""
         fa = FaBean(uuid="u1", fsec_version_id="f1", identifier="old")
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
 
         def check_identifier(identifier):
             # L'identifiant passé à exists_by_identifier devrait être le nouveau
-            assert identifier == "FA_2024_C_F"
+            assert identifier == "FA_2024_C_F_01"
             return False
 
         repo.exists_by_identifier.side_effect = check_identifier
@@ -2263,7 +2185,6 @@ class TestEdgeCases:
             uuid="test",
             status_id=FaStatus.IN_PROGRESS,
             iec_validation_progress=True,
-            iec_validation_progress_date=date(2024, 1, 1),
         )
         repo.get_by_uuid.return_value = fa
         repo.update.return_value = fa
@@ -2281,27 +2202,14 @@ class TestEdgeCases:
         with pytest.raises(InvalidDataException):
             validate_open_phase(repo, "t", "V", date(2024, 3, 9))
 
-    def test_validate_progress_chronology_uses_less_than(self, repo):
+    def test_close_fa_chronology_uses_less_than(self, repo):
         """Kill mutant: < mutated to > or <=.
         Date exactly one day before open_validation_date should raise."""
         fa = FaBean(
             uuid="t",
             status_id=FaStatus.IN_PROGRESS,
-            iec_validation_open_date=date(2024, 3, 10),
-        )
-        repo.get_by_uuid.return_value = fa
-
-        with pytest.raises(InvalidDataException):
-            validate_progress_phase(repo, "t", "V", date(2024, 3, 9))
-
-    def test_close_fa_chronology_uses_less_than(self, repo):
-        """Kill mutant: < mutated to > or <=.
-        Date exactly one day before progress_validation_date should raise."""
-        fa = FaBean(
-            uuid="t",
-            status_id=FaStatus.IN_PROGRESS,
             iec_validation_progress=True,
-            iec_validation_progress_date=date(2024, 3, 10),
+            iec_validation_open_date=date(2024, 3, 10),
         )
         repo.get_by_uuid.return_value = fa
 
@@ -2320,7 +2228,7 @@ class TestFaServiceLoggerMessages:
 
     @patch("app.domain.fa.services.fa_service.logger")
     def test_create_fa_logs_creation(self, mock_logger, repo):
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = False
         bean = FaBean(uuid="fa-1", fsec_version_id="fsec-1", identifier="")
         repo.create.return_value = bean
@@ -2422,20 +2330,9 @@ class TestFaServiceLoggerMessages:
 class TestFaServiceErrorMessages:
     """Kill mutants on error message format strings and exception field names."""
 
-    def test_create_fa_conflict_fsec_version_id_field(self, repo):
-        """Verify ConflictException field is exactly 'fsec_version_id'."""
-        repo.exists_by_fsec_version_id.return_value = True
-        bean = FaBean(fsec_version_id="fsec-v1")
-
-        with pytest.raises(ConflictException) as exc_info:
-            create_fa(repo, bean, "Camp", "FSEC", 2025)
-
-        assert exc_info.value.field == "fsec_version_id"
-        assert exc_info.value.value == "fsec-v1"
-
     def test_create_fa_conflict_identifier_field(self, repo):
         """Verify ConflictException field is exactly 'identifier'."""
-        repo.exists_by_fsec_version_id.return_value = False
+        repo.max_sequence_by_fsec_version_id.return_value = 0
         repo.exists_by_identifier.return_value = True
         bean = FaBean(fsec_version_id="fsec-v1")
 
@@ -2520,29 +2417,13 @@ class TestFaServiceErrorMessages:
         assert "2024-06-10" in msg
         assert "2024-06-15" in msg
 
-    def test_validate_progress_chronology_error_message(self, repo):
-        """Verify InvalidDataException message for progress chronology error."""
-        fa = FaBean(
-            uuid="fa-1",
-            status_id=FaStatus.IN_PROGRESS,
-            iec_validation_open_date=date(2024, 6, 15),
-        )
-        repo.get_by_uuid.return_value = fa
-
-        with pytest.raises(InvalidDataException) as exc_info:
-            validate_progress_phase(repo, "fa-1", "V", date(2024, 6, 10))
-
-        msg = str(exc_info.value)
-        assert "2024-06-10" in msg
-        assert "2024-06-15" in msg
-
     def test_close_fa_chronology_error_message(self, repo):
         """Verify InvalidDataException message for close chronology error."""
         fa = FaBean(
             uuid="fa-1",
             status_id=FaStatus.IN_PROGRESS,
             iec_validation_progress=True,
-            iec_validation_progress_date=date(2024, 6, 15),
+            iec_validation_open_date=date(2024, 6, 15),
         )
         repo.get_by_uuid.return_value = fa
 
@@ -2562,11 +2443,85 @@ class TestFaServiceErrorMessages:
 
         assert exc_info.value.resource == "FA"
 
-    def test_get_fa_by_fsec_version_id_not_found_resource(self, repo):
-        """Verify NotFoundException resource is 'FA for FSEC'."""
-        repo.get_by_fsec_version_id.return_value = None
+    def test_create_fa_resolve_missing_fsec_version_id(
+        self, repo, fsec_repo, campaign_repo
+    ):
+        """Verify InvalidDataException quand fsec_version_id est vide à la résolution."""
+        bean = FaBean(fsec_version_id="")
 
-        with pytest.raises(NotFoundException) as exc_info:
-            get_fa_by_fsec_version_id(repo, "unknown")
+        with pytest.raises(InvalidDataException):
+            resolve_fa_creation_context(bean, fsec_repo, campaign_repo)
 
-        assert exc_info.value.resource == "FA for FSEC"
+
+# ============================================================================
+# REGENERATE FA IDENTIFIERS (réalignement contexte FSEC)
+# ============================================================================
+
+
+class TestParseFaSequence:
+    """Extraction du suffixe séquentiel `_NN` d'un identifiant FA."""
+
+    def test_parses_trailing_sequence(self):
+        assert _parse_fa_sequence("FA_2026_OMEGA_1_03") == 3
+
+    def test_ignores_underscores_in_names(self):
+        # Noms campagne/FSEC avec underscores : seul le groupe final compte.
+        assert _parse_fa_sequence("FA_2026_lol_baptiste_1f_12") == 12
+
+    def test_defaults_to_one_when_absent(self):
+        assert _parse_fa_sequence("identifiant_sans_sequence") == 1
+        assert _parse_fa_sequence("") == 1
+
+
+class TestRegenerateFaIdentifiersForFsec:
+    """Réécriture des identifiants FA quand la FSEC change de nom/campagne."""
+
+    def test_regenerates_preserving_sequence(self, repo):
+        """Chaque FA garde son numéro de séquence, seul le contexte change."""
+        repo.get_all_by_fsec_version_id.return_value = [
+            FaBean(uuid="fa1", identifier="FA_2026_OMEGA_1_01"),
+            FaBean(uuid="fa2", identifier="FA_2026_OMEGA_1_02"),
+        ]
+        repo.exists_by_identifier.return_value = False
+
+        count = regenerate_fa_identifiers_for_fsec(
+            repo, "fsec-v1", "lol", "baptiste", 2026
+        )
+
+        assert count == 2
+        repo.update_identifier.assert_any_call("fa1", "FA_2026_lol_baptiste_01")
+        repo.update_identifier.assert_any_call("fa2", "FA_2026_lol_baptiste_02")
+
+    def test_skips_when_identifier_unchanged(self, repo):
+        """Pas d'écriture si le contexte ne modifie pas l'identifiant."""
+        repo.get_all_by_fsec_version_id.return_value = [
+            FaBean(uuid="fa1", identifier="FA_2026_OMEGA_1_01"),
+        ]
+        repo.exists_by_identifier.return_value = False
+
+        # Même campagne/nom/année que l'identifiant existant.
+        count = regenerate_fa_identifiers_for_fsec(repo, "fsec-v1", "OMEGA", "1", 2026)
+
+        assert count == 0
+        repo.update_identifier.assert_not_called()
+
+    def test_falls_back_to_next_sequence_on_collision(self, repo):
+        """Collision sur l'identifiant cible → prochain numéro libre."""
+        repo.get_all_by_fsec_version_id.return_value = [
+            FaBean(uuid="fa1", identifier="FA_2026_OMEGA_1_01"),
+        ]
+        repo.exists_by_identifier.return_value = True
+        repo.max_sequence_by_fsec_version_id.return_value = 7
+
+        count = regenerate_fa_identifiers_for_fsec(
+            repo, "fsec-v1", "lol", "baptiste", 2026
+        )
+
+        assert count == 1
+        repo.update_identifier.assert_called_once_with("fa1", "FA_2026_lol_baptiste_08")
+
+    def test_no_fa_returns_zero(self, repo):
+        repo.get_all_by_fsec_version_id.return_value = []
+
+        assert regenerate_fa_identifiers_for_fsec(repo, "fsec-v1", "lol", "x", 2026) == 0
+        repo.update_identifier.assert_not_called()

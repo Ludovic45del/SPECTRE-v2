@@ -197,6 +197,54 @@ class TestFsecControllerUpdate:
         assert data["name"] == "FSEC Modifié"
         assert data["status_id"] == 1
 
+    def test_update_fsec_rename_regenerates_fa_identifiers(
+        self, api_client, sample_campaign, sample_fsec_payload
+    ):
+        """Renommer une FSEC réaligne l'identifiant de ses FA (le « nom » suit)."""
+        from datetime import date as _date
+
+        from app.domain.fa.services.fa_service import generate_fa_identifier
+        from app.repository.fa.models.fa_entity import FaEntity
+        from app.repository.fsec.models.fsec_entity import FsecEntity
+
+        create_response = api_client.post(
+            "/api/v1/fsecs/",
+            data=json.dumps(sample_fsec_payload),
+            content_type="application/json",
+        )
+        version_uuid = create_response.json()["version_uuid"]
+        fsec_entity = FsecEntity.objects.get(version_uuid=version_uuid)
+
+        initial_identifier = generate_fa_identifier(
+            sample_campaign.name, sample_fsec_payload["name"], sample_campaign.year, 1
+        )
+        fa = FaEntity.objects.create(
+            fsec_version_id=fsec_entity,
+            status_id_id=0,
+            identifier=initial_identifier,
+            discoverer="Testeur",
+            event_date=_date(2025, 3, 1),
+            observation="obs",
+            quick_analysis="qa",
+        )
+
+        new_name = "FSEC Renommé"
+        updated_payload = sample_fsec_payload.copy()
+        updated_payload["name"] = new_name
+        response = api_client.put(
+            f"/api/v1/fsecs/{version_uuid}/",
+            data=json.dumps(updated_payload),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        fa.refresh_from_db()
+        expected = generate_fa_identifier(
+            sample_campaign.name, new_name, sample_campaign.year, 1
+        )
+        assert fa.identifier == expected
+        assert fa.identifier != initial_identifier
+
     def test_update_fsec_status_to_hs(self, api_client, sample_fsec_payload):
         """Test passage en statut HS."""
         # Créer un FSEC
@@ -271,6 +319,36 @@ class TestFsecControllerDelete:
         response = admin_api_client.delete(f"/api/v1/fsecs/{fake_uuid}/")
 
         assert response.status_code in [404, 500]
+
+    def test_delete_fsec_with_steps_returns_204(
+        self, api_client, admin_api_client, sample_fsec_payload
+    ):
+        """Régression : supprimer un FSEC qui a des étapes ne doit plus renvoyer 500.
+
+        Les étapes (FK `on_delete=PROTECT`) levaient un `ProtectedError` non géré
+        par le middleware → 500. La cascade applicative purge la version et rend
+        un 204.
+        """
+        from app.repository.fsec.models.fsec_entity import FsecEntity
+        from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
+
+        create_response = api_client.post(
+            "/api/v1/fsecs/",
+            data=json.dumps(sample_fsec_payload),
+            content_type="application/json",
+        )
+        version_uuid = create_response.json()["version_uuid"]
+
+        # Rattache une étape : reproduit l'état qui déclenchait le 500.
+        fsec_entity = FsecEntity.objects.get(version_uuid=version_uuid)
+        AssemblyStepEntity.objects.create(fsec_version_id=fsec_entity)
+
+        response = admin_api_client.delete(f"/api/v1/fsecs/{version_uuid}/")
+
+        assert response.status_code == 204
+        assert not AssemblyStepEntity.objects.filter(
+            fsec_version_id=version_uuid
+        ).exists()
 
 
 # ============================================================================

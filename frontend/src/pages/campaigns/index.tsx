@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useCampaigns } from '@entities/campaign';
+import { paths } from '@shared/config';
 import { CreateCampaignModal, useCreateCampaignStore } from '@features/campaign/create-campaign';
 import { CampaignsToolbar, useFilterCampaignsStore } from '@features/campaign/filter-campaigns';
 import { useEntityList, ROWS_PER_PAGE_OPTIONS } from '@shared/lib';
@@ -57,7 +58,7 @@ export default function CampaignsPage() {
 
     const paginatedCampaigns = useMemo(() => paginate(processedCampaigns), [paginate, processedCampaigns]);
 
-    const handleNavigate = useCallback((uuid: string) => navigate(`/campagne-details/${uuid}/overview`), [navigate]);
+    const handleNavigate = useCallback((slug: string) => navigate(paths.campaign.tab(slug, 'overview')), [navigate]);
 
     // Loading state - Skeleton table
     if (isLoading) {

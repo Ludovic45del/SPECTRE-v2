@@ -6,7 +6,7 @@
  */
 
 import { memo, useCallback } from 'react';
-import { Box, Divider, IconButton, Paper, Stack, Typography } from '@mui/material';
+import { Box, Divider, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
@@ -141,20 +141,15 @@ export const DocumentsSection = memo(function DocumentsSection({
                                 )}
                             </Box>
                             {doc && (
-                                <IconButton
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => handleCopyLink(doc.path)}
-                                    sx={{
-                                        flexShrink: 0,
-                                        borderRadius: 1,
-                                        bgcolor: 'primary.main',
-                                        color: 'white',
-                                        '&:hover': { bgcolor: 'primary.dark' },
-                                    }}
-                                >
-                                    <ContentCopyIcon fontSize="small" />
-                                </IconButton>
+                                <Tooltip title="Copier le lien" arrow>
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleCopyLink(doc.path)}
+                                        sx={{ flexShrink: 0 }}
+                                    >
+                                        <ContentCopyIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
                             )}
                         </Box>
                     );

@@ -17,6 +17,9 @@ const MOCK_FSEC_VERSION_UUID = '00000000-0000-0000-0000-000000000002';
 
 // Mock FA data
 const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
+    slug: 'fa-001',
+    fsecSlug: null,
+    campaignSlug: null,
     uuid: MOCK_FA_UUID,
     fsecVersionId: MOCK_FSEC_VERSION_UUID,
     identifier: 'FA-001',
@@ -39,7 +42,6 @@ const createMockFa = (overrides: Partial<Fa> = {}): Fa => ({
     cause: 'Test cause',
     experienceImpact: 'Test impact',
     iecValidationProgress: false,
-    iecValidationProgressDate: null,
     iecValidationProgressName: null,
     iecValidationProgressUserUuid: null,
     closureValidation: null,
@@ -76,7 +78,6 @@ const createMockFaApiResponse = (overrides: Record<string, unknown> = {}) => ({
     cause: 'Updated cause',
     experience_impact: 'Test impact',
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,

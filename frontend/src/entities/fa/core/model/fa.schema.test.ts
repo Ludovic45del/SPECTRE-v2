@@ -38,7 +38,6 @@ const createValidApiData = (overrides = {}) => ({
     cause: null,
     experience_impact: null,
     iec_validation_progress: false,
-    iec_validation_progress_date: null,
     iec_validation_progress_name: null,
     closure_validation: null,
     closure_date: null,
@@ -66,7 +65,6 @@ describe('FaApiSchema', () => {
             cause: 'Cause identifiée',
             experience_impact: 'Impact modéré',
             iec_validation_progress: true,
-            iec_validation_progress_date: '2024-01-25',
             iec_validation_progress_name: 'Validator 2',
             closure_validation: 'Fermeture validée',
             closure_date: '2024-01-30',
@@ -140,7 +138,6 @@ describe('FaSchema (Transformation)', () => {
         const apiData = createValidApiData({
             event_date: '2024-01-15',
             iec_validation_open_date: '2024-01-20',
-            iec_validation_progress_date: '2024-01-25',
             closure_date: '2024-01-30',
             created_at: '2024-01-15T10:30:00Z',
             last_updated: '2024-01-16T14:00:00Z',
@@ -150,7 +147,6 @@ describe('FaSchema (Transformation)', () => {
 
         expect(result.eventDate).toBeInstanceOf(Date);
         expect(result.iecValidationOpenDate).toBeInstanceOf(Date);
-        expect(result.iecValidationProgressDate).toBeInstanceOf(Date);
         expect(result.closureDate).toBeInstanceOf(Date);
         expect(result.createdAt).toBeInstanceOf(Date);
         expect(result.lastUpdated).toBeInstanceOf(Date);
@@ -160,7 +156,6 @@ describe('FaSchema (Transformation)', () => {
         const apiData = createValidApiData({
             event_date: null,
             iec_validation_open_date: null,
-            iec_validation_progress_date: null,
             closure_date: null,
             created_at: null,
             last_updated: null,
@@ -170,7 +165,6 @@ describe('FaSchema (Transformation)', () => {
 
         expect(result.eventDate).toBeNull();
         expect(result.iecValidationOpenDate).toBeNull();
-        expect(result.iecValidationProgressDate).toBeNull();
         expect(result.closureDate).toBeNull();
         expect(result.createdAt).toBeNull();
         expect(result.lastUpdated).toBeNull();
@@ -181,7 +175,6 @@ describe('FaSchema (Transformation)', () => {
             cause: 'Cause identifiée',
             experience_impact: 'Impact sur production',
             iec_validation_progress: true,
-            iec_validation_progress_date: '2024-01-25',
             iec_validation_progress_name: 'IEC Validator',
         });
 
@@ -190,7 +183,6 @@ describe('FaSchema (Transformation)', () => {
         expect(result.cause).toBe('Cause identifiée');
         expect(result.experienceImpact).toBe('Impact sur production');
         expect(result.iecValidationProgress).toBe(true);
-        expect(result.iecValidationProgressDate).toBeInstanceOf(Date);
         expect(result.iecValidationProgressName).toBe('IEC Validator');
     });
 

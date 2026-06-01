@@ -13,6 +13,7 @@ import { filterEmbases, sortEmbases, getStatut } from './embase-list-utils';
 // ---------------------------------------------------------------------------
 
 const createEmbase = (overrides: Partial<Embase> = {}): Embase => ({
+    slug: 'emb-001',
     uuid: '123e4567-e89b-12d3-a456-426614174000',
     identifier: 'EMB-001',
     type: 'jet_de_gaz' as const,

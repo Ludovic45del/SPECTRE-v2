@@ -1,0 +1,142 @@
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] '
+                    '"$request" $status $body_bytes_sent '
+                    '"$http_referer" "$http_user_agent"';
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    tcp_nopush      on;
+    tcp_nodelay     on;
+    keepalive_timeout  65;
+    server_tokens   off;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/javascript application/javascript application/json image/svg+xml;
+
+    # Brotli (meilleur ratio que gzip sur le JS/CSS). Décommenter UNIQUEMENT si
+    # l'image nginx embarque ngx_brotli (sinon nginx refuse de démarrer) :
+    # brotli on;
+    # brotli_comp_level 6;
+    # brotli_types text/plain text/css text/javascript application/javascript application/json image/svg+xml;
+
+    client_max_body_size 10M;
+
+    upstream backend {
+        server backend:8000;
+    }
+
+    # HTTP : challenge ACME (Let's Encrypt) + redirection vers HTTPS
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        # Challenge Let's Encrypt (HTTP-01) — doit rester accessible en clair.
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot;
+        }
+
+        # Tout le reste bascule en HTTPS.
+        location / {
+            return 301 https://$host$request_uri;
+        }
+    }
+
+    # HTTPS : seule porte d'entrée applicative
+    server {
+        listen 443 ssl;
+        listen [::]:443 ssl;
+        http2 on;
+        server_name ${DOMAIN};
+
+        # Certificat : Let's Encrypt si disponible, sinon auto-signé
+        # (chemins résolus par entrypoint-nginx.sh).
+        ssl_certificate     ${SSL_CERT};
+        ssl_certificate_key ${SSL_KEY};
+        ssl_protocols       TLSv1.2 TLSv1.3;
+        ssl_ciphers         HIGH:!aNULL:!MD5;
+        ssl_session_cache   shared:SSL:10m;
+        ssl_session_timeout 1d;
+
+        # Whitelist IP — toute IP non listée reçoit 403
+        include /etc/nginx/conf.d/allowed_ips.conf;
+        deny all;
+
+        # Sécurité de base
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        # Médias utilisateurs servis par nginx (uploads FSEC, etc.)
+        # Doit être déclaré AVANT /api/ pour avoir la priorité de match.
+        # Django génère des URLs sous /api/media/ (cf. MEDIA_URL dans settings.py).
+        location /api/media/ {
+            alias /srv/media/;
+            expires 7d;
+            add_header Cache-Control "public";
+        }
+
+        # API Django
+        location /api/ {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_redirect off;
+            proxy_read_timeout 60s;
+            client_max_body_size 10M;
+        }
+
+        # Admin Django (mêmes règles)
+        location /admin/ {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+
+        # Statiques Django (collectstatic) — pour le panel admin et DRF
+        location /static/ {
+            alias /srv/static/;
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # Assets buildés par Vite : noms content-hashés (index-XXXX.js) →
+        # cache long immuable. Doit être déclaré AVANT `location /` pour la
+        # priorité de match. Supprime la revalidation systématique au reload.
+        location ^~ /assets/ {
+            root /usr/share/nginx/html;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            access_log off;
+            try_files $uri =404;
+        }
+
+        # SPA React : tout le reste va sur index.html (client-side routing).
+        # index.html reste en no-cache pour toujours pointer vers les derniers
+        # hash d'assets après un redéploiement.
+        location / {
+            root /usr/share/nginx/html;
+            try_files $uri $uri/ /index.html;
+            expires -1;
+        }
+    }
+}

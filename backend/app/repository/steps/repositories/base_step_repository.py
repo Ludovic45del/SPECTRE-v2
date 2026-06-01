@@ -9,9 +9,41 @@ from typing import Callable, Generic, List, Optional, Type, TypeVar
 
 from django.db import models, transaction
 
+from app.domain.exceptions import ValidationException
+from app.repository.user.models.user_profile_entity import UserProfileEntity
+
 # Types génériques
 BeanT = TypeVar("BeanT")
 EntityT = TypeVar("EntityT", bound=models.Model)
+
+
+def resolve_step_users(user_uuids: List[str]) -> List["UserProfileEntity"]:
+    """Charge les UserProfileEntity correspondant aux uuids (ordre d'entrée préservé).
+
+    Lève ValidationException si l'un des uuids est introuvable. Partagé par les
+    steps assemblage/métrologie pour gérer leurs M2M d'opérateurs multiples
+    (premier de la liste = FK simple synchronisée pour la rétro-compat).
+    """
+    if not user_uuids:
+        return []
+    by_uuid = {
+        str(profile.uuid): profile
+        for profile in UserProfileEntity.objects.filter(uuid__in=user_uuids)
+    }
+    missing = [uuid for uuid in user_uuids if uuid not in by_uuid]
+    if missing:
+        raise ValidationException(
+            "operator_user_uuids",
+            f"Utilisateurs introuvables: {sorted(missing)}",
+        )
+    # Dédoublonne en conservant l'ordre de saisie.
+    seen: set = set()
+    ordered: List[UserProfileEntity] = []
+    for uuid in user_uuids:
+        if uuid not in seen:
+            seen.add(uuid)
+            ordered.append(by_uuid[uuid])
+    return ordered
 
 
 class BaseStepRepository(Generic[BeanT, EntityT]):

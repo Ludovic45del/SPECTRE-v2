@@ -19,6 +19,9 @@ def user_mapper_entity_to_bean(user: User, profile: UserProfileEntity) -> UserBe
         service=profile.service,
         numero=profile.numero,
         bureau=profile.bureau,
+        # ImageField.url lève ValueError si le champ est vide → garde-fou explicite.
+        avatar_url=profile.avatar.url if profile.avatar else None,
+        signature_url=profile.signature.url if profile.signature else None,
         is_active=user.is_active,
         force_password_change=profile.force_password_change,
         dashboard_preferences=profile.dashboard_preferences or {},
@@ -55,6 +58,8 @@ def user_mapper_bean_to_api(bean: UserBean) -> dict:
         "service": bean.service or "",
         "numero": bean.numero or "",
         "bureau": bean.bureau or "",
+        "avatar_url": bean.avatar_url,
+        "signature_url": bean.signature_url,
         "is_active": bean.is_active,
         "force_password_change": bean.force_password_change,
         "dashboard_preferences": bean.dashboard_preferences or {},

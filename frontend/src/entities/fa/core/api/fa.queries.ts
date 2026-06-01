@@ -22,12 +22,24 @@
  * - POST /fas/{uuid}/close/ → close FA
  */
 
+import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { api, ApiError } from '@shared/api';
-import { QUERY_CACHE_CONFIG } from '@shared/lib';
+import { api } from '@shared/api';
+import { QUERY_CACHE_CONFIG, seedDetailFromList, isUuid } from '@shared/lib';
 
-import { type Fa, type FaCreate, type FaUpdate, FaListSchema, FaSchema, faCreateToApi, faUpdateToApi } from '../model';
+import {
+    type Fa,
+    type FaCreate,
+    type FaPhoto,
+    type FaUpdate,
+    FaListSchema,
+    FaPhotoListSchema,
+    FaPhotoSchema,
+    FaSchema,
+    faCreateToApi,
+    faUpdateToApi,
+} from '../model';
 import { faKeys } from './fa.keys';
 
 /**
@@ -71,50 +83,94 @@ export function useFas() {
  * return <FaDetails fa={fa} />;
  * ```
  */
+export async function fetchFa(uuid: string, signal?: AbortSignal): Promise<Fa> {
+    const data = await api.get(`/fas/${uuid}/`, undefined, signal);
+    return FaSchema.parse(data);
+}
+
 export function useFa(uuid: string) {
+    const queryClient = useQueryClient();
     return useQuery({
         queryKey: faKeys.detail(uuid),
-        queryFn: async ({ signal }): Promise<Fa> => {
-            const data = await api.get(`/fas/${uuid}/`, undefined, signal);
-            return FaSchema.parse(data);
-        },
+        queryFn: ({ signal }) => fetchFa(uuid, signal),
         enabled: Boolean(uuid),
         ...QUERY_CACHE_CONFIG,
+        // Seedé depuis le cache liste → header instantané au clic.
+        ...seedDetailFromList<Fa>(queryClient, [faKeys.lists()], (f) => f.uuid === uuid),
     });
 }
 
 /**
- * Hook to fetch a FA associated with a specific FSEC.
+ * Récupère une FA par son slug d'URL (slugify de l'identifier). Rétro-compatible :
+ * bascule sur l'endpoint UUID si le paramètre est un UUID (anciens liens).
+ */
+export async function fetchFaBySlug(slugOrUuid: string, signal?: AbortSignal): Promise<Fa> {
+    const path = isUuid(slugOrUuid)
+        ? `/fas/${slugOrUuid}/`
+        : `/fas/by-slug/${encodeURIComponent(slugOrUuid)}/`;
+    const data = await api.get(path, undefined, signal);
+    return FaSchema.parse(data);
+}
+
+/**
+ * Fetch single FA by slug. Seedé depuis le cache liste (match slug ou uuid).
+ */
+export function useFaBySlug(slug: string) {
+    const queryClient = useQueryClient();
+    return useQuery({
+        queryKey: faKeys.detailBySlug(slug),
+        queryFn: ({ signal }) => fetchFaBySlug(slug, signal),
+        enabled: Boolean(slug),
+        ...QUERY_CACHE_CONFIG,
+        ...seedDetailFromList<Fa>(queryClient, [faKeys.lists()], (f) => f.slug === slug || f.uuid === slug),
+    });
+}
+
+/**
+ * Précharge le détail d'une FA (survol de ligne). No-op si déjà frais.
+ */
+export function usePrefetchFa() {
+    const queryClient = useQueryClient();
+    return useCallback(
+        (uuid: string) => {
+            if (!uuid) return;
+            void queryClient.prefetchQuery({
+                queryKey: faKeys.detail(uuid),
+                queryFn: ({ signal }) => fetchFa(uuid, signal),
+                ...QUERY_CACHE_CONFIG,
+            });
+        },
+        [queryClient],
+    );
+}
+
+/**
+ * Hook to fetch all FAs associated with a specific FSEC.
  *
- * Returns null if no FA exists for the given FSEC (one-to-one relationship).
+ * Returns an array (potentially empty). A FSEC can have multiple FAs.
  *
  * @param fsecVersionId - The FSEC version UUID
- * @returns TanStack Query result with FA or null
+ * @returns TanStack Query result with an array of FAs (empty if none)
  *
  * @example
  * ```tsx
- * const { data: fa } = useFaByFsec(fsec.versionUuid);
+ * const { data: fas = [] } = useFasByFsec(fsec.versionUuid);
  *
- * if (fa) {
- *   return <Link to={`/fa/${fa.uuid}`}>Voir FA</Link>;
+ * if (fas.length > 0) {
+ *   return fas.map((fa) => <Link key={fa.uuid} to={`/fa/${fa.uuid}`}>{fa.identifier}</Link>);
  * }
  * return <Button onClick={openCreateFaModal}>Créer FA</Button>;
  * ```
  */
-export function useFaByFsec(fsecVersionId: string) {
+export function useFasByFsec(fsecVersionId: string) {
     return useQuery({
         queryKey: faKeys.byFsec(fsecVersionId),
-        queryFn: async ({ signal }): Promise<Fa | null> => {
-            try {
-                const data = await api.get(`/fas/fsec/${fsecVersionId}/`, undefined, signal);
-                return FaSchema.parse(data);
-            } catch (error) {
-                // Return null only for 404 (no FA found for this FSEC)
-                if (error instanceof ApiError && error.status === 404) {
-                    return null;
-                }
-                throw error;
+        queryFn: async ({ signal }): Promise<Fa[]> => {
+            const data = await api.get(`/fas/fsec/${fsecVersionId}/`, undefined, signal);
+            if (!Array.isArray(data)) {
+                return [];
             }
+            return data.map((item) => FaSchema.parse(item));
         },
         enabled: Boolean(fsecVersionId),
         ...QUERY_CACHE_CONFIG,
@@ -155,6 +211,8 @@ export function useCreateFa() {
         onSuccess: (newFa) => {
             // Pre-populate detail cache so navigation shows data immediately
             queryClient.setQueryData(faKeys.detail(newFa.uuid), newFa);
+            // La création navigue vers /fa-details/<slug> → pré-seed la clé slug.
+            queryClient.setQueryData(faKeys.detailBySlug(newFa.slug), newFa);
             // Invalidate list
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
             // Invalidate FSEC-specific query
@@ -200,9 +258,8 @@ export function useUpdateFa() {
         },
         onSuccess: (updatedFa) => {
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
-            queryClient.invalidateQueries({
-                queryKey: faKeys.detail(updatedFa.uuid),
-            });
+            // `details()` (préfixe) couvre detail(uuid) ET detailBySlug(slug).
+            queryClient.invalidateQueries({ queryKey: faKeys.details() });
             if (updatedFa.fsecVersionId) {
                 queryClient.invalidateQueries({
                     queryKey: faKeys.byFsec(updatedFa.fsecVersionId),
@@ -244,6 +301,74 @@ export function useDeleteFa() {
             queryClient.invalidateQueries({ queryKey: faKeys.detail(deletedUuid) });
             // Invalidate all byFsec queries since we don't have the fsecVersionId here
             queryClient.invalidateQueries({ queryKey: [...faKeys.all, 'fsec'] });
+        },
+    });
+}
+
+/**
+ * Galerie de photos d'une FA (phase Ouvert).
+ *
+ * Endpoint : GET /fas/{uuid}/photos/ → liste ordonnée.
+ */
+export function useFaPhotos(faUuid: string) {
+    return useQuery({
+        queryKey: faKeys.photos(faUuid),
+        queryFn: async ({ signal }): Promise<FaPhoto[]> => {
+            const data = await api.get(`/fas/${faUuid}/photos/`, undefined, signal);
+            if (!Array.isArray(data)) return [];
+            return FaPhotoListSchema.parse(data);
+        },
+        enabled: Boolean(faUuid),
+        ...QUERY_CACHE_CONFIG,
+    });
+}
+
+/**
+ * Ajoute une photo à la galerie d'une FA (upload multipart).
+ *
+ * Le fichier doit déjà être compressé côté caller (cf. shared/lib/compressImage).
+ * Endpoint : POST /fas/{uuid}/photos/ (champ `image`, `caption?`).
+ */
+export function useAddFaPhoto() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            faUuid,
+            image,
+            caption,
+        }: {
+            faUuid: string;
+            image: File;
+            caption?: string | null;
+        }): Promise<FaPhoto> => {
+            const form = new FormData();
+            form.append('image', image, image.name);
+            if (caption) form.append('caption', caption);
+            const response = await api.post(`/fas/${faUuid}/photos/`, form);
+            return FaPhotoSchema.parse(response);
+        },
+        onSuccess: (_photo, variables) => {
+            queryClient.invalidateQueries({ queryKey: faKeys.photos(variables.faUuid) });
+        },
+    });
+}
+
+/**
+ * Supprime une photo de la galerie d'une FA.
+ *
+ * Endpoint : DELETE /fas/{uuid}/photos/{photoUuid}/.
+ */
+export function useDeleteFaPhoto() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ faUuid, photoUuid }: { faUuid: string; photoUuid: string }): Promise<string> => {
+            await api.delete(`/fas/${faUuid}/photos/${photoUuid}/`);
+            return photoUuid;
+        },
+        onSuccess: (_deletedUuid, variables) => {
+            queryClient.invalidateQueries({ queryKey: faKeys.photos(variables.faUuid) });
         },
     });
 }
@@ -295,11 +420,10 @@ export function useValidateOpenFa() {
             });
             return FaSchema.parse(response);
         },
-        onSuccess: (updatedFa) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
-            queryClient.invalidateQueries({
-                queryKey: faKeys.detail(updatedFa.uuid),
-            });
+            // `details()` (préfixe) couvre detail(uuid) ET detailBySlug(slug).
+            queryClient.invalidateQueries({ queryKey: faKeys.details() });
         },
     });
 }
@@ -349,11 +473,10 @@ export function useValidateProgressFa() {
             });
             return FaSchema.parse(response);
         },
-        onSuccess: (updatedFa) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
-            queryClient.invalidateQueries({
-                queryKey: faKeys.detail(updatedFa.uuid),
-            });
+            // `details()` (préfixe) couvre detail(uuid) ET detailBySlug(slug).
+            queryClient.invalidateQueries({ queryKey: faKeys.details() });
         },
     });
 }
@@ -411,11 +534,10 @@ export function useCloseFa() {
             });
             return FaSchema.parse(response);
         },
-        onSuccess: (updatedFa) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: faKeys.lists() });
-            queryClient.invalidateQueries({
-                queryKey: faKeys.detail(updatedFa.uuid),
-            });
+            // `details()` (préfixe) couvre detail(uuid) ET detailBySlug(slug).
+            queryClient.invalidateQueries({ queryKey: faKeys.details() });
         },
     });
 }

@@ -65,6 +65,8 @@ class SealingStepRepository(ISealingStepRepository):
         entity.rack_id_id = bean.rack_id
         entity.interface_io = bean.interface_io
         entity.comments = bean.comments
+        entity.metro_file_link = bean.metro_file_link
+        entity.visrad_link = bean.visrad_link
         entity.save()
         return sealing_step_mapper_entity_to_bean(entity)
 

@@ -7,26 +7,26 @@
  * Inline editing on Voie V1, Mécanique, Voie V2 tabs
  */
 
-import { memo, useMemo, useState, useCallback } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
-import { Box, Container, Alert, CircularProgress } from '@mui/material';
+import { Suspense, lazy, memo, useMemo, useState, useCallback, useEffect } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Box, Container, Alert, Skeleton, Stack } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
-import { useEmbase, useUpdateEmbase, embaseToCreateForm } from '@entities/embase';
+import { useEmbaseBySlug, useUpdateEmbase, embaseToCreateForm } from '@entities/embase';
 import { type EmbaseCreate } from '@entities/embase';
 import { EmbaseHeader } from '@features/embase/embase-header';
-import {
-    CreateEmbaseModal,
-    EtalonnageTab,
-    EtalonnageFormDialog,
-    VoieV1Tab,
-    MecaniqueTab,
-    VoieV2Tab,
-} from '@features/embase';
+import { CreateEmbaseModal, VoieV1Tab, MecaniqueTab, VoieV2Tab } from '@features/embase';
+// EtalonnageFormDialog : léger (pas de recharts). EtalonnageTab : recharts →
+// chargé en lazy pour garder charts-vendor hors du chunk de base de la page.
+import { EtalonnageFormDialog } from '@features/embase/etalonnage-tab';
+const EtalonnageTab = lazy(() =>
+    import('@features/embase/etalonnage-tab').then((m) => ({ default: m.EtalonnageTab })),
+);
 import { RoutedTabs } from '@widgets/routed-tabs';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
 import { RouteTransition } from '@shared/ui/RouteTransition';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
+import { paths } from '@shared/config';
 import { TABS_1_VOIE, TABS_2_VOIES, getActiveTab } from './constants';
 import { HistoriqueFsecTab, ComparisonDialog } from './components';
 
@@ -35,17 +35,28 @@ import { HistoriqueFsecTab, ComparisonDialog } from './components';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function EmbaseDetailsPage() {
-    const { uuid = '' } = useParams<{ uuid: string }>();
+    const { embaseSlug = '' } = useParams<{ embaseSlug: string }>();
     const location = useLocation();
+    const navigate = useNavigate();
     const { showSuccess, showError } = useNotification();
 
-    const { data: embase, isLoading, error, isError } = useEmbase(uuid);
+    const { data: embase, isLoading, error, isError } = useEmbaseBySlug(embaseSlug);
     const updateMutation = useUpdateEmbase();
     const [showComparison, setShowComparison] = useState(false);
     const [etalFormOpen, setEtalFormOpen] = useState(false);
     const [etalFormVoie, setEtalFormVoie] = useState<1 | 2>(1);
 
     const activeTab = useMemo(() => getActiveTab(location.pathname), [location.pathname]);
+
+    // Réécrit l'URL vers le slug canonique (arrivée par UUID ancien lien ou slug
+    // obsolète), en préservant l'onglet courant.
+    useEffect(() => {
+        if (embase?.slug && embase.slug !== embaseSlug) {
+            navigate(location.pathname.replace(`/embase-details/${embaseSlug}`, `/embase-details/${embase.slug}`), {
+                replace: true,
+            });
+        }
+    }, [embase?.slug, embaseSlug, location.pathname, navigate]);
 
     const handleOpenComparison = useCallback(() => setShowComparison(true), []);
     const handleCloseComparison = useCallback(() => setShowComparison(false), []);
@@ -97,7 +108,9 @@ function EmbaseDetailsPage() {
             case 'etalonnage':
                 return (
                     <ErrorBoundary compact sectionName="Étalonnage">
-                        <EtalonnageTab embaseUuid={embase.uuid} nombreVoies={embase.nombreVoies as 1 | 2} />
+                        <Suspense fallback={<Skeleton variant="rounded" height={300} />}>
+                            <EtalonnageTab embaseUuid={embase.uuid} nombreVoies={embase.nombreVoies as 1 | 2} />
+                        </Suspense>
                     </ErrorBoundary>
                 );
             case 'historique-fsec':
@@ -115,11 +128,18 @@ function EmbaseDetailsPage() {
         }
     }, [embase, activeTab, handleSave, updateMutation.isPending]);
 
+    // Skeleton calé sur le layout (header + onglets + contenu) → pas de saut
+    // visuel. Souvent court-circuité par le seeding depuis le cache liste.
     if (isLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                <CircularProgress />
-            </Box>
+            <Container maxWidth={false} sx={{ py: 3 }}>
+                <Skeleton variant="rounded" height={120} sx={{ mb: 3 }} />
+                <Skeleton variant="rounded" height={48} width={420} sx={{ mb: 3 }} />
+                <Stack spacing={3}>
+                    <Skeleton variant="rounded" height={220} />
+                    <Skeleton variant="rounded" height={160} />
+                </Stack>
+            </Container>
         );
     }
 
@@ -144,7 +164,7 @@ function EmbaseDetailsPage() {
             <Box sx={{ mt: 3 }}>
                 <RoutedTabs
                     tabs={embase.nombreVoies === 2 ? TABS_2_VOIES : TABS_1_VOIE}
-                    baseUrl={`/embase-details/${uuid}`}
+                    baseUrl={paths.embase.root(embaseSlug)}
                 />
             </Box>
 
@@ -161,7 +181,7 @@ function EmbaseDetailsPage() {
             <EtalonnageFormDialog
                 open={etalFormOpen}
                 onClose={handleCloseEtalForm}
-                embaseUuid={uuid}
+                embaseUuid={embase.uuid}
                 voie={etalFormVoie}
             />
 

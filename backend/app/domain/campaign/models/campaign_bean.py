@@ -13,6 +13,9 @@ class CampaignBean:
     type_id: Optional[int] = None
     status_id: Optional[int] = None
     installation_id: Optional[int] = None
+    # Label de l'installation (dérivé du référentiel), nécessaire au calcul du
+    # slug d'URL. Non persisté : renseigné en lecture par le mapper entity→bean.
+    installation_label: Optional[str] = None
     name: str = ""
     year: int = 0
     semester: str = ""

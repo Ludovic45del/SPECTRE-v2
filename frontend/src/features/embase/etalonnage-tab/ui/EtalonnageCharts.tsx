@@ -17,6 +17,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { ETALONNAGE_FIELD_LABELS, ETALONNAGE_FIELD_COLORS } from '@entities/etalonnage';
+import { ChartTooltipCard } from '@shared/ui';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -46,6 +47,10 @@ interface MetricChartProps {
     chartData: ChartDataPoint[];
 }
 
+function formatMeasure(value: number): string {
+    return value.toLocaleString('fr-FR', { maximumFractionDigits: 3 });
+}
+
 const MetricChart = memo(function MetricChart({ metricKey, label, color, chartData }: MetricChartProps) {
     return (
         <Box>
@@ -58,7 +63,37 @@ const MetricChart = memo(function MetricChart({ metricKey, label, color, chartDa
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" fontSize={11} tick={{ fill: '#666' }} />
                         <YAxis fontSize={11} tick={{ fill: '#666' }} domain={['auto', 'auto']} />
-                        <RechartsTooltip />
+                        <RechartsTooltip
+                            wrapperStyle={{ outline: 'none' }}
+                            cursor={{
+                                stroke: color,
+                                strokeWidth: 1.5,
+                                strokeDasharray: '4 4',
+                            }}
+                            content={({ active, payload, label: dateLabel }) => {
+                                if (!active || !payload || payload.length === 0) {
+                                    return null;
+                                }
+                                const value = payload[0]?.value;
+                                if (value === null || value === undefined) {
+                                    return null;
+                                }
+                                return (
+                                    <ChartTooltipCard
+                                        title={String(dateLabel)}
+                                        accent={color}
+                                        metrics={[
+                                            {
+                                                label,
+                                                value: formatMeasure(Number(value)),
+                                                color,
+                                                bold: true,
+                                            },
+                                        ]}
+                                    />
+                                );
+                            }}
+                        />
                         <Line
                             type="monotone"
                             dataKey={metricKey}

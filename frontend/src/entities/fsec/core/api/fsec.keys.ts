@@ -11,5 +11,8 @@ export const fsecKeys = {
     list: (filters?: Record<string, unknown>) => [...fsecKeys.lists(), filters] as const,
     details: () => [...fsecKeys.all, 'detail'] as const,
     detail: (versionUuid: string) => [...fsecKeys.details(), versionUuid] as const,
+    // Clé de la page de détail adressée par slug (sous le préfixe `details()` :
+    // invalider `details()` rafraîchit donc aussi les pages slug).
+    detailBySlug: (slug: string) => [...fsecKeys.details(), 'by-slug', slug] as const,
     byCampaign: (campaignUuid: string) => [...fsecKeys.all, 'campaign', campaignUuid] as const,
 };

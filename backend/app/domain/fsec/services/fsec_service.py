@@ -3,7 +3,10 @@
 import logging
 from typing import Any, Dict, List, Optional
 
+from app.domain.campaign.interface.campaign_repository import ICampaignRepository
 from app.domain.exceptions import ConflictException, NotFoundException
+from app.domain.fa.interface.fa_repository import IFaRepository
+from app.domain.fa.services.fa_service import regenerate_fa_identifiers_for_fsec
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.fsec.models.fsec_bean import FsecBean
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
@@ -45,6 +48,34 @@ def _maybe_sync_stock_after_status_change(
     )
 
 
+def _maybe_regenerate_fa_identifiers(
+    fa_repository: Optional[IFaRepository],
+    campaign_repository: Optional[ICampaignRepository],
+    fsec: FsecBean,
+    context_changed: bool,
+) -> None:
+    """Réaligne l'identifiant des FA quand le contexte (nom/campagne) de la FSEC change.
+
+    Le « nom » d'une FA est son identifiant, qui encode (année, campagne, nom
+    FSEC, séquence) : il doit suivre un renommage ou un changement de campagne de
+    la FSEC parente. Sans repos FA/campagne (ex. tests unitaires FSEC purs) ou
+    sans campagne rattachée, aucun effet.
+    """
+    if (
+        not context_changed
+        or fa_repository is None
+        or campaign_repository is None
+        or not fsec.campaign_id
+    ):
+        return
+    campaign = campaign_repository.get_by_uuid(fsec.campaign_id)
+    if campaign is None:
+        return
+    regenerate_fa_identifiers_for_fsec(
+        fa_repository, fsec.version_uuid, campaign.name, fsec.name, campaign.year
+    )
+
+
 def create_fsec(repository: IFsecRepository, bean: FsecBean) -> FsecBean:
     """Crée un nouveau FSEC après validation."""
     if bean.campaign_id:
@@ -67,6 +98,14 @@ def get_fsec_by_version_uuid(
     bean = repository.get_by_version_uuid(version_uuid)
     if bean is None:
         raise NotFoundException("FSEC", version_uuid)
+    return bean
+
+
+def get_fsec_by_slug(repository: IFsecRepository, slug: str) -> FsecBean:
+    """Récupère un FSEC par son slug d'URL."""
+    bean = repository.get_by_slug(slug)
+    if bean is None:
+        raise NotFoundException("FSEC", slug)
     return bean
 
 
@@ -112,11 +151,15 @@ def update_fsec(
     bean: FsecBean,
     stock_catalog_repository: Optional[IStockCatalogRepository] = None,
     stock_assembly_repository: Optional[IFsecAssemblyItemRepository] = None,
+    fa_repository: Optional[IFaRepository] = None,
+    campaign_repository: Optional[ICampaignRepository] = None,
 ) -> FsecBean:
     """Met à jour un FSEC.
 
     Les paramètres `stock_*_repository` permettent au controller d'injecter le
-    couplage Stock ↔ FSEC (CDC §4.2) ; ils sont optionnels pour préserver la
+    couplage Stock ↔ FSEC (CDC §4.2). Les paramètres `fa_repository` /
+    `campaign_repository` activent le réalignement des identifiants FA quand le
+    nom ou la campagne change. Tous sont optionnels pour préserver la
     rétro-compatibilité des appels existants (ex. tests unitaires FSEC purs).
     """
     existing = repository.get_by_version_uuid(bean.version_uuid)
@@ -136,6 +179,13 @@ def update_fsec(
 
     result = repository.update(bean)
     logger.info(f"Updated FSEC version_uuid={bean.version_uuid}")
+
+    _maybe_regenerate_fa_identifiers(
+        fa_repository,
+        campaign_repository,
+        result,
+        context_changed=name_changed or campaign_changed,
+    )
 
     _maybe_sync_stock_after_status_change(
         fsec_uuid=result.fsec_uuid,
@@ -222,6 +272,54 @@ def delete_fsec(repository: IFsecRepository, version_uuid: str) -> bool:
         raise NotFoundException("FSEC", version_uuid)
     logger.info(f"Deleted FSEC version_uuid={version_uuid}")
     return True
+
+
+def set_fsec_overview_image(
+    repository: IFsecRepository,
+    version_uuid: str,
+    image_file: Optional[Any],
+) -> FsecBean:
+    """Remplace (image_file != None) ou supprime (image_file is None) la photo
+    de vue d'ensemble d'un FSEC.
+    """
+    bean = repository.set_overview_image(version_uuid, image_file)
+    if bean is None:
+        raise NotFoundException("FSEC", version_uuid)
+    action = "set" if image_file is not None else "cleared"
+    logger.info(f"Overview image {action} for FSEC version_uuid={version_uuid}")
+    return bean
+
+
+def set_fsec_assembly_plan_image(
+    repository: IFsecRepository,
+    version_uuid: str,
+    image_file: Optional[Any],
+) -> FsecBean:
+    """Remplace (image_file != None) ou supprime (image_file is None) l'image du
+    plan d'assemblage. La suppression vide aussi le calque d'annotations.
+    """
+    bean = repository.set_assembly_plan_image(version_uuid, image_file)
+    if bean is None:
+        raise NotFoundException("FSEC", version_uuid)
+    action = "set" if image_file is not None else "cleared"
+    logger.info(f"Assembly plan image {action} for FSEC version_uuid={version_uuid}")
+    return bean
+
+
+def set_fsec_assembly_plan_annotations(
+    repository: IFsecRepository,
+    version_uuid: str,
+    annotations: Any,
+) -> FsecBean:
+    """Remplace le calque d'annotations du plan d'assemblage (sémantique PUT)."""
+    bean = repository.set_assembly_plan_annotations(version_uuid, annotations)
+    if bean is None:
+        raise NotFoundException("FSEC", version_uuid)
+    logger.info(
+        f"Assembly plan annotations set ({len(annotations or [])} items) "
+        f"for FSEC version_uuid={version_uuid}"
+    )
+    return bean
 
 
 def create_new_version(

@@ -24,11 +24,15 @@ const mockAssemblyStep = {
     fsec_version_id: fsecVersionUuid,
     operator: 'Assembleur Test',
     operator_user_uuid: null,
+    operator_user_uuids: [],
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
     machine_uuids: ["423e4567-e89b-12d3-a456-426614174003"],
 };
+
+const OPERATOR_UUID_A = 'e5f6a7b8-c9d0-1234-efab-345678901234';
+const OPERATOR_UUID_B = 'f6a7b8c9-d0e1-2345-fabc-456789012345';
 
 const mockAssemblySteps = [
     mockAssemblyStep,
@@ -139,6 +143,34 @@ describe('useCreateAssemblyStep', () => {
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
         expect(result.current.data?.uuid).toBe('d4e5f6a7-b8c9-0123-defa-234567890123');
+    });
+
+    it('should send and round-trip multiple operators', async () => {
+        let receivedBody: Record<string, unknown> | null = null;
+        server.use(
+            http.post('/api/v1/assembly-steps/', async ({ request }) => {
+                receivedBody = (await request.json()) as Record<string, unknown>;
+                return HttpResponse.json(
+                    { ...mockAssemblyStep, uuid: stepUuid2, ...receivedBody },
+                    { status: 201 },
+                );
+            }),
+        );
+
+        const wrapper = createQueryWrapper();
+        const { result } = renderHook(() => useCreateAssemblyStep(), { wrapper });
+
+        result.current.mutate({
+            fsecVersionId: fsecVersionUuid,
+            operatorUserUuids: [OPERATOR_UUID_A, OPERATOR_UUID_B],
+            startDate: new Date('2025-03-01'),
+            machineUuids: [],
+        });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        expect(receivedBody!.operator_user_uuids).toEqual([OPERATOR_UUID_A, OPERATOR_UUID_B]);
+        expect(result.current.data?.operatorUserUuids).toEqual([OPERATOR_UUID_A, OPERATOR_UUID_B]);
     });
 
     it('should handle validation error', async () => {

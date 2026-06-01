@@ -1,4 +1,8 @@
 export { UserSelect } from './UserSelect';
 export type { UserSelectProps } from './UserSelect';
+export { UserMultiSelect } from './UserMultiSelect';
+export type { UserMultiSelectProps } from './UserMultiSelect';
 export { UserChip } from './UserChip';
 export type { UserChipProps } from './UserChip';
+export { UserChipList } from './UserChipList';
+export type { UserChipListProps } from './UserChipList';

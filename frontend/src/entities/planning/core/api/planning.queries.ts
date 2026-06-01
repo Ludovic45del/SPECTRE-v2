@@ -15,7 +15,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@shared/api';
-import { QUERY_CACHE_CONFIG } from '@shared/lib';
+import { QUERY_CACHE_CONFIG, REFERENTIAL_CACHE_CONFIG } from '@shared/lib';
 import { useNotificationStore } from '@shared/lib/notification';
 import {
     LabEvent,
@@ -311,6 +311,7 @@ export function usePlanningSteps() {
         queryKey: planningKeys.planningSteps(),
         queryFn: ({ signal }): Promise<PlanningStep[]> =>
             api.get('/planning/planning-steps/', PlanningStepListSchema, signal),
-        ...QUERY_CACHE_CONFIG,
+        // Référentiel lecture seule (aucune mutation front) → frais sur la session.
+        ...REFERENTIAL_CACHE_CONFIG,
     });
 }

@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Link, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import {
     MetrologyStep,
     SealingStep,
@@ -20,10 +20,11 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import dayjs from 'dayjs';
 import { MetrologyStepModal } from '@features/fsec/edit-metrology';
 import { SealingStepModal } from '@features/fsec/edit-sealing';
-import { UserChip } from '@entities/user';
+import { UserChip, UserChipList } from '@entities/user';
 import { MachineChipList } from '@entities/material';
 import { useNotification } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib';
@@ -34,6 +35,35 @@ interface ControleTabProps {
 }
 
 const WORKFLOW_STEPS = ['Métrologie', 'Scellement'];
+
+// ============ Sealing file link (cliquable, supporte URL HTTP et chemin UNC) ============
+
+function SealingLinkCell({ label, value }: { label: string; value: string | null }) {
+    return (
+        <>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                {label}
+            </Typography>
+            {value ? (
+                <Link
+                    href={value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="hover"
+                    variant="body2"
+                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, wordBreak: 'break-all' }}
+                >
+                    {value}
+                    <OpenInNewIcon fontSize="inherit" />
+                </Link>
+            ) : (
+                <Typography variant="body2" fontWeight="medium">
+                    -
+                </Typography>
+            )}
+        </>
+    );
+}
 
 // ============ Unified Control Card ============
 
@@ -131,11 +161,11 @@ function ControleMetrologiqueCard({
                                 </Grid>
                                 <Grid item xs={6} md={3}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Métrologue
+                                        {metrologyStep.metrologistUserUuids.length > 1 ? 'Métrologues' : 'Métrologue'}
                                     </Typography>
                                     <Box>
-                                        <UserChip
-                                            userUuid={metrologyStep.metrologistUserUuid}
+                                        <UserChipList
+                                            uuids={metrologyStep.metrologistUserUuids}
                                             fallbackText={metrologyStep.metrologistName}
                                         />
                                     </Box>
@@ -231,6 +261,15 @@ function ControleMetrologiqueCard({
                                             <Typography variant="body2" fontWeight="medium">
                                                 {sealingStep.interfaceIo || '-'}
                                             </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <SealingLinkCell
+                                                label="Fichier métro .txt"
+                                                value={sealingStep.metroFileLink}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <SealingLinkCell label="Visrad réalisé" value={sealingStep.visradLink} />
                                         </Grid>
                                     </Grid>
                                     {sealingStep.comments && (

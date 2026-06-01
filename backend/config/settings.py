@@ -167,10 +167,22 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = os.environ.get("STATIC_ROOT", str(BASE_DIR / "staticfiles"))
 STORAGES = {
+    # FileSystemStorage par défaut pour les uploads (FSEC overview photo).
+    # En réseau fermé prod, le reverse proxy nginx sert MEDIA_URL.
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+# Media files (user uploads — FSEC overview photos).
+# MEDIA_URL est servie sous /api/media/ pour passer par le proxy Vite (qui ne
+# proxyfait que /api en dev) sans config supplémentaire. En prod, nginx expose
+# /api/media/ → MEDIA_ROOT.
+MEDIA_URL = os.environ.get("MEDIA_URL", "/api/media/")
+MEDIA_ROOT = os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media"))
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -231,8 +243,13 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 
-# File upload limits (2.5 MB max for CSV imports)
+# File upload limits.
+# DATA_UPLOAD_MAX_MEMORY_SIZE = limite des champs non-fichier (form data) → 2.5 MB.
+# FILE_UPLOAD_MAX_MEMORY_SIZE = seuil au-delà duquel le fichier est streamé sur disque
+# plutôt que gardé en RAM. 5 MB couvre largement les photos compressées côté client
+# (objectif < 500 ko) avec une marge confortable.
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 
 # Security Headers (production hardening)
 if not DEBUG:

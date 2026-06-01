@@ -32,6 +32,7 @@ import { useFsecsByCampaign, Fsec, getStatusInfo, getCategoryInfo } from '@entit
 import { CampaignWithRelations } from '@entities/campaign';
 import { DataChip } from '@widgets/data-chip';
 import { motion } from '@shared/ui/motion';
+import { paths } from '@shared/config';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -94,7 +95,7 @@ const sortFsecs = (fsecs: Fsec[], column: SortColumn, direction: SortDirection):
 
 interface FsecTableRowProps {
     fsec: Fsec;
-    onNavigate: (versionUuid: string) => void;
+    onNavigate: (slug: string) => void;
 }
 
 const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate }: FsecTableRowProps) {
@@ -103,12 +104,12 @@ const FsecTableRow = memo(function FsecTableRow({ fsec, onNavigate }: FsecTableR
     const category = getCategoryInfo(fsec.categoryId);
 
     const handleDoubleClick = useCallback(() => {
-        onNavigate(fsec.versionUuid);
-    }, [fsec.versionUuid, onNavigate]);
+        onNavigate(fsec.slug);
+    }, [fsec.slug, onNavigate]);
 
     const handleButtonClick = useCallback(() => {
-        onNavigate(fsec.versionUuid);
-    }, [fsec.versionUuid, onNavigate]);
+        onNavigate(fsec.slug);
+    }, [fsec.slug, onNavigate]);
 
     return (
         <TableRow
@@ -166,8 +167,8 @@ function CampaignFsecsPageComponent({ campaign }: CampaignFsecsPageProps) {
 
     // Event handlers (memoized for child components)
     const handleNavigate = useCallback(
-        (versionUuid: string) => {
-            navigate(`/fsec-details/${versionUuid}/overview`);
+        (slug: string) => {
+            navigate(paths.fsec.tab(slug, 'overview'));
         },
         [navigate],
     );

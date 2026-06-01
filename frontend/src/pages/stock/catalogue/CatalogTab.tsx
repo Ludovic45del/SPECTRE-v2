@@ -35,7 +35,7 @@ const TOTAL_COLS = CATALOG_COLUMNS.length + 1; // +1 pour la colonne actions
 
 export function CatalogTab() {
     const filters = useFilterCatalogStore((s) => s.filters);
-    const { data: items, isLoading, error } = useCatalogItems(filters);
+    const { data: items, isLoading, isPlaceholderData, error } = useCatalogItems(filters);
     const openCreateModal = useCreateItemStore((s) => s.open);
     const openEditModal = useEditItemStore((s) => s.open);
 
@@ -102,7 +102,15 @@ export function CatalogTab() {
             <TableContainer
                 component={Paper}
                 variant="outlined"
-                sx={{ borderColor: 'divider', borderRadius: 1, mt: 3 }}
+                sx={{
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    mt: 3,
+                    // Atténue la table pendant le fetch d'un nouveau filtre
+                    // (placeholderData) sans vider l'écran.
+                    opacity: isPlaceholderData ? 0.6 : 1,
+                    transition: 'opacity .15s',
+                }}
             >
                 <Table sx={{ tableLayout: 'fixed' }}>
                     <colgroup>

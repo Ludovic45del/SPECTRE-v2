@@ -114,18 +114,22 @@ async function request<T>(endpoint: string, options: RequestOptions = {}, schema
 
     const timed = buildTimedSignal(signal);
 
+    // FormData (upload de fichier) : le navigateur DOIT poser lui-même le
+    // Content-Type incluant le boundary multipart → on ne le force pas.
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+
     const config: RequestInit = {
         ...init,
         signal: timed.signal,
         headers: {
-            'Content-Type': 'application/json',
+            ...(!isFormData && { 'Content-Type': 'application/json' }),
             ...(token && { Authorization: `Bearer ${token}` }),
             ...init.headers,
         },
     };
 
-    if (body) {
-        config.body = JSON.stringify(body);
+    if (body !== undefined && body !== null) {
+        config.body = isFormData ? (body as FormData) : JSON.stringify(body);
     }
 
     try {
@@ -192,5 +196,45 @@ export const api = {
     patch: <T>(endpoint: string, body: unknown, schema?: ZodType<T, any, any>) =>
         request<T>(endpoint, { method: 'PATCH', body }, schema),
 
-    delete: (endpoint: string): Promise<void> => request(endpoint, { method: 'DELETE' }),
+    delete: <T = void>(endpoint: string, schema?: ZodType<T, any, any>) =>
+        request<T>(endpoint, { method: 'DELETE' }, schema),
+
+    /**
+     * POST with binary response (e.g. PDF generation). Returns the raw Blob.
+     * Réutilise la logique d'auth/refresh de `request` via un fetch interne.
+     */
+    postBlob: async (endpoint: string, body: unknown, signal?: AbortSignal): Promise<Blob> => {
+        const token = tokenProvider?.getAccessToken() ?? null;
+        const timed = buildTimedSignal(signal);
+        const doFetch = (accessToken: string | null) =>
+            fetch(`${API_BASE_URL}${endpoint}`, {
+                method: 'POST',
+                signal: timed.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+                },
+                body: body !== undefined && body !== null ? JSON.stringify(body) : undefined,
+            });
+
+        try {
+            let response = await doFetch(token);
+            if (response.status === 401 && token) {
+                const refreshed = await refreshTokenWithMutex();
+                if (refreshed) {
+                    response = await doFetch(tokenProvider?.getAccessToken() ?? null);
+                } else {
+                    tokenProvider?.logout();
+                    throw new ApiError(401, 'Session expired');
+                }
+            }
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new ApiError(response.status, response.statusText, errorData);
+            }
+            return await response.blob();
+        } finally {
+            timed.cancel();
+        }
+    },
 };

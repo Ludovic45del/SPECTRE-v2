@@ -3,6 +3,7 @@
 from typing import Any, Dict
 
 from app.domain.campaign.models.campaign_bean import CampaignBean
+from app.domain.shared.slug import build_campaign_slug
 from app.mapper.type_conversion import parse_date_string
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 
@@ -14,6 +15,11 @@ def campaign_mapper_entity_to_bean(entity: CampaignEntity) -> CampaignBean:
         type_id=entity.type_id_id,
         status_id=entity.status_id_id,
         installation_id=entity.installation_id_id,
+        installation_label=(
+            entity.installation_id.label
+            if entity.installation_id_id is not None
+            else None
+        ),
         name=entity.name,
         year=entity.year,
         semester=entity.semester,
@@ -65,6 +71,9 @@ def campaign_mapper_bean_to_api(bean: CampaignBean) -> Dict[str, Any]:
     """Convertit un CampaignBean en données API."""
     return {
         "uuid": bean.uuid,
+        "slug": build_campaign_slug(
+            bean.year, bean.semester, bean.installation_label, bean.name
+        ),
         "type_id": bean.type_id,
         "status_id": bean.status_id,
         "installation_id": bean.installation_id,

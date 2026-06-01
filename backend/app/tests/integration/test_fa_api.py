@@ -68,7 +68,6 @@ def sample_fa_bean(sample_fa_uuid, sample_fsec_version_id):
         cause="Cause identifiée",
         experience_impact="Impact test",
         iec_validation_progress=False,
-        iec_validation_progress_date=None,
         iec_validation_progress_name=None,
         closure_validation=None,
         closure_date=None,
@@ -408,12 +407,12 @@ class TestFaControllerCustomActions:
     """Tests pour les actions custom du FA Controller."""
 
     @pytest.mark.integration
-    @patch("app.api.fa.fa_controller.get_fa_by_fsec_version_id")
+    @patch("app.api.fa.fa_controller.get_fas_by_fsec_version_id")
     def test_get_by_fsec_returns_fa(
         self, mock_get_fa, request_factory, sample_fsec_version_id, sample_fa_bean
     ):
-        """Test GET /fsec/:fsec_version_id retourne la FA."""
-        mock_get_fa.return_value = sample_fa_bean
+        """Test GET /fsec/:fsec_version_id retourne la liste des FA de la FSEC."""
+        mock_get_fa.return_value = [sample_fa_bean]
 
         request = request_factory.get(f"/api/fa/fsec/{sample_fsec_version_id}/")
         controller = FaController()
@@ -423,10 +422,11 @@ class TestFaControllerCustomActions:
 
         assert response.status_code == 200
         data = json.loads(response.content)
-        assert data["fsec_version_id"] == sample_fsec_version_id
+        assert isinstance(data, list)
+        assert data[0]["fsec_version_id"] == sample_fsec_version_id
 
     @pytest.mark.integration
-    @patch("app.api.fa.fa_controller.get_fa_by_fsec_version_id")
+    @patch("app.api.fa.fa_controller.get_fas_by_fsec_version_id")
     def test_get_by_fsec_not_found_raises_exception(
         self, mock_get_fa, request_factory, sample_fsec_version_id
     ):

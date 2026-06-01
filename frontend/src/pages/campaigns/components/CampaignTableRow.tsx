@@ -6,8 +6,9 @@
 import { useCallback, memo } from 'react';
 import { TableRow, TableCell, Typography, IconButton, Tooltip, alpha, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { CampaignWithRelations } from '@entities/campaign';
+import { CampaignWithRelations, usePrefetchCampaign } from '@entities/campaign';
 import { DataChip } from '@widgets/data-chip';
+import { useHoverPrefetch } from '@shared/lib';
 import { motion } from '@shared/ui/motion';
 
 interface CampaignTableRowProps {
@@ -19,12 +20,17 @@ export const CampaignTableRow = memo(function CampaignTableRow({ campaign, onNav
     const theme = useTheme();
 
     const handleDoubleClick = useCallback(() => {
-        onNavigate(campaign.uuid);
+        onNavigate(campaign.slug);
     }, [campaign.uuid, onNavigate]);
 
     const handleButtonClick = useCallback(() => {
-        onNavigate(campaign.uuid);
+        onNavigate(campaign.slug);
     }, [campaign.uuid, onNavigate]);
+
+    const prefetchCampaign = usePrefetchCampaign();
+    const hoverPrefetch = useHoverPrefetch(
+        useCallback(() => prefetchCampaign(campaign.uuid), [prefetchCampaign, campaign.uuid]),
+    );
 
     return (
         <TableRow
@@ -37,6 +43,7 @@ export const CampaignTableRow = memo(function CampaignTableRow({ campaign, onNav
                 },
             }}
             onDoubleClick={handleDoubleClick}
+            {...hoverPrefetch}
         >
             <TableCell>
                 <Typography fontWeight={500}>{campaign.year}</Typography>

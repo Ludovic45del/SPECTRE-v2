@@ -9,8 +9,9 @@ import { memo, useCallback } from 'react';
 import { Box, TableRow, TableCell, Typography, IconButton, Tooltip, alpha, useTheme } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { type Fa, getStatusInfo, getCriticalityInfo, getTypeInfo } from '@entities/fa';
+import { type Fa, getStatusInfo, getCriticalityInfo, getTypeInfo, usePrefetchFa } from '@entities/fa';
 import { DataChip } from '@widgets/data-chip';
+import { useHoverPrefetch } from '@shared/lib';
 import { motion } from '@shared/ui/motion';
 
 // `fsecName` est désormais directement présent sur `Fa` (string | null) :
@@ -32,12 +33,15 @@ export const FaTableRow = memo(function FaTableRow({ fa, onNavigate, onNavigateF
     const borderColor = fa.criticalityId === 3 ? '#F44336' : fa.criticalityId === 2 ? '#FF9800' : undefined;
 
     const handleDoubleClick = useCallback(() => {
-        onNavigate(fa.uuid);
-    }, [fa.uuid, onNavigate]);
+        onNavigate(fa.slug);
+    }, [fa.slug, onNavigate]);
 
     const handleButtonClick = useCallback(() => {
-        onNavigate(fa.uuid);
-    }, [fa.uuid, onNavigate]);
+        onNavigate(fa.slug);
+    }, [fa.slug, onNavigate]);
+
+    const prefetchFa = usePrefetchFa();
+    const hoverPrefetch = useHoverPrefetch(useCallback(() => prefetchFa(fa.uuid), [prefetchFa, fa.uuid]));
 
     return (
         <TableRow
@@ -53,6 +57,7 @@ export const FaTableRow = memo(function FaTableRow({ fa, onNavigate, onNavigateF
                 },
             }}
             onDoubleClick={handleDoubleClick}
+            {...hoverPrefetch}
         >
             <TableCell>
                 <Typography fontWeight={500}>{fa.identifier}</Typography>
@@ -61,7 +66,7 @@ export const FaTableRow = memo(function FaTableRow({ fa, onNavigate, onNavigateF
                 {fa.fsecVersionId && onNavigateFsec ? (
                     <Typography
                         component="span"
-                        onClick={(e) => onNavigateFsec(e, fa.fsecVersionId)}
+                        onClick={(e) => onNavigateFsec(e, fa.fsecSlug)}
                         sx={{
                             color: 'primary.main',
                             fontWeight: 500,

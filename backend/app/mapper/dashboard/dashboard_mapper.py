@@ -33,6 +33,8 @@ def dashboard_activity_item_bean_to_api(item: RecentActivityItemBean) -> Dict[st
         "id": item.id,
         "type": item.type,
         "name": item.name,
+        # Slug d'URL pour le lien d'activité (None pour le type "planning").
+        "slug": item.slug,
         "status_id": item.status_id,
         "last_updated": item.last_updated,
     }

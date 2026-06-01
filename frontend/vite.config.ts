@@ -31,8 +31,20 @@ export default defineConfig({
             output: {
                 manualChunks(id) {
                     if (!id.includes('node_modules')) return undefined;
+                    // `use-sync-external-store` : shim React partagé par zustand
+                    // (eager, app-wide) ET recharts (lazy). Sans cette clause,
+                    // Rollup le range avec recharts → l'entrée tire charts-vendor
+                    // (~115K gzip) au boot juste pour ce shim. On le force avec le
+                    // runtime React, déjà préchargé.
+                    if (id.includes('use-sync-external-store') || id.includes('/zustand/')) {
+                        return 'react-vendor';
+                    }
                     if (id.includes('recharts') || id.includes('d3-')) return 'charts-vendor';
-                    if (id.includes('@mui/x-date-pickers') || id.includes('dayjs')) return 'date-vendor';
+                    // dayjs (eager, léger — utilisé dans main.tsx) séparé de
+                    // @mui/x-date-pickers (lourd, désormais lazy) pour que les
+                    // date-pickers ne soient plus préchargés au boot via dayjs.
+                    if (id.includes('@mui/x-date-pickers')) return 'date-vendor';
+                    if (id.includes('dayjs')) return 'dayjs-vendor';
                     if (
                         id.includes('@mui/material') ||
                         id.includes('@mui/system') ||

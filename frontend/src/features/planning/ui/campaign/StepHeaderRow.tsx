@@ -2,7 +2,7 @@
  * StepHeaderRow — Ligne d'en-tête d'étape avec barre agrégée et progression.
  * Supports column virtualization via CampaignContext.visibleRange.
  */
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { softChipSx } from '@shared/lib';
 import { ChevronRight, ExpandMore } from '@mui/icons-material';
@@ -15,7 +15,6 @@ import { type TimelineColumn, isFsecStepDone } from '../../lib/planning.utils';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
 import { getBarBorderRadius } from '../../lib/planning.bar-utils';
 import { HoverTd, StickyLabelCell } from '../PlanningCell';
-import { AssemblageInfoPopover } from '../AssemblageInfoPopover';
 import { useCampaignContext } from './CampaignContext';
 import type { FsecInfo } from './types';
 
@@ -61,21 +60,11 @@ export function StepHeaderRow({
     stepsForEtape,
     campaignFsecs,
 }: StepHeaderRowProps) {
-    const { campagne, columns, planningData, membres, salles, labEvents, visibleRange, onNavigate } =
-        useCampaignContext();
+    const { campagne, columns, planningData, visibleRange, onNavigate, onOpenStepDialog } = useCampaignContext();
     const colors = usePlanningColors();
     const toggleStepGroup = usePlanningStore((s) => s.toggleStepGroup);
 
     const { startCol, endCol } = visibleRange;
-
-    // Step availability dialog state (Assemblage / Métrologie)
-    const isAssemblage = etape.label === 'Assemblage';
-    const isMetrologie = etape.label === 'Métrologie';
-    const hasAvailabilityDialog = isAssemblage || isMetrologie;
-    const [infoPopover, setInfoPopover] = useState<{
-        anchorEl: HTMLElement;
-        column: TimelineColumn;
-    } | null>(null);
 
     // Aggregate range for header bar
     const aggregateRange = useMemo(() => computeAggregateRange(stepsForEtape), [stepsForEtape]);
@@ -126,21 +115,11 @@ export function StepHeaderRow({
                 <HoverTd
                     key={col.key}
                     role="gridcell"
-                    onMouseDown={
-                        hasAvailabilityDialog
-                            ? (e: React.MouseEvent<HTMLTableCellElement>) => {
-                                  e.stopPropagation();
-                              }
-                            : undefined
-                    }
-                    onClick={
-                        hasAvailabilityDialog
-                            ? (e: React.MouseEvent<HTMLTableCellElement>) => {
-                                  e.stopPropagation();
-                                  setInfoPopover({ anchorEl: e.currentTarget, column: col });
-                              }
-                            : undefined
-                    }
+                    onMouseDown={(e: React.MouseEvent<HTMLTableCellElement>) => e.stopPropagation()}
+                    onClick={(e: React.MouseEvent<HTMLTableCellElement>) => {
+                        e.stopPropagation();
+                        onOpenStepDialog(etape, col.start.format('YYYY-MM-DD'));
+                    }}
                     style={{
                         position: 'relative',
                         padding: 0,
@@ -163,7 +142,7 @@ export function StepHeaderRow({
                                   ? colors.weekend
                                   : colors.sectionBg,
                         userSelect: 'none',
-                        cursor: hasAvailabilityDialog ? 'pointer' : undefined,
+                        cursor: 'pointer',
                     }}
                 >
                     {barPos && (
@@ -203,7 +182,7 @@ export function StepHeaderRow({
         etape,
         colors,
         planningData.weekStatesMap,
-        hasAvailabilityDialog,
+        onOpenStepDialog,
     ]);
 
     return (
@@ -250,25 +229,6 @@ export function StepHeaderRow({
 
             {/* Aggregate bar (thin, translucent) with column virtualization */}
             {timelineCells}
-
-            {/* Step availability dialog (Assemblage / Métrologie) */}
-            {infoPopover && hasAvailabilityDialog && (
-                <AssemblageInfoPopover
-                    column={infoPopover.column}
-                    membres={membres}
-                    salles={salles}
-                    labEvents={labEvents}
-                    planningData={planningData}
-                    campaignUuid={campagne.uuid}
-                    campaignFsecs={campaignFsecs}
-                    onClose={() => setInfoPopover(null)}
-                    stepLabel={etape.label}
-                    stepColor={etape.color}
-                    fonctionFilter={isAssemblage ? 'Assembleur' : 'Métrologue'}
-                    fonctionLabel={isAssemblage ? 'Assembleurs' : 'Métrologues'}
-                    salleName={isAssemblage ? 'B1' : 'B2'}
-                />
-            )}
         </tr>
     );
 }

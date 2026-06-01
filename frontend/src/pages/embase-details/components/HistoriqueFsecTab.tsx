@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { type Embase, useEmbaseFsecHistory, type EmbaseFsecHistoryItem } from '@entities/embase';
+import { paths } from '@shared/config';
 import { FsecHistoryRow } from './FsecHistoryRow';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -156,8 +157,10 @@ function HistoriqueFsecTabComponent({ embase }: { embase: Embase }) {
     }, [fsecHistory, sort.column, sort.direction]);
 
     const handleNavigate = useCallback(
+        // L'historique ne porte que le version_uuid (pas de slug) : on navigue par
+        // UUID, la page réécrit l'URL vers le slug canonique (rétro-compat).
         (fsecVersionUuid: string) => {
-            navigate(`/fsec-details/${fsecVersionUuid}/overview`);
+            navigate(paths.fsec.tab(fsecVersionUuid, 'overview'));
         },
         [navigate],
     );

@@ -3,9 +3,10 @@
  * @module entities/embase/api
  */
 
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@shared/api';
-import { QUERY_CACHE_CONFIG } from '@shared/lib';
+import { QUERY_CACHE_CONFIG, seedDetailFromList, isUuid } from '@shared/lib';
 import {
     Embase,
     EmbaseSchema,
@@ -30,18 +31,65 @@ export function useEmbases() {
     });
 }
 
+export async function fetchEmbase(uuid: string, signal?: AbortSignal): Promise<Embase> {
+    return api.get(`/embases/${uuid}/`, EmbaseSchema, signal);
+}
+
 /**
- * Fetch single embase by UUID
+ * Fetch single embase by UUID. Seedé depuis le cache liste → header instantané.
  */
 export function useEmbase(uuid: string) {
+    const queryClient = useQueryClient();
     return useQuery({
         queryKey: embaseKeys.detail(uuid),
-        queryFn: async ({ signal }): Promise<Embase> => {
-            return api.get(`/embases/${uuid}/`, EmbaseSchema, signal);
-        },
+        queryFn: ({ signal }) => fetchEmbase(uuid, signal),
         enabled: Boolean(uuid),
         ...QUERY_CACHE_CONFIG,
+        ...seedDetailFromList<Embase>(queryClient, [embaseKeys.lists()], (e) => e.uuid === uuid),
     });
+}
+
+/**
+ * Récupère une embase par son slug d'URL (slugify de l'identifier). Rétro-compatible :
+ * bascule sur l'endpoint UUID si le paramètre est un UUID (anciens liens).
+ */
+export async function fetchEmbaseBySlug(slugOrUuid: string, signal?: AbortSignal): Promise<Embase> {
+    const path = isUuid(slugOrUuid)
+        ? `/embases/${slugOrUuid}/`
+        : `/embases/by-slug/${encodeURIComponent(slugOrUuid)}/`;
+    return api.get(path, EmbaseSchema, signal);
+}
+
+/**
+ * Fetch single embase by slug. Seedé depuis le cache liste (match slug ou uuid).
+ */
+export function useEmbaseBySlug(slug: string) {
+    const queryClient = useQueryClient();
+    return useQuery({
+        queryKey: embaseKeys.detailBySlug(slug),
+        queryFn: ({ signal }) => fetchEmbaseBySlug(slug, signal),
+        enabled: Boolean(slug),
+        ...QUERY_CACHE_CONFIG,
+        ...seedDetailFromList<Embase>(queryClient, [embaseKeys.lists()], (e) => e.slug === slug || e.uuid === slug),
+    });
+}
+
+/**
+ * Précharge le détail d'une embase (survol de ligne). No-op si déjà frais.
+ */
+export function usePrefetchEmbase() {
+    const queryClient = useQueryClient();
+    return useCallback(
+        (uuid: string) => {
+            if (!uuid) return;
+            void queryClient.prefetchQuery({
+                queryKey: embaseKeys.detail(uuid),
+                queryFn: ({ signal }) => fetchEmbase(uuid, signal),
+                ...QUERY_CACHE_CONFIG,
+            });
+        },
+        [queryClient],
+    );
 }
 
 /**
@@ -72,9 +120,10 @@ export function useUpdateEmbase() {
             const apiData = embaseCreateToApi(data);
             return api.put(`/embases/${uuid}/`, apiData, EmbaseSchema);
         },
-        onSuccess: (_, variables) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: embaseKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: embaseKeys.detail(variables.uuid) });
+            // `details()` (préfixe) couvre detail(uuid) ET detailBySlug(slug).
+            queryClient.invalidateQueries({ queryKey: embaseKeys.details() });
         },
     });
 }

@@ -20,6 +20,7 @@ const mockAssemblyStep = {
     fsecVersionId: '00000000-0000-0000-0000-000000000002',
     operator: 'Lucie Petit',
     operatorUserUuid: ASSEMBLER_UUID,
+    operatorUserUuids: [ASSEMBLER_UUID],
     startDate: new Date('2025-02-01'),
     endDate: new Date('2025-02-15'),
     comments: 'Test assembly step',
@@ -32,6 +33,7 @@ const mockAssemblyStepApi = {
     fsec_version_id: '00000000-0000-0000-0000-000000000002',
     operator: 'Lucie Petit',
     operator_user_uuid: ASSEMBLER_UUID,
+    operator_user_uuids: [ASSEMBLER_UUID],
     start_date: '2025-02-01',
     end_date: '2025-02-15',
     comments: 'Test assembly step',
@@ -97,7 +99,7 @@ describe('AssemblyStepModal', () => {
     });
 
     describe('Create Mode', () => {
-        it('should call update API on edit submit (Assembleur préservé)', async () => {
+        it('should call update API on edit submit (Assembleurs préservés)', async () => {
             const user = userEvent.setup();
             const putBody: { current: Record<string, unknown> | null } = { current: null };
 
@@ -112,17 +114,36 @@ describe('AssemblyStepModal', () => {
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
-            // Submit (l'Assembleur et la date sont déjà pré-remplis depuis step)
-            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
-            await user.click(submitButton);
+            // Submit (les Assembleurs et la date sont déjà pré-remplis depuis step).
+            // Le clic sur le bouton ne doit PAS être bloqué par la validation native
+            // bien que l'input du multi-select soit vide (régression du bug "Please
+            // fill out this field" avec des assembleurs pourtant sélectionnés).
+            await user.click(screen.getByRole('button', { name: /sauvegarder/i }));
 
             await waitFor(() => {
                 expect(mockOnClose).toHaveBeenCalled();
             });
-            expect(putBody.current?.operator_user_uuid).toBe(ASSEMBLER_UUID);
+            expect(putBody.current?.operator_user_uuids).toEqual([ASSEMBLER_UUID]);
         });
 
-        it('should block submission when Assembleur is not selected', async () => {
+        it('lève le required natif HTML une fois un Assembleur sélectionné', async () => {
+            // Régression : la validation navigateur bloquait la soumission
+            // (« Please fill out this field ») car l'input du multi-select reste vide
+            // même avec des assembleurs en chips. L'input ne doit être `required` que
+            // tant que rien n'est sélectionné.
+            const user = userEvent.setup();
+            renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
+
+            const input = screen.getByLabelText(/assembleurs/i);
+            expect(input).toBeRequired();
+
+            await user.click(input);
+            await user.click(await screen.findByRole('option', { name: /Lucie Petit/i }));
+
+            expect(screen.getByLabelText(/assembleurs/i)).not.toBeRequired();
+        });
+
+        it('should block submission when no Assembleur is selected', async () => {
             const user = userEvent.setup();
 
             renderWithProviders(<AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} />);
@@ -136,15 +157,14 @@ describe('AssemblyStepModal', () => {
     });
 
     describe('Edit Mode', () => {
-        it('should pre-fill Assembleur with step.operatorUserUuid', async () => {
+        it('should pre-fill Assembleurs with step.operatorUserUuids', async () => {
             renderWithProviders(
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
-            // Le UserSelect doit pré-sélectionner Lucie Petit
+            // Le UserMultiSelect rend la sélection en chip(s) : on cherche le nom affiché.
             await waitFor(() => {
-                const input = screen.getByLabelText(/assembleur/i) as HTMLInputElement;
-                expect(input.value).toMatch(/Lucie Petit/i);
+                expect(screen.getByText(/Lucie Petit/i)).toBeInTheDocument();
             });
         });
 
@@ -163,9 +183,7 @@ describe('AssemblyStepModal', () => {
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
-            // Submit
-            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
-            await user.click(submitButton);
+            await user.click(screen.getByRole('button', { name: /sauvegarder/i }));
 
             await waitFor(() => {
                 expect(apiCalled).toBe(true);
@@ -272,8 +290,7 @@ describe('AssemblyStepModal', () => {
             );
 
             // Submit form
-            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
-            await user.click(submitButton);
+            await user.click(screen.getByRole('button', { name: /sauvegarder/i }));
 
             // Should show error notification
             await waitFor(() => {
@@ -296,8 +313,7 @@ describe('AssemblyStepModal', () => {
                 <AssemblyStepModal open onClose={mockOnClose} fsecVersionId={fsecVersionId} step={mockAssemblyStep} />,
             );
 
-            const submitButton = screen.getByRole('button', { name: /sauvegarder/i });
-            await user.click(submitButton);
+            await user.click(screen.getByRole('button', { name: /sauvegarder/i }));
 
             await waitFor(() => {
                 expect(mockOnClose).not.toHaveBeenCalled();

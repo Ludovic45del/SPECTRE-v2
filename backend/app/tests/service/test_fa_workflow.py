@@ -21,7 +21,7 @@ from app.domain.fa.services.fa_service import create_fa, update_fa
 def mock_fa_repo():
     """Mock du repository FA."""
     repo = MagicMock()
-    repo.exists_by_fsec_version_id.return_value = False
+    repo.max_sequence_by_fsec_version_id.return_value = 0
     repo.exists_by_identifier.return_value = False
     return repo
 

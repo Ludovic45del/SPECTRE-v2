@@ -51,6 +51,8 @@ interface CreateSealingStepInput {
     rackId?: number | null;
     interfaceIo?: string | null;
     comments?: string | null;
+    metroFileLink?: string | null;
+    visradLink?: string | null;
 }
 
 interface UpdateSealingStepInput extends CreateSealingStepInput {
@@ -66,6 +68,8 @@ function sealingStepToApi(input: CreateSealingStepInput) {
         rack_id: input.rackId ?? null,
         interface_io: input.interfaceIo ?? null,
         comments: input.comments ?? null,
+        metro_file_link: input.metroFileLink ?? null,
+        visrad_link: input.visradLink ?? null,
     };
 }
 

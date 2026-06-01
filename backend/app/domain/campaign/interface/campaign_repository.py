@@ -23,6 +23,11 @@ class ICampaignRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_by_slug(self, slug: str) -> Optional[CampaignBean]:
+        """Récupère une campagne par son slug d'URL calculé."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get_all(
         self, limit: Optional[int] = None, offset: int = 0
     ) -> List[CampaignBean]:

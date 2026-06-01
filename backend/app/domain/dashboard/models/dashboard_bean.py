@@ -39,6 +39,8 @@ class RecentActivityItemBean:
     name: str = ""
     status_id: Optional[int] = None
     last_updated: Optional[str] = None
+    # Slug d'URL calculé (campagne/FSEC/FA/embase) pour les liens d'activité.
+    slug: Optional[str] = None
 
     # Champs spécifiques campagne
     type_id: Optional[int] = None

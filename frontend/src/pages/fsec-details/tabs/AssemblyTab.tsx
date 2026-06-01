@@ -8,7 +8,9 @@
 import { useState } from 'react';
 import { Box, Button, Chip, Collapse, Divider, Grid, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { AssemblyStep, useAssemblyStepsByFsec } from '@entities/fsec/steps';
-import { UserChip } from '@entities/user';
+import { Fsec } from '@entities/fsec';
+import { AssemblyPlanSection } from '@features/fsec/edit-assembly-plan';
+import { UserChipList } from '@entities/user';
 import { MachineChipList } from '@entities/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,11 +28,8 @@ import { WorkflowMiniStepper } from './components/MiniStepper';
 const FSEC_STATUS_ID_TIREE = 7;
 
 interface AssemblyTabProps {
-    fsecVersionId: string;
-    /** UUID logique partagé entre versions FSEC (utilisé par le tableau récap stock). */
-    fsecUuid: string;
-    /** ID du statut FSEC courant — verrouille le tableau récap si === 7 (Tirée). */
-    fsecStatusId: number;
+    /** FSEC courant : porte version_uuid, fsec_uuid, statut, plan d'assemblage… */
+    fsec: Fsec;
 }
 
 const ASSEMBLY_WORKFLOW_STEPS = ["Début d'assemblage", "Fin d'assemblage"];
@@ -106,9 +105,9 @@ function AssemblyStepCard({ step, index, onEdit }: { step: AssemblyStep; index: 
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary">
-                                Assembleur
+                                {step.operatorUserUuids.length > 1 ? 'Assembleurs' : 'Assembleur'}
                             </Typography>
-                            <UserChip userUuid={step.operatorUserUuid} fallbackText={step.operator} />
+                            <UserChipList uuids={step.operatorUserUuids} fallbackText={step.operator} />
                         </Grid>
                         <Grid item xs={6} md={3}>
                             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
@@ -148,7 +147,10 @@ function EmptyAssemblyCard({ onAdd }: { onAdd: () => void }) {
     );
 }
 
-export function AssemblyTab({ fsecVersionId, fsecUuid, fsecStatusId }: AssemblyTabProps) {
+export function AssemblyTab({ fsec }: AssemblyTabProps) {
+    const fsecVersionId = fsec.versionUuid;
+    const fsecUuid = fsec.fsecUuid;
+    const fsecStatusId = fsec.statusId ?? 0;
     const { data: assemblySteps, isLoading } = useAssemblyStepsByFsec(fsecVersionId);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedStep, setSelectedStep] = useState<AssemblyStep | null>(null);
@@ -174,6 +176,14 @@ export function AssemblyTab({ fsecVersionId, fsecUuid, fsecStatusId }: AssemblyT
         <Box>
             <Stack spacing={3}>
                 <AssemblyItemsSection fsecUuid={fsecUuid} isLocked={isFsecLocked} />
+
+                <Paper variant="outlined" sx={{ borderRadius: 1, bgcolor: 'background.paper', overflow: 'hidden' }}>
+                    <AssemblyPlanSection
+                        versionUuid={fsecVersionId}
+                        imageUrl={fsec.assemblyPlanImage}
+                        annotations={fsec.assemblyPlanAnnotations}
+                    />
+                </Paper>
 
                 {isLoading ? (
                     <Skeleton variant="rounded" height={120} sx={{ borderRadius: 1 }} />

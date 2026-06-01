@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 
 from app.domain.embase.models.embase_bean import EmbaseBean
 from app.domain.embase.models.fsec_history_bean import FsecHistoryEntryBean
+from app.domain.shared.slug import slugify_text
 from app.mapper.type_conversion import (
     decimal_to_float,
     format_date_for_api,
@@ -164,6 +165,7 @@ def embase_mapper_bean_to_api(bean: EmbaseBean) -> Dict[str, Any]:
     """Convertit un EmbaseBean en donnees API."""
     result = {
         "uuid": bean.uuid,
+        "slug": slugify_text(bean.identifier),
         "identifier": bean.identifier,
         "type": bean.type,
         "nombre_voies": bean.nombre_voies,

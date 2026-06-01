@@ -5,9 +5,14 @@ import logging
 from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 
-from app.api.user.serializers import UpdateSelfProfileSerializer
+from app.api.user.serializers import (
+    AvatarUploadSerializer,
+    SignatureUploadSerializer,
+    UpdateSelfProfileSerializer,
+)
 from app.domain.user.services import user_service
 from app.mapper.user.user_mapper import user_mapper_api_to_bean, user_mapper_bean_to_api
 from app.repository.user.repositories.user_repository import UserRepository
@@ -44,3 +49,61 @@ class MeController(viewsets.ViewSet):
 
         logger.info("Utilisateur %s a modifie son profil", request.user.username)
         return JsonResponse(user_mapper_bean_to_api(updated_bean))
+
+    @action(
+        detail=False,
+        methods=["post", "delete"],
+        url_path="avatar",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def avatar(self, request):
+        """POST /api/v1/auth/me/avatar/ — upload (multipart, champ `image`).
+        DELETE /api/v1/auth/me/avatar/ — suppression de la photo de profil.
+
+        Renvoie le profil mis à jour (avec `avatar_url` à jour ou null).
+        """
+        profile = request.user.profile
+
+        if request.method == "DELETE":
+            bean = user_service.delete_user_avatar(self.repository, profile.uuid)
+            logger.info("Utilisateur %s a supprime son avatar", request.user.username)
+            return JsonResponse(user_mapper_bean_to_api(bean))
+
+        serializer = AvatarUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        bean = user_service.set_user_avatar(
+            self.repository, profile.uuid, serializer.validated_data["image"]
+        )
+        logger.info("Utilisateur %s a mis a jour son avatar", request.user.username)
+        return JsonResponse(user_mapper_bean_to_api(bean))
+
+    @action(
+        detail=False,
+        methods=["post", "delete"],
+        url_path="signature",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def signature(self, request):
+        """POST /api/v1/auth/me/signature/ — upload (multipart, champ `image`).
+        DELETE /api/v1/auth/me/signature/ — suppression de la signature.
+
+        Renvoie le profil mis à jour (avec `signature_url` à jour ou null).
+        Un utilisateur n'agit que sur sa propre signature (request.user.profile),
+        aucun paramètre d'identité externe n'est accepté.
+        """
+        profile = request.user.profile
+
+        if request.method == "DELETE":
+            bean = user_service.delete_user_signature(self.repository, profile.uuid)
+            logger.info(
+                "Utilisateur %s a supprime sa signature", request.user.username
+            )
+            return JsonResponse(user_mapper_bean_to_api(bean))
+
+        serializer = SignatureUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        bean = user_service.set_user_signature(
+            self.repository, profile.uuid, serializer.validated_data["image"]
+        )
+        logger.info("Utilisateur %s a mis a jour sa signature", request.user.username)
+        return JsonResponse(user_mapper_bean_to_api(bean))

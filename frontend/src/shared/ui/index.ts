@@ -8,5 +8,6 @@ export { OfflineBanner } from './OfflineBanner';
 export { useNotification } from '../lib/notification';
 export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
 export { ColorDot, type ColorDotProps } from './ColorDot';
+export { ChartTooltipCard, type TooltipMetric } from './ChartTooltipCard';
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { LoginSuccessAnimation, type LoginSuccessAnimationProps } from './LoginSuccessAnimation';

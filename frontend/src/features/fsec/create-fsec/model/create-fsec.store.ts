@@ -9,17 +9,19 @@ import { create } from 'zustand';
 
 interface CreateFsecState {
     isOpen: boolean;
+    preselectedCampaignId: string | null;
 
     // Actions
-    open: () => void;
+    open: (campaignId?: string) => void;
     close: () => void;
     reset: () => void;
 }
 
 export const useCreateFsecStore = create<CreateFsecState>((set) => ({
     isOpen: false,
+    preselectedCampaignId: null,
 
-    open: () => set({ isOpen: true }),
+    open: (campaignId?: string) => set({ isOpen: true, preselectedCampaignId: campaignId ?? null }),
     close: () => set({ isOpen: false }),
-    reset: () => set({ isOpen: false }),
+    reset: () => set({ isOpen: false, preselectedCampaignId: null }),
 }));

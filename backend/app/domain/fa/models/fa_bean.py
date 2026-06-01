@@ -36,11 +36,12 @@ class FaBean:
     iec_validation_open_name: Optional[str] = None
     iec_validation_open_user_uuid: Optional[str] = None
 
-    # Phase En cours
+    # Phase En cours.
+    # Pas de date de passage en cours : seules les dates d'ouverture et de clôture
+    # sont conservées (KPIs DCP simplifiés).
     cause: Optional[str] = None
     experience_impact: Optional[str] = None
     iec_validation_progress: bool = False
-    iec_validation_progress_date: Optional[date] = None
     iec_validation_progress_name: Optional[str] = None
     iec_validation_progress_user_uuid: Optional[str] = None
 
@@ -49,9 +50,6 @@ class FaBean:
     closure_date: Optional[date] = None
     closure_validator_name: Optional[str] = None
     closure_validator_user_uuid: Optional[str] = None
-
-    # Soft delete
-    is_active: bool = True
 
     # Metadata
     created_at: Optional[datetime] = None
@@ -62,3 +60,9 @@ class FaBean:
     # Remplis par fa_mapper_entity_to_bean depuis le select_related élargi.
     fsec_name: Optional[str] = None
     installation: Optional[str] = None
+
+    # Slugs d'URL calculés (non persistés) : `slug` de la FA (slugify identifier),
+    # `fsec_slug` et `campaign_slug` des parents pour la navigation croisée.
+    slug: Optional[str] = None
+    fsec_slug: Optional[str] = None
+    campaign_slug: Optional[str] = None

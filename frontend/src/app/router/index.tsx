@@ -3,34 +3,39 @@
  * @module app/router
  */
 
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { MainLayout } from '../layouts';
 import { useAuthStore } from '@features/auth';
 import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
+import { lazyWithRetry, pageImports } from './page-loaders';
 
-// Lazy-loaded pages
-const LoginPage = lazy(() => import('@pages/login'));
-const SetInitialPasswordPage = lazy(() => import('@pages/set-initial-password'));
-const HomePage = lazy(() => import('@pages/home'));
-const AdminUsersPage = lazy(() => import('@pages/admin/users'));
-const ChangePasswordPage = lazy(() => import('@pages/change-password'));
-const CampaignsPage = lazy(() => import('@pages/campaigns'));
-const CampaignDetailsPage = lazy(() => import('@pages/campaign-details'));
-const FsecsPage = lazy(() => import('@pages/fsecs'));
-const FsecDetailsPage = lazy(() => import('@pages/fsec-details'));
-const FasPage = lazy(() => import('@pages/fas'));
-const FaDetailsPage = lazy(() => import('@pages/fa-details'));
-const EmbasesPage = lazy(() => import('@pages/embases'));
-const EmbaseDetailsPage = lazy(() => import('@pages/embase-details'));
-const PlanningPage = lazy(() => import('@pages/planning'));
-const IndicateursFaPage = lazy(() => import('@pages/indicateurs/fa'));
-const IndicateursFsecPage = lazy(() => import('@pages/indicateurs/fsec'));
-const StockPage = lazy(() => import('@pages/stock'));
-const MaterielPage = lazy(() => import('@pages/materiel'));
-const MaterielMachinesView = lazy(() => import('@pages/materiel/MachinesView'));
+// Lazy-loaded pages — chunks déclarés dans page-loaders.ts (partagés avec le
+// prefetch d'intention). `lazyWithRetry` recharge proprement après un
+// redéploiement (chunk au hash périmé).
+const LoginPage = lazyWithRetry(pageImports.login);
+const SetInitialPasswordPage = lazyWithRetry(pageImports.setInitialPassword);
+const HomePage = lazyWithRetry(pageImports.home);
+const ChangePasswordPage = lazyWithRetry(pageImports.changePassword);
+const CampaignsPage = lazyWithRetry(pageImports.campaigns);
+const CampaignDetailsPage = lazyWithRetry(pageImports.campaignDetails);
+const FsecsPage = lazyWithRetry(pageImports.fsecs);
+const FsecDetailsPage = lazyWithRetry(pageImports.fsecDetails);
+const FasPage = lazyWithRetry(pageImports.fas);
+const FaDetailsPage = lazyWithRetry(pageImports.faDetails);
+const EmbasesPage = lazyWithRetry(pageImports.embases);
+const EmbaseDetailsPage = lazyWithRetry(pageImports.embaseDetails);
+const PlanningPage = lazyWithRetry(pageImports.planning);
+const IndicateursFaPage = lazyWithRetry(pageImports.indicateursFa);
+const IndicateursFsecPage = lazyWithRetry(pageImports.indicateursFsec);
+const IndicateursCampagnePage = lazyWithRetry(pageImports.indicateursCampagne);
+const StockPage = lazyWithRetry(pageImports.stock);
+const MaterielPage = lazyWithRetry(pageImports.materiel);
+const MaterielMachinesView = lazyWithRetry(pageImports.materielMachines);
+const EquipeAnnuairePage = lazyWithRetry(pageImports.equipeAnnuaire);
+const EquipeCartePage = lazyWithRetry(pageImports.equipeCarte);
 
 // Minimal loader for login page Suspense
 function LoginLoader() {
@@ -43,10 +48,13 @@ function LoginLoader() {
 
 // QueryErrorResetBoundary + ErrorBoundary wrapper
 function QuerySafeErrorBoundary({ sectionName, children }: { sectionName: string; children: React.ReactNode }) {
+    // `key={pathname}` remonte l'ErrorBoundary à chaque navigation → une page
+    // qui a throw ne reste pas collée à l'écran quand on clique ailleurs.
+    const location = useLocation();
     return (
         <QueryErrorResetBoundary>
             {({ reset }) => (
-                <ErrorBoundary onReset={reset} sectionName={sectionName}>
+                <ErrorBoundary key={location.pathname} onReset={reset} sectionName={sectionName}>
                     {children}
                 </ErrorBoundary>
             )}
@@ -129,7 +137,7 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: 'campagne-details/:campaignUuid/*',
+                path: 'campagne-details/:campaignSlug/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Détails campagne">
                         <CampaignDetailsPage />
@@ -145,7 +153,7 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: 'fsec-details/:versionUuid/*',
+                path: 'fsec-details/:fsecSlug/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Détails FSEC">
                         <FsecDetailsPage />
@@ -161,7 +169,7 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: 'fa-details/:uuid/*',
+                path: 'fa-details/:faSlug/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Détails FA">
                         <FaDetailsPage />
@@ -177,7 +185,7 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: 'embase-details/:uuid/*',
+                path: 'embase-details/:embaseSlug/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Détails Embase">
                         <EmbaseDetailsPage />
@@ -213,6 +221,14 @@ export const router = createBrowserRouter([
                 ),
             },
             {
+                path: 'indicateurs/campagne',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Indicateurs Campagnes">
+                        <IndicateursCampagnePage />
+                    </QuerySafeErrorBoundary>
+                ),
+            },
+            {
                 path: 'stock/*',
                 element: (
                     <QuerySafeErrorBoundary sectionName="Stock">
@@ -230,10 +246,22 @@ export const router = createBrowserRouter([
                 children: [{ index: true, element: <MaterielMachinesView /> }],
             },
             {
-                path: 'admin/utilisateurs',
+                path: 'equipe',
+                element: <Navigate to="/equipe/annuaire" replace />,
+            },
+            {
+                path: 'equipe/annuaire',
                 element: (
-                    <QuerySafeErrorBoundary sectionName="Administration">
-                        <AdminUsersPage />
+                    <QuerySafeErrorBoundary sectionName="Équipe">
+                        <EquipeAnnuairePage />
+                    </QuerySafeErrorBoundary>
+                ),
+            },
+            {
+                path: 'equipe/carte',
+                element: (
+                    <QuerySafeErrorBoundary sectionName="Carte du centre">
+                        <EquipeCartePage />
                     </QuerySafeErrorBoundary>
                 ),
             },

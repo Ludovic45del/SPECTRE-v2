@@ -19,6 +19,8 @@ const MOCK_CAMPAIGN_UUID = '00000000-0000-0000-0000-000000000003';
 
 // Mock FSEC data for different categories
 const createMockFsec = (overrides: Partial<Fsec> = {}): Fsec => ({
+    slug: 'fsec-test-001',
+    campaignSlug: null,
     fsecUuid: MOCK_FSEC_UUID,
     versionUuid: MOCK_VERSION_UUID,
     name: 'FSEC Test 001',
@@ -34,6 +36,15 @@ const createMockFsec = (overrides: Partial<Fsec> = {}): Fsec => ({
     experienceSrxx: null,
     localisation: null,
     depressurizationFailed: null,
+    overviewImage: null,
+    assemblyPlanImage: null,
+    assemblyPlanAnnotations: [],
+    alignmentFileLink: null,
+    fdieLink: null,
+    deliveryValidation: null,
+    deliveryRemarques: null,
+    deliveryValidatedByUsername: null,
+    deliveryValidatedAt: null,
     createdAt: new Date('2025-01-15T10:00:00Z'),
     lastUpdated: new Date('2025-01-15T10:00:00Z'),
     ...overrides,

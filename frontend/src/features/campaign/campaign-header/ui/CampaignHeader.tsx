@@ -24,7 +24,13 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import NoteAddOutlinedIcon from '@mui/icons-material/NoteAddOutlined';
+import PostAddOutlinedIcon from '@mui/icons-material/PostAddOutlined';
 import { CampaignWithRelations, useDeleteCampaign } from '@entities/campaign';
+import { GenerateRecapSheetModal } from '@features/campaign/generate-recap-sheet';
+import { CreateFaModal, useCreateFaStore } from '@features/fa';
+import { CreateFsecModal, useCreateFsecStore } from '@features/fsec/create-fsec';
 import { DataChip } from '@widgets/data-chip';
 import { WorkflowStepper } from './WorkflowStepper';
 import { useNotification } from '@shared/ui';
@@ -51,7 +57,10 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
     const navigate = useNavigate();
     const { showNotification } = useNotification();
     const deleteMutation = useDeleteCampaign();
+    const openCreateFsec = useCreateFsecStore((state) => state.open);
+    const openCreateFa = useCreateFaStore((state) => state.open);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isRecapSheetOpen, setIsRecapSheetOpen] = useState(false);
 
     // Memoized computed values
     const formattedName = useMemo(() => {
@@ -65,6 +74,14 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
     }, [campaign.lastUpdated]);
 
     // Memoized handlers
+    const handleAddFsec = useCallback(() => {
+        openCreateFsec(campaign.uuid);
+    }, [openCreateFsec, campaign.uuid]);
+
+    const handleAddFa = useCallback(() => {
+        openCreateFa(undefined, campaign.uuid);
+    }, [openCreateFa, campaign.uuid]);
+
     const handleOpenDeleteDialog = useCallback(() => {
         setIsDeleteDialogOpen(true);
     }, []);
@@ -200,8 +217,77 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
                     <WorkflowStepper campaign={campaign} />
                 </Box>
 
-                {/* Right: Delete action */}
-                <Box>
+                {/* Right: Actions (ajout FSEC/FA + fiche récap livraison + suppression) */}
+                <Stack direction="row" spacing={1}>
+                    <Tooltip title="Ajouter une FSEC à cette campagne">
+                        <IconButton
+                            onClick={handleAddFsec}
+                            aria-label="Ajouter une FSEC à cette campagne"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: '50%',
+                                bgcolor: 'background.paper',
+                                color: 'text.secondary',
+                                transition: `all ${motion.base}`,
+                                '&:hover': {
+                                    bgcolor: 'primary.50',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                },
+                            }}
+                        >
+                            <NoteAddOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Ajouter une FA à cette campagne">
+                        <IconButton
+                            onClick={handleAddFa}
+                            aria-label="Ajouter une FA à cette campagne"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: '50%',
+                                bgcolor: 'background.paper',
+                                color: 'text.secondary',
+                                transition: `all ${motion.base}`,
+                                '&:hover': {
+                                    bgcolor: 'primary.50',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                },
+                            }}
+                        >
+                            <PostAddOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Générer la fiche de livraison récapitulative">
+                        <IconButton
+                            onClick={() => setIsRecapSheetOpen(true)}
+                            aria-label="Générer la fiche de livraison récapitulative"
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: '50%',
+                                bgcolor: 'background.paper',
+                                color: 'text.secondary',
+                                transition: `all ${motion.base}`,
+                                '&:hover': {
+                                    bgcolor: 'primary.50',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                },
+                            }}
+                        >
+                            <PictureAsPdfOutlinedIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Supprimer la campagne">
                         <IconButton
                             onClick={handleOpenDeleteDialog}
@@ -225,8 +311,18 @@ function CampaignHeaderComponent({ campaign }: CampaignHeaderProps) {
                             <DeleteOutlineIcon sx={{ fontSize: 20 }} />
                         </IconButton>
                     </Tooltip>
-                </Box>
+                </Stack>
             </Stack>
+
+            <GenerateRecapSheetModal
+                open={isRecapSheetOpen}
+                onClose={() => setIsRecapSheetOpen(false)}
+                campaign={campaign}
+            />
+
+            {/* Création FSEC / FA pré-rattachée à la campagne courante */}
+            <CreateFsecModal />
+            <CreateFaModal />
 
             {/* Delete Confirmation Dialog */}
             <Dialog

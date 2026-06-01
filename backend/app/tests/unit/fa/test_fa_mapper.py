@@ -49,7 +49,6 @@ def sample_fa_bean():
         cause="Cause identifiée test",
         experience_impact="Impact test",
         iec_validation_progress=False,
-        iec_validation_progress_date=None,
         iec_validation_progress_name=None,
         # Phase Clos
         closure_validation=None,
@@ -84,7 +83,6 @@ def sample_fa_api_data():
         "cause": "Cause API",
         "experience_impact": "Impact API",
         "iec_validation_progress": True,
-        "iec_validation_progress_date": "2025-04-12",
         "iec_validation_progress_name": "Valideur Progress",
         # Phase Clos
         "closure_validation": "Clôture validée",
@@ -102,6 +100,8 @@ class TestFaMapperEntityToBean:
         mock_entity = MagicMock()
         mock_entity.uuid = "entity-uuid-12345"
         mock_entity.fsec_version_id_id = "fsec-version-uuid"
+        mock_entity.fsec_version_id.name = "FSEC Mapper"
+        mock_entity.fsec_version_id.campaign_id = None
         mock_entity.status_id_id = 0
         mock_entity.type_id_id = 1
         mock_entity.criticality_id_id = 2
@@ -122,7 +122,6 @@ class TestFaMapperEntityToBean:
         mock_entity.cause = "Cause test"
         mock_entity.experience_impact = "Impact test"
         mock_entity.iec_validation_progress = False
-        mock_entity.iec_validation_progress_date = None
         mock_entity.iec_validation_progress_name = None
         # Phase Clos
         mock_entity.closure_validation = None
@@ -151,6 +150,8 @@ class TestFaMapperEntityToBean:
         mock_entity = MagicMock()
         mock_entity.uuid = "entity-uuid-null"
         mock_entity.fsec_version_id_id = "fsec-uuid"
+        mock_entity.fsec_version_id.name = "FSEC Mapper"
+        mock_entity.fsec_version_id.campaign_id = None
         mock_entity.status_id_id = None
         mock_entity.type_id_id = None
         mock_entity.criticality_id_id = None
@@ -169,7 +170,6 @@ class TestFaMapperEntityToBean:
         mock_entity.cause = None
         mock_entity.experience_impact = None
         mock_entity.iec_validation_progress = False
-        mock_entity.iec_validation_progress_date = None
         mock_entity.iec_validation_progress_name = None
         mock_entity.closure_validation = None
         mock_entity.closure_date = None
@@ -191,6 +191,8 @@ class TestFaMapperEntityToBean:
         mock_entity = MagicMock()
         mock_entity.uuid = "entity-uuid-other"
         mock_entity.fsec_version_id_id = "fsec-uuid"
+        mock_entity.fsec_version_id.name = "FSEC Mapper"
+        mock_entity.fsec_version_id.campaign_id = None
         mock_entity.status_id_id = 0
         mock_entity.type_id_id = None
         mock_entity.criticality_id_id = None
@@ -209,7 +211,6 @@ class TestFaMapperEntityToBean:
         mock_entity.cause = None
         mock_entity.experience_impact = None
         mock_entity.iec_validation_progress = False
-        mock_entity.iec_validation_progress_date = None
         mock_entity.iec_validation_progress_name = None
         mock_entity.closure_validation = None
         mock_entity.closure_date = None
