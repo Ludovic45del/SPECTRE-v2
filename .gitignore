@@ -29,6 +29,10 @@ db.sqlite3
 db.sqlite3-journal
 staticfiles/
 
+# Offline pip wheels (pip download -r requirements-dev.txt -d wheels/)
+wheels/
+*.whl
+
 # Uploads runtime (signatures, avatars, photos FA/FSEC)
 backend/media/
 
