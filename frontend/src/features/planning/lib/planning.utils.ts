@@ -6,6 +6,7 @@
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import 'dayjs/locale/fr';
+import { isPausedFsecStatus } from '@entities/fsec';
 import { WEEKLY_COLS } from './planning.constants';
 
 dayjs.extend(isoWeek);
@@ -142,6 +143,10 @@ export function isFsecStepDone(
     fsec: { statusId: number | null; shootingDate: Date | null },
     etape: { minStatusForDone?: number | null; useShootingDate?: boolean },
 ): boolean {
+    // Un statut de pause (HS, Décision MOE) fige l'avancement : tant que la FSEC
+    // est en pause, aucune étape n'est considérée comme terminée. Sans ce garde,
+    // statusId=15 (>= tous les seuils) marquerait toutes les étapes « faites ».
+    if (isPausedFsecStatus(fsec.statusId)) return false;
     if (etape.useShootingDate) return fsec.shootingDate != null;
     if (etape.minStatusForDone != null) return (fsec.statusId ?? 0) >= etape.minStatusForDone;
     return false;

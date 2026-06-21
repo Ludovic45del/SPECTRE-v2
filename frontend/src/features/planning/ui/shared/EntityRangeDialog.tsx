@@ -11,8 +11,8 @@ import { type ReactNode, useId } from 'react';
 import { Box, Button, IconButton, Popover, TextField, Typography } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { usePlanningColors } from '../../lib/planning.hooks';
-import type { DateRange } from '../../lib/useDateRangeSelection';
-import { RangeCalendar } from './RangeCalendar';
+import { RangeCalendar } from '@shared/ui';
+import type { DateRange } from '@shared/lib';
 
 export interface EntityRangeDialogProps {
     anchorEl: HTMLElement;

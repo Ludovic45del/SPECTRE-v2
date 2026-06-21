@@ -35,6 +35,7 @@ import {
     getBarBorderRadius,
     getBarSpanCount,
     calculateResizePreview,
+    calculateDragPreview,
 } from './planning.bar-utils';
 
 import { resolveWeekState } from './planning.grid-utils';
@@ -196,6 +197,23 @@ describe('isFsecStepDone', () => {
     it('handles null statusId with minStatusForDone', () => {
         expect(isFsecStepDone({ statusId: null, shootingDate: null }, { minStatusForDone: 1 })).toBe(false);
     });
+
+    // Statuts de pause : figent l'avancement, aucune étape n'est « faite »
+    // même si statusId >= seuil ou que la date de tir est renseignée.
+    it.each([
+        ['HS', 8],
+        ['Décision MOE', 15],
+    ])('not done for paused status %s even when statusId >= minStatusForDone', (_label, statusId) => {
+        expect(isFsecStepDone({ statusId, shootingDate: null }, { minStatusForDone: 1 })).toBe(false);
+        expect(isFsecStepDone({ statusId, shootingDate: null }, { minStatusForDone: 7 })).toBe(false);
+    });
+
+    it.each([
+        ['HS', 8],
+        ['Décision MOE', 15],
+    ])('not done for paused status %s even on a shooting-date step', (_label, statusId) => {
+        expect(isFsecStepDone({ statusId, shootingDate: new Date() }, { useShootingDate: true })).toBe(false);
+    });
 });
 
 // ====================== Row ID helpers ======================
@@ -346,6 +364,41 @@ describe('calculateResizePreview', () => {
     it('returns null for item outside columns', () => {
         const farItem = { startDate: '2020-01-01', endDate: '2020-01-07' };
         expect(calculateResizePreview(farItem, cols, 'end', 3, '#000')).toBeNull();
+    });
+});
+
+describe('calculateDragPreview', () => {
+    const cols = computeWeeklyColumns('2025-05-01');
+    // Barre de 3 colonnes (indices 3 → 5).
+    const item = {
+        startDate: cols[3].start.format('YYYY-MM-DD'),
+        endDate: cols[5].end.format('YYYY-MM-DD'),
+    };
+
+    it('décale toute la barre vers la droite en conservant sa longueur', () => {
+        const preview = calculateDragPreview(item, cols, 2, '#F00');
+        expect(preview).not.toBeNull();
+        expect(preview!.startIdx).toBe(5);
+        expect(preview!.endIdx).toBe(7);
+        expect(preview!.color).toBe('#F00');
+    });
+
+    it('décale toute la barre vers la gauche', () => {
+        const preview = calculateDragPreview(item, cols, -3, '#0F0');
+        expect(preview!.startIdx).toBe(0);
+        expect(preview!.endIdx).toBe(2);
+    });
+
+    it('borne le décalage aux extrémités de la grille', () => {
+        const preview = calculateDragPreview(item, cols, -10, '#00F');
+        expect(preview!.startIdx).toBe(0);
+        // endIdx borné à 0 (la barre déborde entièrement à gauche)
+        expect(preview!.endIdx).toBe(0);
+    });
+
+    it('renvoie null pour un item hors colonnes', () => {
+        const farItem = { startDate: '2020-01-01', endDate: '2020-01-07' };
+        expect(calculateDragPreview(farItem, cols, 1, '#000')).toBeNull();
     });
 });
 

@@ -72,5 +72,7 @@ def build_fsec_slug(
     Le nom de FSEC n'est unique que ``(campaign_id, name)`` ; on le préfixe donc
     par le slug campagne pour garantir l'unicité globale.
     """
-    campaign_part = build_campaign_slug(year, semester, installation_label, campaign_name)
+    campaign_part = build_campaign_slug(
+        year, semester, installation_label, campaign_name
+    )
     return slugify_text(f"{campaign_part}-{fsec_name or ''}")

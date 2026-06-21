@@ -11,11 +11,7 @@ from app.domain.dashboard.models.dashboard_bean import (
     FaCountsBean,
     RecentActivityItemBean,
 )
-from app.domain.shared.slug import (
-    build_campaign_slug,
-    build_fsec_slug,
-    slugify_text,
-)
+from app.domain.shared.slug import build_campaign_slug, build_fsec_slug, slugify_text
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.embase.models.embase_entity import EmbaseEntity
 from app.repository.fa.models.fa_entity import FaEntity

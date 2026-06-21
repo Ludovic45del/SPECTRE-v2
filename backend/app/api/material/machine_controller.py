@@ -5,10 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 
-from app.api.material.serializers import (
-    MachineListQuerySerializer,
-    MachineSerializer,
-)
+from app.api.material.serializers import MachineListQuerySerializer, MachineSerializer
 from app.domain.exceptions import InvalidDataException
 from app.domain.material.models.machine_link_bean import MachineLinkBean
 from app.domain.material.services.material_service import (

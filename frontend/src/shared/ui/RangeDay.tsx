@@ -4,12 +4,12 @@
  * Factory (comme `createAvailabilityDay`) car MUI v8 ne permet plus d'étendre
  * `PickersDayProps`. Couche volontairement DISTINCTE de `createAvailabilityDay`
  * (dispo) : on ne fusionne pas les deux pour ne pas casser leur mémoïsation.
- * @module features/planning/ui/shared
+ * @module shared/ui
  */
 import { alpha } from '@mui/material/styles';
 import { PickersDay, type PickersDayProps } from '@mui/x-date-pickers/PickersDay';
 import type { Dayjs } from 'dayjs';
-import type { DateRange } from '../../lib/useDateRangeSelection';
+import type { DateRange } from '../lib/useDateRangeSelection';
 
 interface RangeDayConfig extends DateRange {
     /** Couleur d'accent (extrémités pleines + intervalle en alpha). */

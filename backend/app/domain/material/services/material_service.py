@@ -11,10 +11,7 @@ Conventions :
 import logging
 from typing import List
 
-from app.domain.exceptions import (
-    InvalidDataException,
-    NotFoundException,
-)
+from app.domain.exceptions import InvalidDataException, NotFoundException
 from app.domain.material.interface.machine_maintenance_repository import (
     IMachineMaintenanceRepository,
 )
@@ -148,9 +145,7 @@ def create_maintenance(
         raise NotFoundException("Machine", bean.machine_uuid)
     _validate_maintenance_payload(bean)
     result = maintenance_repo.create(bean)
-    logger.info(
-        "Maintenance créée: machine=%s, date=%s", bean.machine_uuid, bean.date
-    )
+    logger.info("Maintenance créée: machine=%s, date=%s", bean.machine_uuid, bean.date)
     return result
 
 
@@ -167,9 +162,7 @@ def update_maintenance(
     return repository.update(bean)
 
 
-def delete_maintenance(
-    repository: IMachineMaintenanceRepository, uuid: str
-) -> None:
+def delete_maintenance(repository: IMachineMaintenanceRepository, uuid: str) -> None:
     if not repository.delete(uuid):
         raise NotFoundException("MachineMaintenance", uuid)
     logger.info("Maintenance supprimée: %s", uuid)

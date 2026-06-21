@@ -15,12 +15,15 @@ from app.domain.stock.interface.catalog_repository import IStockCatalogRepositor
 from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
 from app.domain.stock.models.stock_constants import (
     CATEGORY_BY_KIND,
+    CATEGORY_STRUCTURATION,
     ELEMENT_STATUS_DISPO,
     ERROR_CODE_CATALOG_ITEM_IN_USE,
     ERROR_CODE_INVALID_KIND_CATEGORY,
     ITEM_KIND_CONSUMABLE,
     ITEM_KIND_ELEMENT,
     ITEM_KINDS,
+    STRUCTURATION_BATCH_MAX,
+    STRUCTURATION_TYPES,
 )
 
 logger = logging.getLogger(__name__)
@@ -30,6 +33,7 @@ logger = logging.getLogger(__name__)
 # `kind` est explicitement exclu (immuable après création — cf. CDC §5.1).
 ALLOWED_PATCH_FIELDS = {
     "category",
+    "structuration_type",
     "name",
     "reference",
     "caracteristique",
@@ -41,6 +45,7 @@ ALLOWED_PATCH_FIELDS = {
     "seuil_alerte",
     "date_peremption",
     "type_d_achat",
+    "fsec_name",
     "installation",
     "status",
     "materiaux_mat",
@@ -72,6 +77,23 @@ def _validate_kind_category_consistency(bean: StockCatalogItemBean) -> None:
             f"Rubrique '{bean.category}' incompatible avec kind='{bean.kind}'. "
             f"Valeurs autorisées pour ce kind : {sorted(allowed)}",
         )
+
+
+def _validate_structuration_type(bean: StockCatalogItemBean) -> None:
+    """Cohérence rubrique ↔ structuration_type.
+
+    Requis (standard/speciale/ec) quand category=structuration ; remis à None
+    silencieusement sinon (ex. PATCH qui change la rubrique sans nettoyer le type).
+    """
+    if bean.category == CATEGORY_STRUCTURATION:
+        if bean.structuration_type not in STRUCTURATION_TYPES:
+            raise ValidationException(
+                "structuration_type",
+                "Le champ 'structuration_type' est requis pour la rubrique "
+                f"'structuration'. Valeurs autorisées : {sorted(STRUCTURATION_TYPES)}",
+            )
+    else:
+        bean.structuration_type = None
 
 
 def _validate_kind_specific_fields(bean: StockCatalogItemBean) -> None:
@@ -115,7 +137,7 @@ def _validate_kind_specific_fields(bean: StockCatalogItemBean) -> None:
                 "quantite", "La quantité ne peut pas être négative."
             )
         # Champs interdits pour consumable
-        for forbidden in ("status", "installation", "materiaux_mat"):
+        for forbidden in ("status", "installation", "materiaux_mat", "fsec_name"):
             if getattr(bean, forbidden) is not None:
                 raise ValidationException(
                     forbidden,
@@ -152,6 +174,7 @@ def create_item(
     """Crée un nouvel item du catalogue après validation (cf. CDC §5.1)."""
     _validate_kind(bean)
     _validate_kind_category_consistency(bean)
+    _validate_structuration_type(bean)
     _validate_kind_specific_fields(bean)
     _validate_unicity(repository, bean)
 
@@ -164,6 +187,64 @@ def create_item(
     result = repository.create(bean)
     logger.info("Created stock catalog item uuid=%s", result.uuid)
     return result
+
+
+def create_structuration_batch(
+    repository: IStockCatalogRepository,
+    *,
+    structuration_type: str,
+    installation: str,
+    quantity: int,
+    fsec_name: Optional[str] = None,
+    caracteristique: Optional[str] = None,
+    fournisseur: Optional[str] = None,
+    materiaux_mat: Optional[str] = None,
+    boite: Optional[str] = None,
+    emplacement: Optional[str] = None,
+    remarques: Optional[str] = None,
+) -> List[StockCatalogItemBean]:
+    """Crée un paquet de `quantity` structurations numérotées automatiquement.
+
+    Chaque pièce partage le même type et la même installation ; son `name` est un
+    numéro de série **global** et **continu** (max existant + 1), calculé une
+    seule fois pour tout le paquet — seul identifiant distinctif. La création est
+    atomique : soit toutes les pièces sont créées, soit aucune.
+
+    La FSEC reste optionnelle. Voir CDC §8.1 (mode paquet).
+    """
+    if not isinstance(quantity, int) or quantity < 1 or quantity > STRUCTURATION_BATCH_MAX:
+        raise ValidationException(
+            "quantity",
+            f"La quantité doit être un entier entre 1 et {STRUCTURATION_BATCH_MAX}.",
+        )
+
+    # `template` porte les champs communs ; le `name` (numéro de série) est
+    # attribué par le repository, sous verrou, pour tout le paquet. Les champs
+    # communs sont validés une seule fois sur le template (ils sont identiques
+    # pour toutes les pièces). L'unicité du `name` est garantie par construction
+    # (numéro = max(kind=element) + 1) et n'a donc pas à être revérifiée par pièce.
+    template = StockCatalogItemBean(
+        kind=ITEM_KIND_ELEMENT,
+        category=CATEGORY_STRUCTURATION,
+        structuration_type=structuration_type,
+        name="",
+        installation=installation,
+        status=ELEMENT_STATUS_DISPO,
+        fsec_name=fsec_name or None,
+        caracteristique=caracteristique or None,
+        fournisseur=fournisseur or None,
+        materiaux_mat=materiaux_mat or None,
+        boite=boite or None,
+        emplacement=emplacement or None,
+        remarques=remarques or None,
+    )
+    _validate_kind(template)
+    _validate_kind_category_consistency(template)
+    _validate_structuration_type(template)
+    _validate_kind_specific_fields(template)
+
+    logger.info("Creating structuration batch: %d items", quantity)
+    return repository.create_structuration_batch(template, quantity)
 
 
 def get_item(repository: IStockCatalogRepository, uuid: str) -> StockCatalogItemBean:
@@ -231,6 +312,7 @@ def update_item(
 
     _validate_kind(bean)
     _validate_kind_category_consistency(bean)
+    _validate_structuration_type(bean)
     _validate_kind_specific_fields(bean)
     _validate_unicity(repository, bean, exclude_uuid=bean.uuid)
 
@@ -255,6 +337,7 @@ def patch_item(
 
     # Re-validation post-fusion
     _validate_kind_category_consistency(existing)
+    _validate_structuration_type(existing)
     _validate_kind_specific_fields(existing)
     _validate_unicity(repository, existing, exclude_uuid=uuid)
 

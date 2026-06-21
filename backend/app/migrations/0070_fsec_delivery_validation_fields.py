@@ -8,29 +8,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0069_fsec_alignment_fdie_links'),
+        ("app", "0069_fsec_alignment_fdie_links"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='fsecentity',
-            name='delivery_remarques',
+            model_name="fsecentity",
+            name="delivery_remarques",
             field=models.TextField(blank=True, max_length=500, null=True),
         ),
         migrations.AddField(
-            model_name='fsecentity',
-            name='delivery_validated_at',
+            model_name="fsecentity",
+            name="delivery_validated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='fsecentity',
-            name='delivery_validated_by',
-            field=models.ForeignKey(blank=True, db_column='delivery_validated_by_id', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='validated_fsec_deliveries', to=settings.AUTH_USER_MODEL),
+            model_name="fsecentity",
+            name="delivery_validated_by",
+            field=models.ForeignKey(
+                blank=True,
+                db_column="delivery_validated_by_id",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="validated_fsec_deliveries",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='fsecentity',
-            name='delivery_validation',
+            model_name="fsecentity",
+            name="delivery_validation",
             field=models.CharField(blank=True, max_length=10, null=True),
         ),
     ]

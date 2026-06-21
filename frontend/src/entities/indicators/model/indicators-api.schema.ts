@@ -69,14 +69,6 @@ export const CampaignIndicatorsApiSchema = z.object({
     top_by_volume: z.array(CampaignVolumeApiSchema),
 });
 
-// ---------- Operator workload ----------
-
-export const OperatorWorkloadApiSchema = z.object({
-    user_uuid: z.string(),
-    name: z.string(),
-    steps_count: z.number().int().nonnegative(),
-});
-
 // ---------- Bundle complet (raw API) ----------
 
 export const IndicatorsApiSchema = z.object({
@@ -85,6 +77,5 @@ export const IndicatorsApiSchema = z.object({
     fsec: FsecIndicatorsApiSchema,
     campaign: CampaignIndicatorsApiSchema,
     step_durations: z.array(StepDurationApiSchema),
-    top_operators: z.array(OperatorWorkloadApiSchema),
     bottleneck_step_key: z.string().nullable(),
 });

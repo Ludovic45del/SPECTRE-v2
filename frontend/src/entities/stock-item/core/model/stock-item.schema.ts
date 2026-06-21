@@ -14,15 +14,19 @@ import { z } from 'zod';
 
 import {
     CATEGORIES_BY_KIND,
+    CATEGORY,
     CATEGORY_VALUES,
     ELEMENT_STATUS_VALUES,
     ITEM_KIND,
     ITEM_KIND_VALUES,
     INSTALLATION_VALUES,
+    STRUCTURATION_BATCH_MAX,
+    STRUCTURATION_TYPE_VALUES,
     type CategoryCode,
     type ElementStatus,
     type Installation,
     type ItemKind,
+    type StructurationType,
 } from './stock.constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,6 +37,9 @@ export const StockCatalogItemApiSchema = z.object({
     uuid: z.string().uuid(),
     kind: z.enum(ITEM_KIND_VALUES as [ItemKind, ...ItemKind[]]),
     category: z.enum(CATEGORY_VALUES as [CategoryCode, ...CategoryCode[]]),
+    structuration_type: z
+        .enum(STRUCTURATION_TYPE_VALUES as [StructurationType, ...StructurationType[]])
+        .nullable(),
     name: z.string(),
     reference: z.string().nullable(),
     caracteristique: z.string().nullable(),
@@ -44,6 +51,7 @@ export const StockCatalogItemApiSchema = z.object({
     seuil_alerte: z.number().int().nullable(),
     date_peremption: z.string().nullable(),
     type_d_achat: z.string().nullable(),
+    fsec_name: z.string().nullable(),
     installation: z.enum(INSTALLATION_VALUES as [Installation, ...Installation[]]).nullable(),
     status: z.enum(ELEMENT_STATUS_VALUES as [ElementStatus, ...ElementStatus[]]).nullable(),
     materiaux_mat: z.string().nullable(),
@@ -58,6 +66,7 @@ export const StockCatalogItemSchema = StockCatalogItemApiSchema.transform((api) 
     uuid: api.uuid,
     kind: api.kind,
     category: api.category,
+    structurationType: api.structuration_type,
     name: api.name,
     reference: api.reference,
     caracteristique: api.caracteristique,
@@ -69,6 +78,7 @@ export const StockCatalogItemSchema = StockCatalogItemApiSchema.transform((api) 
     seuilAlerte: api.seuil_alerte,
     datePeremption: api.date_peremption ? new Date(api.date_peremption) : null,
     typeDAchat: api.type_d_achat,
+    fsecName: api.fsec_name,
     installation: api.installation,
     status: api.status,
     materiauxMat: api.materiaux_mat,
@@ -91,14 +101,34 @@ export const StockCatalogItemListSchema = z.array(StockCatalogItemSchema);
 const ELEMENT_CATEGORY_VALUES = CATEGORIES_BY_KIND[ITEM_KIND.ELEMENT];
 const CONSUMABLE_CATEGORY_VALUES = CATEGORIES_BY_KIND[ITEM_KIND.CONSUMABLE];
 
-/** Schéma du formulaire élément (kind=element). */
-export const ElementFormSchema = z.object({
+/**
+ * Objet de base du formulaire élément (kind=element).
+ *
+ * `name` reste une clé requise (chaîne, '' autorisé) ; la contrainte « non vide »
+ * est appliquée par le superRefine **selon le mode** : en mode paquet (création
+ * de structuration), c'est `batchQuantity` qui est requis et `name` (le numéro
+ * de série, seul identifiant) est attribué automatiquement côté backend.
+ */
+const elementFormObject = z.object({
     kind: z.literal(ITEM_KIND.ELEMENT),
-    name: z.string().min(1, 'Le nom est requis').max(200),
+    name: z.string().max(200),
+    // Nombre de pièces à créer en mode paquet (structuration uniquement).
+    batchQuantity: z
+        .number({ invalid_type_error: 'La quantité doit être un entier' })
+        .int('La quantité doit être un entier')
+        .min(1, 'La quantité doit être au moins 1')
+        .max(STRUCTURATION_BATCH_MAX, `Maximum ${STRUCTURATION_BATCH_MAX} pièces par paquet`)
+        .optional()
+        .nullable(),
     reference: z.string().max(200).optional().nullable(),
+    fsecName: z.string().max(200).optional().nullable(),
     category: z.enum(ELEMENT_CATEGORY_VALUES as [CategoryCode, ...CategoryCode[]], {
         required_error: 'La rubrique est requise',
     }),
+    structurationType: z
+        .enum(STRUCTURATION_TYPE_VALUES as [StructurationType, ...StructurationType[]])
+        .optional()
+        .nullable(),
     installation: z.enum(INSTALLATION_VALUES as [Installation, ...Installation[]], {
         required_error: "L'installation est requise",
     }),
@@ -110,6 +140,50 @@ export const ElementFormSchema = z.object({
     emplacement: z.string().max(200).optional().nullable(),
     remarques: z.string().max(4000).optional().nullable(),
 });
+
+/** Construit le superRefine du formulaire élément selon le mode (paquet ou non). */
+function refineElementForm(batchMode: boolean) {
+    return (values: z.infer<typeof elementFormObject>, ctx: z.RefinementCtx) => {
+        const isStructuration = values.category === CATEGORY.STRUCTURATION;
+
+        if (isStructuration) {
+            if (!values.structurationType) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['structurationType'],
+                    message: 'Le type de structuration est requis',
+                });
+            }
+            if (batchMode) {
+                // Mode paquet (création) : seule la quantité est requise ;
+                // `name` (numéro de série) est attribué automatiquement.
+                if (values.batchQuantity == null || values.batchQuantity < 1) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        path: ['batchQuantity'],
+                        message: 'La quantité doit être au moins 1',
+                    });
+                }
+                return;
+            }
+        }
+
+        // Hors mode paquet (édition, ou rubrique non-structuration) : nom requis.
+        if (!values.name || !values.name.trim()) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['name'],
+                message: 'Le nom est requis',
+            });
+        }
+    };
+}
+
+/** Schéma single / édition (nom requis, pas de numérotation auto). */
+export const ElementFormSchema = elementFormObject.superRefine(refineElementForm(false));
+
+/** Schéma création (mode paquet pour structuration : libellé + quantité requis). */
+export const ElementBatchFormSchema = elementFormObject.superRefine(refineElementForm(true));
 
 export type ElementFormValues = z.infer<typeof ElementFormSchema>;
 
@@ -153,6 +227,7 @@ export type ConsumableFormValues = z.infer<typeof ConsumableFormSchema>;
 export interface StockCatalogItemPayload {
     kind: ItemKind;
     category: CategoryCode;
+    structuration_type?: StructurationType | null;
     name: string;
     reference?: string | null;
     caracteristique?: string | null;
@@ -164,6 +239,7 @@ export interface StockCatalogItemPayload {
     seuil_alerte?: number | null;
     date_peremption?: string | null;
     type_d_achat?: string | null;
+    fsec_name?: string | null;
     installation?: Installation | null;
     status?: ElementStatus | null;
     materiaux_mat?: string | null;
@@ -175,16 +251,52 @@ const emptyToNull = <T extends string | null | undefined>(v: T): string | null =
     !v || (typeof v === 'string' && v.trim() === '') ? null : v;
 
 export function elementFormToApi(values: ElementFormValues): StockCatalogItemPayload {
+    const isStructuration = values.category === CATEGORY.STRUCTURATION;
     return {
         kind: ITEM_KIND.ELEMENT,
         category: values.category,
-        name: values.name.trim(),
+        structuration_type: isStructuration ? (values.structurationType ?? null) : null,
+        name: (values.name ?? '').trim(),
         reference: emptyToNull(values.reference),
+        fsec_name: emptyToNull(values.fsecName),
         caracteristique: emptyToNull(values.caracteristique),
         type_de_colle: emptyToNull(values.typeDeColle),
         materiaux_mat: emptyToNull(values.materiauxMat),
         fournisseur: emptyToNull(values.fournisseur),
         installation: values.installation,
+        boite: emptyToNull(values.boite),
+        emplacement: emptyToNull(values.emplacement),
+        remarques: emptyToNull(values.remarques),
+    };
+}
+
+/** Payload de création par lot de structurations (POST /stock/catalog/batch-structuration/). */
+export interface StructurationBatchPayload {
+    structuration_type: StructurationType;
+    installation: Installation;
+    quantity: number;
+    fsec_name?: string | null;
+    caracteristique?: string | null;
+    fournisseur?: string | null;
+    materiaux_mat?: string | null;
+    boite?: string | null;
+    emplacement?: string | null;
+    remarques?: string | null;
+}
+
+/**
+ * Convertit les valeurs du formulaire élément (mode paquet, rubrique structuration)
+ * en payload de création par lot. La numérotation (`name`) est gérée côté backend.
+ */
+export function structurationBatchFormToApi(values: ElementFormValues): StructurationBatchPayload {
+    return {
+        structuration_type: values.structurationType as StructurationType,
+        installation: values.installation,
+        quantity: values.batchQuantity ?? 1,
+        fsec_name: emptyToNull(values.fsecName),
+        caracteristique: emptyToNull(values.caracteristique),
+        fournisseur: emptyToNull(values.fournisseur),
+        materiaux_mat: emptyToNull(values.materiauxMat),
         boite: emptyToNull(values.boite),
         emplacement: emptyToNull(values.emplacement),
         remarques: emptyToNull(values.remarques),
@@ -220,7 +332,9 @@ export function itemToElementFormValues(item: {
     kind: ItemKind;
     name: string;
     reference: string | null;
+    fsecName: string | null;
     category: CategoryCode;
+    structurationType: StructurationType | null;
     installation: Installation | null;
     caracteristique: string | null;
     typeDeColle: string | null;
@@ -233,8 +347,13 @@ export function itemToElementFormValues(item: {
     return {
         kind: ITEM_KIND.ELEMENT,
         name: item.name,
+        // Pas de mode paquet à l'édition (on édite une pièce unique).
+        batchQuantity: 1,
         reference: item.reference ?? '',
+        // null (et non '') : valeur d'Autocomplete contrôlé freeSolo=false.
+        fsecName: item.fsecName ?? null,
         category: item.category,
+        structurationType: item.structurationType,
         installation: item.installation ?? INSTALLATION_VALUES[0],
         caracteristique: item.caracteristique ?? '',
         typeDeColle: item.typeDeColle ?? '',
@@ -291,6 +410,9 @@ export function itemToConsumableFormValues(item: {
 export const StockCatalogItemPatchSchema = z
     .object({
         category: z.enum(CATEGORY_VALUES as [CategoryCode, ...CategoryCode[]]),
+        structuration_type: z
+            .enum(STRUCTURATION_TYPE_VALUES as [StructurationType, ...StructurationType[]])
+            .nullable(),
         name: z.string().max(200),
         reference: z.string().max(200).nullable(),
         caracteristique: z.string().max(200).nullable(),
@@ -302,6 +424,7 @@ export const StockCatalogItemPatchSchema = z
         seuil_alerte: z.number().int().min(0).nullable(),
         date_peremption: z.string().nullable(),
         type_d_achat: z.string().max(100).nullable(),
+        fsec_name: z.string().max(200).nullable(),
         installation: z.enum(INSTALLATION_VALUES as [Installation, ...Installation[]]).nullable(),
         status: z.enum(ELEMENT_STATUS_VALUES as [ElementStatus, ...ElementStatus[]]).nullable(),
         materiaux_mat: z.string().max(200).nullable(),

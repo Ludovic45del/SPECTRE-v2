@@ -14,6 +14,14 @@ export const GRID_FIXED_WIDTH = GRID_LABEL_WIDTH + GRID_SUB_LABEL_WIDTH;
 export const COL_WIDTH = 56;
 export const WEEKLY_COLS = 13;
 
+// ====================== Drag visuals ======================
+
+/**
+ * Ombre portée du fantôme de déplacement (drag-to-move) : donne l'impression
+ * que la barre saisie « décolle » de la grille et plane jusqu'à sa cible.
+ */
+export const DRAG_GHOST_SHADOW = '0 6px 16px rgba(0, 0, 0, 0.35)';
+
 // ====================== Colors ======================
 
 export interface PlanningColors {
@@ -49,7 +57,7 @@ export const PLANNING_COLORS_LIGHT: PlanningColors = {
     orange: '#FFF7B9',
     headerBg: '#E8EDF5',
     sectionBg: '#DCE1EE',
-    dragHighlight: 'rgba(0, 122, 255, 0.12)',
+    dragHighlight: 'rgba(0, 122, 255, 0.16)',
     vacances: '#DBEAFE',
     fermeture: '#EDEAF3',
     currentDay: '#FEF3C7',
@@ -71,7 +79,7 @@ export const PLANNING_COLORS_DARK: PlanningColors = {
     orange: '#5C5230',
     headerBg: '#1A1D27',
     sectionBg: '#1F2334',
-    dragHighlight: 'rgba(0, 122, 255, 0.12)',
+    dragHighlight: 'rgba(0, 122, 255, 0.16)',
     vacances: '#1A2230',
     fermeture: '#231E2C',
     currentDay: '#3D3520',
@@ -99,7 +107,7 @@ export const PLANNING_COLORS_CREAM: PlanningColors = {
     orange: '#F7D9A0',
     headerBg: '#EADFC6',
     sectionBg: '#DCCDA9',
-    dragHighlight: 'rgba(0, 122, 255, 0.12)',
+    dragHighlight: 'rgba(0, 122, 255, 0.16)',
     vacances: '#CBDFC9',
     fermeture: '#E7D2D9',
     currentDay: '#FBE6B0',

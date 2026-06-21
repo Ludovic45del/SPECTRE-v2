@@ -18,9 +18,9 @@ def forwards(apps, schema_editor):
     AssemblyStep = apps.get_model("app", "AssemblyStepEntity")
     MetrologyStep = apps.get_model("app", "MetrologyStepEntity")
 
-    for step in AssemblyStep.objects.filter(
-        operator_user_id__isnull=False
-    ).iterator(chunk_size=500):
+    for step in AssemblyStep.objects.filter(operator_user_id__isnull=False).iterator(
+        chunk_size=500
+    ):
         step.operator_users.add(step.operator_user)
 
     for step in MetrologyStep.objects.filter(

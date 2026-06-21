@@ -10,12 +10,14 @@ from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.api.stock.serializers import (
     StockCatalogItemPatchSerializer,
     StockCatalogItemSerializer,
+    StructurationBatchSerializer,
 )
 from app.core.permissions import IsReadOnlyOrAdmin
 from app.domain.exceptions import InvalidDataException
 from app.domain.stock.services.catalog_service import (
     count_items,
     create_item,
+    create_structuration_batch,
     get_item,
     list_items,
     patch_item,
@@ -112,6 +114,46 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
             stock_catalog_mapper_bean_to_api(result),
             status=201,
             encoder=DjangoJSONEncoder,
+        )
+
+    # ----------------------------------------------------------------- batch structuration
+
+    @action(detail=False, methods=["get"], url_path="next-structuration-number")
+    def next_structuration_number(self, request) -> JsonResponse:
+        """GET /api/v1/stock/catalog/next-structuration-number/.
+
+        Renvoie le prochain numéro de série global qui serait attribué à la
+        première pièce d'un nouveau paquet de structuration (aperçu UI).
+        """
+        return JsonResponse({"next": self.repository.next_structuration_number()})
+
+    @action(detail=False, methods=["post"], url_path="batch-structuration")
+    def batch_structuration(self, request) -> JsonResponse:
+        """POST /api/v1/stock/catalog/batch-structuration/.
+
+        Crée un paquet de structurations numérotées automatiquement (cf. CDC §8.1).
+        Renvoie la liste des items créés (201).
+        """
+        serializer = StructurationBatchSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise InvalidDataException(str(serializer.errors))
+        data = serializer.validated_data
+        results = create_structuration_batch(
+            self.repository,
+            structuration_type=data["structuration_type"],
+            installation=data["installation"],
+            quantity=data["quantity"],
+            fsec_name=data.get("fsec_name"),
+            caracteristique=data.get("caracteristique"),
+            fournisseur=data.get("fournisseur"),
+            materiaux_mat=data.get("materiaux_mat"),
+            boite=data.get("boite"),
+            emplacement=data.get("emplacement"),
+            remarques=data.get("remarques"),
+        )
+        payload = [stock_catalog_mapper_bean_to_api(b) for b in results]
+        return JsonResponse(
+            payload, safe=False, status=201, encoder=DjangoJSONEncoder
         )
 
     # ----------------------------------------------------------------- update (PUT)

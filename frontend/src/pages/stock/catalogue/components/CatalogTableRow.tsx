@@ -11,6 +11,7 @@ import {
     QuantityBadge,
     RubricBadge,
     StatusBadge,
+    StructurationTypeBadge,
     type StockCatalogItem,
 } from '@entities/stock-item';
 import { motion } from '@shared/ui/motion';
@@ -60,6 +61,13 @@ export const CatalogTableRow = memo(function CatalogTableRow({ item, onClick }: 
             </TableCell>
             <TableCell>
                 <RubricBadge category={item.category} />
+            </TableCell>
+            <TableCell>
+                {item.structurationType ? (
+                    <StructurationTypeBadge type={item.structurationType} />
+                ) : (
+                    <Typography color="text.secondary">—</Typography>
+                )}
             </TableCell>
             <TableCell>
                 <Typography color={item.fournisseur ? 'text.primary' : 'text.secondary'}>

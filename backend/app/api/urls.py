@@ -11,9 +11,6 @@ from app.api.campaign.campaign_teams_controller import CampaignTeamsController
 # Dashboard Controller
 from app.api.dashboard.dashboard_controller import DashboardController
 
-# Indicators Controller
-from app.api.indicators.indicators_controller import IndicatorsController
-
 # Embase Controllers
 from app.api.embase.embase_controller import EmbaseController
 from app.api.embase.etalonnage_controller import EtalonnageController
@@ -26,11 +23,12 @@ from app.api.fsec.fsec_controller import FsecController
 from app.api.fsec.fsec_documents_controller import FsecDocumentsController
 from app.api.fsec.fsec_teams_controller import FsecTeamsController
 
+# Indicators Controller
+from app.api.indicators.indicators_controller import IndicatorsController
+
 # Material Controllers
 from app.api.material.machine_controller import MachineController
-from app.api.material.machine_maintenance_controller import (
-    MachineMaintenanceController,
-)
+from app.api.material.machine_maintenance_controller import MachineMaintenanceController
 from app.api.material.machine_room_controller import MachineRoomController
 
 # Steps Controllers

@@ -16,7 +16,6 @@ Choix de modélisation pour les délais entre étapes :
 """
 
 import statistics
-from collections import Counter
 from datetime import date, datetime
 from typing import Dict, List, Optional
 
@@ -28,7 +27,6 @@ from app.domain.indicators.models.indicators_bean import (
     CampaignVolumeBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
-    OperatorWorkloadBean,
     StepDurationBean,
 )
 from app.repository.campaign.models.campaign_entity import CampaignEntity
@@ -51,7 +49,6 @@ from app.repository.steps.models.metrology_step_entity import MetrologyStepEntit
 from app.repository.steps.models.permeation_step_entity import PermeationStepEntity
 from app.repository.steps.models.pictures_step_entity import PicturesStepEntity
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
-from app.repository.user.models.user_profile_entity import UserProfileEntity
 
 # Catégories FSEC "avec gaz" — voir backend/app/data/fsec/fsec_category.csv
 # 0 = Sans Gaz ; 1..4 = variantes avec gaz (BP, HP, BP+HP, Permeation+HP).
@@ -507,75 +504,6 @@ class IndicatorsRepository(IIndicatorsRepository):
                 )
             )
         return results
-
-    # ----------------------------------------------------- Top operators
-    def get_top_operators(
-        self, year: int, semester: Optional[int] = None, limit: int = 10
-    ) -> List[OperatorWorkloadBean]:
-        """Top opérateurs (toutes étapes confondues) par volume d'étapes complétées.
-
-        Une étape est comptée si elle est rattachée à une FSEC dont la campagne
-        correspond à la période (year + semester) et si elle a un utilisateur
-        identifié (operator_user / metrologist_user selon le type d'étape).
-        """
-        # Steps "normaux" : FK directe vers FSEC → préfixe fsec_version_id__.
-        step_q = _campaign_q(year, semester, prefix="fsec_version_id__")
-        # SealingStep est lié à FSEC indirectement via metrology_step_id.
-        sealing_q = _campaign_q(
-            year, semester, prefix="metrology_step_id__fsec_version_id__"
-        )
-
-        counts: Counter = Counter()
-
-        def add(qs, user_field: str, filter_q: Q):
-            rows = (
-                qs.filter(filter_q, **{f"{user_field}__isnull": False})
-                .values_list(user_field)
-                .annotate(c=Count("uuid"))
-            )
-            for user_uuid, count in rows:
-                if user_uuid is not None:
-                    counts[user_uuid] += count
-
-        # Assemblage / métrologie : opérateurs multiples (M2M) → chacun crédité.
-        add(AssemblyStepEntity.objects.all(), "operator_users__uuid", step_q)
-        add(MetrologyStepEntity.objects.all(), "metrologist_users__uuid", step_q)
-        add(SealingStepEntity.objects.all(), "metrologist_user", sealing_q)
-        add(PicturesStepEntity.objects.all(), "operator_user", step_q)
-        add(PermeationStepEntity.objects.all(), "operator_user", step_q)
-        add(GasFillingBpStepEntity.objects.all(), "operator_user", step_q)
-        add(GasFillingHpStepEntity.objects.all(), "operator_user", step_q)
-        add(AirtightnessTestLpStepEntity.objects.all(), "operator_user", step_q)
-        add(DepressurizationStepEntity.objects.all(), "operator_user", step_q)
-
-        if not counts:
-            return []
-
-        top_uuids = [uid for uid, _ in counts.most_common(limit)]
-        profiles = {
-            p.uuid: p
-            for p in UserProfileEntity.objects.filter(
-                uuid__in=top_uuids
-            ).select_related("user")
-        }
-        result: List[OperatorWorkloadBean] = []
-        for user_uuid in top_uuids:
-            profile = profiles.get(user_uuid)
-            if profile and profile.user:
-                full_name = (
-                    f"{profile.user.first_name} {profile.user.last_name}".strip()
-                    or profile.user.username
-                )
-            else:
-                full_name = "Utilisateur inconnu"
-            result.append(
-                OperatorWorkloadBean(
-                    user_uuid=str(user_uuid),
-                    name=full_name,
-                    steps_count=counts[user_uuid],
-                )
-            )
-        return result
 
     # --------------------------------------------------------- Utilities
     @staticmethod

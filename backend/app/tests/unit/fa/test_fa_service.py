@@ -41,6 +41,7 @@ from app.domain.fa.services.fa_service import (
     get_fa_by_uuid,
     get_fas_by_fsec_version_id,
     patch_fa,
+    regenerate_fa_identifiers_for_campaign,
     regenerate_fa_identifiers_for_fsec,
     resolve_fa_creation_context,
     update_fa,
@@ -48,6 +49,7 @@ from app.domain.fa.services.fa_service import (
     validate_progress_phase,
 )
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
+from app.domain.fsec.models.fsec_bean import FsecBean
 
 # ============================================================================
 # FIXTURES
@@ -2523,5 +2525,64 @@ class TestRegenerateFaIdentifiersForFsec:
     def test_no_fa_returns_zero(self, repo):
         repo.get_all_by_fsec_version_id.return_value = []
 
-        assert regenerate_fa_identifiers_for_fsec(repo, "fsec-v1", "lol", "x", 2026) == 0
+        assert (
+            regenerate_fa_identifiers_for_fsec(repo, "fsec-v1", "lol", "x", 2026) == 0
+        )
+        repo.update_identifier.assert_not_called()
+
+
+class TestRegenerateFaIdentifiersForCampaign:
+    """Réécriture des identifiants FA de toutes les FSEC d'une campagne renommée."""
+
+    def test_regenerates_across_all_fsecs(self, repo, fsec_repo):
+        """Chaque FSEC de la campagne voit ses FA réalignées sur le nouveau contexte."""
+        fsec_repo.get_by_campaign_id.return_value = [
+            FsecBean(version_uuid="fsec-v1", name="A"),
+            FsecBean(version_uuid="fsec-v2", name="B"),
+        ]
+        identifiers = {
+            "fsec-v1": [FaBean(uuid="fa1", identifier="FA_2025_OLD_A_01")],
+            "fsec-v2": [
+                FaBean(uuid="fa2", identifier="FA_2025_OLD_B_01"),
+                FaBean(uuid="fa3", identifier="FA_2025_OLD_B_02"),
+            ],
+        }
+        repo.get_all_by_fsec_version_id.side_effect = lambda vid: identifiers[vid]
+        repo.exists_by_identifier.return_value = False
+
+        count = regenerate_fa_identifiers_for_campaign(
+            repo, fsec_repo, "camp-uuid", "NEW", 2026
+        )
+
+        assert count == 3
+        fsec_repo.get_by_campaign_id.assert_called_once_with("camp-uuid")
+        repo.update_identifier.assert_any_call("fa1", "FA_2026_NEW_A_01")
+        repo.update_identifier.assert_any_call("fa2", "FA_2026_NEW_B_01")
+        repo.update_identifier.assert_any_call("fa3", "FA_2026_NEW_B_02")
+
+    def test_no_fsec_returns_zero(self, repo, fsec_repo):
+        """Campagne sans FSEC : aucun appel de réécriture."""
+        fsec_repo.get_by_campaign_id.return_value = []
+
+        assert (
+            regenerate_fa_identifiers_for_campaign(
+                repo, fsec_repo, "camp-uuid", "NEW", 2026
+            )
+            == 0
+        )
+        repo.update_identifier.assert_not_called()
+
+    def test_fsec_without_fa_contributes_zero(self, repo, fsec_repo):
+        """Une FSEC sans FA n'incrémente pas le total."""
+        fsec_repo.get_by_campaign_id.return_value = [
+            FsecBean(version_uuid="fsec-v1", name="A"),
+        ]
+        repo.get_all_by_fsec_version_id.return_value = []
+
+        assert (
+            regenerate_fa_identifiers_for_campaign(
+                repo, fsec_repo, "camp-uuid", "NEW", 2026
+            )
+            == 0
+        )
         repo.update_identifier.assert_not_called()

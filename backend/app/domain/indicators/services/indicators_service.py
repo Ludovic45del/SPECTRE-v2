@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 INDICATORS_CACHE_TTL = 60
 _INDICATORS_CACHE_KEY = "indicators:data:v1"
 
-_TOP_OPERATORS_LIMIT = 10
 _CAMPAIGN_TOP_LIMIT = 8
 
 # Valeurs autorisées pour `semester` côté domaine. None = année entière.
@@ -67,9 +66,6 @@ def get_indicators(
     step_durations = repository.get_step_durations(
         target_year, semester=target_semester
     )
-    top_operators = repository.get_top_operators(
-        target_year, semester=target_semester, limit=_TOP_OPERATORS_LIMIT
-    )
 
     # Goulot d'étranglement : transition avec la moyenne (avg_days) la plus longue.
     bottleneck_key = None
@@ -85,7 +81,6 @@ def get_indicators(
         fsec=fsec,
         campaign=campaign,
         step_durations=step_durations,
-        top_operators=top_operators,
         bottleneck_step_key=bottleneck_key,
     )
     cache.set(cache_key, bean, timeout=INDICATORS_CACHE_TTL)

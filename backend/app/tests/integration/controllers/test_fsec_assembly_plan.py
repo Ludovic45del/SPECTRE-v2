@@ -88,8 +88,23 @@ def _make_png(width: int = 400, height: int = 300, color=(200, 200, 200)) -> byt
 
 
 # ── fixtures de calque (format réel du front : id + type + géométrie x1/y1…) ──
-ARROW = {"id": "a1", "type": "arrow", "x1": 10, "y1": 20, "x2": 60, "y2": 70, "color": "#e53935"}
-TEXT = {"id": "t1", "type": "text", "x1": 30, "y1": 40, "text": "Vanne", "color": "#e53935"}
+ARROW = {
+    "id": "a1",
+    "type": "arrow",
+    "x1": 10,
+    "y1": 20,
+    "x2": 60,
+    "y2": 70,
+    "color": "#e53935",
+}
+TEXT = {
+    "id": "t1",
+    "type": "text",
+    "x1": 30,
+    "y1": 40,
+    "text": "Vanne",
+    "color": "#e53935",
+}
 
 
 @pytest.mark.integration
@@ -107,9 +122,7 @@ class TestAssemblyPlanImageUpload:
     def test_upload_png_sets_assembly_plan_image_url(
         self, api_client, created_fsec, media_root
     ):
-        upload = SimpleUploadedFile(
-            "plan.png", _make_png(), content_type="image/png"
-        )
+        upload = SimpleUploadedFile("plan.png", _make_png(), content_type="image/png")
         with override_settings(MEDIA_ROOT=media_root):
             response = _patch_multipart(
                 api_client,
@@ -123,9 +136,7 @@ class TestAssemblyPlanImageUpload:
         assert "/media/fsec/assembly-plan/" in data["assembly_plan_image"]
         assert data["assembly_plan_image"].endswith(".png")
 
-    def test_upload_replaces_previous_image(
-        self, api_client, created_fsec, media_root
-    ):
+    def test_upload_replaces_previous_image(self, api_client, created_fsec, media_root):
         with override_settings(MEDIA_ROOT=media_root):
             first = _patch_multipart(
                 api_client,
@@ -144,8 +155,7 @@ class TestAssemblyPlanImageUpload:
 
         assert first.status_code == 200 and second.status_code == 200
         assert (
-            first.json()["assembly_plan_image"]
-            != second.json()["assembly_plan_image"]
+            first.json()["assembly_plan_image"] != second.json()["assembly_plan_image"]
         )
 
     def test_upload_preserves_existing_annotations(
@@ -215,22 +225,16 @@ class TestAssemblyPlanImageDelete:
                 f"/api/v1/fsecs/{created_fsec}/assembly-plan-annotations/",
                 [ARROW, TEXT],
             )
-            response = api_client.delete(
-                f"/api/v1/fsecs/{created_fsec}/assembly-plan/"
-            )
+            response = api_client.delete(f"/api/v1/fsecs/{created_fsec}/assembly-plan/")
 
         assert response.status_code == 200
         data = response.json()
         assert data["assembly_plan_image"] is None
         assert data["assembly_plan_annotations"] == []
 
-    def test_delete_idempotent_when_no_plan(
-        self, api_client, created_fsec, media_root
-    ):
+    def test_delete_idempotent_when_no_plan(self, api_client, created_fsec, media_root):
         with override_settings(MEDIA_ROOT=media_root):
-            response = api_client.delete(
-                f"/api/v1/fsecs/{created_fsec}/assembly-plan/"
-            )
+            response = api_client.delete(f"/api/v1/fsecs/{created_fsec}/assembly-plan/")
         assert response.status_code == 200
         assert response.json()["assembly_plan_image"] is None
 

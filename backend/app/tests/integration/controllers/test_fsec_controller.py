@@ -268,6 +268,29 @@ class TestFsecControllerUpdate:
         assert response.status_code == 200
         assert response.json()["status_id"] == 8
 
+    def test_update_fsec_status_to_decision_moe(self, api_client, sample_fsec_payload):
+        """Test passage en statut « Décision MOE » (mise en pause comme HS)."""
+        # Créer un FSEC
+        create_response = api_client.post(
+            "/api/v1/fsecs/",
+            data=json.dumps(sample_fsec_payload),
+            content_type="application/json",
+        )
+        version_uuid = create_response.json()["version_uuid"]
+
+        # Passer en Décision MOE (15)
+        updated_payload = sample_fsec_payload.copy()
+        updated_payload["status_id"] = 15
+
+        response = api_client.put(
+            f"/api/v1/fsecs/{version_uuid}/",
+            data=json.dumps(updated_payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status_id"] == 15
+
     def test_update_fsec_not_found(self, api_client, sample_fsec_payload):
         """Test 404 pour mise à jour UUID inexistant."""
         fake_uuid = str(uuid.uuid4())

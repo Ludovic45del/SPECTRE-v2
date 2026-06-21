@@ -20,8 +20,9 @@ import {
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import BlockIcon from '@mui/icons-material/Block';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import CheckIcon from '@mui/icons-material/Check';
-import { Fsec, useUpdateFsec } from '@entities/fsec';
+import { Fsec, FSEC_STATUSES, isPausedFsecStatus, useUpdateFsec } from '@entities/fsec';
 import { useNotification } from '@shared/ui';
 import { stepPop } from '@shared/lib';
 import { motion, motionDuration, motionEasing } from '@shared/ui/motion';
@@ -47,6 +48,7 @@ const ALL_STEPS: Record<number, string> = {
     12: 'Perméation',
     13: 'Dépress.',
     14: 'Repress.',
+    15: 'Décision MOE',
 };
 
 // Séquences de workflow par catégorie (selon FSEC_CARTOGRAPHIE.md)
@@ -58,7 +60,11 @@ const WORKFLOW_SEQUENCES: Record<number, number[]> = {
     4: [0, 1, 2, 3, 10, 4, 12, 13, 11, 5, 6, 7],
 };
 
+// Statuts de mise en pause : hors progression linéaire, ils figent l'avancement.
 const HS_STEP = { label: 'HS', id: 8 };
+const DECISION_MOE_STEP = { label: 'Décision MOE', id: 15 };
+// Couleur du chip Décision MOE alignée sur le référentiel (source de vérité unique).
+const DECISION_MOE_COLOR = FSEC_STATUSES[DECISION_MOE_STEP.id]?.color ?? '#64748b';
 
 function getWorkflowSteps(
     categoryId: number | null,
@@ -187,7 +193,11 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
     const currentStatusId = fsec.statusId ?? 0;
     const activeStepIndex = workflowSteps.findIndex((step) => step.id === currentStatusId);
     const isHS = currentStatusId === HS_STEP.id;
-    const isWorkflowComplete = !isHS && activeStepIndex === workflowSteps.length - 1;
+    const isDecisionMoe = currentStatusId === DECISION_MOE_STEP.id;
+    // Un statut de pause (HS ou Décision MOE) fige la progression : aucun step
+    // n'est marqué actif/terminé tant que la FSEC est en pause.
+    const isPaused = isPausedFsecStatus(currentStatusId);
+    const isWorkflowComplete = !isPaused && activeStepIndex === workflowSteps.length - 1;
     const prevStatusId = useRef(currentStatusId);
 
     // Detect when step actually changes (after mutation success)
@@ -210,11 +220,6 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
     const handleStepClick = (stepId: number) => {
         if (stepId === currentStatusId || isPending) return;
         setConfirmDialog({ open: true, targetStepId: stepId });
-    };
-
-    const handleHSClick = () => {
-        if (isHS || isPending) return;
-        setConfirmDialog({ open: true, targetStepId: HS_STEP.id });
     };
 
     const handleConfirm = () => {
@@ -271,8 +276,8 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
             >
                 <StepperContainer>
                     {workflowSteps.map((step, index) => {
-                        const isCompleted = !isHS && index < activeStepIndex;
-                        const isActive = !isHS && index === activeStepIndex;
+                        const isCompleted = !isPaused && index < activeStepIndex;
+                        const isActive = !isPaused && index === activeStepIndex;
                         const isAnimating = isTransitioning && index === transitionTarget;
                         // Alternate: even indices = top, odd indices = bottom
                         const labelPosition = index % 2 === 0 ? 'top' : 'bottom';
@@ -308,20 +313,41 @@ export function FsecWorkflowStepper({ fsec }: FsecWorkflowStepperProps) {
                     })}
                 </StepperContainer>
 
-                {/* Chip HS */}
-                <Chip
-                    icon={<BlockIcon sx={{ fontSize: '1rem' }} />}
-                    label={HS_STEP.label}
-                    onClick={handleHSClick}
-                    disabled={isPending}
-                    color={isHS ? 'error' : 'default'}
-                    variant={isHS ? 'filled' : 'outlined'}
-                    aria-label={isHS ? `Annuler le statut ${HS_STEP.label}` : `Marquer la FSEC ${HS_STEP.label}`}
-                    sx={{
-                        flexShrink: 0,
-                        cursor: isHS ? 'default' : 'pointer',
-                    }}
-                />
+                {/* Chips de mise en pause : Décision MOE + HS */}
+                <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                    <Chip
+                        icon={<PauseCircleOutlineIcon sx={{ fontSize: '1rem' }} />}
+                        label={DECISION_MOE_STEP.label}
+                        onClick={() => handleStepClick(DECISION_MOE_STEP.id)}
+                        disabled={isPending}
+                        variant={isDecisionMoe ? 'filled' : 'outlined'}
+                        aria-label={
+                            isDecisionMoe
+                                ? `Annuler le statut ${DECISION_MOE_STEP.label}`
+                                : `Marquer la FSEC ${DECISION_MOE_STEP.label}`
+                        }
+                        sx={{
+                            cursor: isDecisionMoe ? 'default' : 'pointer',
+                            // Pause : couleur du référentiel (slate), comme dans le donut/statistiques.
+                            ...(isDecisionMoe && {
+                                bgcolor: DECISION_MOE_COLOR,
+                                color: 'common.white',
+                                '& .MuiChip-icon': { color: 'common.white' },
+                                '&:hover': { bgcolor: DECISION_MOE_COLOR },
+                            }),
+                        }}
+                    />
+                    <Chip
+                        icon={<BlockIcon sx={{ fontSize: '1rem' }} />}
+                        label={HS_STEP.label}
+                        onClick={() => handleStepClick(HS_STEP.id)}
+                        disabled={isPending}
+                        color={isHS ? 'error' : 'default'}
+                        variant={isHS ? 'filled' : 'outlined'}
+                        aria-label={isHS ? `Annuler le statut ${HS_STEP.label}` : `Marquer la FSEC ${HS_STEP.label}`}
+                        sx={{ cursor: isHS ? 'default' : 'pointer' }}
+                    />
+                </Stack>
             </Stack>
 
             {/* Confirmation Dialog */}

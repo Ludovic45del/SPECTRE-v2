@@ -3,6 +3,7 @@
  */
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { api } from '@shared/api';
 import { QUERY_CACHE_CONFIG } from '@shared/lib';
 
@@ -15,6 +16,7 @@ import {
     type StockCatalogItem,
     type StockCatalogItemPatchPayload,
     type StockCatalogItemPayload,
+    type StructurationBatchPayload,
 } from '../model/stock-item.schema';
 import {
     StockMovementSchema,
@@ -74,6 +76,27 @@ export function useCatalogItem(uuid: string) {
     });
 }
 
+const NextStructurationNumberSchema = z.object({ next: z.number().int() }).transform((d) => d.next);
+
+/**
+ * Prochain numéro de série global qui sera attribué à la 1ʳᵉ pièce d'un nouveau
+ * paquet de structuration. Sert à afficher l'aperçu « n° X → Y » avant soumission.
+ */
+export function useNextStructurationNumber(enabled = true) {
+    return useQuery({
+        queryKey: stockCatalogKeys.nextStructurationNumber(),
+        queryFn: async ({ signal }): Promise<number> => {
+            return api.get('/stock/catalog/next-structuration-number/', NextStructurationNumberSchema, signal);
+        },
+        enabled,
+        ...QUERY_CACHE_CONFIG,
+        // Compteur global partagé : on refetch à chaque ouverture du formulaire
+        // pour ne pas afficher un n° déjà consommé par un autre poste.
+        staleTime: 0,
+        refetchOnMount: 'always',
+    });
+}
+
 /** Liste agrégée des alertes (low_stock / expired / expiring_soon). */
 export function useStockAlerts() {
     return useQuery({
@@ -98,6 +121,26 @@ export function useCreateCatalogItem() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: stockCatalogKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: stockCatalogKeys.nextStructurationNumber() });
+            queryClient.invalidateQueries({ queryKey: stockAlertKeys.all });
+        },
+    });
+}
+
+/**
+ * Crée un paquet de structurations numérotées automatiquement (mode « paquet »).
+ * Renvoie la liste des items créés.
+ */
+export function useCreateStructurationBatch() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload: StructurationBatchPayload): Promise<StockCatalogItem[]> => {
+            const response = await api.post('/stock/catalog/batch-structuration/', payload);
+            return StockCatalogItemListSchema.parse(response);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: stockCatalogKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: stockCatalogKeys.nextStructurationNumber() });
             queryClient.invalidateQueries({ queryKey: stockAlertKeys.all });
         },
     });

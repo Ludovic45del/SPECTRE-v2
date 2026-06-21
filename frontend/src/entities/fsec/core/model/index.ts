@@ -18,6 +18,8 @@ export {
     FSEC_CATEGORIES,
     FSEC_STATUS_LIST,
     FSEC_CATEGORY_LIST,
+    PAUSED_FSEC_STATUS_IDS,
+    isPausedFsecStatus,
     getStatusInfo,
     getCategoryInfo,
 } from './fsec.constants';

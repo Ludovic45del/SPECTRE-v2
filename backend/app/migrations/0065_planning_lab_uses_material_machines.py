@@ -14,7 +14,7 @@ def clear_lab_events(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0064_step_machines_m2m'),
+        ("app", "0064_step_machines_m2m"),
     ]
 
     operations = [
@@ -22,21 +22,21 @@ class Migration(migrations.Migration):
         # Repointe LabEvent vers le parc Matériel : LabMachineEntity n'a plus
         # de FK entrante.
         migrations.AlterField(
-            model_name='labevententity',
-            name='machine',
+            model_name="labevententity",
+            name="machine",
             field=models.ForeignKey(
-                db_column='machine_id',
+                db_column="machine_id",
                 on_delete=django.db.models.deletion.CASCADE,
-                to='app.machineentity',
+                to="app.machineentity",
             ),
         ),
         # Supprimer LabMachine d'abord : sa FK `salle` vers LabSalle disparaît
         # avec la table. Évite un RemoveField(salle) incompatible SQLite
         # (reconstruction de table + contrainte sur la colonne supprimée).
         migrations.DeleteModel(
-            name='LabMachineEntity',
+            name="LabMachineEntity",
         ),
         migrations.DeleteModel(
-            name='LabSalleEntity',
+            name="LabSalleEntity",
         ),
     ]

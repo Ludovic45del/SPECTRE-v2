@@ -5,7 +5,6 @@ export {
     FsecIndicatorsSchema,
     CampaignIndicatorsSchema,
     CampaignVolumeSchema,
-    OperatorWorkloadSchema,
     IndicatorsApiSchema,
 } from './indicators.schema';
 export type {
@@ -15,5 +14,4 @@ export type {
     FsecIndicators,
     CampaignIndicators,
     CampaignVolume,
-    OperatorWorkload,
 } from './indicators.schema';

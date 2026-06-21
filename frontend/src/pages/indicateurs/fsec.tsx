@@ -20,7 +20,6 @@ import StepDurationsChart from './components/StepDurationsChart';
 import CategoryBarChart, { type CategoryBarEntry } from './components/CategoryBarChart';
 import CategoryPieChart, { type CategoryPieEntry } from './components/CategoryPieChart';
 import MonthlyLineChart from './components/MonthlyLineChart';
-import TopOperatorsCard from './components/TopOperatorsCard';
 
 const COLORS = {
     fsec: '#5856D6',
@@ -189,13 +188,6 @@ export default function IndicateursFsecPage() {
                             data={statusEntries}
                             layout="vertical"
                         />
-                    )}
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    {isLoading ? (
-                        <Skeleton variant="rounded" height={300} />
-                    ) : (
-                        <TopOperatorsCard operators={data?.topOperators ?? []} />
                     )}
                 </Grid>
             </Grid>

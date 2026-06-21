@@ -33,6 +33,7 @@ from app.domain.exceptions import (
     NotFoundException,
     ValidationException,
 )
+from app.domain.fa.services import fa_service
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 
 
@@ -270,6 +271,144 @@ class TestCampaignServiceUpdate:
             update_campaign(mock_repo, fake_bean)
 
         mock_repo.update.assert_not_called()
+
+
+class TestCampaignFaIdentifierRegeneration:
+    """Réalignement des identifiants FA quand le nom/année de la campagne change.
+
+    Le « nom » d'une FA encode (année, campagne, nom FSEC, séquence) : un
+    renommage de campagne (ou un changement d'année) doit propager aux FA de
+    toutes ses FSEC. Le semestre n'entre pas dans l'identifiant FA : un simple
+    changement de semestre ne doit donc rien régénérer.
+    """
+
+    def _existing(self) -> CampaignBean:
+        return CampaignBean(
+            uuid="cccccccc-cccc-cccc-cccc-cccccccccccc",
+            type_id=0,
+            status_id=0,
+            installation_id=0,
+            name="Ancienne",
+            year=2025,
+            semester="S1",
+        )
+
+    def _repo_for(self, existing: CampaignBean):
+        mock_repo = create_autospec(ICampaignRepository)
+        mock_repo.get_by_uuid.return_value = existing
+        mock_repo.exists_duplicate.return_value = False
+        mock_repo.update.side_effect = lambda b: b
+        return mock_repo
+
+    @pytest.mark.unit
+    def test_update_name_change_triggers_regeneration(self):
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        fa_repo, fsec_repo = MagicMock(), MagicMock()
+        updated = CampaignBean(
+            uuid=existing.uuid, name="Nouvelle", year=2025, semester="S1"
+        )
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            update_campaign(mock_repo, updated, fa_repo, fsec_repo)
+
+        regen.assert_called_once_with(
+            fa_repo, fsec_repo, existing.uuid, "Nouvelle", 2025
+        )
+
+    @pytest.mark.unit
+    def test_update_year_change_triggers_regeneration(self):
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        fa_repo, fsec_repo = MagicMock(), MagicMock()
+        updated = CampaignBean(
+            uuid=existing.uuid, name="Ancienne", year=2026, semester="S1"
+        )
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            update_campaign(mock_repo, updated, fa_repo, fsec_repo)
+
+        regen.assert_called_once_with(
+            fa_repo, fsec_repo, existing.uuid, "Ancienne", 2026
+        )
+
+    @pytest.mark.unit
+    def test_update_semester_only_change_skips_regeneration(self):
+        """Le semestre n'est pas dans l'identifiant FA : aucune régénération."""
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        fa_repo, fsec_repo = MagicMock(), MagicMock()
+        updated = CampaignBean(
+            uuid=existing.uuid, name="Ancienne", year=2025, semester="S2"
+        )
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            update_campaign(mock_repo, updated, fa_repo, fsec_repo)
+
+        regen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_update_without_repos_skips_regeneration(self):
+        """Sans repos FA/FSEC (appel legacy), aucune régénération n'est tentée."""
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        updated = CampaignBean(
+            uuid=existing.uuid, name="Nouvelle", year=2025, semester="S1"
+        )
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            update_campaign(mock_repo, updated)
+
+        regen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_patch_name_change_triggers_regeneration(self):
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        fa_repo, fsec_repo = MagicMock(), MagicMock()
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            patch_campaign(
+                mock_repo,
+                existing.uuid,
+                {"name": "Nouvelle"},
+                fa_repository=fa_repo,
+                fsec_repository=fsec_repo,
+            )
+
+        regen.assert_called_once_with(
+            fa_repo, fsec_repo, existing.uuid, "Nouvelle", 2025
+        )
+
+    @pytest.mark.unit
+    def test_patch_non_identifying_field_skips_regeneration(self):
+        """Un PATCH qui ne touche ni nom ni année ne régénère rien."""
+        existing = self._existing()
+        mock_repo = self._repo_for(existing)
+        fa_repo, fsec_repo = MagicMock(), MagicMock()
+
+        with patch.object(
+            fa_service, "regenerate_fa_identifiers_for_campaign"
+        ) as regen:
+            patch_campaign(
+                mock_repo,
+                existing.uuid,
+                {"status_id": 1},
+                fa_repository=fa_repo,
+                fsec_repository=fsec_repo,
+            )
+
+        regen.assert_not_called()
 
 
 class TestCampaignServiceDelete:

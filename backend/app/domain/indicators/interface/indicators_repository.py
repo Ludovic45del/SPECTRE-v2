@@ -7,7 +7,6 @@ from app.domain.indicators.models.indicators_bean import (
     CampaignIndicatorsBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
-    OperatorWorkloadBean,
     StepDurationBean,
 )
 
@@ -46,11 +45,4 @@ class IIndicatorsRepository(abc.ABC):
         self, year: int, semester: Optional[int] = None
     ) -> List[StepDurationBean]:
         """Délais moyens/médians entre étapes (sur FSEC tirées dans la période)."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_top_operators(
-        self, year: int, semester: Optional[int] = None, limit: int = 10
-    ) -> List[OperatorWorkloadBean]:
-        """Top opérateurs par nombre d'étapes complétées dans la période."""
         raise NotImplementedError

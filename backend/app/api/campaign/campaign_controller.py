@@ -21,9 +21,7 @@ from app.domain.campaign.services.campaign_service import (
     update_campaign,
 )
 from app.domain.exceptions import InvalidDataException
-from app.domain.fsec.services.delivery_sheet_service import (
-    build_campaign_recap_sheet,
-)
+from app.domain.fsec.services.delivery_sheet_service import build_campaign_recap_sheet
 from app.domain.fsec.services.delivery_workflow_service import (
     get_delivery_snapshot,
     update_delivery_info,
@@ -43,6 +41,7 @@ from app.repository.campaign.repositories.campaign_repository import CampaignRep
 from app.repository.campaign.repositories.campaign_teams_repository import (
     CampaignTeamsRepository,
 )
+from app.repository.fa.repositories.fa_repository import FaRepository
 from app.repository.fsec.repositories.fsec_repository import FsecRepository
 from app.repository.steps.repositories.sealing_step_repository import (
     SealingStepRepository,
@@ -66,6 +65,10 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
         super().__init__(**kwargs)
         self.repository = CampaignRepository()
         self.paginator = CampaignPagination()
+        # Repos injectés dans update/patch_campaign pour réaligner les
+        # identifiants FA des FSEC rattachées quand le nom/année change.
+        self.fa_repository = FaRepository()
+        self.fsec_repository = FsecRepository()
 
     def list(self, request) -> JsonResponse:
         """Liste toutes les campagnes avec pagination (GET /)."""
@@ -118,7 +121,12 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
             raise InvalidDataException(str(serializer.errors))
 
         bean = campaign_mapper_api_to_bean(serializer.validated_data)
-        result = update_campaign(self.repository, bean)
+        result = update_campaign(
+            self.repository,
+            bean,
+            fa_repository=self.fa_repository,
+            fsec_repository=self.fsec_repository,
+        )
         return JsonResponse(
             campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
         )
@@ -133,7 +141,13 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
             raise InvalidDataException(str(serializer.errors))
 
         validated = serializer.validated_data
-        result = patch_campaign(self.repository, uuid, validated)
+        result = patch_campaign(
+            self.repository,
+            uuid,
+            validated,
+            fa_repository=self.fa_repository,
+            fsec_repository=self.fsec_repository,
+        )
         return JsonResponse(
             campaign_mapper_bean_to_api(result), encoder=DjangoJSONEncoder
         )
@@ -216,7 +230,9 @@ class CampaignController(PaginatedControllerMixin, ViewSet):
         valeurs (interface, date, OK/KO, remarques).
         """
         if request.method == "GET":
-            return JsonResponse(self._build_recap_payload(uuid), encoder=DjangoJSONEncoder)
+            return JsonResponse(
+                self._build_recap_payload(uuid), encoder=DjangoJSONEncoder
+            )
 
         serializer = DeliveryRecapBatchSerializer(data=request.data)
         if not serializer.is_valid():

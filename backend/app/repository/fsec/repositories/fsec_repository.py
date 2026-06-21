@@ -8,11 +8,19 @@ from django.db import transaction
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 from app.domain.fsec.models.fsec_bean import FsecBean
 from app.domain.shared.slug import extract_leading_year
+from app.domain.stock.models.stock_constants import (
+    ELEMENT_STATUS_AFFECTEE,
+    ELEMENT_STATUS_DISPO,
+    ELEMENT_STATUS_RESERVEE,
+    ITEM_KIND_ELEMENT,
+)
 from app.mapper.fsec.fsec_mapper import (
     fsec_mapper_bean_to_entity,
     fsec_mapper_entity_to_bean,
 )
 from app.repository.fsec.models.fsec_entity import FsecEntity
+from app.repository.stock.models.fsec_assembly_item_entity import FsecAssemblyItemEntity
+from app.repository.stock.models.stock_catalog_entity import StockCatalogItemEntity
 
 
 class FsecRepository(IFsecRepository):
@@ -156,14 +164,22 @@ class FsecRepository(IFsecRepository):
         d'étapes sont ajoutés (le référentiel de vie labo évolue). Les liens
         planning (CASCADE) sont inclus ; les petits-enfants en CASCADE (sealing
         via metrology, photo_views via pictures) sont gérés par le collector
-        Django lors du `.delete()` du queryset parent. Les `FsecAssemblyItem` ne
-        sont pas touchés : ils sont reliés par `fsec_uuid` (partagé entre
-        versions), pas par une FK vers la version supprimée.
+        Django lors du `.delete()` du queryset parent.
+
+        Les `FsecAssemblyItem` (tableau récap) sont reliés par `fsec_uuid`
+        (partagé entre versions), pas par une FK vers la version supprimée : on
+        ne les touche donc PAS tant qu'il reste une autre version de cette FSEC.
+        En revanche, si on supprime la **dernière** version d'un `fsec_uuid`, ces
+        lignes deviendraient orphelines (et garderaient des éléments « Réservés »
+        indéfiniment) : on les supprime alors et on libère les éléments concernés
+        (cf. CDC §4.2).
         """
         try:
             entity = FsecEntity.objects.get(version_uuid=version_uuid)
         except FsecEntity.DoesNotExist:
             return False
+
+        fsec_uuid = entity.fsec_uuid
 
         for relation in entity._meta.related_objects:
             accessor = relation.get_accessor_name()
@@ -176,7 +192,31 @@ class FsecRepository(IFsecRepository):
                 getattr(entity, accessor).all().delete()
 
         entity.delete()
+
+        # Dernière version de cette FSEC supprimée → nettoyer le récap orphelin.
+        if not FsecEntity.objects.filter(fsec_uuid=fsec_uuid).exists():
+            self._cleanup_orphan_assembly_items(fsec_uuid)
+
         return True
+
+    @staticmethod
+    def _cleanup_orphan_assembly_items(fsec_uuid) -> None:
+        """Supprime les lignes de récap d'un `fsec_uuid` sans version restante et
+        libère les éléments sérialisés qui ne sont plus référencés (reservee/
+        affectee → dispo ; `tiree` est irréversible, on n'y touche pas)."""
+        assembly_qs = FsecAssemblyItemEntity.objects.filter(fsec_uuid=fsec_uuid)
+        item_uuids = list(assembly_qs.values_list("catalog_item_id", flat=True))
+        assembly_qs.delete()
+        if not item_uuids:
+            return
+        still_referenced = FsecAssemblyItemEntity.objects.values_list(
+            "catalog_item_id", flat=True
+        )
+        StockCatalogItemEntity.objects.filter(
+            uuid__in=item_uuids,
+            kind=ITEM_KIND_ELEMENT,
+            status__in=(ELEMENT_STATUS_RESERVEE, ELEMENT_STATUS_AFFECTEE),
+        ).exclude(uuid__in=still_referenced).update(status=ELEMENT_STATUS_DISPO)
 
     def exists_by_campaign_and_name(self, campaign_id: str, name: str) -> bool:
         """Vérifie si un FSEC existe pour cette campagne avec ce nom."""

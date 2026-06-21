@@ -29,7 +29,7 @@ function CampaignOverviewPageComponent({ campaign }: CampaignOverviewPageProps) 
     const { data: fsecs, isLoading: isLoadingFsecs } = useFsecsByCampaign(campaign.uuid);
 
     const stats = useMemo(() => {
-        if (!fsecs) return { total: 0, tirees: 0, pretes: 0, fabrication: 0, hs: 0 };
+        if (!fsecs) return { total: 0, tirees: 0, pretes: 0, fabrication: 0, hs: 0, decisionMoe: 0 };
 
         return fsecs.reduce(
             (acc, fsec) => {
@@ -48,11 +48,13 @@ function CampaignOverviewPageComponent({ campaign }: CampaignOverviewPageProps) 
                     acc.fabrication++;
                 } else if (statusId === FSEC_STATUS_ID.HS) {
                     acc.hs++;
+                } else if (statusId === FSEC_STATUS_ID.DECISION_MOE) {
+                    acc.decisionMoe++;
                 }
 
                 return acc;
             },
-            { total: 0, tirees: 0, pretes: 0, fabrication: 0, hs: 0 },
+            { total: 0, tirees: 0, pretes: 0, fabrication: 0, hs: 0, decisionMoe: 0 },
         );
     }, [fsecs]);
 

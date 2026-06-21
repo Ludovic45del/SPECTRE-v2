@@ -9,11 +9,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
     CATEGORY,
+    ElementBatchFormSchema,
     elementFormToApi,
-    ElementFormSchema,
     INSTALLATION,
     ITEM_KIND,
+    STRUCTURATION_TYPE,
+    structurationBatchFormToApi,
     useCreateCatalogItem,
+    useCreateStructurationBatch,
+    useNextStructurationNumber,
     type ElementFormValues,
 } from '@entities/stock-item';
 import { useNotification } from '@shared/ui';
@@ -28,6 +32,7 @@ interface ElementFormShellProps {
 
 export function ElementFormShell({ onBack, onCancel, onSuccess }: ElementFormShellProps) {
     const createMutation = useCreateCatalogItem();
+    const batchMutation = useCreateStructurationBatch();
     const { showNotification } = useNotification();
 
     const {
@@ -37,12 +42,16 @@ export function ElementFormShell({ onBack, onCancel, onSuccess }: ElementFormShe
         formState: { errors, isSubmitting },
     } = useForm<ElementFormValues>({
         mode: 'onBlur',
-        resolver: zodResolver(ElementFormSchema),
+        // Mode paquet : à la création, structuration ⇒ libellé + quantité requis.
+        resolver: zodResolver(ElementBatchFormSchema),
         defaultValues: {
             kind: ITEM_KIND.ELEMENT,
             name: '',
+            batchQuantity: 1,
             reference: '',
+            fsecName: null,
             category: CATEGORY.PIECES_ELEMENTAIRES,
+            structurationType: null,
             installation: INSTALLATION.LMJ,
             caracteristique: '',
             typeDeColle: '',
@@ -55,24 +64,50 @@ export function ElementFormShell({ onBack, onCancel, onSuccess }: ElementFormShe
     });
 
     const selectedCategory = watch('category');
-    const showMateriaux = selectedCategory === CATEGORY.STRUCTURATION_SPECIALE;
+    const selectedStructurationType = watch('structurationType');
+    const showStructurationType = selectedCategory === CATEGORY.STRUCTURATION;
+    const showMateriaux =
+        showStructurationType && selectedStructurationType === STRUCTURATION_TYPE.SPECIALE;
+
+    // Aperçu du prochain numéro de série (chargé uniquement en rubrique structuration).
+    const { data: nextNumber } = useNextStructurationNumber(showStructurationType);
 
     const onSubmit = useCallback(
         async (values: ElementFormValues) => {
             try {
-                const created = await createMutation.mutateAsync(elementFormToApi(values));
-                showNotification(`Élément "${created.name}" ajouté au catalogue`, 'success');
+                if (values.category === CATEGORY.STRUCTURATION) {
+                    const created = await batchMutation.mutateAsync(structurationBatchFormToApi(values));
+                    const count = created.length;
+                    const first = created[0]?.name;
+                    const last = created[count - 1]?.name;
+                    showNotification(
+                        count === 1
+                            ? `Structuration n° ${first} ajoutée`
+                            : `${count} structurations ajoutées (n° ${first} → n° ${last})`,
+                        'success',
+                    );
+                } else {
+                    const created = await createMutation.mutateAsync(elementFormToApi(values));
+                    showNotification(`Élément "${created.name}" ajouté au catalogue`, 'success');
+                }
                 onSuccess();
             } catch (err) {
                 showNotification(getErrorMessage(err, "Erreur lors de l'ajout"), 'error');
             }
         },
-        [createMutation, onSuccess, showNotification],
+        [batchMutation, createMutation, onSuccess, showNotification],
     );
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <ElementForm control={control} errors={errors} showMateriaux={showMateriaux} />
+            <ElementForm
+                control={control}
+                errors={errors}
+                showStructurationType={showStructurationType}
+                showMateriaux={showMateriaux}
+                batchMode
+                nextNumber={nextNumber ?? null}
+            />
             <Stack
                 direction="row"
                 justifyContent="space-between"

@@ -16,7 +16,6 @@ import uuid
 import django.db.models.deletion
 from django.db import migrations, models
 
-
 ROOMS_SEED = [
     {"code": "B1", "label": "Salle B1", "color": "#1976D2", "sort_order": 10},
     {"code": "B2", "label": "Salle B2", "color": "#9C27B0", "sort_order": 20},
@@ -243,9 +242,7 @@ class Migration(migrations.Migration):
                 "db_table": "MACHINE_EQUIPMENT",
                 "indexes": [
                     models.Index(fields=["machine"], name="machine_eq_machine_idx"),
-                    models.Index(
-                        fields=["equipment"], name="machine_eq_equipment_idx"
-                    ),
+                    models.Index(fields=["equipment"], name="machine_eq_equipment_idx"),
                 ],
                 "constraints": [
                     models.UniqueConstraint(

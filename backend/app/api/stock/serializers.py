@@ -8,6 +8,8 @@ from app.domain.stock.models.stock_constants import (
     INSTALLATION_CHOICES,
     ITEM_KIND_CHOICES,
     MOVEMENT_TYPE_CHOICES,
+    STRUCTURATION_BATCH_MAX,
+    STRUCTURATION_TYPE_CHOICES,
 )
 
 
@@ -27,6 +29,11 @@ class StockCatalogItemSerializer(serializers.Serializer):
     uuid = serializers.UUIDField(required=False, allow_null=True)
     kind = serializers.ChoiceField(choices=_choices_keys(ITEM_KIND_CHOICES))
     category = serializers.ChoiceField(choices=_choices_keys(CATEGORY_CHOICES))
+    structuration_type = serializers.ChoiceField(
+        choices=_choices_keys(STRUCTURATION_TYPE_CHOICES),
+        required=False,
+        allow_null=True,
+    )
     name = serializers.CharField(max_length=200)
     reference = serializers.CharField(
         max_length=200, required=False, allow_null=True, allow_blank=True
@@ -60,6 +67,9 @@ class StockCatalogItemSerializer(serializers.Serializer):
     )
 
     # Champs element
+    fsec_name = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
     installation = serializers.ChoiceField(
         choices=_choices_keys(INSTALLATION_CHOICES),
         required=False,
@@ -94,6 +104,11 @@ class StockCatalogItemPatchSerializer(serializers.Serializer):
     category = serializers.ChoiceField(
         choices=_choices_keys(CATEGORY_CHOICES), required=False
     )
+    structuration_type = serializers.ChoiceField(
+        choices=_choices_keys(STRUCTURATION_TYPE_CHOICES),
+        required=False,
+        allow_null=True,
+    )
     name = serializers.CharField(max_length=200, required=False)
     reference = serializers.CharField(
         max_length=200, required=False, allow_null=True, allow_blank=True
@@ -123,6 +138,9 @@ class StockCatalogItemPatchSerializer(serializers.Serializer):
     type_d_achat = serializers.CharField(
         max_length=100, required=False, allow_null=True, allow_blank=True
     )
+    fsec_name = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
     installation = serializers.ChoiceField(
         choices=_choices_keys(INSTALLATION_CHOICES),
         required=False,
@@ -143,6 +161,46 @@ class StockCatalogItemPatchSerializer(serializers.Serializer):
         max_length=200, required=False, allow_null=True, allow_blank=True
     )
     is_active = serializers.BooleanField(required=False)
+
+
+class StructurationBatchSerializer(serializers.Serializer):
+    """Validation du payload de création par lot de structurations (POST).
+
+    Crée `quantity` éléments sérialisés (kind=element, category=structuration)
+    partageant le même type et la même installation. Le `name` de chaque pièce
+    est un numéro de série global auto-incrémenté côté service (cf.
+    create_structuration_batch) — seul identifiant distinctif. La FSEC reste
+    optionnelle.
+    """
+
+    structuration_type = serializers.ChoiceField(
+        choices=_choices_keys(STRUCTURATION_TYPE_CHOICES)
+    )
+    installation = serializers.ChoiceField(choices=_choices_keys(INSTALLATION_CHOICES))
+    quantity = serializers.IntegerField(min_value=1, max_value=STRUCTURATION_BATCH_MAX)
+
+    # Champs communs optionnels appliqués à toutes les pièces du paquet.
+    fsec_name = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    caracteristique = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    fournisseur = serializers.CharField(
+        max_length=100, required=False, allow_null=True, allow_blank=True
+    )
+    materiaux_mat = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    boite = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    emplacement = serializers.CharField(
+        max_length=200, required=False, allow_null=True, allow_blank=True
+    )
+    remarques = serializers.CharField(
+        max_length=4000, required=False, allow_null=True, allow_blank=True
+    )
 
 
 # ===========================================================================

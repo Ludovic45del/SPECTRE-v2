@@ -7,13 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0076_backfill_steps_multi_operators'),
+        ("app", "0076_backfill_steps_multi_operators"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='faentity',
-            name='fsec_version_id',
-            field=models.ForeignKey(db_column='fsec_version_id', on_delete=django.db.models.deletion.PROTECT, related_name='fas', to='app.fsecentity'),
+            model_name="faentity",
+            name="fsec_version_id",
+            field=models.ForeignKey(
+                db_column="fsec_version_id",
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="fas",
+                to="app.fsecentity",
+            ),
         ),
     ]

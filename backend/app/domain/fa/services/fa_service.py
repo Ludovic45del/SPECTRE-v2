@@ -111,7 +111,9 @@ def regenerate_fa_identifiers_for_fsec(
     updated = 0
     for fa in fas:
         sequence = _parse_fa_sequence(fa.identifier)
-        new_identifier = generate_fa_identifier(campaign_name, fsec_name, year, sequence)
+        new_identifier = generate_fa_identifier(
+            campaign_name, fsec_name, year, sequence
+        )
         if new_identifier == fa.identifier:
             continue
         # Contrainte unique sur l'identifier : collision très improbable (la paire
@@ -131,6 +133,38 @@ def regenerate_fa_identifiers_for_fsec(
             fsec_version_id,
         )
     return updated
+
+
+def regenerate_fa_identifiers_for_campaign(
+    fa_repository: IFaRepository,
+    fsec_repository: IFsecRepository,
+    campaign_uuid: str,
+    campaign_name: str,
+    year: int,
+) -> int:
+    """Réaligne l'identifiant des FA de TOUTES les FSEC d'une campagne renommée.
+
+    L'identifiant FA encode ``(année, campagne, nom FSEC, séquence)`` ; l'année et
+    le nom de campagne proviennent de la campagne parente. Quand celle-ci est
+    renommée ou change d'année, on régénère les identifiants de chaque FSEC
+    rattachée (toutes versions confondues) pour que le « nom » des FA suive — en
+    préservant le numéro de séquence de chaque FA via
+    :func:`regenerate_fa_identifiers_for_fsec`.
+
+    Retourne le nombre total de FA effectivement réécrites.
+    """
+    total = 0
+    for fsec in fsec_repository.get_by_campaign_id(campaign_uuid):
+        total += regenerate_fa_identifiers_for_fsec(
+            fa_repository, fsec.version_uuid, campaign_name, fsec.name, year
+        )
+    if total:
+        logger.info(
+            "Réaligné %d identifiant(s) FA sur le contexte campagne uuid=%s",
+            total,
+            campaign_uuid,
+        )
+    return total
 
 
 def create_fa(

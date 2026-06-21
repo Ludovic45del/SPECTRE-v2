@@ -18,6 +18,18 @@ class IStockCatalogRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def create_structuration_batch(
+        self, template: StockCatalogItemBean, quantity: int
+    ) -> List[StockCatalogItemBean]:
+        """Crée `quantity` structurations numérotées séquentiellement, atomiquement.
+
+        L'attribution des numéros (lecture du max + insertions) est sérialisée
+        contre la concurrence (cf. implémentation). `template` porte les champs
+        communs ; seul `name` (numéro de série) varie d'une pièce à l'autre.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get_by_uuid(self, uuid: str) -> Optional[StockCatalogItemBean]:
         """Récupère un item par son UUID. Retourne None si non trouvé."""
         raise NotImplementedError
@@ -78,6 +90,14 @@ class IStockCatalogRepository(abc.ABC):
         exclude_uuid: Optional[str] = None,
     ) -> bool:
         """Vérifie l'unicité name+reference par kind (cf. CDC §3.1)."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def next_structuration_number(self) -> int:
+        """Prochain numéro de série global pour une structuration (max + 1).
+
+        Compteur global et continu sur le `name` numérique des structurations.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod

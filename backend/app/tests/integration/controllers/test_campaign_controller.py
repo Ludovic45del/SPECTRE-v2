@@ -253,6 +253,95 @@ class TestCampaignControllerPatch:
         data = response.json()
         assert data["status_id"] == 1
 
+    def _seed_campaign_with_fa(self, api_client, sample_campaign_payload):
+        """Crée campagne → FSEC rattaché → FA, et renvoie (uuid, payload, fa, fsec)."""
+        from datetime import date as _date
+
+        from app.domain.fa.services.fa_service import generate_fa_identifier
+        from app.repository.fa.models.fa_entity import FaEntity
+        from app.repository.fsec.models.fsec_entity import FsecEntity
+
+        campaign_uuid = api_client.post(
+            "/api/v1/campaigns/",
+            data=json.dumps(sample_campaign_payload),
+            content_type="application/json",
+        ).json()["uuid"]
+
+        fsec_payload = {
+            "name": f"FSEC {uuid.uuid4().hex[:8]}",
+            "campaign_id": campaign_uuid,
+            "status_id": 0,
+            "category_id": 0,
+            "rack_id": None,
+            "comments": "",
+        }
+        version_uuid = api_client.post(
+            "/api/v1/fsecs/",
+            data=json.dumps(fsec_payload),
+            content_type="application/json",
+        ).json()["version_uuid"]
+        fsec_entity = FsecEntity.objects.get(version_uuid=version_uuid)
+
+        initial = generate_fa_identifier(
+            sample_campaign_payload["name"],
+            fsec_payload["name"],
+            sample_campaign_payload["year"],
+            1,
+        )
+        fa = FaEntity.objects.create(
+            fsec_version_id=fsec_entity,
+            status_id_id=0,
+            identifier=initial,
+            discoverer="Testeur",
+            event_date=_date(2025, 3, 1),
+            observation="obs",
+            quick_analysis="qa",
+        )
+        return campaign_uuid, fsec_payload, fa, initial
+
+    def test_patch_campaign_rename_regenerates_fa_identifiers(
+        self, api_client, sample_campaign_payload
+    ):
+        """Renommer une campagne (PATCH) réaligne l'identifiant des FA de ses FSEC."""
+        from app.domain.fa.services.fa_service import generate_fa_identifier
+
+        campaign_uuid, fsec_payload, fa, initial = self._seed_campaign_with_fa(
+            api_client, sample_campaign_payload
+        )
+
+        new_name = "Campagne Renommée 2026"
+        new_year = 2026
+        response = api_client.patch(
+            f"/api/v1/campaigns/{campaign_uuid}/",
+            data=json.dumps({"name": new_name, "year": new_year}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        fa.refresh_from_db()
+        expected = generate_fa_identifier(new_name, fsec_payload["name"], new_year, 1)
+        assert fa.identifier == expected
+        assert fa.identifier != initial
+
+    def test_patch_campaign_non_identifying_field_keeps_fa_identifier(
+        self, api_client, sample_campaign_payload
+    ):
+        """Un PATCH sans changement de nom/année ne touche pas l'identifiant FA."""
+        campaign_uuid, _, fa, initial = self._seed_campaign_with_fa(
+            api_client, sample_campaign_payload
+        )
+
+        # PATCH du statut uniquement : aucun impact attendu sur l'identifiant FA.
+        response = api_client.patch(
+            f"/api/v1/campaigns/{campaign_uuid}/",
+            data=json.dumps({"status_id": 1}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+        fa.refresh_from_db()
+        assert fa.identifier == initial
+
 
 # ============================================================================
 # DELETE ENDPOINT TESTS

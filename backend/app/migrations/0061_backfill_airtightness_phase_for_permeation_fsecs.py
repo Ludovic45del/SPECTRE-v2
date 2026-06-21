@@ -14,7 +14,9 @@ def reclasse_phase_hp_pour_cat_4(apps, schema_editor):
     FsecEntity = apps.get_model("app", "FsecEntity")
 
     fsec_version_uuids_cat_4 = list(
-        FsecEntity.objects.filter(category_id_id=4).values_list("version_uuid", flat=True)
+        FsecEntity.objects.filter(category_id_id=4).values_list(
+            "version_uuid", flat=True
+        )
     )
     if not fsec_version_uuids_cat_4:
         return

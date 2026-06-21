@@ -16,3 +16,5 @@ export { useModalSubmit } from './use-modal-submit';
 export { compressImage } from './imageCompression';
 export type { CompressImageOptions, CompressionResult } from './imageCompression';
 export { isNetworkPath, normalizeHref } from './networkPath';
+export { useDateRangeSelection } from './useDateRangeSelection';
+export type { DateRange, RangePhase, DateRangeSelection } from './useDateRangeSelection';

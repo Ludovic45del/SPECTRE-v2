@@ -18,11 +18,9 @@ from app.api.fsec.serializers import (
 )
 from app.api.shared.mixins import LazyRepositoryList, PaginatedControllerMixin
 from app.core.permissions import IsReadOnlyOrAdmin
-from app.domain.exceptions import InvalidDataException
 from app.domain.campaign.services.campaign_service import get_campaign_by_uuid
-from app.domain.fsec.services.delivery_sheet_service import (
-    build_single_target_sheet,
-)
+from app.domain.exceptions import InvalidDataException
+from app.domain.fsec.services.delivery_sheet_service import build_single_target_sheet
 from app.domain.fsec.services.delivery_workflow_service import (
     get_delivery_snapshot,
     update_delivery_info,
@@ -45,16 +43,16 @@ from app.domain.fsec.services.fsec_service import (
     set_fsec_overview_image,
     update_fsec,
 )
+from app.mapper.fsec.fsec_mapper import fsec_mapper_api_to_bean, fsec_mapper_bean_to_api
 from app.repository.campaign.models.campaign_installations_entity import (
     CampaignInstallationsEntity,
 )
 from app.repository.campaign.repositories.campaign_repository import CampaignRepository
 from app.repository.fa.repositories.fa_repository import FaRepository
+from app.repository.fsec.repositories.fsec_repository import FsecRepository
 from app.repository.steps.repositories.sealing_step_repository import (
     SealingStepRepository,
 )
-from app.mapper.fsec.fsec_mapper import fsec_mapper_api_to_bean, fsec_mapper_bean_to_api
-from app.repository.fsec.repositories.fsec_repository import FsecRepository
 from app.repository.stock.repositories.fsec_assembly_item_repository import (
     FsecAssemblyItemRepository,
 )
@@ -253,7 +251,9 @@ class FsecController(PaginatedControllerMixin, ViewSet):
             snapshot = get_delivery_snapshot(
                 self.repository, self.sealing_repository, version_uuid
             )
-            return JsonResponse(self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder)
+            return JsonResponse(
+                self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder
+            )
 
         serializer = DeliveryInfoSerializer(data=request.data)
         if not serializer.is_valid():
@@ -271,7 +271,9 @@ class FsecController(PaginatedControllerMixin, ViewSet):
                 else None
             ),
         )
-        return JsonResponse(self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder
+        )
 
     @action(detail=True, methods=["patch"], url_path="delivery-validation")
     def patch_delivery_validation(self, request, version_uuid=None) -> JsonResponse:
@@ -296,7 +298,9 @@ class FsecController(PaginatedControllerMixin, ViewSet):
             receiver_name=payload.get("delivery_receiver_name"),
             receiver_date=payload.get("delivery_receiver_date"),
         )
-        return JsonResponse(self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder)
+        return JsonResponse(
+            self._serialize_snapshot(snapshot), encoder=DjangoJSONEncoder
+        )
 
     @action(detail=True, methods=["post"], url_path="delivery-sheet")
     def delivery_sheet(self, request, version_uuid=None) -> HttpResponse:

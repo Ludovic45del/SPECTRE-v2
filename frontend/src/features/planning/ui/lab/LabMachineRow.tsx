@@ -8,9 +8,8 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 import { NotesOutlined } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { getEventCategoryMeta, labRowId } from '../../lib/planning.constants';
+import { getEventCategoryMeta, labRowId, DRAG_GHOST_SHADOW } from '../../lib/planning.constants';
 import { type PlanningData, usePlanningColors } from '../../lib/planning.hooks';
-import { usePlanningStore } from '../../lib/planning.store';
 import type { TimelineColumn } from '../../lib/planning.utils';
 import type { VisibleColumnRange } from '../../lib/useColumnVirtualization';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
@@ -24,6 +23,7 @@ import {
     getBarPosition,
     getBarBorderRadius,
     calculateResizePreview,
+    calculateDragPreview,
     getBarSpanCount,
 } from '../../lib/planning.bar-utils';
 import { useDragToMove } from '../../lib/useDragToMove';
@@ -69,7 +69,6 @@ const LabMachineRow = memo(function LabMachineRow({
     visibleRange: VisibleColumnRange;
 }) {
     const colors = usePlanningColors();
-    const eventDrag = usePlanningStore((s) => s.eventDrag);
 
     const updateEvent = useUpdateLabEvent();
 
@@ -87,7 +86,11 @@ const LabMachineRow = memo(function LabMachineRow({
         [machineEvents],
     );
 
-    const { handleCellMouseDown, skipNextClick: skipNextClickDrag } = useDragToMove<LabEvent>({
+    const {
+        handleCellMouseDown,
+        skipNextClick: skipNextClickDrag,
+        dragging,
+    } = useDragToMove<LabEvent>({
         columns,
         findItemAtColumn,
         onMove: (event, dayOffset) => {
@@ -156,13 +159,6 @@ const LabMachineRow = memo(function LabMachineRow({
         [machineEvents, skipNextClickDrag, skipNextClickResize],
     );
 
-    // Drag visual state for this row (cross-machine drag via event drag store)
-    const isDragSource = eventDrag?.machineKey === machine.uuid;
-    const isDragTarget = eventDrag?.currentRowId === rowId;
-    const dragHasMoved = eventDrag
-        ? eventDrag.originColIndex !== eventDrag.currentColIndex || eventDrag.rowId !== eventDrag.currentRowId
-        : false;
-
     // ── Precomputed timeline data with column virtualization ──
     const timelineCells = useMemo(() => {
         const { startCol, endCol } = visibleRange;
@@ -183,12 +179,24 @@ const LabMachineRow = memo(function LabMachineRow({
             }
         }
 
+        // Precompute drag-to-move preview range (whole bar shifts by colDelta)
+        let dragPreview: { startIdx: number; endIdx: number; color: string } | null = null;
+        let draggedUuid: string | null = null;
+        if (dragging) {
+            const colDelta = dragging.currentColIdx - dragging.originColIdx;
+            if (colDelta !== 0) {
+                draggedUuid = dragging.item.uuid;
+                const meta = getEventCategoryMeta(dragging.item.category);
+                dragPreview = calculateDragPreview(dragging.item, columns, colDelta, meta?.color ?? colors.blue);
+            }
+        }
+
         // Precompute event-to-column mapping for O(1) lookups
-        const eventByCol = new Map<number, { event: LabEvent; eventIdx: number }>();
+        const eventByCol = new Map<number, LabEvent>();
         for (let ei = 0; ei < machineEvents.length; ei++) {
             for (let ci = 0; ci < columns.length; ci++) {
                 if (!eventByCol.has(ci) && itemOverlapsColumn(machineEvents[ei], columns[ci])) {
-                    eventByCol.set(ci, { event: machineEvents[ei], eventIdx: ei });
+                    eventByCol.set(ci, machineEvents[ei]);
                 }
             }
         }
@@ -206,21 +214,21 @@ const LabMachineRow = memo(function LabMachineRow({
             const weekState = resolveWeekState(col, planningData.weekStatesMap);
 
             // O(1) lookup from precomputed map
-            const eventMatch = eventByCol.get(idx);
-            const matchingEvent = eventMatch?.event;
-            const matchingEventIdx = eventMatch?.eventIdx ?? -1;
+            const matchingEvent = eventByCol.get(idx);
             const catMeta = matchingEvent ? getEventCategoryMeta(matchingEvent.category) : undefined;
             const barPos = matchingEvent ? getBarPosition(matchingEvent, columns, idx) : undefined;
-
-            // Drag visual feedback
-            const isBeingDragged = isDragSource && dragHasMoved && matchingEventIdx === eventDrag!.eventIndex;
-            const isDropTarget = isDragTarget && dragHasMoved && idx === eventDrag!.currentColIndex;
 
             // Resize visual feedback
             const isResizedEvent = resizing && matchingEvent?.uuid === resizing.itemId;
             const isInResizePreview = resizePreview && idx >= resizePreview.startIdx && idx <= resizePreview.endIdx;
             const isResizePreviewStart = isInResizePreview && idx === resizePreview!.startIdx;
             const isResizePreviewEnd = isInResizePreview && idx === resizePreview!.endIdx;
+
+            // Drag-to-move visual feedback
+            const isDraggedEvent = draggedUuid != null && matchingEvent?.uuid === draggedUuid;
+            const isInDragPreview = dragPreview != null && idx >= dragPreview.startIdx && idx <= dragPreview.endIdx;
+            const isDragPreviewStart = isInDragPreview && idx === dragPreview!.startIdx;
+            const dragSpan = dragPreview ? dragPreview.endIdx - dragPreview.startIdx + 1 : 0;
 
             cells.push(
                 <HoverTd
@@ -233,22 +241,16 @@ const LabMachineRow = memo(function LabMachineRow({
                     style={{
                         position: 'relative',
                         padding: 0,
-                        ...(isDropTarget
-                            ? {
-                                  border: `2px dashed ${colors.blue}`,
-                              }
-                            : {
-                                  borderTop: `1px solid ${colors.border}`,
-                                  borderBottom: `1px solid ${colors.border}`,
-                                  borderLeft:
-                                      barPos && (barPos === 'middle' || barPos === 'end')
-                                          ? 'none'
-                                          : `1px solid ${colors.border}`,
-                                  borderRight:
-                                      barPos && (barPos === 'start' || barPos === 'middle')
-                                          ? 'none'
-                                          : `1px solid ${colors.border}`,
-                              }),
+                        borderTop: `1px solid ${colors.border}`,
+                        borderBottom: `1px solid ${colors.border}`,
+                        borderLeft:
+                            barPos && (barPos === 'middle' || barPos === 'end') ? 'none' : `1px solid ${colors.border}`,
+                        borderRight:
+                            barPos && (barPos === 'start' || barPos === 'middle')
+                                ? 'none'
+                                : `1px solid ${colors.border}`,
+                        // Surbrillance des colonnes cibles pendant un déplacement
+                        boxShadow: isInDragPreview ? `inset 0 0 0 100px ${colors.dragHighlight}` : undefined,
                         backgroundColor: col.isCurrent
                             ? colors.currentDay
                             : weekState === 'fermeture'
@@ -277,7 +279,7 @@ const LabMachineRow = memo(function LabMachineRow({
                                 bgcolor: catMeta.color,
                                 borderRadius: getBarBorderRadius(barPos),
                                 overflow: 'hidden',
-                                opacity: isBeingDragged || isResizedEvent ? 0.3 : 0.85,
+                                opacity: isResizedEvent || isDraggedEvent ? 0.3 : 0.85,
                                 pointerEvents: 'none',
                                 transition: `opacity ${motion.fast}`,
                             }}
@@ -352,27 +354,22 @@ const LabMachineRow = memo(function LabMachineRow({
                         />
                     )}
 
-                    {/* Ghost bar at drop target */}
-                    {isDropTarget && eventDrag && (
+                    {/* Drag-to-move ghost: barre fantôme ombrée à l'emplacement de dépôt */}
+                    {isDragPreviewStart && dragPreview && (
                         <Box
                             sx={{
                                 position: 'absolute',
                                 top: 3,
                                 bottom: 3,
                                 left: 2,
-                                right: 2,
-                                bgcolor: (() => {
-                                    const srcEvents = isDragSource
-                                        ? machineEvents
-                                        : (labEvents.get(eventDrag.machineKey) ?? []);
-                                    const srcEvent = srcEvents[eventDrag.eventIndex];
-                                    const meta = srcEvent ? getEventCategoryMeta(srcEvent.category) : undefined;
-                                    return meta?.color ?? colors.blue;
-                                })(),
+                                width: `calc(${dragSpan * 100}% - 4px)`,
+                                bgcolor: dragPreview.color,
                                 borderRadius: '6px',
-                                opacity: 0.5,
-                                border: `2px dashed rgba(255,255,255,0.6)`,
+                                opacity: 0.75,
+                                border: '1px dashed rgba(255,255,255,0.85)',
+                                boxShadow: DRAG_GHOST_SHADOW,
                                 pointerEvents: 'none',
+                                zIndex: 3,
                             }}
                         />
                     )}
@@ -394,13 +391,9 @@ const LabMachineRow = memo(function LabMachineRow({
         machineEvents,
         planningData.weekStatesMap,
         resizing,
-        isDragSource,
-        isDragTarget,
-        dragHasMoved,
-        eventDrag,
+        dragging,
         rowId,
         colors,
-        labEvents,
         handleCellMouseDown,
         handleCellClick,
         handleResizeStart,

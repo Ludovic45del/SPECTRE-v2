@@ -7,7 +7,7 @@
  *  - `handleItemMouseDown` : mousedown on a bar element with an explicit item
  *    (used when a single row hosts several bars, e.g. lane-packed campaign rows).
  */
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TimelineColumn } from './planning.utils';
 
 export interface DragToMoveOptions<T> {
@@ -21,6 +21,16 @@ export interface DragToMoveOptions<T> {
     disabled?: boolean;
 }
 
+/** État d'un déplacement en cours, qui pilote le fantôme + la surbrillance cible. */
+export interface DragMoveState<T> {
+    /** Item en cours de déplacement. */
+    item: T;
+    /** Index de la colonne saisie au mousedown. */
+    originColIdx: number;
+    /** Index de la colonne actuellement survolée. */
+    currentColIdx: number;
+}
+
 export interface DragToMoveResult<T> {
     /** Attach to `onMouseDown` of each cell `<td>` (single-item rows). */
     handleCellMouseDown: (e: React.MouseEvent<HTMLElement>, col: TimelineColumn, colIdx: number) => void;
@@ -28,6 +38,8 @@ export interface DragToMoveResult<T> {
     handleItemMouseDown: (e: React.MouseEvent<HTMLElement>, item: T, colIdx: number) => void;
     /** Ref that is `true` for one click cycle after a drag so the click handler can bail out. */
     skipNextClick: React.MutableRefObject<boolean>;
+    /** Déplacement en cours (null au repos). Pilote l'aperçu fantôme + surbrillance. */
+    dragging: DragMoveState<T> | null;
 }
 
 export function useDragToMove<T>({
@@ -38,6 +50,8 @@ export function useDragToMove<T>({
 }: DragToMoveOptions<T>): DragToMoveResult<T> {
     const columnsRef = useRef(columns);
     columnsRef.current = columns;
+
+    const [dragging, setDragging] = useState<DragMoveState<T> | null>(null);
 
     const skipNextClick = useRef(false);
     const cleanupRef = useRef<(() => void) | null>(null);
@@ -54,12 +68,19 @@ export function useDragToMove<T>({
 
     const startDrag = useCallback(
         (item: T, originColIdx: number) => {
+            setDragging({ item, originColIdx, currentColIdx: originColIdx });
+
+            let rafId = 0;
             const handleDocMove = (me: MouseEvent) => {
-                const td = (me.target as HTMLElement).closest('td[data-col-index]') as HTMLElement | null;
-                if (!td) return;
-                const ci = parseInt(td.dataset.colIndex ?? '', 10);
-                if (isNaN(ci)) return;
                 document.body.style.cursor = 'grabbing';
+                cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    const td = (me.target as HTMLElement).closest('td[data-col-index]') as HTMLElement | null;
+                    if (!td) return;
+                    const ci = parseInt(td.dataset.colIndex ?? '', 10);
+                    if (isNaN(ci)) return;
+                    setDragging((prev) => (prev && prev.currentColIdx !== ci ? { ...prev, currentColIdx: ci } : prev));
+                });
             };
 
             let finalColIdx = originColIdx;
@@ -87,10 +108,12 @@ export function useDragToMove<T>({
             };
 
             const cleanup = () => {
+                cancelAnimationFrame(rafId);
                 document.removeEventListener('mousemove', handleDocMove);
                 document.removeEventListener('mouseup', handleDocUp);
                 document.body.style.cursor = '';
                 cleanupRef.current = null;
+                setDragging(null);
             };
 
             document.body.style.cursor = 'grabbing';
@@ -122,5 +145,5 @@ export function useDragToMove<T>({
         [disabled, startDrag],
     );
 
-    return { handleCellMouseDown, handleItemMouseDown, skipNextClick };
+    return { handleCellMouseDown, handleItemMouseDown, skipNextClick, dragging };
 }

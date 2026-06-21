@@ -8,7 +8,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 import { NotesOutlined } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { type Membre, memberRowId, getPeriodeMeta } from '../../lib/planning.constants';
+import { type Membre, memberRowId, getPeriodeMeta, DRAG_GHOST_SHADOW } from '../../lib/planning.constants';
 import { type PlanningData, usePlanningColors } from '../../lib/planning.hooks';
 import { usePlanningStore } from '../../lib/planning.store';
 import type { TimelineColumn } from '../../lib/planning.utils';
@@ -18,6 +18,7 @@ import {
     getBarPosition,
     getBarBorderRadius,
     calculateResizePreview,
+    calculateDragPreview,
     getBarSpanCount,
 } from '../../lib/planning.bar-utils';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
@@ -101,7 +102,11 @@ export const MemberRow = memo(function MemberRow({
         [membre.nom, membre.fonction, selectedYear, updatePeriod],
     );
 
-    const { handleCellMouseDown, skipNextClick: skipNextClickDrag } = useDragToMove<PlanningMemberPeriod>({
+    const {
+        handleCellMouseDown,
+        skipNextClick: skipNextClickDrag,
+        dragging,
+    } = useDragToMove<PlanningMemberPeriod>({
         columns,
         findItemAtColumn,
         onMove: handleMove,
@@ -176,6 +181,18 @@ export const MemberRow = memo(function MemberRow({
             }
         }
 
+        // Precompute drag-to-move preview range (whole bar shifts by colDelta)
+        let dragPreview: { startIdx: number; endIdx: number; color: string } | null = null;
+        let draggedUuid: string | null = null;
+        if (dragging) {
+            const colDelta = dragging.currentColIdx - dragging.originColIdx;
+            if (colDelta !== 0) {
+                draggedUuid = dragging.item.uuid;
+                const meta = getPeriodeMeta(dragging.item.periodType);
+                dragPreview = calculateDragPreview(dragging.item, columns, colDelta, meta?.color ?? colors.blue);
+            }
+        }
+
         // Precompute period-to-column mapping for O(1) lookups
         const periodByCol = new Map<number, PlanningMemberPeriod>();
         for (const p of memberPeriods) {
@@ -209,6 +226,12 @@ export const MemberRow = memo(function MemberRow({
             const isResizePreviewStart = isInResizePreview && idx === resizePreview!.startIdx;
             const isResizePreviewEnd = isInResizePreview && idx === resizePreview!.endIdx;
 
+            // Drag-to-move visual feedback
+            const isDraggedPeriod = draggedUuid != null && matchingPeriod?.uuid === draggedUuid;
+            const isInDragPreview = dragPreview != null && idx >= dragPreview.startIdx && idx <= dragPreview.endIdx;
+            const isDragPreviewStart = isInDragPreview && idx === dragPreview!.startIdx;
+            const dragSpan = dragPreview ? dragPreview.endIdx - dragPreview.startIdx + 1 : 0;
+
             cells.push(
                 <HoverTd
                     key={col.key}
@@ -237,6 +260,8 @@ export const MemberRow = memo(function MemberRow({
                                 : col.isWeekend
                                   ? colors.weekend
                                   : colors.cellBg,
+                        // Surbrillance des colonnes cibles pendant un déplacement
+                        boxShadow: isInDragPreview ? `inset 0 0 0 100px ${colors.dragHighlight}` : undefined,
                         cursor: matchingPeriod ? 'grab' : 'pointer',
                         height: 32,
                         verticalAlign: 'middle',
@@ -256,7 +281,7 @@ export const MemberRow = memo(function MemberRow({
                                 bgcolor: periodMeta.color,
                                 borderRadius: getBarBorderRadius(barPos),
                                 overflow: 'hidden',
-                                opacity: isResizedPeriod ? 0.3 : 0.85,
+                                opacity: isResizedPeriod || isDraggedPeriod ? 0.3 : 0.85,
                                 pointerEvents: 'none',
                                 transition: `opacity ${motion.fast}`,
                             }}
@@ -330,6 +355,26 @@ export const MemberRow = memo(function MemberRow({
                             }}
                         />
                     )}
+
+                    {/* Drag-to-move ghost: barre fantôme ombrée à l'emplacement de dépôt */}
+                    {isDragPreviewStart && dragPreview && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 3,
+                                bottom: 3,
+                                left: 2,
+                                width: `calc(${dragSpan * 100}% - 4px)`,
+                                bgcolor: dragPreview.color,
+                                borderRadius: '6px',
+                                opacity: 0.75,
+                                border: '1px dashed rgba(255,255,255,0.85)',
+                                boxShadow: DRAG_GHOST_SHADOW,
+                                pointerEvents: 'none',
+                                zIndex: 3,
+                            }}
+                        />
+                    )}
                 </HoverTd>,
             );
         }
@@ -348,6 +393,7 @@ export const MemberRow = memo(function MemberRow({
         memberPeriods,
         planningData.weekStatesMap,
         resizing,
+        dragging,
         rowId,
         colors,
         handleCellMouseDown,

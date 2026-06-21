@@ -1,9 +1,10 @@
 """Repository StockCatalog — implémentation IStockCatalogRepository."""
 
+from dataclasses import replace
 from datetime import date, timedelta
 from typing import List, Optional
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import F, Q
 
 from app.domain.stock.interface.catalog_repository import IStockCatalogRepository
@@ -13,6 +14,10 @@ from app.domain.stock.models.stock_constants import (
     ITEM_KIND_CONSUMABLE,
     ITEM_KIND_ELEMENT,
 )
+
+# Clé de verrou consultatif PostgreSQL sérialisant l'attribution des numéros de
+# série de structuration entre requêtes concurrentes (cf. create_structuration_batch).
+_STRUCTURATION_LOCK_KEY = 481516234299
 from app.mapper.stock.catalog_mapper import (
     stock_catalog_mapper_bean_to_entity,
     stock_catalog_mapper_entity_to_bean,
@@ -33,6 +38,39 @@ class StockCatalogRepository(IStockCatalogRepository):
         entity.save()
         return stock_catalog_mapper_entity_to_bean(entity)
 
+    @transaction.atomic
+    def create_structuration_batch(
+        self, template: StockCatalogItemBean, quantity: int
+    ) -> List[StockCatalogItemBean]:
+        """Crée `quantity` structurations numérotées séquentiellement, atomiquement.
+
+        L'attribution des numéros (lecture du max + insertions) est sérialisée :
+        - PostgreSQL : verrou consultatif transactionnel (`pg_advisory_xact_lock`),
+          relâché au commit — empêche deux paquets concurrents de réutiliser le
+          même numéro, y compris quand le catalogue est vide.
+        - SQLite : les écritures sont déjà sérialisées au niveau base, la
+          transaction atomique suffit.
+
+        Le compteur est calculé sur l'ensemble `kind=element` (cf.
+        `_max_element_number`) pour rester cohérent avec l'unicité (kind, name,
+        reference) et ne jamais entrer en collision avec une pièce élémentaire
+        au nom numérique.
+        """
+        if connection.vendor == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT pg_advisory_xact_lock(%s)", [_STRUCTURATION_LOCK_KEY]
+                )
+
+        start = self._max_element_number() + 1
+        created: List[StockCatalogItemBean] = []
+        for offset in range(quantity):
+            bean = replace(template, name=str(start + offset))
+            entity = stock_catalog_mapper_bean_to_entity(bean)
+            entity.save()
+            created.append(stock_catalog_mapper_entity_to_bean(entity))
+        return created
+
     def get_by_uuid(self, uuid: str) -> Optional[StockCatalogItemBean]:
         """Récupère un item par son UUID."""
         try:
@@ -49,6 +87,7 @@ class StockCatalogRepository(IStockCatalogRepository):
         # Préserver kind (interdit de modifier après création — cf. CDC §5.1).
         # Le service garantit déjà cette règle, mais on fixe une seconde barrière ici.
         entity.category = bean.category
+        entity.structuration_type = bean.structuration_type
         entity.name = bean.name
         entity.reference = bean.reference
         entity.caracteristique = bean.caracteristique
@@ -60,6 +99,7 @@ class StockCatalogRepository(IStockCatalogRepository):
         entity.seuil_alerte = bean.seuil_alerte
         entity.date_peremption = bean.date_peremption
         entity.type_d_achat = bean.type_d_achat
+        entity.fsec_name = bean.fsec_name
         entity.installation = bean.installation
         entity.status = bean.status
         entity.materiaux_mat = bean.materiaux_mat
@@ -170,6 +210,33 @@ class StockCatalogRepository(IStockCatalogRepository):
         if exclude_uuid:
             qs = qs.exclude(uuid=exclude_uuid)
         return qs.exists()
+
+    def _max_element_number(self) -> int:
+        """Plus grand `name` purement numérique parmi les éléments sérialisés.
+
+        Le périmètre est `kind=element` (et non `category=structuration`) pour
+        être cohérent avec l'unicité (kind, name, reference) : ainsi le prochain
+        numéro ne pourra jamais entrer en collision avec une pièce élémentaire
+        au nom numérique. Inclut les items inactifs (numéros jamais réutilisés).
+        Renvoie 0 si aucun nom numérique n'existe.
+        """
+        names = StockCatalogItemEntity.objects.filter(
+            kind=ITEM_KIND_ELEMENT
+        ).values_list("name", flat=True)
+        max_number = 0
+        for name in names:
+            if name and name.isdigit():
+                value = int(name)
+                if value > max_number:
+                    max_number = value
+        return max_number
+
+    def next_structuration_number(self) -> int:
+        """Prochain numéro de série (max + 1), non verrouillé — pour l'aperçu UI.
+
+        L'attribution réelle et sérialisée a lieu dans `create_structuration_batch`.
+        """
+        return self._max_element_number() + 1
 
     def is_referenced_by_assembly(self, uuid: str) -> bool:
         """Vrai s'il existe au moins un FsecAssemblyItem référençant cet item."""

@@ -4,8 +4,8 @@
  */
 
 import { memo } from 'react';
-import { Box, Paper, Stack, IconButton } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Box, Paper, IconButton, useTheme } from '@mui/material';
+import { RangeCalendar } from '@shared/ui';
 import { CampaignWithRelations } from '@entities/campaign';
 import EditIcon from '@mui/icons-material/Edit';
 import { useCampaignDatesForm } from '../hooks';
@@ -19,7 +19,8 @@ export interface DatesSectionProps {
 }
 
 export const DatesSection = memo(function DatesSection({ campaign }: DatesSectionProps) {
-    const { form, errors, isEditing, isSaving, setStartDate, setEndDate, startEditing, cancelEditing, save } =
+    const theme = useTheme();
+    const { form, isEditing, isSaving, setStartDate, setEndDate, startEditing, cancelEditing, save } =
         useCampaignDatesForm(campaign);
 
     return (
@@ -40,34 +41,14 @@ export const DatesSection = memo(function DatesSection({ campaign }: DatesSectio
                         save();
                     }}
                 >
-                    <Stack spacing={2}>
-                        <DatePicker
-                            label="Date de début"
-                            value={form.startDate}
-                            onChange={setStartDate}
-                            slotProps={{
-                                textField: {
-                                    size: 'small',
-                                    fullWidth: true,
-                                    error: !!errors.startDate,
-                                    helperText: errors.startDate,
-                                },
-                            }}
-                        />
-                        <DatePicker
-                            label="Date de fin"
-                            value={form.endDate}
-                            onChange={setEndDate}
-                            slotProps={{
-                                textField: {
-                                    size: 'small',
-                                    fullWidth: true,
-                                    error: !!errors.endDate,
-                                    helperText: errors.endDate,
-                                },
-                            }}
-                        />
-                    </Stack>
+                    <RangeCalendar
+                        value={{ start: form.startDate, end: form.endDate }}
+                        onChange={(range) => {
+                            setStartDate(range.start);
+                            setEndDate(range.end);
+                        }}
+                        accentColor={theme.palette.primary.main}
+                    />
                     <FormActions onCancel={cancelEditing} isSaving={isSaving} />
                 </Box>
             ) : (

@@ -2,7 +2,9 @@
  * FSEC Workflow Constants
  * Source: back/cible/domain/fsec/constants.py
  *
- * Workflow des 9 étapes pour les FSECs sans gaz
+ * Workflow des étapes pour les FSECs sans gaz.
+ * `hs` et `decision_moe` ne sont pas des étapes linéaires : ce sont des statuts
+ * de mise en pause qui figent l'avancement.
  */
 
 export const WORKFLOW_SANS_GAZ = [
@@ -15,6 +17,7 @@ export const WORKFLOW_SANS_GAZ = [
     'installed',
     'shot',
     'hs',
+    'decision_moe',
 ] as const;
 
 export type FsecWorkflowStep = (typeof WORKFLOW_SANS_GAZ)[number];
@@ -29,6 +32,7 @@ export const STEP_LABELS: Record<FsecWorkflowStep, string> = {
     installed: 'Sur installation',
     shot: 'Tirée',
     hs: 'HS',
+    decision_moe: 'Décision MOE',
 };
 
 export const REQUIRED_SUBTYPES_DOCS = [

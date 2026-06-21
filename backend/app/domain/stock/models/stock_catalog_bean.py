@@ -18,8 +18,12 @@ class StockCatalogItemBean:
     # Discriminant + rubrique
     kind: str = ""
     category: str = ""
+    # Sous-type de structuration — requis si category=structuration, None sinon
+    structuration_type: Optional[str] = None
 
     # Identification
+    # Pour une structuration créée par lot, `name` porte le numéro de série
+    # global auto-incrémenté ("1", "2", ...) — seul identifiant distinctif.
     name: str = ""
     reference: Optional[str] = None
 
@@ -37,6 +41,8 @@ class StockCatalogItemBean:
     type_d_achat: Optional[str] = None
 
     # Champs element uniquement
+    # FSEC de destination (lien déclaratif optionnel, par nom)
+    fsec_name: Optional[str] = None
     installation: Optional[str] = None
     status: Optional[str] = None
     materiaux_mat: Optional[str] = None

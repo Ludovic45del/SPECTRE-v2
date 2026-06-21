@@ -12,7 +12,6 @@ from app.domain.indicators.models.indicators_bean import (
     CampaignIndicatorsBean,
     FaIndicatorsBean,
     FsecIndicatorsBean,
-    OperatorWorkloadBean,
     StepDurationBean,
 )
 from app.domain.indicators.services import indicators_service as svc
@@ -65,9 +64,6 @@ def mock_repo():
             avg_days=None,
         ),
     ]
-    repo.get_top_operators.return_value = [
-        OperatorWorkloadBean(user_uuid="u1", name="Alice", steps_count=15),
-    ]
     return repo
 
 
@@ -81,7 +77,6 @@ def test_returns_bean_with_provided_year(mock_repo):
         2024, semester=None, limit=8
     )
     mock_repo.get_step_durations.assert_called_once_with(2024, semester=None)
-    mock_repo.get_top_operators.assert_called_once_with(2024, semester=None, limit=10)
 
 
 def test_defaults_to_current_year_when_none(mock_repo):
@@ -97,7 +92,6 @@ def test_propagates_semester_when_valid(mock_repo):
     mock_repo.get_fsec_indicators.assert_called_once_with(2025, semester=1)
     mock_repo.get_campaign_indicators.assert_called_once_with(2025, semester=1, limit=8)
     mock_repo.get_step_durations.assert_called_once_with(2025, semester=1)
-    mock_repo.get_top_operators.assert_called_once_with(2025, semester=1, limit=10)
 
 
 def test_invalid_semester_falls_back_to_none(mock_repo):

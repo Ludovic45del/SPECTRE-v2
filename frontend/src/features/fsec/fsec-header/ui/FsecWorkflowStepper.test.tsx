@@ -295,6 +295,74 @@ describe('FsecWorkflowStepper', () => {
     });
 
     // ============================================================================
+    // DÉCISION MOE CHIP TESTS
+    // ============================================================================
+
+    describe('Décision MOE Chip Functionality', () => {
+        it('should render Décision MOE chip', () => {
+            const fsec = createMockFsec();
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            expect(screen.getByRole('button', { name: /Décision MOE/ })).toBeInTheDocument();
+        });
+
+        it('should highlight (filled) Décision MOE chip when status is Décision MOE (15)', () => {
+            const fsec = createMockFsec({ statusId: 15 });
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            const chip = screen.getByRole('button', { name: /Décision MOE/ });
+            // Actif = variante "filled" ; inactif = "outlined".
+            expect(chip).toHaveClass('MuiChip-filled');
+        });
+
+        it('should keep Décision MOE chip outlined when not in that status', () => {
+            const fsec = createMockFsec({ statusId: 0 });
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            const chip = screen.getByRole('button', { name: /Décision MOE/ });
+            expect(chip).toHaveClass('MuiChip-outlined');
+        });
+
+        it('should open confirmation dialog when clicking Décision MOE chip', async () => {
+            const user = userEvent.setup();
+            const fsec = createMockFsec({ statusId: 0 });
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            await user.click(screen.getByRole('button', { name: /Décision MOE/ }));
+
+            await waitFor(() => {
+                expect(screen.getByText('Confirmer le changement de statut')).toBeInTheDocument();
+            });
+
+            // The target status shown in the dialog is "Décision MOE"
+            const dialog = screen.getByRole('dialog');
+            expect(within(dialog).getByText('Décision MOE')).toBeInTheDocument();
+        });
+
+        it('should not open dialog when clicking Décision MOE chip if already in that status', async () => {
+            const user = userEvent.setup();
+            const fsec = createMockFsec({ statusId: 15 });
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            await user.click(screen.getByRole('button', { name: /Décision MOE/ }));
+
+            expect(screen.queryByText('Confirmer le changement de statut')).not.toBeInTheDocument();
+        });
+
+        it('should show the paused visual state (chip filled, no completed step) when status is Décision MOE', () => {
+            const fsec = createMockFsec({ categoryId: 0, statusId: 15 });
+            renderWithProviders(<FsecWorkflowStepper fsec={fsec} />);
+
+            // Paused FSEC : chip rempli et aucune étape marquée terminée.
+            // NB : la logique d'avancement figé (isPausedFsecStatus) est testée à la
+            // source dans planning.utils.test.ts (isFsecStepDone), seul endroit où elle
+            // a un effet observable — un statut de pause n'apparaît dans aucune séquence.
+            expect(screen.getByRole('button', { name: /Décision MOE/ })).toHaveClass('MuiChip-filled');
+            expect(screen.queryAllByTestId('CheckIcon')).toHaveLength(0);
+        });
+    });
+
+    // ============================================================================
     // STATUS UPDATE TESTS
     // ============================================================================
 

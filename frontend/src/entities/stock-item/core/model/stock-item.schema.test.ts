@@ -5,20 +5,29 @@ import { describe, it, expect } from 'vitest';
 
 import {
     ConsumableFormSchema,
+    ElementBatchFormSchema,
     ElementFormSchema,
     StockCatalogItemSchema,
     consumableFormToApi,
     elementFormToApi,
     itemToConsumableFormValues,
     itemToElementFormValues,
+    structurationBatchFormToApi,
 } from './stock-item.schema';
-import { CATEGORY, ELEMENT_STATUS, INSTALLATION, ITEM_KIND } from './stock.constants';
+import {
+    CATEGORY,
+    ELEMENT_STATUS,
+    INSTALLATION,
+    ITEM_KIND,
+    STRUCTURATION_TYPE,
+} from './stock.constants';
 
 describe('StockCatalogItemSchema', () => {
     const baseApi = {
         uuid: '11111111-1111-1111-1111-111111111111',
         kind: 'consumable' as const,
         category: 'colles' as const,
+        structuration_type: null,
         name: 'Araldite',
         reference: 'AR-100',
         caracteristique: null,
@@ -30,6 +39,7 @@ describe('StockCatalogItemSchema', () => {
         seuil_alerte: 2,
         date_peremption: '2026-12-31',
         type_d_achat: null,
+        fsec_name: null,
         installation: null,
         status: null,
         materiaux_mat: null,
@@ -90,6 +100,88 @@ describe('ElementFormSchema', () => {
         });
         expect(result.success).toBe(false);
     });
+
+    it('exige le type quand la rubrique est structuration', () => {
+        const result = ElementFormSchema.safeParse({
+            ...baseValues,
+            category: CATEGORY.STRUCTURATION,
+        });
+        expect(result.success).toBe(false);
+    });
+
+    it('accepte structuration avec type + nom (édition)', () => {
+        const result = ElementFormSchema.safeParse({
+            ...baseValues,
+            category: CATEGORY.STRUCTURATION,
+            structurationType: STRUCTURATION_TYPE.EC,
+        });
+        expect(result.success).toBe(true);
+    });
+
+    it('accepte la FSEC absente, nulle ou renseignée (optionnelle)', () => {
+        expect(ElementFormSchema.safeParse(baseValues).success).toBe(true);
+        expect(ElementFormSchema.safeParse({ ...baseValues, fsecName: null }).success).toBe(true);
+        expect(
+            ElementFormSchema.safeParse({ ...baseValues, fsecName: 'FSEC-2026-001' }).success,
+        ).toBe(true);
+    });
+});
+
+describe('ElementBatchFormSchema (mode paquet)', () => {
+    const batchBase = {
+        kind: ITEM_KIND.ELEMENT,
+        name: '', // auto (numéro de série) en mode paquet
+        category: CATEGORY.STRUCTURATION,
+        installation: INSTALLATION.LMJ,
+        structurationType: STRUCTURATION_TYPE.STANDARD,
+        batchQuantity: 5,
+    };
+
+    it('accepte un paquet valide sans nom manuel', () => {
+        expect(ElementBatchFormSchema.safeParse(batchBase).success).toBe(true);
+    });
+
+    it('exige une quantité ≥ 1', () => {
+        expect(ElementBatchFormSchema.safeParse({ ...batchBase, batchQuantity: 0 }).success).toBe(false);
+        expect(ElementBatchFormSchema.safeParse({ ...batchBase, batchQuantity: null }).success).toBe(false);
+    });
+
+    it('exige le type de structuration', () => {
+        expect(
+            ElementBatchFormSchema.safeParse({ ...batchBase, structurationType: null }).success,
+        ).toBe(false);
+    });
+
+    it('hors structuration : nom requis, quantité ignorée', () => {
+        expect(
+            ElementBatchFormSchema.safeParse({
+                ...batchBase,
+                category: CATEGORY.PIECES_ELEMENTAIRES,
+                structurationType: null,
+                name: 'Plaque A',
+            }).success,
+        ).toBe(true);
+    });
+});
+
+describe('structurationBatchFormToApi', () => {
+    it('mappe le formulaire paquet vers le payload batch', () => {
+        const payload = structurationBatchFormToApi({
+            kind: ITEM_KIND.ELEMENT,
+            name: '',
+            category: CATEGORY.STRUCTURATION,
+            installation: INSTALLATION.LMJ,
+            structurationType: STRUCTURATION_TYPE.SPECIALE,
+            batchQuantity: 3,
+            materiauxMat: 'Cu/Au',
+            fournisseur: '  ',
+        });
+        expect(payload.quantity).toBe(3);
+        expect(payload.structuration_type).toBe(STRUCTURATION_TYPE.SPECIALE);
+        expect(payload.installation).toBe(INSTALLATION.LMJ);
+        expect(payload.materiaux_mat).toBe('Cu/Au');
+        expect(payload.fournisseur).toBeNull();
+    });
 });
 
 describe('ConsumableFormSchema', () => {
@@ -143,6 +235,39 @@ describe('elementFormToApi', () => {
         expect(payload.caracteristique).toBeNull();
         expect(payload.type_de_colle).toBe('Stycast');
         expect(payload.installation).toBe(INSTALLATION.LMJ);
+        // FSEC non renseignée → null dans le payload.
+        expect(payload.fsec_name).toBeNull();
+    });
+
+    it('envoie le type pour structuration et le nullifie pour les autres rubriques', () => {
+        const base = {
+            kind: ITEM_KIND.ELEMENT,
+            name: 'Structuration X',
+            reference: null,
+            installation: INSTALLATION.LMJ,
+            caracteristique: null,
+            typeDeColle: null,
+            materiauxMat: null,
+            fournisseur: null,
+            boite: null,
+            emplacement: null,
+            remarques: null,
+        };
+
+        const structuration = elementFormToApi({
+            ...base,
+            category: CATEGORY.STRUCTURATION,
+            structurationType: STRUCTURATION_TYPE.SPECIALE,
+        });
+        expect(structuration.structuration_type).toBe(STRUCTURATION_TYPE.SPECIALE);
+
+        // Type résiduel (changement de rubrique) → nullifié dans le payload.
+        const pieces = elementFormToApi({
+            ...base,
+            category: CATEGORY.PIECES_ELEMENTAIRES,
+            structurationType: STRUCTURATION_TYPE.SPECIALE,
+        });
+        expect(pieces.structuration_type).toBeNull();
     });
 });
 
@@ -178,6 +303,7 @@ describe('item → form reverse mappers', () => {
             uuid: '22222222-2222-2222-2222-222222222222',
             kind: 'element' as const,
             category: 'pieces_elementaires' as const,
+            structuration_type: null,
             name: 'Cible D2',
             reference: 'D2-001',
             caracteristique: null,
@@ -189,6 +315,7 @@ describe('item → form reverse mappers', () => {
             seuil_alerte: null,
             date_peremption: null,
             type_d_achat: null,
+            fsec_name: null,
             installation: 'LMJ' as const,
             status: ELEMENT_STATUS.DISPO,
             materiaux_mat: 'Or',
@@ -211,6 +338,7 @@ describe('item → form reverse mappers', () => {
             uuid: '33333333-3333-3333-3333-333333333333',
             kind: 'consumable' as const,
             category: 'colles' as const,
+            structuration_type: null,
             name: 'Araldite',
             reference: null,
             caracteristique: null,
@@ -222,6 +350,7 @@ describe('item → form reverse mappers', () => {
             seuil_alerte: 2,
             date_peremption: '2026-06-15',
             type_d_achat: null,
+            fsec_name: null,
             installation: null,
             status: null,
             materiaux_mat: null,

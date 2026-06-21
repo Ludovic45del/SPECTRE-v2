@@ -78,6 +78,7 @@ def seed_reference_data(db):
         (11, "Perméation", "#e91e63"),
         (12, "Repressurisation", "#607d8b"),
         (13, "Dépressurisation", "#ff5722"),
+        (15, "Décision MOE", "#64748b"),
     ]:
         FsecStatusEntity.objects.get_or_create(
             id=id_, defaults={"label": label, "color": color}

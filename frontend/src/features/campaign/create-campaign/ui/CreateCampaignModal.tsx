@@ -27,8 +27,8 @@ import {
     IconButton,
     Tabs,
     Tab,
+    useTheme,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChipSelect } from '@widgets/chip-select';
@@ -39,7 +39,7 @@ import { CampaignCreateSchema, CampaignCreate, useCreateCampaign } from '@entiti
 import { useAddTeamMember } from '@entities/campaign/team';
 import { useCreateCampaignStore } from '../model';
 import { CAMPAIGN_TYPES, CAMPAIGN_INSTALLATIONS, CAMPAIGN_ROLE_ID } from '@entities/campaign/core/lib';
-import { useNotification } from '@shared/ui';
+import { useNotification, RangeCalendar } from '@shared/ui';
 import { getErrorMessage } from '@shared/lib/error-utils';
 
 const typeOptions = Object.values(CAMPAIGN_TYPES).map((t) => ({
@@ -59,6 +59,7 @@ export function CreateCampaignModal() {
     const createMutation = useCreateCampaign();
     const addTeamMember = useAddTeamMember();
     const { showNotification } = useNotification();
+    const theme = useTheme();
     const [tabValue, setTabValue] = useState(0);
 
     const {
@@ -66,6 +67,8 @@ export function CreateCampaignModal() {
         handleSubmit,
         formState: { errors },
         reset: resetForm,
+        setValue,
+        watch,
     } = useForm<CampaignCreate>({
         mode: 'onBlur',
         resolver: zodResolver(CampaignCreateSchema),
@@ -82,6 +85,10 @@ export function CreateCampaignModal() {
             iecUserUuid: '',
         },
     });
+
+    // Plage de dates pilotée par le calendrier (cf. RangeCalendar partagé).
+    const startDate = watch('startDate');
+    const endDate = watch('endDate');
 
     const onSubmit = async (data: CampaignCreate) => {
         try {
@@ -293,47 +300,25 @@ export function CreateCampaignModal() {
                                 )}
                             />
 
-                            {/* Dates (optional) */}
-                            <Stack direction="row" spacing={2}>
-                                <Controller
-                                    name="startDate"
-                                    control={control}
-                                    render={({ field: { value, onChange, ...field } }) => (
-                                        <DatePicker
-                                            {...field}
-                                            label="Date de début"
-                                            value={value ? dayjs(value) : null}
-                                            onChange={(date) => onChange(date?.toDate() || null)}
-                                            slotProps={{
-                                                textField: {
-                                                    fullWidth: true,
-                                                    error: Boolean(errors.startDate),
-                                                    helperText: errors.startDate?.message,
-                                                },
-                                            }}
-                                        />
-                                    )}
-                                />
-                                <Controller
-                                    name="endDate"
-                                    control={control}
-                                    render={({ field: { value, onChange, ...field } }) => (
-                                        <DatePicker
-                                            {...field}
-                                            label="Date de fin"
-                                            value={value ? dayjs(value) : null}
-                                            onChange={(date) => onChange(date?.toDate() || null)}
-                                            slotProps={{
-                                                textField: {
-                                                    fullWidth: true,
-                                                    error: Boolean(errors.endDate),
-                                                    helperText: errors.endDate?.message,
-                                                },
-                                            }}
-                                        />
-                                    )}
-                                />
-                            </Stack>
+                            {/* Dates (optional) — sélection de plage au calendrier */}
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.5 }}>
+                                    Dates de campagne
+                                </Typography>
+                                <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, px: 1, py: 0.5 }}>
+                                    <RangeCalendar
+                                        value={{
+                                            start: startDate ? dayjs(startDate) : null,
+                                            end: endDate ? dayjs(endDate) : null,
+                                        }}
+                                        onChange={(range) => {
+                                            setValue('startDate', range.start?.toDate() ?? null);
+                                            setValue('endDate', range.end?.toDate() ?? null);
+                                        }}
+                                        accentColor={theme.palette.primary.main}
+                                    />
+                                </Box>
+                            </Box>
 
                             {/* DTRI Number (optional, 0 à 999999) */}
                             <Controller

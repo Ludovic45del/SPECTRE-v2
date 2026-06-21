@@ -14,6 +14,7 @@ const buildItem = (overrides: Partial<StockCatalogItem> = {}): StockCatalogItem 
         uuid: crypto.randomUUID(),
         kind: ITEM_KIND.CONSUMABLE,
         category: CATEGORY.COLLES,
+        structurationType: null,
         name: 'Test',
         reference: null,
         caracteristique: null,
@@ -25,6 +26,7 @@ const buildItem = (overrides: Partial<StockCatalogItem> = {}): StockCatalogItem 
         seuilAlerte: null,
         datePeremption: null,
         typeDAchat: null,
+        fsecName: null,
         installation: null,
         status: null,
         materiauxMat: null,
@@ -41,7 +43,7 @@ describe('RubricFilterPills', () => {
         useFilterCatalogStore.getState().reset();
     });
 
-    it('affiche les 6 rubriques + "Toutes" et le total', () => {
+    it('affiche les 4 rubriques + "Toutes" et le total', () => {
         const items = [
             buildItem({ category: CATEGORY.PIECES_ELEMENTAIRES, kind: ITEM_KIND.ELEMENT }),
             buildItem({ category: CATEGORY.PIECES_ELEMENTAIRES, kind: ITEM_KIND.ELEMENT }),
@@ -53,10 +55,33 @@ describe('RubricFilterPills', () => {
         expect(screen.getByText('Toutes les rubriques')).toBeInTheDocument();
         expect(screen.getByText('Pièces élémentaires')).toBeInTheDocument();
         expect(screen.getByText('Structuration')).toBeInTheDocument();
-        expect(screen.getByText('Structuration spéciale')).toBeInTheDocument();
-        expect(screen.getByText('Structuration EC')).toBeInTheDocument();
         expect(screen.getByText('Colles')).toBeInTheDocument();
         expect(screen.getByText('Autres')).toBeInTheDocument();
+    });
+
+    it('compte les trois types de structuration sous la pill unique', () => {
+        const items = [
+            buildItem({
+                category: CATEGORY.STRUCTURATION,
+                structurationType: 'standard',
+                kind: ITEM_KIND.ELEMENT,
+            }),
+            buildItem({
+                category: CATEGORY.STRUCTURATION,
+                structurationType: 'speciale',
+                kind: ITEM_KIND.ELEMENT,
+            }),
+            buildItem({
+                category: CATEGORY.STRUCTURATION,
+                structurationType: 'ec',
+                kind: ITEM_KIND.ELEMENT,
+            }),
+        ];
+
+        renderWithProviders(<RubricFilterPills items={items} />);
+
+        const structPill = screen.getByText('Structuration').closest('button')!;
+        expect(structPill).toHaveTextContent('3');
     });
 
     it('affiche le compteur correct par rubrique', () => {

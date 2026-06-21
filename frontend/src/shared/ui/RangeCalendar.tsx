@@ -6,13 +6,13 @@
  * DateCalendar Community + un slot `day` custom ({@link createRangeDay}) piloté
  * par la machine à états pure {@link useDateRangeSelection}. Un récap texte sous
  * le calendrier compense la perte de la saisie clavier des anciens DatePicker.
- * @module features/planning/ui/shared
+ * @module shared/ui
  */
 import { useEffect, useMemo, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useDateRangeSelection, type DateRange } from '../../lib/useDateRangeSelection';
+import { useDateRangeSelection, type DateRange } from '../lib/useDateRangeSelection';
 import { createRangeDay } from './RangeDay';
 
 export interface RangeCalendarProps {

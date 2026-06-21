@@ -56,8 +56,16 @@ def test_machine_create_with_links(api_client, rooms):
         "status": "in_service",
         "description": "Banc principal salle B1",
         "links": [
-            {"label": "Procédure d'utilisation", "url": "https://intra/procedures/banc-a", "position": 0},
-            {"label": "Manuel constructeur", "url": "https://keysight.com/manual.pdf", "position": 1},
+            {
+                "label": "Procédure d'utilisation",
+                "url": "https://intra/procedures/banc-a",
+                "position": 0,
+            },
+            {
+                "label": "Manuel constructeur",
+                "url": "https://keysight.com/manual.pdf",
+                "position": 1,
+            },
         ],
     }
     resp = api_client.post(
@@ -91,7 +99,9 @@ def test_machine_list_filtered_by_room(api_client, rooms):
 @pytest.mark.django_db
 def test_machine_update_replaces_links(api_client, rooms):
     machine = MachineEntity.objects.create(name="Banc B", room=rooms["B2"])
-    MachineLinkEntity.objects.create(machine=machine, label="Vieux lien", url="http://old")
+    MachineLinkEntity.objects.create(
+        machine=machine, label="Vieux lien", url="http://old"
+    )
 
     payload = {
         "name": "Banc B (renommé)",
@@ -140,14 +150,16 @@ def test_maintenance_crud_and_list(api_client, rooms):
     # Create
     resp = api_client.post(
         f"{BASE}/maintenances/",
-        data=json.dumps({
-            "machine_uuid": str(machine.uuid),
-            "date": "2026-05-01",
-            "type": "preventive",
-            "performed_by_name": "Dupond",
-            "description": "Révision annuelle",
-            "next_maintenance_date": "2027-05-01",
-        }),
+        data=json.dumps(
+            {
+                "machine_uuid": str(machine.uuid),
+                "date": "2026-05-01",
+                "type": "preventive",
+                "performed_by_name": "Dupond",
+                "description": "Révision annuelle",
+                "next_maintenance_date": "2027-05-01",
+            }
+        ),
         content_type="application/json",
     )
     assert resp.status_code == 201, resp.content
@@ -175,11 +187,13 @@ def test_maintenance_next_date_before_date_returns_400(api_client, rooms):
     machine = MachineEntity.objects.create(name="M-maint-bad", room=rooms["B1"])
     resp = api_client.post(
         f"{BASE}/maintenances/",
-        data=json.dumps({
-            "machine_uuid": str(machine.uuid),
-            "date": "2026-05-01",
-            "next_maintenance_date": "2026-01-01",
-        }),
+        data=json.dumps(
+            {
+                "machine_uuid": str(machine.uuid),
+                "date": "2026-05-01",
+                "next_maintenance_date": "2026-01-01",
+            }
+        ),
         content_type="application/json",
     )
     assert resp.status_code == 400
@@ -195,10 +209,12 @@ def test_maintenance_list_requires_machine_uuid(api_client):
 def test_maintenance_unknown_machine_returns_404(api_client):
     resp = api_client.post(
         f"{BASE}/maintenances/",
-        data=json.dumps({
-            "machine_uuid": str(uuid.uuid4()),
-            "date": "2026-05-01",
-        }),
+        data=json.dumps(
+            {
+                "machine_uuid": str(uuid.uuid4()),
+                "date": "2026-05-01",
+            }
+        ),
         content_type="application/json",
     )
     assert resp.status_code == 404

@@ -153,7 +153,9 @@ def test_media_image_data_uri_none_returns_none():
 
 def test_media_image_data_uri_missing_file_returns_none():
     # URL plausible mais fichier absent → None (le template gère l'absence).
-    assert _media_image_data_uri(f"{settings.MEDIA_URL}fsec/signatures/ghost.png") is None
+    assert (
+        _media_image_data_uri(f"{settings.MEDIA_URL}fsec/signatures/ghost.png") is None
+    )
 
 
 @pytest.mark.django_db

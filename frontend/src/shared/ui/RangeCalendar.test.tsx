@@ -6,7 +6,7 @@ import { screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import { setup } from '@test/test-utils';
 import { RangeCalendar } from './RangeCalendar';
-import type { DateRange } from '../../lib/useDateRangeSelection';
+import type { DateRange } from '../lib/useDateRangeSelection';
 
 /** Clique le bouton-jour dont le numéro est `n` (les jours hors mois ne sont pas rendus). */
 async function clickDay(user: ReturnType<typeof setup>['user'], n: number) {

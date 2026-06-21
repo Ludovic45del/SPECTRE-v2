@@ -18,7 +18,7 @@ import {
 } from '@entities/planning/core/api/planning.queries';
 import { ColoredSelect } from '../shared/ColoredSelect';
 import { EntityRangeDialog } from '../shared/EntityRangeDialog';
-import type { DateRange } from '../../lib/useDateRangeSelection';
+import type { DateRange } from '@shared/lib';
 
 export interface MemberPeriodPopoverProps {
     anchorEl: HTMLElement;

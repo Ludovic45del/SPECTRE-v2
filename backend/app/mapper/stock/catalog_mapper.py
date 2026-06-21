@@ -15,6 +15,7 @@ def stock_catalog_mapper_entity_to_bean(
         uuid=str(entity.uuid),
         kind=entity.kind,
         category=entity.category,
+        structuration_type=entity.structuration_type,
         name=entity.name,
         reference=entity.reference,
         caracteristique=entity.caracteristique,
@@ -26,6 +27,7 @@ def stock_catalog_mapper_entity_to_bean(
         seuil_alerte=entity.seuil_alerte,
         date_peremption=entity.date_peremption,
         type_d_achat=entity.type_d_achat,
+        fsec_name=entity.fsec_name,
         installation=entity.installation,
         status=entity.status,
         materiaux_mat=entity.materiaux_mat,
@@ -46,6 +48,7 @@ def stock_catalog_mapper_bean_to_entity(
         entity.uuid = bean.uuid
     entity.kind = bean.kind
     entity.category = bean.category
+    entity.structuration_type = bean.structuration_type
     entity.name = bean.name
     entity.reference = bean.reference
     entity.caracteristique = bean.caracteristique
@@ -57,6 +60,7 @@ def stock_catalog_mapper_bean_to_entity(
     entity.seuil_alerte = bean.seuil_alerte
     entity.date_peremption = bean.date_peremption
     entity.type_d_achat = bean.type_d_achat
+    entity.fsec_name = bean.fsec_name
     entity.installation = bean.installation
     entity.status = bean.status
     entity.materiaux_mat = bean.materiaux_mat
@@ -72,6 +76,7 @@ def stock_catalog_mapper_api_to_bean(data: Dict[str, Any]) -> StockCatalogItemBe
         uuid=data.get("uuid", ""),
         kind=data.get("kind", ""),
         category=data.get("category", ""),
+        structuration_type=data.get("structuration_type"),
         name=data.get("name", ""),
         reference=data.get("reference"),
         caracteristique=data.get("caracteristique"),
@@ -83,6 +88,7 @@ def stock_catalog_mapper_api_to_bean(data: Dict[str, Any]) -> StockCatalogItemBe
         seuil_alerte=data.get("seuil_alerte"),
         date_peremption=parse_date_string(data.get("date_peremption")),
         type_d_achat=data.get("type_d_achat"),
+        fsec_name=data.get("fsec_name"),
         installation=data.get("installation"),
         status=data.get("status"),
         materiaux_mat=data.get("materiaux_mat"),
@@ -98,6 +104,7 @@ def stock_catalog_mapper_bean_to_api(bean: StockCatalogItemBean) -> Dict[str, An
         "uuid": bean.uuid,
         "kind": bean.kind,
         "category": bean.category,
+        "structuration_type": bean.structuration_type,
         "name": bean.name,
         "reference": bean.reference,
         "caracteristique": bean.caracteristique,
@@ -109,6 +116,7 @@ def stock_catalog_mapper_bean_to_api(bean: StockCatalogItemBean) -> Dict[str, An
         "seuil_alerte": bean.seuil_alerte,
         "date_peremption": format_date_for_api(bean.date_peremption),
         "type_d_achat": bean.type_d_achat,
+        "fsec_name": bean.fsec_name,
         "installation": bean.installation,
         "status": bean.status,
         "materiaux_mat": bean.materiaux_mat,

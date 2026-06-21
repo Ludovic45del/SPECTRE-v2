@@ -25,16 +25,12 @@ ITEM_KIND_CHOICES = (
 # ---------------------------------------------------------------------------
 CATEGORY_PIECES_ELEMENTAIRES = "pieces_elementaires"
 CATEGORY_STRUCTURATION = "structuration"
-CATEGORY_STRUCTURATION_SPECIALE = "structuration_speciale"
-CATEGORY_STRUCTURATION_EC = "structuration_ec"
 CATEGORY_COLLES = "colles"
 CATEGORY_AUTRES = "autres"
 
 CATEGORY_CHOICES = (
     (CATEGORY_PIECES_ELEMENTAIRES, "Pièces élémentaires"),
     (CATEGORY_STRUCTURATION, "Structuration"),
-    (CATEGORY_STRUCTURATION_SPECIALE, "Structuration spéciale"),
-    (CATEGORY_STRUCTURATION_EC, "Structuration EC"),
     (CATEGORY_COLLES, "Colles"),
     (CATEGORY_AUTRES, "Autres"),
 )
@@ -45,8 +41,6 @@ CATEGORY_BY_KIND = {
         {
             CATEGORY_PIECES_ELEMENTAIRES,
             CATEGORY_STRUCTURATION,
-            CATEGORY_STRUCTURATION_SPECIALE,
-            CATEGORY_STRUCTURATION_EC,
         }
     ),
     ITEM_KIND_CONSUMABLE: frozenset(
@@ -56,6 +50,32 @@ CATEGORY_BY_KIND = {
         }
     ),
 }
+
+
+# ---------------------------------------------------------------------------
+# Types de structuration — sous-classification de la rubrique "structuration".
+# Requis quand category == structuration, interdit (None) sinon.
+# ---------------------------------------------------------------------------
+STRUCTURATION_TYPE_STANDARD = "standard"
+STRUCTURATION_TYPE_SPECIALE = "speciale"
+STRUCTURATION_TYPE_EC = "ec"
+
+STRUCTURATION_TYPES = (
+    STRUCTURATION_TYPE_STANDARD,
+    STRUCTURATION_TYPE_SPECIALE,
+    STRUCTURATION_TYPE_EC,
+)
+
+STRUCTURATION_TYPE_CHOICES = (
+    (STRUCTURATION_TYPE_STANDARD, "Standard"),
+    (STRUCTURATION_TYPE_SPECIALE, "Spéciale"),
+    (STRUCTURATION_TYPE_EC, "EC"),
+)
+
+# Création par lot ("paquet") de structurations : la numérotation (`name`) est
+# automatique, globale et continue (max + 1). Borne haute du nombre de pièces
+# créées en une seule fois.
+STRUCTURATION_BATCH_MAX = 500
 
 
 # ---------------------------------------------------------------------------

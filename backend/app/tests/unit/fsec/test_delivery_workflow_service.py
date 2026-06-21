@@ -94,9 +94,7 @@ def _make_profile(username: str, signature: bool = True) -> UserProfileEntity:
         user=user, role="iec", force_password_change=False
     )
     if signature:
-        profile.signature.save(
-            "sig.png", ContentFile(_png_bytes()), save=True
-        )
+        profile.signature.save("sig.png", ContentFile(_png_bytes()), save=True)
     return profile
 
 
@@ -104,9 +102,15 @@ def _make_profile(username: str, signature: bool = True) -> UserProfileEntity:
 #  Tests purs (pas de DB)
 # --------------------------------------------------------------------------- #
 def test_pick_latest_sealing_prefers_most_recent_date():
-    a = SealingStepBean(uuid="a", metrology_step_id="m1", date=date(2026, 1, 1), interface_io="A")
-    b = SealingStepBean(uuid="b", metrology_step_id="m2", date=date(2026, 4, 1), interface_io="B")
-    c = SealingStepBean(uuid="c", metrology_step_id="m3", date=date(2026, 2, 1), interface_io="C")
+    a = SealingStepBean(
+        uuid="a", metrology_step_id="m1", date=date(2026, 1, 1), interface_io="A"
+    )
+    b = SealingStepBean(
+        uuid="b", metrology_step_id="m2", date=date(2026, 4, 1), interface_io="B"
+    )
+    c = SealingStepBean(
+        uuid="c", metrology_step_id="m3", date=date(2026, 2, 1), interface_io="C"
+    )
     assert _pick_latest_sealing([a, b, c]).uuid == "b"
 
 
@@ -116,7 +120,9 @@ def test_pick_latest_sealing_none_returns_none():
 
 def test_get_delivery_snapshot_with_sealing():
     fsec = _fsec(delivery_date=date(2026, 4, 24))
-    step = SealingStepBean(uuid="s1", metrology_step_id="m1", date=date(2026, 4, 1), interface_io="785")
+    step = SealingStepBean(
+        uuid="s1", metrology_step_id="m1", date=date(2026, 4, 1), interface_io="785"
+    )
     fsec_repo = FakeFsecRepo({"v1": fsec})
     sealing_repo = FakeSealingRepo({"v1": [step]})
 
@@ -181,7 +187,9 @@ def test_update_delivery_info_empty_interface_io_resets():
     fsec_repo = FakeFsecRepo({"v1": fsec})
     sealing_repo = FakeSealingRepo({"v1": [step]})
 
-    update_delivery_info(fsec_repo, sealing_repo, "v1", delivery_date=None, num_interface_io="")
+    update_delivery_info(
+        fsec_repo, sealing_repo, "v1", delivery_date=None, num_interface_io=""
+    )
     assert sealing_repo.by_fsec["v1"][0].interface_io is None
 
 
@@ -285,7 +293,9 @@ def test_update_delivery_validation_signature_is_a_frozen_copy(media_root):
         frozen_bytes = frozen.read()
 
         # L'utilisateur change sa signature de profil après coup.
-        profile.signature.save("sig2.png", ContentFile(_png_bytes((255, 0, 0, 255))), save=True)
+        profile.signature.save(
+            "sig2.png", ContentFile(_png_bytes((255, 0, 0, 255))), save=True
+        )
 
     # La copie figée est intacte (octets inchangés).
     assert frozen_bytes == _png_bytes()

@@ -41,8 +41,6 @@ export const ITEM_KIND_COLORS: Record<ItemKind, { bg: string; color: string; lab
 export const CATEGORY = {
     PIECES_ELEMENTAIRES: 'pieces_elementaires',
     STRUCTURATION: 'structuration',
-    STRUCTURATION_SPECIALE: 'structuration_speciale',
-    STRUCTURATION_EC: 'structuration_ec',
     COLLES: 'colles',
     AUTRES: 'autres',
 } as const;
@@ -52,8 +50,6 @@ export type CategoryCode = (typeof CATEGORY)[keyof typeof CATEGORY];
 export const CATEGORY_VALUES: readonly CategoryCode[] = [
     CATEGORY.PIECES_ELEMENTAIRES,
     CATEGORY.STRUCTURATION,
-    CATEGORY.STRUCTURATION_SPECIALE,
-    CATEGORY.STRUCTURATION_EC,
     CATEGORY.COLLES,
     CATEGORY.AUTRES,
 ];
@@ -61,20 +57,13 @@ export const CATEGORY_VALUES: readonly CategoryCode[] = [
 export const CATEGORY_LABELS: Record<CategoryCode, string> = {
     [CATEGORY.PIECES_ELEMENTAIRES]: 'Pièces élémentaires',
     [CATEGORY.STRUCTURATION]: 'Structuration',
-    [CATEGORY.STRUCTURATION_SPECIALE]: 'Structuration spéciale',
-    [CATEGORY.STRUCTURATION_EC]: 'Structuration EC',
     [CATEGORY.COLLES]: 'Colles',
     [CATEGORY.AUTRES]: 'Autres',
 };
 
 /** Liste des rubriques autorisées par kind (cf. CDC §4.6). */
 export const CATEGORIES_BY_KIND: Record<ItemKind, readonly CategoryCode[]> = {
-    [ITEM_KIND.ELEMENT]: [
-        CATEGORY.PIECES_ELEMENTAIRES,
-        CATEGORY.STRUCTURATION,
-        CATEGORY.STRUCTURATION_SPECIALE,
-        CATEGORY.STRUCTURATION_EC,
-    ],
+    [ITEM_KIND.ELEMENT]: [CATEGORY.PIECES_ELEMENTAIRES, CATEGORY.STRUCTURATION],
     [ITEM_KIND.CONSUMABLE]: [CATEGORY.COLLES, CATEGORY.AUTRES],
 };
 
@@ -82,11 +71,47 @@ export const CATEGORIES_BY_KIND: Record<ItemKind, readonly CategoryCode[]> = {
 export const CATEGORY_COLORS: Record<CategoryCode, { bg: string; text: string }> = {
     [CATEGORY.PIECES_ELEMENTAIRES]: { bg: '#f3e8ff', text: '#6b21a8' },
     [CATEGORY.STRUCTURATION]: { bg: '#e0e7ff', text: '#3730a3' },
-    [CATEGORY.STRUCTURATION_SPECIALE]: { bg: '#fce7f3', text: '#9d174d' },
-    [CATEGORY.STRUCTURATION_EC]: { bg: '#ccfbf1', text: '#115e59' },
     [CATEGORY.COLLES]: { bg: '#cffafe', text: '#0e7490' },
     [CATEGORY.AUTRES]: { bg: '#f1f5f9', text: '#475569' },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type de structuration — sous-classification de la rubrique "structuration".
+// Requis quand category === 'structuration', null sinon.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const STRUCTURATION_TYPE = {
+    STANDARD: 'standard',
+    SPECIALE: 'speciale',
+    EC: 'ec',
+} as const;
+
+export type StructurationType = (typeof STRUCTURATION_TYPE)[keyof typeof STRUCTURATION_TYPE];
+
+export const STRUCTURATION_TYPE_VALUES: readonly StructurationType[] = [
+    STRUCTURATION_TYPE.STANDARD,
+    STRUCTURATION_TYPE.SPECIALE,
+    STRUCTURATION_TYPE.EC,
+];
+
+export const STRUCTURATION_TYPE_LABELS: Record<StructurationType, string> = {
+    [STRUCTURATION_TYPE.STANDARD]: 'Standard',
+    [STRUCTURATION_TYPE.SPECIALE]: 'Spéciale',
+    [STRUCTURATION_TYPE.EC]: 'EC',
+};
+
+/** Couleurs UI par type de structuration (reprend les anciennes couleurs de rubrique). */
+export const STRUCTURATION_TYPE_COLORS: Record<StructurationType, { bg: string; text: string }> = {
+    [STRUCTURATION_TYPE.STANDARD]: { bg: '#e0e7ff', text: '#3730a3' },
+    [STRUCTURATION_TYPE.SPECIALE]: { bg: '#fce7f3', text: '#9d174d' },
+    [STRUCTURATION_TYPE.EC]: { bg: '#ccfbf1', text: '#115e59' },
+};
+
+/**
+ * Borne haute du nombre de structurations créables en un seul paquet.
+ * Miroir de `STRUCTURATION_BATCH_MAX` (backend stock_constants.py).
+ */
+export const STRUCTURATION_BATCH_MAX = 500;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cycle de vie élément sérialisé

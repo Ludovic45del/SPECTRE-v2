@@ -18,6 +18,8 @@ export const stockCatalogKeys = {
     list: (filters: StockCatalogListFilters) => [...stockCatalogKeys.lists(), filters] as const,
     details: () => [...stockCatalogKeys.all, 'detail'] as const,
     detail: (uuid: string) => [...stockCatalogKeys.details(), uuid] as const,
+    /** Prochain numéro de série global pour une structuration (aperçu mode paquet). */
+    nextStructurationNumber: () => [...stockCatalogKeys.all, 'next-structuration-number'] as const,
 };
 
 export const stockAlertKeys = {

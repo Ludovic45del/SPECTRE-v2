@@ -15,6 +15,7 @@ from app.domain.exceptions import (
     NotFoundException,
     ValidationException,
 )
+from app.domain.fa.interface.fa_repository import IFaRepository
 from app.domain.fsec.interface.fsec_repository import IFsecRepository
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,38 @@ def _validate_date_range(bean: CampaignBean) -> None:
         )
 
 
+def _maybe_regenerate_fa_identifiers(
+    fa_repository: Optional[IFaRepository],
+    fsec_repository: Optional[IFsecRepository],
+    campaign: CampaignBean,
+    context_changed: bool,
+) -> None:
+    """Réaligne l'identifiant des FA des FSEC de la campagne quand son contexte change.
+
+    Le « nom » d'une FA est son identifiant, qui encode (année, campagne, nom
+    FSEC, séquence) : l'année et le nom de campagne doivent suivre un renommage ou
+    un changement d'année de la campagne parente. Sans repos FA/FSEC (ex. tests
+    unitaires campagne purs), aucun effet — la rétro-compatibilité des appels
+    existants est préservée.
+    """
+    if not context_changed or fa_repository is None or fsec_repository is None:
+        return
+    # Import différé : fa_service importe l'interface FSEC, dont le package
+    # ré-importe fa_service — un import top-level ici formerait un cycle au
+    # chargement. L'appel n'a lieu qu'à l'exécution, tous les modules chargés.
+    from app.domain.fa.services.fa_service import (
+        regenerate_fa_identifiers_for_campaign,
+    )
+
+    regenerate_fa_identifiers_for_campaign(
+        fa_repository,
+        fsec_repository,
+        campaign.uuid,
+        campaign.name,
+        campaign.year,
+    )
+
+
 def create_campaign(
     repository: ICampaignRepository, bean: CampaignBean
 ) -> CampaignBean:
@@ -135,9 +168,18 @@ def count_all_campaigns(repository: ICampaignRepository) -> int:
 
 
 def update_campaign(
-    repository: ICampaignRepository, bean: CampaignBean
+    repository: ICampaignRepository,
+    bean: CampaignBean,
+    fa_repository: Optional[IFaRepository] = None,
+    fsec_repository: Optional[IFsecRepository] = None,
 ) -> CampaignBean:
-    """Met à jour une campagne (remplacement complet)."""
+    """Met à jour une campagne (remplacement complet).
+
+    Les paramètres `fa_repository` / `fsec_repository` activent le réalignement
+    des identifiants FA des FSEC rattachées quand le nom ou l'année change. Ils
+    sont optionnels pour préserver la rétro-compatibilité des appels existants
+    (ex. tests unitaires campagne purs).
+    """
     # 1. Vérifie existence
     existing = repository.get_by_uuid(bean.uuid)
     if existing is None:
@@ -159,18 +201,40 @@ def update_campaign(
             )
 
     logger.info(f"Updating campaign uuid={bean.uuid}")
-    return repository.update(bean)
+    result = repository.update(bean)
+
+    # Le nom/année de campagne alimentent l'identifiant des FA : on les réaligne
+    # si l'un des deux a changé (le semestre n'entre pas dans l'identifiant FA).
+    _maybe_regenerate_fa_identifiers(
+        fa_repository,
+        fsec_repository,
+        result,
+        context_changed=(
+            bean.name != existing.name or bean.year != existing.year
+        ),
+    )
+    return result
 
 
 def patch_campaign(
-    repository: ICampaignRepository, uuid: str, partial_data: Dict[str, Any]
+    repository: ICampaignRepository,
+    uuid: str,
+    partial_data: Dict[str, Any],
+    fa_repository: Optional[IFaRepository] = None,
+    fsec_repository: Optional[IFsecRepository] = None,
 ) -> CampaignBean:
-    """Met à jour partiellement une campagne (PATCH)."""
+    """Met à jour partiellement une campagne (PATCH).
+
+    Voir :func:`update_campaign` pour la sémantique des paramètres
+    `fa_repository` / `fsec_repository` (réalignement des identifiants FA).
+    """
     existing_bean = repository.get_by_uuid(uuid)
     if existing_bean is None:
         raise NotFoundException("Campaign", uuid)
 
     # Sauvegarde des anciennes valeurs clés pour comparaison
+    old_name = existing_bean.name
+    old_year = existing_bean.year
     old_key = (existing_bean.name, existing_bean.year, existing_bean.semester)
 
     # Fusion des données (Merge) avec validation des types
@@ -190,7 +254,17 @@ def patch_campaign(
             )
 
     logger.info(f"Patching campaign uuid={uuid}, fields={list(partial_data.keys())}")
-    return repository.update(existing_bean)
+    result = repository.update(existing_bean)
+
+    _maybe_regenerate_fa_identifiers(
+        fa_repository,
+        fsec_repository,
+        result,
+        context_changed=(
+            existing_bean.name != old_name or existing_bean.year != old_year
+        ),
+    )
+    return result
 
 
 def delete_campaign(

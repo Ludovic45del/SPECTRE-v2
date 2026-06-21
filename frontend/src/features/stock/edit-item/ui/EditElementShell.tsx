@@ -15,6 +15,7 @@ import {
     elementFormToApi,
     ElementFormSchema,
     itemToElementFormValues,
+    STRUCTURATION_TYPE,
     usePatchCatalogItem,
     type ElementFormValues,
     type StockCatalogItem,
@@ -46,7 +47,10 @@ export function EditElementShell({ item, onCancel, onSuccess, onDelete }: EditEl
     });
 
     const selectedCategory = watch('category');
-    const showMateriaux = selectedCategory === CATEGORY.STRUCTURATION_SPECIALE;
+    const selectedStructurationType = watch('structurationType');
+    const showStructurationType = selectedCategory === CATEGORY.STRUCTURATION;
+    const showMateriaux =
+        showStructurationType && selectedStructurationType === STRUCTURATION_TYPE.SPECIALE;
 
     const onSubmit = useCallback(
         async (values: ElementFormValues) => {
@@ -56,8 +60,10 @@ export function EditElementShell({ item, onCancel, onSuccess, onDelete }: EditEl
                 // `status` est géré uniquement par le couplage FSEC (cf. §4.2).
                 const patch = {
                     category: apiPayload.category,
+                    structuration_type: apiPayload.structuration_type ?? null,
                     name: apiPayload.name,
                     reference: apiPayload.reference,
+                    fsec_name: apiPayload.fsec_name ?? null,
                     caracteristique: apiPayload.caracteristique,
                     type_de_colle: apiPayload.type_de_colle,
                     materiaux_mat: apiPayload.materiaux_mat,
@@ -79,7 +85,12 @@ export function EditElementShell({ item, onCancel, onSuccess, onDelete }: EditEl
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <ElementForm control={control} errors={errors} showMateriaux={showMateriaux} />
+            <ElementForm
+                control={control}
+                errors={errors}
+                showStructurationType={showStructurationType}
+                showMateriaux={showMateriaux}
+            />
             <Stack
                 direction="row"
                 justifyContent="space-between"

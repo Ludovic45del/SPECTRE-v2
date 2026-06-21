@@ -6,26 +6,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0063_remove_equipment_module'),
+        ("app", "0063_remove_equipment_module"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='assemblystepentity',
-            name='assembly_bench',
+            model_name="assemblystepentity",
+            name="assembly_bench",
         ),
         migrations.RemoveField(
-            model_name='metrologystepentity',
-            name='machine_id',
+            model_name="metrologystepentity",
+            name="machine_id",
         ),
         migrations.AddField(
-            model_name='assemblystepentity',
-            name='machines',
-            field=models.ManyToManyField(blank=True, db_table='ASSEMBLY_STEP_MACHINE', related_name='assembly_steps', to='app.machineentity'),
+            model_name="assemblystepentity",
+            name="machines",
+            field=models.ManyToManyField(
+                blank=True,
+                db_table="ASSEMBLY_STEP_MACHINE",
+                related_name="assembly_steps",
+                to="app.machineentity",
+            ),
         ),
         migrations.AddField(
-            model_name='metrologystepentity',
-            name='machines',
-            field=models.ManyToManyField(blank=True, db_table='METROLOGY_STEP_MACHINE', related_name='metrology_steps', to='app.machineentity'),
+            model_name="metrologystepentity",
+            name="machines",
+            field=models.ManyToManyField(
+                blank=True,
+                db_table="METROLOGY_STEP_MACHINE",
+                related_name="metrology_steps",
+                to="app.machineentity",
+            ),
         ),
     ]

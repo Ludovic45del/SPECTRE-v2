@@ -14,7 +14,6 @@ import {
     FaIndicatorsApiSchema,
     FsecIndicatorsApiSchema,
     IndicatorsApiSchema,
-    OperatorWorkloadApiSchema,
     StepDurationApiSchema,
 } from './indicators-api.schema';
 
@@ -83,15 +82,6 @@ export const CampaignIndicatorsSchema = CampaignIndicatorsApiSchema.transform((a
 }));
 export type CampaignIndicators = z.infer<typeof CampaignIndicatorsSchema>;
 
-// ---------- Operator workload ----------
-
-export const OperatorWorkloadSchema = OperatorWorkloadApiSchema.transform((api) => ({
-    userUuid: api.user_uuid,
-    name: api.name,
-    stepsCount: api.steps_count,
-}));
-export type OperatorWorkload = z.infer<typeof OperatorWorkloadSchema>;
-
 // ---------- Bundle complet (domain) ----------
 
 export const IndicatorsSchema = IndicatorsApiSchema.transform((api) => ({
@@ -100,7 +90,6 @@ export const IndicatorsSchema = IndicatorsApiSchema.transform((api) => ({
     fsec: FsecIndicatorsSchema.parse(api.fsec),
     campaign: CampaignIndicatorsSchema.parse(api.campaign),
     stepDurations: api.step_durations.map((sd) => StepDurationSchema.parse(sd)),
-    topOperators: api.top_operators.map((o) => OperatorWorkloadSchema.parse(o)),
     bottleneckStepKey: api.bottleneck_step_key,
 }));
 export type Indicators = z.infer<typeof IndicatorsSchema>;

@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { useUpdateCampaignStep } from '@entities/planning/core/api/planning.queries';
 import type { PlanningCampaignStep } from '@entities/planning/core/model/planning.schema';
 import type { Etape } from '../../lib/planning.constants';
+import { DRAG_GHOST_SHADOW } from '../../lib/planning.constants';
 import { usePlanningColors } from '../../lib/planning.hooks';
 import { type TimelineColumn, isFsecStepDone } from '../../lib/planning.utils';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
@@ -20,6 +21,7 @@ import {
     getBarPosition,
     getBarBorderRadius,
     calculateResizePreview,
+    calculateDragPreview,
 } from '../../lib/planning.bar-utils';
 import { assignLanes, LANE_HEIGHT, LANE_ROW_VPAD, laneRowHeight } from '../../lib/planning.lane-utils';
 import { useDragToMove } from '../../lib/useDragToMove';
@@ -93,7 +95,7 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
         },
         [updateStep],
     );
-    const { handleItemMouseDown, skipNextClick } = useDragToMove<PlanningCampaignStep>({
+    const { handleItemMouseDown, skipNextClick, dragging } = useDragToMove<PlanningCampaignStep>({
         columns,
         findItemAtColumn: useCallback(() => undefined, []),
         onMove,
@@ -156,6 +158,24 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
     const timelineCells = useMemo(() => {
         const cells: React.ReactNode[] = [];
 
+        // ── Drag-to-move preview (toute la barre glisse de colDelta colonnes) ──
+        let dragPreview: { startIdx: number; endIdx: number; color: string } | null = null;
+        let draggedUuid: string | null = null;
+        let draggedTop = 0;
+        if (dragging) {
+            const colDelta = dragging.currentColIdx - dragging.originColIdx;
+            if (colDelta !== 0) {
+                draggedUuid = dragging.item.uuid;
+                const lane = laneByStep.get(dragging.item.uuid) ?? 0;
+                draggedTop = lane * LANE_HEIGHT + LANE_ROW_VPAD + BAR_GAP;
+                const fsec = fsecByUuid.get(dragging.item.fsecUuid);
+                const ghostColor = fsec && isFsecStepDone(fsec, etape) ? '#4caf50' : etape.color;
+                dragPreview = calculateDragPreview(dragging.item, columns, colDelta, ghostColor);
+            }
+        }
+        const dragSpan = dragPreview ? dragPreview.endIdx - dragPreview.startIdx + 1 : 0;
+        const dragBarHeight = LANE_HEIGHT - 2 * BAR_GAP;
+
         if (startCol > 0) {
             cells.push(
                 <td key="spacer-left" colSpan={startCol} style={{ padding: 0, border: 'none', height: rowHeight }} />,
@@ -174,6 +194,7 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
                 const fsec = fsecByUuid.get(step.fsecUuid);
                 const isDone = fsec ? isFsecStepDone(fsec, etape) : false;
                 const isResizedStep = resizing?.itemId === step.uuid;
+                const isDraggedStep = step.uuid === draggedUuid;
                 const top = lane * LANE_HEIGHT + LANE_ROW_VPAD + BAR_GAP;
                 const barHeight = LANE_HEIGHT - 2 * BAR_GAP;
                 const isEdge = barPos === 'start' || barPos === 'single';
@@ -198,7 +219,7 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
                             px: 0.5,
                             overflow: 'hidden',
                             cursor: 'grab',
-                            opacity: isResizedStep ? 0.3 : 1,
+                            opacity: isResizedStep || isDraggedStep ? 0.3 : 1,
                             zIndex: 2,
                         }}
                     >
@@ -249,6 +270,30 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
                 }
             }
 
+            // Drag-to-move ghost: barre fantôme ombrée à l'emplacement de dépôt
+            const isInDragPreview = dragPreview != null && idx >= dragPreview.startIdx && idx <= dragPreview.endIdx;
+            if (dragPreview && idx === dragPreview.startIdx) {
+                bars.push(
+                    <Box
+                        key="drag-ghost"
+                        sx={{
+                            position: 'absolute',
+                            top: draggedTop,
+                            height: dragBarHeight,
+                            left: 2,
+                            width: `calc(${dragSpan * 100}% - 4px)`,
+                            bgcolor: dragPreview.color,
+                            borderRadius: '6px',
+                            opacity: 0.75,
+                            border: '1px dashed rgba(255,255,255,0.85)',
+                            boxShadow: DRAG_GHOST_SHADOW,
+                            pointerEvents: 'none',
+                            zIndex: 4,
+                        }}
+                    />,
+                );
+            }
+
             cells.push(
                 <HoverTd
                     key={col.key}
@@ -260,6 +305,7 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
                         padding: 0,
                         height: rowHeight,
                         border: `1px solid ${colors.border}`,
+                        boxShadow: isInDragPreview ? `inset 0 0 0 100px ${colors.dragHighlight}` : undefined,
                         backgroundColor: col.isCurrent
                             ? colors.currentDay
                             : weekState === 'fermeture'
@@ -296,6 +342,7 @@ export const StepLanesRow = memo(function StepLanesRow({ etape, etapeFsecs, step
         fsecByUuid,
         etape,
         resizing,
+        dragging,
         colors,
         planningData.weekStatesMap,
         handleItemMouseDown,

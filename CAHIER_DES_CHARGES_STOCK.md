@@ -62,7 +62,8 @@ Le catalogue unique contenant TOUS les items (sérialisés + consommables). Un c
 |---|---|---|---|
 | `uuid` | UUIDField | PK, auto | Identifiant unique |
 | `kind` | CharField(20) | choices=`['element','consumable']`, **requis** | `element` = sérialisé (instance unique), `consumable` = quantifié |
-| `category` | CharField(50) | choices=`['pieces_elementaires','structuration','structuration_speciale','structuration_ec','colles','autres']`, **requis** | Rubrique métier (enum strict, cf. §4.6 pour le mapping kind↔rubriques) |
+| `category` | CharField(50) | choices=`['pieces_elementaires','structuration','colles','autres']`, **requis** | Rubrique métier (enum strict, cf. §4.6 pour le mapping kind↔rubriques) |
+| `structuration_type` | CharField(20) | choices=`['standard','speciale','ec']`, nullable/blank | Type de structuration — **requis si `category='structuration'`**, null sinon (cf. §4.6) |
 | `name` | CharField(200) | **requis** | Nom d'affichage de l'item |
 | `reference` | CharField(200) | nullable/blank | Référence fournisseur ou numéro interne (ex. `2024_LMJ_Gorfou-1`, `N°521`) |
 | `caracteristique` | CharField(200) | nullable/blank | Ex. `PEEK` |
@@ -76,9 +77,10 @@ Le catalogue unique contenant TOUS les items (sérialisés + consommables). Un c
 | `date_peremption` | DateField | nullable | Alerte si dépassée ou approche (seuil 30j côté UI, non configurable en v1) |
 | `type_d_achat` | CharField(100) | nullable/blank | Texte libre (cf. Excel template) |
 | **Champs element uniquement** | | | (tous nullables quand kind=`consumable`) |
+| `fsec_name` | CharField(200) | nullable/blank | FSEC de destination (lien déclaratif **optionnel**, par nom — le couplage dur passe par `FSEC_ASSEMBLY_ITEM`, cf. §4.2) |
 | `installation` | CharField(10) | nullable, choices=`['LMJ','OMEGA']` | Installation cible pour les éléments |
 | `status` | CharField(20) | nullable, choices=`['dispo','reservee','affectee','tiree']`, default=`'dispo'` | Cycle de vie d'un élément sérialisé |
-| `materiaux_mat` | CharField(200) | nullable/blank | Matériau de la structuration (visible/pertinent uniquement quand `category='structuration_speciale'`) |
+| `materiaux_mat` | CharField(200) | nullable/blank | Matériau de la structuration (visible/pertinent uniquement quand `structuration_type='speciale'`) |
 | **Placement physique** | | | |
 | `boite` | CharField(200) | nullable/blank | `numero_de_boite_ou_descriptif_boite` |
 | `emplacement` | CharField(200) | nullable/blank | Emplacement physique |
@@ -100,12 +102,13 @@ indexes = [
 
 **Validations métier (à faire dans le service) :**
 - **Cohérence kind ↔ rubrique** (cf. §4.6) :
-  - Si `kind='element'` : `category ∈ {pieces_elementaires, structuration, structuration_speciale, structuration_ec}`.
+  - Si `kind='element'` : `category ∈ {pieces_elementaires, structuration}`.
   - Si `kind='consumable'` : `category ∈ {colles, autres}`.
   - Toute autre combinaison → `ValidationException` (code: `INVALID_KIND_CATEGORY`).
 - Si `kind='element'` : `status` requis, `installation` requis, `quantite` et `unite` et `seuil_alerte` et `date_peremption` et `type_d_achat` doivent être null.
-- Si `kind='consumable'` : `status` doit être null, `installation` doit être null, `materiaux_mat` doit être null, `unite` requis, `quantite` requis (peut être 0).
-- `materiaux_mat` n'est cohérent qu'avec `category='structuration_speciale'` (sinon doit être null) — soft check (warning, pas bloquant) côté service.
+- Si `kind='consumable'` : `status` doit être null, `installation` doit être null, `materiaux_mat` doit être null, `fsec_name` doit être null, `unite` requis, `quantite` requis (peut être 0).
+- **Cohérence rubrique ↔ type de structuration** : si `category='structuration'`, `structuration_type` requis (`standard`/`speciale`/`ec`) ; sinon `structuration_type` est remis à null silencieusement par le service.
+- `materiaux_mat` n'est cohérent qu'avec `structuration_type='speciale'` (sinon doit être null) — soft check (warning, pas bloquant) côté service.
 - `name` + `reference` doivent être uniques ensemble pour un `kind` donné (pour éviter les doublons) → contrainte à vérifier dans le service, pas via DB (référence peut être nulle).
 
 ### 3.2 Entité `StockMovement` — table `STOCK_MOVEMENT`
@@ -224,18 +227,24 @@ Ces calculs se font côté frontend à partir de `quantite`, `seuil_alerte`, `da
 
 ### 4.6 Rubriques (enum)
 
-`category` est un **enum strict de 6 valeurs**, groupées par `kind`. C'est l'unique source de vérité côté backend ET frontend (pas de saisie libre, pas d'endpoint dynamique).
+`category` est un **enum strict de 4 valeurs**, groupées par `kind`. C'est l'unique source de vérité côté backend ET frontend (pas de saisie libre, pas d'endpoint dynamique).
 
 | Code (stocké) | Libellé UI | Kind |
 |---|---|---|
 | `pieces_elementaires` | Pièces élémentaires | `element` |
 | `structuration` | Structuration | `element` |
-| `structuration_speciale` | Structuration spéciale | `element` |
-| `structuration_ec` | Structuration EC | `element` |
 | `colles` | Colles | `consumable` |
 | `autres` | Autres | `consumable` |
 
-→ 4 rubriques élément + 2 rubriques consommable.
+→ 2 rubriques élément + 2 rubriques consommable.
+
+La rubrique `structuration` est sous-classée par `structuration_type` (enum strict, requis quand `category='structuration'`) :
+
+| Code (stocké) | Libellé UI |
+|---|---|
+| `standard` | Standard |
+| `speciale` | Spéciale |
+| `ec` | EC |
 
 **Comportement frontend :**
 - Le dropdown "Rubrique" du formulaire de création/édition est filtré selon le `kind` choisi à l'étape 1 du formulaire (modal de choix kind → modal de saisie). Aucune rubrique cross-kind n'est sélectionnable.
@@ -258,7 +267,7 @@ Toutes les routes sont préfixées `/api/v1/stock/`. Authentification JWT requis
 ```
 GET    /api/v1/stock/catalog/
          ?kind=element|consumable
-         ?category=pieces_elementaires|structuration|structuration_speciale|structuration_ec|colles|autres
+         ?category=pieces_elementaires|structuration|colles|autres
          ?status=dispo|reservee|affectee|tiree
          ?installation=LMJ|OMEGA
          ?is_active=true|false  (default: true)
@@ -488,13 +497,15 @@ Le module expose 3 onglets dans sa page principale :
 
 | Champ formulaire | Champ modèle | Requis | Notes |
 |---|---|:---:|---|
-| Nom | `name` | ✓ | |
+| Nom | `name` | ✓ | Texte libre |
 | Référence | `reference` | | Identifiant unique de l'instance (ex. `CIB-D2-2026-042`) |
-| Rubrique | `category` | ✓ | Dropdown filtré sur les **4 valeurs element** : `pieces_elementaires`, `structuration`, `structuration_speciale`, `structuration_ec` |
+| FSEC | `fsec_name` | | Autocomplete sur les FSEC **non tirées** — optionnel, effaçable |
+| Rubrique | `category` | ✓ | Dropdown filtré sur les **2 valeurs element** : `pieces_elementaires`, `structuration` |
+| Type | `structuration_type` | ✓* | Dropdown `standard`/`speciale`/`ec` — **visible et requis uniquement si `category='structuration'`** |
 | Installation | `installation` | ✓ | Radio LMJ / OMEGA |
 | Caractéristique | `caracteristique` | | Texte libre (ex. `PEEK`, `Épaisseur 50µm`) |
 | Type de colle | `type_de_colle` | | Texte libre (ex. `UV`, `3090`) |
-| Matériaux | `materiaux_mat` | | **Visible uniquement si `category='structuration_speciale'`** |
+| Matériaux | `materiaux_mat` | | **Visible uniquement si `structuration_type='speciale'`** |
 | Fournisseur | `fournisseur` | | |
 | Boîte | `boite` | | |
 | Emplacement | `emplacement` | | |

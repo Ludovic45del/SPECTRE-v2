@@ -184,6 +184,15 @@ function ControleMetrologiqueCard({
                                     </Typography>
                                     <MachineChipList uuids={metrologyStep.machineUuids} roomCode="B2" emptyText="-" />
                                 </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <SealingLinkCell
+                                        label="Fichier métro .txt"
+                                        value={sealingStep?.metroFileLink ?? null}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <SealingLinkCell label="Visrad réalisé" value={sealingStep?.visradLink ?? null} />
+                                </Grid>
                             </Grid>
                             {metrologyStep.comments && (
                                 <Box sx={{ mt: 1.5 }}>
@@ -261,15 +270,6 @@ function ControleMetrologiqueCard({
                                             <Typography variant="body2" fontWeight="medium">
                                                 {sealingStep.interfaceIo || '-'}
                                             </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} md={6}>
-                                            <SealingLinkCell
-                                                label="Fichier métro .txt"
-                                                value={sealingStep.metroFileLink}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} md={6}>
-                                            <SealingLinkCell label="Visrad réalisé" value={sealingStep.visradLink} />
                                         </Grid>
                                     </Grid>
                                     {sealingStep.comments && (

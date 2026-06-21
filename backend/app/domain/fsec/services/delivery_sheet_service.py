@@ -105,7 +105,7 @@ def _media_image_data_uri(relative_url: Optional[str]) -> Optional[str]:
 
     media_url = settings.MEDIA_URL
     name = (
-        relative_url[len(media_url):]
+        relative_url[len(media_url) :]
         if relative_url.startswith(media_url)
         else relative_url.lstrip("/")
     )

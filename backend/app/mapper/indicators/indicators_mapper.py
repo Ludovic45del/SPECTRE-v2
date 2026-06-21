@@ -8,7 +8,6 @@ from app.domain.indicators.models.indicators_bean import (
     FaIndicatorsBean,
     FsecIndicatorsBean,
     IndicatorsBean,
-    OperatorWorkloadBean,
     StepDurationBean,
 )
 
@@ -75,14 +74,6 @@ def campaign_indicators_bean_to_api(bean: CampaignIndicatorsBean) -> Dict[str, A
     }
 
 
-def operator_workload_bean_to_api(bean: OperatorWorkloadBean) -> Dict[str, Any]:
-    return {
-        "user_uuid": bean.user_uuid,
-        "name": bean.name,
-        "steps_count": bean.steps_count,
-    }
-
-
 def indicators_bean_to_api(bean: IndicatorsBean) -> Dict[str, Any]:
     return {
         "year": bean.year,
@@ -90,8 +81,5 @@ def indicators_bean_to_api(bean: IndicatorsBean) -> Dict[str, Any]:
         "fsec": fsec_indicators_bean_to_api(bean.fsec),
         "campaign": campaign_indicators_bean_to_api(bean.campaign),
         "step_durations": [step_duration_bean_to_api(sd) for sd in bean.step_durations],
-        "top_operators": [
-            operator_workload_bean_to_api(op) for op in bean.top_operators
-        ],
         "bottleneck_step_key": bean.bottleneck_step_key,
     }

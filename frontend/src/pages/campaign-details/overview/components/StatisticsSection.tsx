@@ -5,6 +5,7 @@
 
 import { useMemo, memo } from 'react';
 import { Paper, Stack, Skeleton, useTheme } from '@mui/material';
+import { FSEC_STATUS_ID, FSEC_STATUSES } from '@entities/fsec';
 import { SectionHeader } from './SectionHeader';
 import { DonutChart } from './DonutChart';
 import { PAPER_BASE_SX } from './styles';
@@ -16,6 +17,7 @@ export interface StatisticsSectionProps {
         pretes: number;
         fabrication: number;
         hs: number;
+        decisionMoe: number;
     };
     isLoading?: boolean;
 }
@@ -29,6 +31,11 @@ export const StatisticsSection = memo(function StatisticsSection({ stats, isLoad
             { label: 'Prêtes', value: stats.pretes, color: theme.palette.info.main },
             { label: 'Fabrication', value: stats.fabrication, color: theme.palette.warning.main },
             { label: 'HS', value: stats.hs, color: theme.palette.error.main },
+            {
+                label: 'Décision MOE',
+                value: stats.decisionMoe,
+                color: FSEC_STATUSES[FSEC_STATUS_ID.DECISION_MOE].color,
+            },
         ],
         [stats, theme],
     );

@@ -12,18 +12,14 @@
 import { http, HttpResponse } from 'msw';
 
 type StockKind = 'element' | 'consumable';
-type StockCategory =
-    | 'pieces_elementaires'
-    | 'structuration'
-    | 'structuration_speciale'
-    | 'structuration_ec'
-    | 'colles'
-    | 'autres';
+type StockCategory = 'pieces_elementaires' | 'structuration' | 'colles' | 'autres';
+type StockStructurationType = 'standard' | 'speciale' | 'ec';
 
 interface StockItemOverrides {
     uuid?: string;
     kind?: StockKind;
     category?: StockCategory;
+    structuration_type?: StockStructurationType | null;
     name?: string;
     reference?: string | null;
     caracteristique?: string | null;
@@ -35,6 +31,7 @@ interface StockItemOverrides {
     seuil_alerte?: number | null;
     date_peremption?: string | null;
     type_d_achat?: string | null;
+    fsec_name?: string | null;
     installation?: 'LMJ' | 'OMEGA' | null;
     status?: 'dispo' | 'reservee' | 'affectee' | 'tiree' | null;
     materiaux_mat?: string | null;
@@ -47,6 +44,7 @@ export const createMockStockCatalogItem = (overrides: StockItemOverrides = {}) =
     uuid: crypto.randomUUID(),
     kind: 'consumable' as StockKind,
     category: 'colles' as StockCategory,
+    structuration_type: null as StockStructurationType | null,
     name: 'Item Stock Test',
     reference: 'REF-001',
     caracteristique: null,
@@ -58,6 +56,7 @@ export const createMockStockCatalogItem = (overrides: StockItemOverrides = {}) =
     seuil_alerte: 2,
     date_peremption: null,
     type_d_achat: null,
+    fsec_name: null,
     installation: null,
     status: null,
     materiaux_mat: null,
@@ -69,8 +68,35 @@ export const createMockStockCatalogItem = (overrides: StockItemOverrides = {}) =
     ...overrides,
 });
 
+interface StructurationBatchBody {
+    structuration_type: StockStructurationType;
+    installation: 'LMJ' | 'OMEGA';
+    quantity: number;
+}
+
+/** Construit la réponse d'un POST batch-structuration : `quantity` items numérotés. */
+function buildBatchResponse(body: StructurationBatchBody, start = 1) {
+    return Array.from({ length: body.quantity }, (_, i) =>
+        createMockStockCatalogItem({
+            kind: 'element',
+            category: 'structuration',
+            structuration_type: body.structuration_type,
+            installation: body.installation,
+            status: 'dispo',
+            name: String(start + i),
+            reference: null,
+        }),
+    );
+}
+
 /** Default stock handlers — listes vides + 404 pour détails inconnus. */
 export const stockHandlers = [
+    // Avant le handler `:uuid` pour éviter que "next-structuration-number" soit pris pour un uuid.
+    http.get('/api/v1/stock/catalog/next-structuration-number/', () => HttpResponse.json({ next: 1 })),
+    http.post('/api/v1/stock/catalog/batch-structuration/', async ({ request }) => {
+        const body = (await request.json()) as StructurationBatchBody;
+        return HttpResponse.json(buildBatchResponse(body), { status: 201 });
+    }),
     http.get('/api/v1/stock/catalog/', () => HttpResponse.json([])),
     http.get('/api/v1/stock/catalog/:uuid/', () => new HttpResponse(null, { status: 404 })),
     http.post('/api/v1/stock/catalog/', async ({ request }) => {
@@ -96,6 +122,11 @@ export function stockHandlersWithData(data: {
 }) {
     const items = data.items ?? [];
     return [
+        http.get('/api/v1/stock/catalog/next-structuration-number/', () => HttpResponse.json({ next: 1 })),
+        http.post('/api/v1/stock/catalog/batch-structuration/', async ({ request }) => {
+            const body = (await request.json()) as StructurationBatchBody;
+            return HttpResponse.json(buildBatchResponse(body), { status: 201 });
+        }),
         http.get('/api/v1/stock/catalog/', () => HttpResponse.json(items)),
         http.get('/api/v1/stock/catalog/:uuid/', ({ params }) => {
             const item = items.find((i) => i.uuid === params.uuid);

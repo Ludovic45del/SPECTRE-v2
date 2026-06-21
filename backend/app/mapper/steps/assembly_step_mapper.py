@@ -3,7 +3,6 @@
 from typing import Any, Dict, List
 
 from app.domain.steps.models.assembly_step_bean import AssemblyStepBean
-from app.mapper.steps.base_step_mapper import normalize_user_uuid
 from app.mapper.type_conversion import format_date_for_api
 from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
 
@@ -66,7 +65,9 @@ def assembly_step_mapper_bean_to_entity(bean: AssemblyStepBean) -> AssemblyStepE
         entity.uuid = bean.uuid
     entity.fsec_version_id_id = bean.fsec_version_id
     entity.operator = bean.operator
-    entity.operator_user_id = bean.operator_user_uuids[0] if bean.operator_user_uuids else None
+    entity.operator_user_id = (
+        bean.operator_user_uuids[0] if bean.operator_user_uuids else None
+    )
     entity.start_date = bean.start_date
     entity.end_date = bean.end_date
     entity.comments = bean.comments

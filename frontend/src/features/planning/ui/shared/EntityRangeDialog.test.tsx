@@ -7,7 +7,7 @@ import { screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import { setup, axe } from '@test/test-utils';
 import { EntityRangeDialog, type EntityRangeDialogProps } from './EntityRangeDialog';
-import type { DateRange } from '../../lib/useDateRangeSelection';
+import type { DateRange } from '@shared/lib';
 
 function Harness(overrides: Partial<EntityRangeDialogProps> = {}) {
     const [range, setRange] = useState<DateRange>({ start: dayjs('2026-05-15'), end: dayjs('2026-05-18') });

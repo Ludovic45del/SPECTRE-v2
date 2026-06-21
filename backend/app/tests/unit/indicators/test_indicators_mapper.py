@@ -8,7 +8,6 @@ from app.domain.indicators.models.indicators_bean import (
     FaIndicatorsBean,
     FsecIndicatorsBean,
     IndicatorsBean,
-    OperatorWorkloadBean,
     StepDurationBean,
 )
 from app.mapper.indicators.indicators_mapper import (
@@ -17,7 +16,6 @@ from app.mapper.indicators.indicators_mapper import (
     fa_indicators_bean_to_api,
     fsec_indicators_bean_to_api,
     indicators_bean_to_api,
-    operator_workload_bean_to_api,
     step_duration_bean_to_api,
 )
 
@@ -146,15 +144,6 @@ def test_campaign_indicators_bean_to_api_preserves_nulls():
     assert api["top_by_volume"] == []
 
 
-def test_operator_workload_bean_to_api():
-    bean = OperatorWorkloadBean(user_uuid="u1", name="Alice", steps_count=12)
-    assert operator_workload_bean_to_api(bean) == {
-        "user_uuid": "u1",
-        "name": "Alice",
-        "steps_count": 12,
-    }
-
-
 def test_indicators_bean_to_api_aggregates_everything():
     bean = IndicatorsBean(
         year=2026,
@@ -164,9 +153,6 @@ def test_indicators_bean_to_api_aggregates_everything():
         step_durations=[
             StepDurationBean(key="k", label="l", count=0),
         ],
-        top_operators=[
-            OperatorWorkloadBean(user_uuid="u1", name="Alice", steps_count=1)
-        ],
         bottleneck_step_key="k",
     )
     api = indicators_bean_to_api(bean)
@@ -175,5 +161,4 @@ def test_indicators_bean_to_api_aggregates_everything():
     assert api["fsec"]["total_created_in_year"] == 2
     assert api["campaign"]["total_in_period"] == 3
     assert len(api["step_durations"]) == 1
-    assert len(api["top_operators"]) == 1
     assert api["bottleneck_step_key"] == "k"

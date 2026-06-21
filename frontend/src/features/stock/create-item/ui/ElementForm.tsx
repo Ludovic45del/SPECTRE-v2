@@ -3,9 +3,10 @@
  */
 
 import { useMemo } from 'react';
-import { Controller, type Control, type FieldErrors } from 'react-hook-form';
+import { Controller, useWatch, type Control, type FieldErrors } from 'react-hook-form';
 import {
     Autocomplete,
+    Box,
     FormControl,
     FormControlLabel,
     FormHelperText,
@@ -20,30 +21,55 @@ import {
 } from '@mui/material';
 import {
     CATEGORIES_BY_KIND,
-    CATEGORY,
     CATEGORY_LABELS,
     INSTALLATION_LABELS,
     INSTALLATION_VALUES,
     ITEM_KIND,
+    STRUCTURATION_BATCH_MAX,
+    STRUCTURATION_TYPE_LABELS,
+    STRUCTURATION_TYPE_VALUES,
     type ElementFormValues,
 } from '@entities/stock-item';
 import { useFsecs } from '@entities/fsec';
 
 /**
  * ID du statut FSEC "Tirée" (cf. backend `FSEC_STATUS_ID_TIREE`).
- * Les éléments sérialisés ne peuvent être nommés qu'avec une FSEC non tirée.
+ * Un élément sérialisé ne peut être rattaché qu'à une FSEC non tirée.
  */
 const FSEC_STATUS_ID_TIREE = 7;
 
 interface ElementFormProps {
     control: Control<ElementFormValues>;
     errors: FieldErrors<ElementFormValues>;
-    /** Si la rubrique sélectionnée est `structuration_speciale`, on affiche le champ "Matériaux". */
+    /** Si la rubrique sélectionnée est `structuration`, on affiche le select "Type". */
+    showStructurationType: boolean;
+    /** Si le type de structuration est `speciale`, on affiche le champ "Matériaux". */
     showMateriaux: boolean;
+    /**
+     * Mode « paquet » : à la création d'une structuration, on saisit un libellé
+     * + une quantité, et la numérotation (nom = n° de série) est automatique.
+     * Hors structuration ou en édition, ce mode est inactif.
+     */
+    batchMode?: boolean;
+    /** Prochain numéro de série global (aperçu de la plage en mode paquet). */
+    nextNumber?: number | null;
 }
 
-export function ElementForm({ control, errors, showMateriaux }: ElementFormProps) {
+export function ElementForm({
+    control,
+    errors,
+    showStructurationType,
+    showMateriaux,
+    batchMode = false,
+    nextNumber = null,
+}: ElementFormProps) {
     const elementCategories = CATEGORIES_BY_KIND[ITEM_KIND.ELEMENT];
+
+    // Mode paquet effectif : actif uniquement à la création d'une structuration.
+    const isBatch = batchMode && showStructurationType;
+    const batchQuantity = useWatch({ control, name: 'batchQuantity' });
+    const previewCount =
+        typeof batchQuantity === 'number' && batchQuantity >= 1 ? batchQuantity : null;
 
     const { data: fsecs, isLoading: fsecsLoading } = useFsecs();
     const fsecOptions = useMemo(() => {
@@ -56,53 +82,127 @@ export function ElementForm({ control, errors, showMateriaux }: ElementFormProps
 
     return (
         <Stack spacing={2}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                        <Autocomplete
-                            options={fsecOptions}
-                            value={field.value ?? null}
-                            onChange={(_, value) => field.onChange(value ?? '')}
-                            onBlur={field.onBlur}
-                            loading={fsecsLoading}
-                            fullWidth
-                            size="small"
-                            isOptionEqualToValue={(opt, val) => opt === val}
-                            // Un nom hérité d'un ancien élément peut ne plus matcher une FSEC active :
-                            // freeSolo=false impose le choix dans la liste à la création/édition.
-                            freeSolo={false}
-                            noOptionsText="Aucune FSEC disponible (toutes tirées ou aucune créée)"
-                            renderInput={(params) => (
+            {isBatch ? (
+                <>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
+                        <Controller
+                            name="batchQuantity"
+                            control={control}
+                            render={({ field }) => (
                                 <TextField
-                                    {...params}
-                                    label="Nom (FSEC)"
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    onChange={(e) =>
+                                        field.onChange(e.target.value === '' ? null : Number(e.target.value))
+                                    }
+                                    label="Quantité"
                                     required
-                                    error={!!errors.name}
-                                    helperText={errors.name?.message ?? 'Sélectionnez une FSEC non tirée'}
+                                    size="small"
+                                    type="number"
+                                    inputProps={{ min: 1, max: STRUCTURATION_BATCH_MAX }}
+                                    sx={{ width: { xs: '100%', sm: 200 } }}
+                                    error={!!errors.batchQuantity}
+                                    helperText={errors.batchQuantity?.message ?? 'Nombre de pièces à créer'}
                                 />
                             )}
                         />
-                    )}
-                />
-                <Controller
-                    name="reference"
-                    control={control}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            value={field.value ?? ''}
-                            label="Référence"
-                            fullWidth
-                            size="small"
-                            placeholder="Identifiant unique de l'instance"
-                            error={!!errors.reference}
-                            helperText={errors.reference?.message ?? "Identifiant unique de l'instance"}
+                        <Box
+                            sx={{
+                                flex: 1,
+                                px: 1.5,
+                                py: 1,
+                                borderRadius: 1,
+                                bgcolor: 'action.hover',
+                                minHeight: 40,
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Typography variant="body2" color="text.secondary">
+                                {nextNumber == null
+                                    ? 'Numérotation automatique…'
+                                    : previewCount == null
+                                      ? `Démarre au n° ${nextNumber}`
+                                      : previewCount === 1
+                                        ? `Numéro attribué : n° ${nextNumber}`
+                                        : `Numéros attribués : n° ${nextNumber} → n° ${nextNumber + previewCount - 1}`}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </>
+            ) : (
+                <>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <Controller
+                            name="name"
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    label="Nom"
+                                    required
+                                    fullWidth
+                                    size="small"
+                                    placeholder={showStructurationType ? 'ex. 12' : 'ex. Cible D2, Cône Gorfou'}
+                                    error={!!errors.name}
+                                    helperText={
+                                        errors.name?.message ??
+                                        (showStructurationType ? 'N° de série de la pièce' : "Nom de l'élément")
+                                    }
+                                />
+                            )}
                         />
-                    )}
-                />
-            </Stack>
+                        <Controller
+                            name="reference"
+                            control={control}
+                            render={({ field }) => (
+                                <TextField
+                                    {...field}
+                                    value={field.value ?? ''}
+                                    label="Référence"
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Identifiant unique de l'instance"
+                                    error={!!errors.reference}
+                                    helperText={errors.reference?.message ?? "Identifiant unique de l'instance"}
+                                />
+                            )}
+                        />
+                    </Stack>
+                </>
+            )}
+
+            <Controller
+                name="fsecName"
+                control={control}
+                render={({ field }) => (
+                    <Autocomplete
+                        options={fsecOptions}
+                        value={field.value ?? null}
+                        onChange={(_, value) => field.onChange(value ?? null)}
+                        onBlur={field.onBlur}
+                        loading={fsecsLoading}
+                        fullWidth
+                        size="small"
+                        isOptionEqualToValue={(opt, val) => opt === val}
+                        // freeSolo=false impose le choix dans la liste ; champ effaçable (croix).
+                        freeSolo={false}
+                        noOptionsText="Aucune FSEC disponible (toutes tirées ou aucune créée)"
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="FSEC"
+                                error={!!errors.fsecName}
+                                helperText={
+                                    errors.fsecName?.message ??
+                                    'FSEC de destination (optionnelle, non tirée)'
+                                }
+                            />
+                        )}
+                    />
+                )}
+            />
 
             <Controller
                 name="category"
@@ -121,6 +221,33 @@ export function ElementForm({ control, errors, showMateriaux }: ElementFormProps
                     </FormControl>
                 )}
             />
+
+            {showStructurationType && (
+                <Controller
+                    name="structurationType"
+                    control={control}
+                    render={({ field }) => (
+                        <FormControl size="small" fullWidth required error={!!errors.structurationType}>
+                            <InputLabel id="element-structuration-type-label">Type</InputLabel>
+                            <Select
+                                {...field}
+                                value={field.value ?? ''}
+                                labelId="element-structuration-type-label"
+                                label="Type"
+                            >
+                                {STRUCTURATION_TYPE_VALUES.map((t) => (
+                                    <MenuItem key={t} value={t}>
+                                        {STRUCTURATION_TYPE_LABELS[t]}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>
+                                {errors.structurationType?.message ?? 'Type de structuration'}
+                            </FormHelperText>
+                        </FormControl>
+                    )}
+                />
+            )}
 
             <Controller
                 name="installation"
@@ -193,8 +320,7 @@ export function ElementForm({ control, errors, showMateriaux }: ElementFormProps
                             placeholder="ex. Cu/Au"
                             error={!!errors.materiauxMat}
                             helperText={
-                                errors.materiauxMat?.message ??
-                                `Spécifique à la rubrique ${CATEGORY_LABELS[CATEGORY.STRUCTURATION_SPECIALE]}`
+                                errors.materiauxMat?.message ?? 'Spécifique à la structuration spéciale'
                             }
                         />
                     )}

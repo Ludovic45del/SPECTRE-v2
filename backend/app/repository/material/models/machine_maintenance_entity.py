@@ -22,9 +22,7 @@ class MachineMaintenanceEntity(models.Model):
         db_table = "MACHINE_MAINTENANCE"
         ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(
-                fields=["machine", "-date"], name="maint_machine_date_idx"
-            ),
+            models.Index(fields=["machine", "-date"], name="maint_machine_date_idx"),
             models.Index(fields=["next_maintenance_date"], name="maint_next_date_idx"),
         ]
 

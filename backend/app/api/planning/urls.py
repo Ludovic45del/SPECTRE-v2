@@ -37,9 +37,7 @@ router.register(
     PlanningCampaignStepController,
     basename="planning-campaign-steps",
 )
-router.register(
-    r"planning-steps", PlanningStepController, basename="planning-steps"
-)
+router.register(r"planning-steps", PlanningStepController, basename="planning-steps")
 router.register(r"lab-events", LabEventController, basename="planning-lab-events")
 
 urlpatterns = [

@@ -1,8 +1,7 @@
 """Tests d'intégration : assembleurs / métrologues multiples par étape.
 
 Vérifie le round-trip M2M (liste persistée + relue), la synchronisation de la
-FK simple sur le premier membre, la validation des uuids inconnus et le
-crédit KPI de chaque opérateur.
+FK simple sur le premier membre et la validation des uuids inconnus.
 """
 
 import uuid
@@ -16,9 +15,6 @@ from app.domain.steps.models.metrology_step_bean import MetrologyStepBean
 from app.domain.steps.models.sealing_step_bean import SealingStepBean
 from app.repository.campaign.models.campaign_entity import CampaignEntity
 from app.repository.fsec.models.fsec_entity import FsecEntity
-from app.repository.indicators.repositories.indicators_repository import (
-    IndicatorsRepository,
-)
 from app.repository.steps.models.assembly_step_entity import AssemblyStepEntity
 from app.repository.steps.models.metrology_step_entity import MetrologyStepEntity
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
@@ -260,23 +256,3 @@ class TestSealingFileLinks:
         reread = repo.get_by_uuid(created.uuid)
         assert reread.metro_file_link is None
         assert reread.visrad_link == "https://intranet/visrad/updated"
-
-
-@pytest.mark.integration
-@pytest.mark.django_db
-class TestTopOperatorsCreditsEachMember:
-    def test_both_assemblers_credited(self, fsec, operators):
-        repo = AssemblyStepRepository()
-        u1, u2 = str(operators[0].uuid), str(operators[1].uuid)
-        repo.create(
-            AssemblyStepBean(
-                fsec_version_id=str(fsec.version_uuid),
-                operator_user_uuids=[u1, u2],
-            )
-        )
-
-        results = IndicatorsRepository().get_top_operators(year=2026, semester=None)
-        counts = {r.user_uuid: r.steps_count for r in results}
-
-        assert counts.get(u1) == 1
-        assert counts.get(u2) == 1

@@ -126,3 +126,45 @@ export function calculateResizePreview(
         color,
     };
 }
+
+// ====================== Drag-to-move preview ======================
+
+export interface DragPreview {
+    startIdx: number;
+    endIdx: number;
+    color: string;
+}
+
+/**
+ * Pendant un déplacement (drag-to-move), calcule la plage de colonnes où la
+ * barre atterrirait. Toute la barre glisse de `colDelta` colonnes
+ * (`currentColIdx - originColIdx`, soit la colonne saisie → colonne survolée).
+ *
+ * @param item     L'item déplacé (startDate/endDate).
+ * @param columns  Ensemble des colonnes de la timeline.
+ * @param colDelta Décalage en colonnes appliqué à toute la barre.
+ * @param color    Couleur du fantôme.
+ */
+export function calculateDragPreview(
+    item: DateRangeItem,
+    columns: TimelineColumn[],
+    colDelta: number,
+    color: string,
+): DragPreview | null {
+    const firstIdx = columns.findIndex((c) => itemOverlapsColumn(item, c));
+    if (firstIdx < 0) return null;
+
+    let lastIdx = firstIdx;
+    for (let i = columns.length - 1; i >= 0; i--) {
+        if (itemOverlapsColumn(item, columns[i])) {
+            lastIdx = i;
+            break;
+        }
+    }
+
+    const span = lastIdx - firstIdx;
+    const max = columns.length - 1;
+    const start = Math.max(0, Math.min(firstIdx + colDelta, max));
+    const end = Math.max(0, Math.min(firstIdx + colDelta + span, max));
+    return { startIdx: start, endIdx: end, color };
+}

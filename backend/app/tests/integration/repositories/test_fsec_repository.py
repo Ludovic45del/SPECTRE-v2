@@ -277,6 +277,102 @@ class TestFsecRepositoryDelete:
 
         assert result is False
 
+    def test_delete_last_version_cleans_assembly_and_frees_elements(
+        self, fsec_repository, sample_fsec_data
+    ):
+        """Supprimer la DERNIÈRE version d'une FSEC purge son récap orphelin et
+        libère les éléments réservés (reservee → dispo). Régression : avant, les
+        FsecAssemblyItem restaient orphelins et bloquaient la suppression de
+        l'élément (CATALOG_ITEM_IN_USE) indéfiniment."""
+        from app.domain.stock.models.stock_constants import (
+            CATEGORY_STRUCTURATION,
+            ELEMENT_STATUS_DISPO,
+            ELEMENT_STATUS_RESERVEE,
+            INSTALLATION_LMJ,
+            ITEM_KIND_ELEMENT,
+            STRUCTURATION_TYPE_STANDARD,
+        )
+        from app.repository.stock.models.fsec_assembly_item_entity import (
+            FsecAssemblyItemEntity,
+        )
+        from app.repository.stock.models.stock_catalog_entity import (
+            StockCatalogItemEntity,
+        )
+
+        created = fsec_repository.create(FsecBean(**sample_fsec_data))
+        item = StockCatalogItemEntity.objects.create(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            structuration_type=STRUCTURATION_TYPE_STANDARD,
+            name="1",
+            installation=INSTALLATION_LMJ,
+            status=ELEMENT_STATUS_RESERVEE,
+        )
+        FsecAssemblyItemEntity.objects.create(
+            fsec_uuid=created.fsec_uuid, catalog_item=item
+        )
+
+        assert fsec_repository.delete(created.version_uuid) is True
+
+        assert not FsecAssemblyItemEntity.objects.filter(
+            fsec_uuid=created.fsec_uuid
+        ).exists()
+        item.refresh_from_db()
+        assert item.status == ELEMENT_STATUS_DISPO
+
+    def test_delete_non_last_version_keeps_assembly(
+        self, fsec_repository, sample_fsec_data
+    ):
+        """Tant qu'une autre version partage le `fsec_uuid`, le récap (et donc la
+        réservation des éléments) est conservé : on ne supprime pas le tableau
+        partagé entre versions."""
+        from app.domain.stock.models.stock_constants import (
+            CATEGORY_STRUCTURATION,
+            ELEMENT_STATUS_RESERVEE,
+            INSTALLATION_LMJ,
+            ITEM_KIND_ELEMENT,
+            STRUCTURATION_TYPE_STANDARD,
+        )
+        from app.repository.fsec.models.fsec_entity import FsecEntity
+        from app.repository.stock.models.fsec_assembly_item_entity import (
+            FsecAssemblyItemEntity,
+        )
+        from app.repository.stock.models.stock_catalog_entity import (
+            StockCatalogItemEntity,
+        )
+
+        created = fsec_repository.create(FsecBean(**sample_fsec_data))
+        # 2e version partageant le même fsec_uuid (duplication sans deviner les FK).
+        dup = FsecEntity.objects.get(version_uuid=created.version_uuid)
+        dup.version_uuid = str(uuid.uuid4())
+        # Nom distinct pour respecter l'unicité (campaign_id, name) ; seul le
+        # `fsec_uuid` partagé importe pour la logique de nettoyage.
+        dup.name = f"{created.name} v2 {uuid.uuid4().hex[:6]}"
+        dup.is_active = False
+        dup._state.adding = True
+        dup.save(force_insert=True)
+
+        item = StockCatalogItemEntity.objects.create(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            structuration_type=STRUCTURATION_TYPE_STANDARD,
+            name="2",
+            installation=INSTALLATION_LMJ,
+            status=ELEMENT_STATUS_RESERVEE,
+        )
+        FsecAssemblyItemEntity.objects.create(
+            fsec_uuid=created.fsec_uuid, catalog_item=item
+        )
+
+        # On supprime la 1re version ; la 2e (dup) reste.
+        assert fsec_repository.delete(created.version_uuid) is True
+
+        assert FsecAssemblyItemEntity.objects.filter(
+            fsec_uuid=created.fsec_uuid
+        ).exists()
+        item.refresh_from_db()
+        assert item.status == ELEMENT_STATUS_RESERVEE
+
     def test_delete_fsec_cascades_children(self, fsec_repository, sample_fsec_data):
         """La suppression d'un FSEC efface en cascade toutes ses données rattachées.
 

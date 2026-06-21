@@ -102,9 +102,7 @@ class TestFsecOverviewImageUpload:
         assert "/media/fsec/overview/" in data["overview_image"]
         assert data["overview_image"].endswith((".jpg", ".jpeg"))
 
-    def test_upload_replaces_previous_image(
-        self, api_client, created_fsec, media_root
-    ):
+    def test_upload_replaces_previous_image(self, api_client, created_fsec, media_root):
         """Un second upload remplace la photo (l'URL change, ancien chemin libéré)."""
         with override_settings(MEDIA_ROOT=media_root):
             first = _patch_multipart(
@@ -179,9 +177,7 @@ class TestFsecOverviewImageUpload:
 class TestFsecOverviewImageDelete:
     """Endpoint DELETE /fsecs/{version_uuid}/overview-image/"""
 
-    def test_delete_clears_overview_image(
-        self, api_client, created_fsec, media_root
-    ):
+    def test_delete_clears_overview_image(self, api_client, created_fsec, media_root):
         """Après DELETE, overview_image est null."""
         with override_settings(MEDIA_ROOT=media_root):
             _patch_multipart(

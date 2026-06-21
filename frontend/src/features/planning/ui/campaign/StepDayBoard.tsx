@@ -18,6 +18,7 @@ import { Check } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import type { PlanningCampaignStep } from '@entities/planning/core/model/planning.schema';
 import type { Etape } from '../../lib/planning.constants';
+import { DRAG_GHOST_SHADOW } from '../../lib/planning.constants';
 import { usePlanningColors } from '../../lib/planning.hooks';
 import { type TimelineColumn, isFsecStepDone } from '../../lib/planning.utils';
 import { resolveWeekState } from '../../lib/planning.grid-utils';
@@ -26,6 +27,7 @@ import {
     getBarPosition,
     getBarBorderRadius,
     calculateResizePreview,
+    calculateDragPreview,
 } from '../../lib/planning.bar-utils';
 import { assignLanes, LANE_HEIGHT, LANE_ROW_VPAD, laneRowHeight } from '../../lib/planning.lane-utils';
 import { useDragToMove } from '../../lib/useDragToMove';
@@ -100,12 +102,29 @@ export const StepDayBoard = memo(function StepDayBoard({
         return m;
     }, [stepsForEtape, columns]);
 
-    const { handleItemMouseDown } = useDragToMove<PlanningCampaignStep>({
+    const { handleItemMouseDown, dragging } = useDragToMove<PlanningCampaignStep>({
         columns,
         findItemAtColumn: useCallback(() => undefined, []),
         onMove,
     });
     const { resizing, handleResizeStart } = useResizeBar({ columns, items: stepsForEtape, onResize });
+
+    // ── Drag-to-move preview (toute la barre glisse de colDelta colonnes) ──
+    let dragPreview: { startIdx: number; endIdx: number; color: string } | null = null;
+    let draggedUuid: string | null = null;
+    let draggedTop = 0;
+    if (dragging) {
+        const colDelta = dragging.currentColIdx - dragging.originColIdx;
+        if (colDelta !== 0) {
+            draggedUuid = dragging.item.uuid;
+            const lane = laneByStep.get(dragging.item.uuid) ?? 0;
+            draggedTop = lane * LANE_HEIGHT + LANE_ROW_VPAD + BAR_GAP;
+            const fsec = fsecByUuid.get(dragging.item.fsecUuid);
+            const ghostColor = fsec && isFsecStepDone(fsec, etape) ? '#4caf50' : etape.color;
+            dragPreview = calculateDragPreview(dragging.item, columns, colDelta, ghostColor);
+        }
+    }
+    const dragBarHeight = LANE_HEIGHT - 2 * BAR_GAP;
 
     return (
         <Box sx={{ overflowX: 'auto', border: `1px solid ${colors.border}`, borderRadius: 1 }} {...dropProps}>
@@ -142,6 +161,8 @@ export const StepDayBoard = memo(function StepDayBoard({
                         <tr>
                             {columns.map((col, idx) => {
                                 const weekState = resolveWeekState(col, weekStatesMap);
+                                const isInDragPreview =
+                                    dragPreview != null && idx >= dragPreview.startIdx && idx <= dragPreview.endIdx;
                                 const bars: React.ReactNode[] = [];
                                 // Fusion façon Vie Labo : on retire la bordure verticale là où une
                                 // barre traverse, pour qu'elle paraisse continue d'une cellule à l'autre.
@@ -158,6 +179,7 @@ export const StepDayBoard = memo(function StepDayBoard({
                                     const fsec = fsecByUuid.get(step.fsecUuid);
                                     const isDone = fsec ? isFsecStepDone(fsec, etape) : false;
                                     const isResizedStep = resizing?.itemId === step.uuid;
+                                    const isDraggedStep = step.uuid === draggedUuid;
                                     const top = lane * LANE_HEIGHT + LANE_ROW_VPAD + BAR_GAP;
                                     const barHeight = LANE_HEIGHT - 2 * BAR_GAP;
                                     const isStart = idx === bounds?.first;
@@ -176,7 +198,7 @@ export const StepDayBoard = memo(function StepDayBoard({
                                                 bgcolor: isDone ? '#4caf50' : etape.color,
                                                 borderRadius: getBarBorderRadius(barPos),
                                                 cursor: 'grab',
-                                                opacity: isResizedStep ? 0.3 : 0.85,
+                                                opacity: isResizedStep || isDraggedStep ? 0.3 : 0.85,
                                                 zIndex: 2,
                                             }}
                                         >
@@ -264,6 +286,9 @@ export const StepDayBoard = memo(function StepDayBoard({
                                             borderBottom: `1px solid ${colors.border}`,
                                             borderLeft: dropLeftBorder ? 'none' : `1px solid ${colors.border}`,
                                             borderRight: dropRightBorder ? 'none' : `1px solid ${colors.border}`,
+                                            boxShadow: isInDragPreview
+                                                ? `inset 0 0 0 100px ${colors.dragHighlight}`
+                                                : undefined,
                                             backgroundColor: col.isCurrent
                                                 ? colors.currentDay
                                                 : weekState === 'fermeture'
@@ -322,6 +347,7 @@ export const StepDayBoard = memo(function StepDayBoard({
                                     gap: 0.3,
                                     px: 2,
                                     overflow: 'hidden',
+                                    opacity: step.uuid === draggedUuid ? 0.3 : 1,
                                 }}
                             >
                                 {isDone && <Check sx={{ fontSize: 12, color: '#fff', flexShrink: 0 }} />}
@@ -331,6 +357,24 @@ export const StepDayBoard = memo(function StepDayBoard({
                             </Box>
                         );
                     })}
+
+                    {/* Drag-to-move ghost: barre fantôme ombrée à l'emplacement de dépôt */}
+                    {dragPreview && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: draggedTop,
+                                height: dragBarHeight,
+                                left: `${(dragPreview.startIdx / colCount) * 100}%`,
+                                width: `${((dragPreview.endIdx - dragPreview.startIdx + 1) / colCount) * 100}%`,
+                                bgcolor: dragPreview.color,
+                                borderRadius: '6px',
+                                opacity: 0.75,
+                                border: '1px dashed rgba(255,255,255,0.85)',
+                                boxShadow: DRAG_GHOST_SHADOW,
+                            }}
+                        />
+                    )}
                 </Box>
             </Box>
         </Box>

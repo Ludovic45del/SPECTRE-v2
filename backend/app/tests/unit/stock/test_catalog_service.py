@@ -3,6 +3,8 @@
 Couverture des règles CDC §3.1 et §10.1.
 """
 
+from dataclasses import replace
+
 import pytest
 
 from app.domain.exceptions import (
@@ -14,15 +16,21 @@ from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
 from app.domain.stock.models.stock_constants import (
     CATEGORY_COLLES,
     CATEGORY_PIECES_ELEMENTAIRES,
+    CATEGORY_STRUCTURATION,
     ELEMENT_STATUS_DISPO,
     ERROR_CODE_CATALOG_ITEM_IN_USE,
     ERROR_CODE_INVALID_KIND_CATEGORY,
     INSTALLATION_LMJ,
     ITEM_KIND_CONSUMABLE,
     ITEM_KIND_ELEMENT,
+    STRUCTURATION_BATCH_MAX,
+    STRUCTURATION_TYPE_EC,
+    STRUCTURATION_TYPE_SPECIALE,
+    STRUCTURATION_TYPE_STANDARD,
 )
 from app.domain.stock.services.catalog_service import (
     create_item,
+    create_structuration_batch,
     get_item,
     list_items,
     patch_item,
@@ -96,6 +104,104 @@ class TestCreateItem:
         with pytest.raises(ValidationException) as exc:
             create_item(mock_stock_catalog_repository, bean)
         assert exc.value.field == "unite"
+
+    @pytest.mark.unit
+    def test_create_element_accepts_optional_fsec_name(
+        self, mock_stock_catalog_repository
+    ):
+        # fsec_name est un lien déclaratif optionnel : accepté renseigné ou absent.
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_PIECES_ELEMENTAIRES,
+            name="Cible libre",
+            fsec_name="FSEC-2026-001",
+            installation=INSTALLATION_LMJ,
+        )
+        mock_stock_catalog_repository.create.return_value = bean
+        result = create_item(mock_stock_catalog_repository, bean)
+        assert result.fsec_name == "FSEC-2026-001"
+
+        bean_sans_fsec = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_PIECES_ELEMENTAIRES,
+            name="Cible sans FSEC",
+            installation=INSTALLATION_LMJ,
+        )
+        mock_stock_catalog_repository.create.return_value = bean_sans_fsec
+        result = create_item(mock_stock_catalog_repository, bean_sans_fsec)
+        assert result.fsec_name is None
+
+    @pytest.mark.unit
+    def test_create_consumable_rejects_fsec_name(self, mock_stock_catalog_repository):
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_CONSUMABLE,
+            category=CATEGORY_COLLES,
+            name="Colle",
+            unite="tubes",
+            quantite=1,
+            fsec_name="FSEC-2026-001",
+        )
+        with pytest.raises(ValidationException) as exc:
+            create_item(mock_stock_catalog_repository, bean)
+        assert exc.value.field == "fsec_name"
+
+    @pytest.mark.unit
+    def test_create_structuration_requires_type(self, mock_stock_catalog_repository):
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            name="Structuration sans type",
+            installation=INSTALLATION_LMJ,
+        )
+        with pytest.raises(ValidationException) as exc:
+            create_item(mock_stock_catalog_repository, bean)
+        assert exc.value.field == "structuration_type"
+
+    @pytest.mark.unit
+    def test_create_structuration_with_type_success(
+        self, mock_stock_catalog_repository
+    ):
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            structuration_type=STRUCTURATION_TYPE_EC,
+            name="Structuration EC",
+            installation=INSTALLATION_LMJ,
+        )
+        mock_stock_catalog_repository.create.return_value = bean
+        result = create_item(mock_stock_catalog_repository, bean)
+        assert result.structuration_type == STRUCTURATION_TYPE_EC
+
+    @pytest.mark.unit
+    def test_create_structuration_rejects_unknown_type(
+        self, mock_stock_catalog_repository
+    ):
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            structuration_type="bogus",
+            name="Structuration type inconnu",
+            installation=INSTALLATION_LMJ,
+        )
+        with pytest.raises(ValidationException) as exc:
+            create_item(mock_stock_catalog_repository, bean)
+        assert exc.value.field == "structuration_type"
+
+    @pytest.mark.unit
+    def test_create_non_structuration_clears_type(
+        self, mock_stock_catalog_repository
+    ):
+        # Type fourni hors rubrique structuration → remis à None silencieusement.
+        bean = StockCatalogItemBean(
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_PIECES_ELEMENTAIRES,
+            structuration_type=STRUCTURATION_TYPE_SPECIALE,
+            name="Cible",
+            installation=INSTALLATION_LMJ,
+        )
+        mock_stock_catalog_repository.create.return_value = bean
+        create_item(mock_stock_catalog_repository, bean)
+        assert bean.structuration_type is None
 
     @pytest.mark.unit
     def test_create_consumable_requires_unite(self, mock_stock_catalog_repository):
@@ -301,3 +407,93 @@ class TestSoftDelete:
         mock_stock_catalog_repository.get_by_uuid.return_value = None
         with pytest.raises(NotFoundException):
             soft_delete_item(mock_stock_catalog_repository, "missing-uuid")
+
+
+class TestCreateStructurationBatch:
+    """Création par lot de structurations : le service valide et délègue
+    l'allocation (numérotation atomique + verrouillée) au repository."""
+
+    @staticmethod
+    def _setup(repo):
+        # Simule l'attribution séquentielle des numéros côté repository.
+        repo.create_structuration_batch.side_effect = lambda template, quantity: [
+            replace(template, name=str(i + 1)) for i in range(quantity)
+        ]
+
+    @pytest.mark.unit
+    def test_builds_validated_template_and_delegates(
+        self, mock_stock_catalog_repository
+    ):
+        self._setup(mock_stock_catalog_repository)
+        result = create_structuration_batch(
+            mock_stock_catalog_repository,
+            structuration_type=STRUCTURATION_TYPE_STANDARD,
+            installation=INSTALLATION_LMJ,
+            quantity=3,
+        )
+        assert len(result) == 3
+        mock_stock_catalog_repository.create_structuration_batch.assert_called_once()
+        template, quantity = mock_stock_catalog_repository.create_structuration_batch.call_args[0]
+        assert quantity == 3
+        assert template.kind == ITEM_KIND_ELEMENT
+        assert template.category == CATEGORY_STRUCTURATION
+        assert template.structuration_type == STRUCTURATION_TYPE_STANDARD
+        assert template.installation == INSTALLATION_LMJ
+        assert template.status == ELEMENT_STATUS_DISPO
+
+    @pytest.mark.unit
+    def test_fsec_is_optional(self, mock_stock_catalog_repository):
+        self._setup(mock_stock_catalog_repository)
+        create_structuration_batch(
+            mock_stock_catalog_repository,
+            structuration_type=STRUCTURATION_TYPE_STANDARD,
+            installation=INSTALLATION_LMJ,
+            quantity=1,
+            fsec_name=None,
+        )
+        template = mock_stock_catalog_repository.create_structuration_batch.call_args[0][0]
+        assert template.fsec_name is None
+
+    @pytest.mark.unit
+    def test_propagates_common_fields(self, mock_stock_catalog_repository):
+        self._setup(mock_stock_catalog_repository)
+        create_structuration_batch(
+            mock_stock_catalog_repository,
+            structuration_type=STRUCTURATION_TYPE_SPECIALE,
+            installation=INSTALLATION_LMJ,
+            quantity=2,
+            materiaux_mat="Cu/Au",
+            fournisseur="CEA Valduc",
+        )
+        template = mock_stock_catalog_repository.create_structuration_batch.call_args[0][0]
+        assert template.materiaux_mat == "Cu/Au"
+        assert template.fournisseur == "CEA Valduc"
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("quantity", [0, -1, STRUCTURATION_BATCH_MAX + 1])
+    def test_rejects_invalid_quantity(
+        self, quantity, mock_stock_catalog_repository
+    ):
+        self._setup(mock_stock_catalog_repository)
+        with pytest.raises(ValidationException) as exc:
+            create_structuration_batch(
+                mock_stock_catalog_repository,
+                structuration_type=STRUCTURATION_TYPE_STANDARD,
+                installation=INSTALLATION_LMJ,
+                quantity=quantity,
+            )
+        assert exc.value.field == "quantity"
+        mock_stock_catalog_repository.create_structuration_batch.assert_not_called()
+
+    @pytest.mark.unit
+    def test_rejects_invalid_structuration_type(self, mock_stock_catalog_repository):
+        self._setup(mock_stock_catalog_repository)
+        with pytest.raises(ValidationException) as exc:
+            create_structuration_batch(
+                mock_stock_catalog_repository,
+                structuration_type="bogus",
+                installation=INSTALLATION_LMJ,
+                quantity=2,
+            )
+        assert exc.value.field == "structuration_type"
+        mock_stock_catalog_repository.create_structuration_batch.assert_not_called()

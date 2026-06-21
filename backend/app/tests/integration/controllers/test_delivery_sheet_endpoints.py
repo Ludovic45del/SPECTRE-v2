@@ -115,9 +115,7 @@ class TestDeliveryInfoEndpoint:
     ):
         response = api_client.patch(
             f"/api/v1/fsecs/{fsec.version_uuid}/delivery-info/",
-            data=json.dumps(
-                {"num_interface_io": "785", "delivery_date": "2026-05-14"}
-            ),
+            data=json.dumps({"num_interface_io": "785", "delivery_date": "2026-05-14"}),
             content_type="application/json",
         )
         assert response.status_code == 200
@@ -129,9 +127,7 @@ class TestDeliveryInfoEndpoint:
     def test_patch_without_sealing_step_keeps_date(self, api_client, fsec):
         response = api_client.patch(
             f"/api/v1/fsecs/{fsec.version_uuid}/delivery-info/",
-            data=json.dumps(
-                {"num_interface_io": "785", "delivery_date": "2026-05-14"}
-            ),
+            data=json.dumps({"num_interface_io": "785", "delivery_date": "2026-05-14"}),
             content_type="application/json",
         )
         assert response.status_code == 200

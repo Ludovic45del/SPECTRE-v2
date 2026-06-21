@@ -550,8 +550,6 @@ class TestCampaignStepService:
         assert svc.delete_campaign_step(mock_repo, uuid.uuid4()) is True
 
 
-
-
 # ====================== LAB EVENT ======================
 
 

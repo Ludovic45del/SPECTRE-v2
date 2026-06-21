@@ -55,7 +55,6 @@ const validPayload = {
             is_gas: false,
         },
     ],
-    top_operators: [{ user_uuid: 'u1', name: 'Alice', steps_count: 12 }],
     bottleneck_step_key: 'assembly_to_metrology',
 };
 
@@ -81,8 +80,6 @@ describe('IndicatorsSchema', () => {
         expect(parsed.stepDurations).toHaveLength(1);
         expect(parsed.stepDurations[0].avgDays).toBe(4.5);
         expect(parsed.stepDurations[0].isGas).toBe(false);
-        expect(parsed.topOperators[0].userUuid).toBe('u1');
-        expect(parsed.topOperators[0].stepsCount).toBe(12);
         expect(parsed.bottleneckStepKey).toBe('assembly_to_metrology');
     });
 

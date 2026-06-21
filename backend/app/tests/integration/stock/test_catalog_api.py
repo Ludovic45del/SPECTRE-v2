@@ -6,7 +6,7 @@ HTTP (status, payload).
 
 import json
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.test import RequestFactory
@@ -17,10 +17,12 @@ from app.domain.stock.models.stock_catalog_bean import StockCatalogItemBean
 from app.domain.stock.models.stock_constants import (
     CATEGORY_COLLES,
     CATEGORY_PIECES_ELEMENTAIRES,
+    CATEGORY_STRUCTURATION,
     ELEMENT_STATUS_DISPO,
     INSTALLATION_LMJ,
     ITEM_KIND_CONSUMABLE,
     ITEM_KIND_ELEMENT,
+    STRUCTURATION_TYPE_STANDARD,
 )
 
 
@@ -192,3 +194,75 @@ class TestStockCatalogControllerCreate:
 
         with pytest.raises(InvalidDataException):
             controller.create(request)
+
+
+# ============================================================================
+# BATCH STRUCTURATION
+# ============================================================================
+
+
+class TestStockCatalogControllerBatchStructuration:
+    @staticmethod
+    def _structuration_bean(uuid, name):
+        return StockCatalogItemBean(
+            uuid=uuid,
+            kind=ITEM_KIND_ELEMENT,
+            category=CATEGORY_STRUCTURATION,
+            structuration_type=STRUCTURATION_TYPE_STANDARD,
+            name=name,
+            installation=INSTALLATION_LMJ,
+            status=ELEMENT_STATUS_DISPO,
+            is_active=True,
+        )
+
+    @pytest.mark.integration
+    def test_next_number_endpoint(self, request_factory):
+        controller = StockCatalogController()
+        controller.repository = MagicMock()
+        controller.repository.next_structuration_number.return_value = 12
+        response = controller.next_structuration_number(
+            _make_get(
+                request_factory, "/api/v1/stock/catalog/next-structuration-number/"
+            )
+        )
+        assert response.status_code == 200
+        assert json.loads(response.content) == {"next": 12}
+
+    @pytest.mark.integration
+    @patch("app.api.stock.catalog_controller.create_structuration_batch")
+    def test_batch_success_returns_201_list(self, mock_batch, request_factory):
+        mock_batch.return_value = [
+            self._structuration_bean("a" * 8 + "-1111-4111-8111-111111111111", "11"),
+            self._structuration_bean("b" * 8 + "-1111-4111-8111-111111111111", "12"),
+        ]
+        controller = StockCatalogController()
+        request = _make_post(
+            request_factory,
+            "/api/v1/stock/catalog/batch-structuration/",
+            {
+                "structuration_type": STRUCTURATION_TYPE_STANDARD,
+                "installation": INSTALLATION_LMJ,
+                "quantity": 2,
+            },
+        )
+        response = controller.batch_structuration(request)
+        assert response.status_code == 201
+        data = json.loads(response.content)
+        assert [item["name"] for item in data] == ["11", "12"]
+
+    @pytest.mark.integration
+    def test_batch_invalid_quantity_returns_400(self, request_factory):
+        from app.domain.exceptions import InvalidDataException
+
+        controller = StockCatalogController()
+        request = _make_post(
+            request_factory,
+            "/api/v1/stock/catalog/batch-structuration/",
+            {
+                "structuration_type": STRUCTURATION_TYPE_STANDARD,
+                "installation": INSTALLATION_LMJ,
+                "quantity": 0,
+            },
+        )
+        with pytest.raises(InvalidDataException):
+            controller.batch_structuration(request)

@@ -36,6 +36,13 @@ const TOTAL_COLS = CATALOG_COLUMNS.length + 1; // +1 pour la colonne actions
 export function CatalogTab() {
     const filters = useFilterCatalogStore((s) => s.filters);
     const { data: items, isLoading, isPlaceholderData, error } = useCatalogItems(filters);
+
+    // Compteurs des rubriques : mêmes filtres SAUF la catégorie, sinon
+    // sélectionner une rubrique ramènerait toutes les autres à 0.
+    // (category null ⇒ même query key que `filters` ⇒ pas de requête en plus)
+    const countFilters = useMemo(() => ({ ...filters, category: null }), [filters]);
+    const { data: rubricCountItems } = useCatalogItems(countFilters);
+
     const openCreateModal = useCreateItemStore((s) => s.open);
     const openEditModal = useEditItemStore((s) => s.open);
 
@@ -77,7 +84,7 @@ export function CatalogTab() {
     return (
         <Box>
             <CatalogToolbar onAdd={openCreateModal} />
-            <RubricFilterPills items={items} />
+            <RubricFilterPills items={rubricCountItems} />
 
             {/* Table Header — Paper séparé style Campaigns */}
             <Paper variant="outlined" sx={{ borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
@@ -130,6 +137,9 @@ export function CatalogTab() {
                                     </TableCell>
                                     <TableCell>
                                         <Skeleton variant="rounded" width={100} height={22} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Skeleton variant="rounded" width={70} height={22} />
                                     </TableCell>
                                     <TableCell>
                                         <Skeleton variant="text" width="80%" />

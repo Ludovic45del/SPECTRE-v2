@@ -3,7 +3,7 @@
  * dates par clics successifs sur un calendrier (1er clic = début, 2e = fin).
  *
  * Aucune dépendance UI : 100% testable. Utilisée par {@link RangeCalendar}.
- * @module features/planning/lib
+ * @module shared/lib
  */
 import { useCallback, useState } from 'react';
 import type { Dayjs } from 'dayjs';

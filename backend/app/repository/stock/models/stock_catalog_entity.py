@@ -13,6 +13,7 @@ from app.domain.stock.models.stock_constants import (
     ELEMENT_STATUS_DISPO,
     INSTALLATION_CHOICES,
     ITEM_KIND_CHOICES,
+    STRUCTURATION_TYPE_CHOICES,
 )
 
 
@@ -44,10 +45,17 @@ class StockCatalogItemEntity(models.Model):
     # Discriminant principal
     kind = models.CharField(max_length=20, choices=ITEM_KIND_CHOICES)
 
-    # Rubrique métier (enum strict des 6 valeurs, cf. CDC §4.6)
+    # Rubrique métier (enum strict des 4 valeurs, cf. CDC §4.6)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
 
+    # Sous-type de structuration — requis si category=structuration, NULL sinon
+    structuration_type = models.CharField(
+        max_length=20, choices=STRUCTURATION_TYPE_CHOICES, null=True, blank=True
+    )
+
     # Identification
+    # Pour une structuration créée par lot, `name` porte le numéro de série
+    # global auto-incrémenté — seul identifiant distinctif.
     name = models.CharField(max_length=200)
     reference = models.CharField(max_length=200, null=True, blank=True)
 
@@ -65,6 +73,9 @@ class StockCatalogItemEntity(models.Model):
     type_d_achat = models.CharField(max_length=100, null=True, blank=True)
 
     # --- Champs element uniquement (null pour kind=consumable) ---
+    # FSEC de destination (nom, lien déclaratif optionnel — le couplage dur
+    # passe par FSEC_ASSEMBLY_ITEM, cf. CDC §4.2)
+    fsec_name = models.CharField(max_length=200, null=True, blank=True)
     installation = models.CharField(
         max_length=10, choices=INSTALLATION_CHOICES, null=True, blank=True
     )

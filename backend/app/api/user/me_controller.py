@@ -95,9 +95,7 @@ class MeController(viewsets.ViewSet):
 
         if request.method == "DELETE":
             bean = user_service.delete_user_signature(self.repository, profile.uuid)
-            logger.info(
-                "Utilisateur %s a supprime sa signature", request.user.username
-            )
+            logger.info("Utilisateur %s a supprime sa signature", request.user.username)
             return JsonResponse(user_mapper_bean_to_api(bean))
 
         serializer = SignatureUploadSerializer(data=request.data)

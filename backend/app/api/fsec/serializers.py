@@ -113,9 +113,7 @@ class DeliveryInfoSerializer(serializers.Serializer):
         max_length=50, required=False, allow_blank=True, allow_null=True
     )
     delivery_date = serializers.DateField(required=False, allow_null=True)
-    delivery_acceptor_user_uuid = serializers.UUIDField(
-        required=False, allow_null=True
-    )
+    delivery_acceptor_user_uuid = serializers.UUIDField(required=False, allow_null=True)
 
 
 class DeliveryValidationSerializer(serializers.Serializer):
@@ -152,9 +150,7 @@ class DeliveryRecapTargetInfoSerializer(serializers.Serializer):
     delivery_remarques = serializers.CharField(
         max_length=500, required=False, allow_blank=True, allow_null=True
     )
-    delivery_acceptor_user_uuid = serializers.UUIDField(
-        required=False, allow_null=True
-    )
+    delivery_acceptor_user_uuid = serializers.UUIDField(required=False, allow_null=True)
     delivery_receiver_name = serializers.CharField(
         max_length=100, required=False, allow_blank=True, allow_null=True
     )

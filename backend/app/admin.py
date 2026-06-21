@@ -38,6 +38,9 @@ from app.repository.fsec.models.fsec_rack_entity import FsecRackEntity
 from app.repository.fsec.models.fsec_roles_entity import FsecRolesEntity
 from app.repository.fsec.models.fsec_status_entity import FsecStatusEntity
 from app.repository.fsec.models.fsec_teams_entity import FsecTeamsEntity
+
+# Planning Entities
+from app.repository.planning.models.planning_step_entity import PlanningStepEntity
 from app.repository.steps.models.airtightness_test_lp_step_entity import (
     AirtightnessTestLpStepEntity,
 )
@@ -63,9 +66,6 @@ from app.repository.steps.models.repressurization_step_entity import (
     RepressurizationStepEntity,
 )
 from app.repository.steps.models.sealing_step_entity import SealingStepEntity
-
-# Planning Entities
-from app.repository.planning.models.planning_step_entity import PlanningStepEntity
 
 
 # Campaign Admin Classes

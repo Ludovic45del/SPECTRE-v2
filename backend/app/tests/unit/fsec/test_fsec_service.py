@@ -548,9 +548,7 @@ class TestFsecServiceOverviewImage:
         mock_repo.set_overview_image.return_value = updated
         fake_file = MagicMock(name="UploadedFile")
 
-        result = set_fsec_overview_image(
-            mock_repo, sample_fsec.version_uuid, fake_file
-        )
+        result = set_fsec_overview_image(mock_repo, sample_fsec.version_uuid, fake_file)
 
         mock_repo.set_overview_image.assert_called_once_with(
             sample_fsec.version_uuid, fake_file
@@ -649,7 +647,9 @@ class TestFsecServiceAssemblyPlan:
 
     def test_set_assembly_plan_annotations_delegates_to_repo(self, sample_fsec):
         mock_repo = MagicMock()
-        annotations = [{"id": "a1", "type": "arrow", "x1": 0, "y1": 0, "x2": 1, "y2": 1}]
+        annotations = [
+            {"id": "a1", "type": "arrow", "x1": 0, "y1": 0, "x2": 1, "y2": 1}
+        ]
         updated = FsecBean(
             version_uuid=sample_fsec.version_uuid,
             fsec_uuid=sample_fsec.fsec_uuid,

@@ -88,15 +88,6 @@ class CampaignIndicatorsBean:
 
 
 @dataclass
-class OperatorWorkloadBean:
-    """Charge de travail d'un opérateur (nombre d'étapes complétées dans l'année)."""
-
-    user_uuid: str
-    name: str
-    steps_count: int = 0
-
-
-@dataclass
 class IndicatorsBean:
     """Conteneur global des indicateurs pour une année donnée."""
 
@@ -105,5 +96,4 @@ class IndicatorsBean:
     fsec: FsecIndicatorsBean = field(default_factory=FsecIndicatorsBean)
     campaign: CampaignIndicatorsBean = field(default_factory=CampaignIndicatorsBean)
     step_durations: List[StepDurationBean] = field(default_factory=list)
-    top_operators: List[OperatorWorkloadBean] = field(default_factory=list)
     bottleneck_step_key: Optional[str] = None

@@ -14,7 +14,7 @@ import { useCreateLabEvent, useDeleteLabEvent, useUpdateLabEvent } from '@entiti
 import type { LabEvent } from '@entities/planning/core/model/planning.schema';
 import { ColoredSelect } from '../shared/ColoredSelect';
 import { EntityRangeDialog } from '../shared/EntityRangeDialog';
-import type { DateRange } from '../../lib/useDateRangeSelection';
+import type { DateRange } from '@shared/lib';
 
 export interface EventPopoverProps {
     anchorEl: HTMLElement;

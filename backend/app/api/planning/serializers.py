@@ -36,9 +36,7 @@ class StepLabelValidationMixin:
         )
 
         if not PlanningStepEntity.objects.filter(label=value).exists():
-            raise serializers.ValidationError(
-                f"Etape de planning inconnue: '{value}'."
-            )
+            raise serializers.ValidationError(f"Etape de planning inconnue: '{value}'.")
         return value
 
 
@@ -76,9 +74,7 @@ class PlanningCellAnnotationSerializer(
     text = serializers.CharField(required=True, max_length=1000)
 
 
-class PlanningFsecCellLinkSerializer(
-    StepLabelValidationMixin, serializers.Serializer
-):
+class PlanningFsecCellLinkSerializer(StepLabelValidationMixin, serializers.Serializer):
     """Validation pour les liens FSEC -> cellule/etape planning.
     week_num=0 signifie un lien au niveau de l'etape (pas une semaine specifique).
     """

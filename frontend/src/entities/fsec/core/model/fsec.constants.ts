@@ -30,7 +30,19 @@ export const FSEC_STATUS_ID = {
     PERMEATION: 12,
     DEPRESSURISATION: 13,
     RE_PRESSURISATION: 14,
+    DECISION_MOE: 15,
 } as const;
+
+/**
+ * Statuts de mise en pause : hors de la progression linéaire, ils figent
+ * l'avancement de la FSEC (aucune étape n'est considérée active ni terminée).
+ * Source de vérité unique partagée par le stepper FSEC et la vue couloirs planning.
+ */
+export const PAUSED_FSEC_STATUS_IDS: readonly number[] = [FSEC_STATUS_ID.HS, FSEC_STATUS_ID.DECISION_MOE];
+
+/** True si le statut fige l'avancement (HS ou Décision MOE). */
+export const isPausedFsecStatus = (statusId: number | null): boolean =>
+    statusId !== null && PAUSED_FSEC_STATUS_IDS.includes(statusId);
 
 /** FSEC Status referential from backend */
 export const FSEC_STATUSES: Record<number, FsecStatusInfo> = {
@@ -51,6 +63,8 @@ export const FSEC_STATUSES: Record<number, FsecStatusInfo> = {
     12: { label: 'Perméation', color: '#ec4899' },
     13: { label: 'Dépressurisation', color: '#f97316' },
     14: { label: 'Re-pressurisation', color: '#22c55e' },
+    // Statut de mise en pause (fige l'avancement, comme HS)
+    15: { label: 'Décision MOE', color: '#64748b' },
 } as const;
 
 /** FSEC Category referential from backend */

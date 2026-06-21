@@ -284,14 +284,22 @@ class TestCampaignRepositoryGetBySlug:
         name = f"Recurrente {uuid.uuid4().hex[:8]}"
         s1 = campaign_repository.create(
             CampaignBean(
-                type_id=0, status_id=0, installation_id=0,
-                name=name, year=2026, semester="S1",
+                type_id=0,
+                status_id=0,
+                installation_id=0,
+                name=name,
+                year=2026,
+                semester="S1",
             )
         )
         s2 = campaign_repository.create(
             CampaignBean(
-                type_id=0, status_id=0, installation_id=0,
-                name=name, year=2026, semester="S2",
+                type_id=0,
+                status_id=0,
+                installation_id=0,
+                name=name,
+                year=2026,
+                semester="S2",
             )
         )
         slug_s1 = build_campaign_slug(2026, "S1", s1.installation_label, name)

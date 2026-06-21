@@ -11,3 +11,4 @@ export { ColorDot, type ColorDotProps } from './ColorDot';
 export { ChartTooltipCard, type TooltipMetric } from './ChartTooltipCard';
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { LoginSuccessAnimation, type LoginSuccessAnimationProps } from './LoginSuccessAnimation';
+export { RangeCalendar, type RangeCalendarProps } from './RangeCalendar';

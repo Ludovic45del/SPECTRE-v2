@@ -115,7 +115,9 @@ class TestMeSignature:
             resp = me_client.post(self.URL, {"image": bad})
         assert resp.status_code == 400
 
-    def test_upload_rejects_oversized_dimensions(self, me_client, media_root, monkeypatch):
+    def test_upload_rejects_oversized_dimensions(
+        self, me_client, media_root, monkeypatch
+    ):
         monkeypatch.setattr("app.api.user.serializers.AVATAR_MAX_PIXELS", 1000)
         with override_settings(MEDIA_ROOT=media_root):
             resp = me_client.post(self.URL, {"image": _png(400, 300)})
