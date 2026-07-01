@@ -1,0 +1,43 @@
+# =============================================================================
+#  SPECTRE — service systemd pour gunicorn (déploiement air-gap RHEL 9)
+# =============================================================================
+#  Installer dans : /etc/systemd/system/spectre-gunicorn.service
+#  Puis :
+#     sudo systemctl daemon-reload
+#     sudo systemctl enable --now spectre-gunicorn
+#     sudo systemctl status spectre-gunicorn
+#     journalctl -u spectre-gunicorn -f          # logs
+#
+#  ⚠ ADAPTER : User/Group, et les chemins /opt/spectre/... à votre installation.
+# =============================================================================
+
+[Unit]
+Description=SPECTRE Gunicorn (Django/DRF)
+After=network.target
+
+[Service]
+Type=simple
+User=spectre
+Group=spectre
+
+# Le venv Python 3.11 dédié et le code backend.
+WorkingDirectory=/opt/spectre/backend
+Environment=DJANGO_SETTINGS_MODULE=config.settings
+
+# Variables d'env de l'application. Le « - » rend le fichier optionnel
+# (settings.py charge de toute façon backend/.env via python-dotenv).
+EnvironmentFile=-/opt/spectre/backend/.env
+
+ExecStart=/opt/spectre/venv/bin/gunicorn \
+    --config /opt/spectre/deploy/airgap/gunicorn.conf.py \
+    config.wsgi:application
+
+Restart=on-failure
+RestartSec=5
+
+# Durcissement léger (compatible écriture SQLite + médias).
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

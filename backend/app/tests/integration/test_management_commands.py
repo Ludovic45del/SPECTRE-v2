@@ -116,9 +116,15 @@ class TestGetConnPostgresUrl:
 # =============================================================================
 
 
-@pytest.mark.unit
+@pytest.mark.integration
 class TestInsertCsvIntoTableRaises:
-    """A DB-level error must bubble up, not be logged-and-swallowed."""
+    """A DB-level error must bubble up, not be logged-and-swallowed.
+
+    Le chemin testé (pd.read_csv + get_conn + to_sql) est celui du moteur
+    PostgreSQL : on force donc DATABASES sur un ENGINE postgresql et on
+    court-circuite _table_has_rows, pour que le test soit déterministe quel que
+    soit le moteur ambiant (sqlite en job unit, postgresql en job integration).
+    """
 
     def test_reraises_on_db_error(self, tmp_path):
         from app.management.commands import database_util
@@ -151,13 +157,18 @@ class TestInsertCsvIntoTableRaises:
             def __exit__(self, *exc):
                 return False
 
-        with patch.object(database_util, "get_conn", return_value=FakeConn()):
-            with patch(
-                "app.management.commands.database_util.pd.read_csv"
-            ) as mock_read:
-                mock_df = mock_read.return_value
-                mock_df.to_sql.side_effect = boom
-                with pytest.raises(RuntimeError, match="duplicate key"):
-                    database_util.insert_csv_into_table(cmd, "SOME_TABLE", csv_path)
+        pg_settings = {"default": {"ENGINE": "django.db.backends.postgresql"}}
+        with patch.object(database_util.settings, "DATABASES", pg_settings):
+            with patch.object(database_util, "_table_has_rows", return_value=False):
+                with patch.object(database_util, "get_conn", return_value=FakeConn()):
+                    with patch(
+                        "app.management.commands.database_util.pd.read_csv"
+                    ) as mock_read:
+                        mock_df = mock_read.return_value
+                        mock_df.to_sql.side_effect = boom
+                        with pytest.raises(RuntimeError, match="duplicate key"):
+                            database_util.insert_csv_into_table(
+                                cmd, "SOME_TABLE", csv_path
+                            )
 
         assert "Unexpected error" in cmd.stderr.getvalue()

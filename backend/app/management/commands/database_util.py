@@ -1,10 +1,30 @@
+"""Utilitaires de seed de la base (initdb / demo).
+
+pandas et SQLAlchemy ne sont utilisés que pour le **chemin rapide PostgreSQL**
+(`df.to_sql`). Ils sont importés de façon protégée : en déploiement air-gap
+SQLite ils ne sont pas installés, et le seed passe par la connexion Django
+(stdlib `csv` uniquement). Les noms `pd` / `create_engine` / `URL` restent des
+attributs de module (réels en dev/CI où les deux paquets sont présents) pour
+que les tests puissent les patcher.
+"""
+
+import csv
 from pathlib import Path
 
-import pandas as pd
 from django.conf import settings
 from django.db import connection
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+
+try:  # pragma: no cover - présents en dev/CI, absents en prod air-gap SQLite
+    import pandas as pd
+except ImportError:  # pragma: no cover
+    pd = None
+
+try:  # pragma: no cover
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import URL
+except ImportError:  # pragma: no cover
+    create_engine = None
+    URL = None
 
 
 def get_conn():
@@ -16,6 +36,13 @@ def get_conn():
         raise RuntimeError(
             f"Only PostgreSQL is supported, got ENGINE={engine!r}. "
             "Configure DB_ENGINE=django.db.backends.postgresql in backend/.env."
+        )
+
+    if create_engine is None or URL is None:
+        raise RuntimeError(
+            "SQLAlchemy est requis pour le seed via le chemin rapide PostgreSQL. "
+            "Installez `sqlalchemy` (cf. requirements-dev.txt) ou utilisez "
+            "USE_SQLITE=True."
         )
 
     port = db_settings.get("PORT") or "5432"
@@ -45,18 +72,28 @@ def _table_has_rows(table_name):
         return cursor.fetchone()[0] > 0
 
 
-def _insert_via_django(table_name, df):
-    """Insère un DataFrame via la connexion Django.
+def _insert_csv_via_django(table_name, csv_path):
+    """Insère un CSV via la connexion Django, sans pandas.
 
-    Indépendant du moteur : fonctionne avec SQLite (serveur de dev) comme
-    avec tout backend supporté par Django. Les colonnes du CSV correspondent
-    aux colonnes réelles de la table.
+    Indépendant du moteur : fonctionne avec SQLite (déploiement air-gap) comme
+    avec tout backend supporté par Django. Les colonnes du CSV correspondent aux
+    colonnes réelles de la table. Une cellule vide devient NULL (parité avec
+    l'ancien comportement pandas NaN → None).
     """
-    columns = list(df.columns)
-    rows = [
-        tuple(None if pd.isna(value) else value for value in record)
-        for record in df.itertuples(index=False, name=None)
-    ]
+    with open(csv_path, newline="", encoding="utf-8") as fh:
+        reader = csv.reader(fh)
+        try:
+            columns = next(reader)
+        except StopIteration:
+            return  # CSV vide (pas même d'en-tête)
+        rows = [
+            tuple(value if value != "" else None for value in record)
+            for record in reader
+            # Ignore les lignes vides (parité avec pandas skip_blank_lines) :
+            # certains CSV se terminent par une ligne blanche.
+            if record
+        ]
+
     if not rows:
         return
 
@@ -81,16 +118,23 @@ def insert_csv_into_table(self, table_name, csv_path):
             )
             return
 
-        # Use Path for cross-platform path handling
-        df = pd.read_csv(Path(csv_path), dtype="string")
+        csv_path = Path(csv_path)
         engine = settings.DATABASES["default"].get("ENGINE", "")
         if "postgresql" in engine:
+            # Chemin rapide PostgreSQL (pandas + SQLAlchemy bulk COPY).
+            if pd is None:
+                raise RuntimeError(
+                    "pandas est requis pour le seed via le chemin rapide "
+                    "PostgreSQL. Installez `pandas` (cf. requirements-dev.txt) "
+                    "ou utilisez USE_SQLITE=True."
+                )
+            df = pd.read_csv(csv_path, dtype="string")
             with get_conn() as conn:
                 df.to_sql(table_name, if_exists="append", index=False, con=conn)
         else:
             # SQLite ou autre : passe par la connexion Django (get_conn ne
-            # supporte que PostgreSQL).
-            _insert_via_django(table_name, df)
+            # supporte que PostgreSQL), sans dépendre de pandas.
+            _insert_csv_via_django(table_name, csv_path)
     except Exception as e:
         # Re-raise so the caller can decide whether to abort or tolerate the
         # failure. Previously this was swallowed, hiding duplicate-PK errors on

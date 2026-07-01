@@ -44,7 +44,11 @@ class UserRepository(IUserRepository):
         )
         group_name = ROLE_TO_PERMISSION_GROUP.get(bean.role)
         if group_name:
-            group = Group.objects.get(name=group_name)
+            # get_or_create : le groupe de permission est créé au besoin pour
+            # rester idempotent sur une base neuve (ex. createadmin juste après
+            # migrate, avant initdb). Évite le « Group matching query does not
+            # exist » qui bloquait la création du premier compte.
+            group, _ = Group.objects.get_or_create(name=group_name)
             user.groups.set([group])
 
         logger.debug(
@@ -102,7 +106,8 @@ class UserRepository(IUserRepository):
         if old_role != bean.role:
             group_name = ROLE_TO_PERMISSION_GROUP.get(bean.role)
             if group_name:
-                group = Group.objects.get(name=group_name)
+                # get_or_create : idempotent sur une base neuve (cf. create()).
+                group, _ = Group.objects.get_or_create(name=group_name)
                 user.groups.set([group])
             logger.debug(
                 "Role modifie pour %s: %s -> %s",

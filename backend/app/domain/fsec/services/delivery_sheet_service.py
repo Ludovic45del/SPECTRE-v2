@@ -122,9 +122,23 @@ def _media_image_data_uri(relative_url: Optional[str]) -> Optional[str]:
 
 
 def _render_pdf(context: dict) -> bytes:
-    """Rend le template + génère le PDF via WeasyPrint."""
-    # Import local pour éviter le coût de chargement WeasyPrint au démarrage Django.
-    from weasyprint import HTML
+    """Rend le template + génère le PDF via WeasyPrint.
+
+    Import local + protégé : WeasyPrint (et ses dépendances système cairo /
+    pango / gdk-pixbuf) est **optionnel**. Il n'est pas embarqué dans le
+    déploiement air-gap SQLite par défaut. Si la fonctionnalité « fiche de
+    livraison PDF » est utilisée sans WeasyPrint installé, on lève une erreur
+    explicite et actionnable plutôt qu'un ImportError brut.
+    """
+    try:
+        from weasyprint import HTML
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "La génération PDF des fiches de livraison nécessite WeasyPrint, "
+            "non installé dans ce déploiement. Installez `weasyprint` et ses "
+            "dépendances système (cairo, pango, gdk-pixbuf, libffi) pour "
+            "activer cette fonctionnalité."
+        ) from exc
 
     html = render_to_string(DELIVERY_SHEET_TEMPLATE, context)
     return HTML(string=html).write_pdf()

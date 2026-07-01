@@ -15,6 +15,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # override=False : les vraies variables d'environnement ont priorité (utile en prod).
 load_dotenv(BASE_DIR / ".env", override=False)
 
+
+def _env_bool(name: str, default: str = "False") -> bool:
+    """Parse une variable d'environnement booléenne de façon stricte.
+
+    Accepte 1/true/yes/on (et 0/false/no/off/vide), insensible à la casse et
+    aux espaces. Toute autre valeur (faute de frappe : « Tru », « oui »…) lève
+    une ValueError au démarrage plutôt que d'être interprétée silencieusement à
+    False — on évite ainsi un basculement de mode silencieux en production
+    (ex. USE_SQLITE mal orthographié qui retomberait sur PostgreSQL).
+    """
+    raw = os.environ.get(name, default)
+    value = raw.strip().lower()
+    if value in ("1", "true", "yes", "on"):
+        return True
+    if value in ("0", "false", "no", "off", ""):
+        return False
+    raise ValueError(
+        f"La variable d'environnement {name}={raw!r} n'est pas un booléen valide. "
+        f"Utilisez True ou False (ou 1/0)."
+    )
+
+
 # SECURITY: SECRET_KEY must be set in environment (no fallback in production)
 # For development, set DJANGO_SECRET_KEY in your .env file
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
@@ -97,35 +119,58 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database - PostgreSQL uniquement, configuration via env vars (cf. .env.example).
-# ATOMIC_REQUESTS wraps every HTTP request in a database transaction, so a mutation
-# that fails mid-way through a service touching multiple repositories rolls back
-# cleanly instead of leaving the DB in a partial state.
-_db_name = os.environ.get("DB_NAME")
-if not _db_name:
-    raise ValueError(
-        "DB_NAME environment variable is required. "
-        "Configure PostgreSQL via backend/.env (cf. .env.example)."
-    )
+# Database — deux modes sélectionnés par USE_SQLITE :
+#   * USE_SQLITE=True  → SQLite. Cible du déploiement air-gap (RHEL 9 CEA) et du
+#     dev sans serveur PostgreSQL. Aucun driver PostgreSQL (psycopg2) n'est
+#     requis ni importé dans ce mode : le bloc n'ouvre jamais de connexion PG.
+#   * USE_SQLITE=False (défaut) → PostgreSQL, configuré via les variables DB_*.
+#
+# ATOMIC_REQUESTS enveloppe chaque requête HTTP dans une transaction : une
+# mutation qui échoue au milieu d'un service touchant plusieurs repositories est
+# annulée proprement au lieu de laisser la base dans un état partiel.
+USE_SQLITE = _env_bool("USE_SQLITE", "False")
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": _db_name,
-        "USER": os.environ.get("DB_USER", ""),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
-        "ATOMIC_REQUESTS": os.environ.get("DB_ATOMIC_REQUESTS", "True").lower()
-        == "true",
-        # Persistent connections : évite de recréer une connexion PG à chaque requête
-        # (≈ 5-20 ms gagnés par requête en prod). 0 = comportement legacy.
-        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
-        # Vérifie la connexion réutilisée (Django 4.2+). Indispensable avec
-        # CONN_MAX_AGE > 0 pour tolérer les coupures réseau/redémarrages PG.
-        "CONN_HEALTH_CHECKS": True,
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            # Chemin du fichier SQLite (absolu recommandé en prod). Par défaut
+            # backend/db.sqlite3.
+            "NAME": os.environ.get("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
+            "ATOMIC_REQUESTS": _env_bool("DB_ATOMIC_REQUESTS", "True"),
+            # busy timeout : attend jusqu'à 20 s la libération d'un verrou avant
+            # « database is locked ». Utile avec plusieurs workers gunicorn qui
+            # écrivent en concurrence sur le même fichier SQLite.
+            "OPTIONS": {"timeout": 20},
+        }
     }
-}
+else:
+    # PostgreSQL — DB_NAME obligatoire (cf. .env.example).
+    _db_name = os.environ.get("DB_NAME")
+    if not _db_name:
+        raise ValueError(
+            "DB_NAME environment variable is required when USE_SQLITE is not set. "
+            "Configure PostgreSQL via backend/.env (cf. .env.example), "
+            "or set USE_SQLITE=True for a SQLite deployment."
+        )
+
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),
+            "NAME": _db_name,
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+            "ATOMIC_REQUESTS": _env_bool("DB_ATOMIC_REQUESTS", "True"),
+            # Persistent connections : évite de recréer une connexion PG à chaque
+            # requête (≈ 5-20 ms gagnés par requête en prod). 0 = legacy.
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
+            # Vérifie la connexion réutilisée (Django 4.2+). Indispensable avec
+            # CONN_MAX_AGE > 0 pour tolérer les coupures réseau/redémarrages PG.
+            "CONN_HEALTH_CHECKS": True,
+        }
+    }
 
 # Cache : LocMemCache par défaut (mono-process). En multi-worker (gunicorn -w N),
 # basculer sur Redis via CACHE_BACKEND=django.core.cache.backends.redis.RedisCache
