@@ -393,6 +393,37 @@ class TestUserAdminUpdate:
         )
         assert response.status_code == 400
 
+    def test_update_user_accepts_blank_optional_fields(
+        self, admin_client, existing_user
+    ):
+        # Le front envoie TOUJOURS les 7 champs, y compris "" pour les champs
+        # profil non renseignés (laboratoire/service/numero/bureau). Changer le
+        # rôle d'un tel utilisateur ne doit pas être rejeté (400 "may not be
+        # blank"). Cohérent avec CreateUserSerializer / UpdateSelfProfileSerializer.
+        _, profile = existing_user
+        payload = {
+            "first_name": "Existant",
+            "last_name": "User",
+            "role": "assembleur",
+            "laboratoire": "",
+            "service": "",
+            "numero": "",
+            "bureau": "",
+        }
+        response = admin_client.put(
+            f"/api/v1/users/{profile.uuid}/",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["role"] == "assembleur"
+        assert data["laboratoire"] == ""
+        assert data["service"] == ""
+        assert data["numero"] == ""
+        assert data["bureau"] == ""
+
 
 # ============================================================================
 # TOGGLE ACTIVE ENDPOINT

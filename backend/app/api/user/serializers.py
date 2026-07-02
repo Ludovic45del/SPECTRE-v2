@@ -47,13 +47,23 @@ class CreateUserSerializer(serializers.Serializer):
 
 
 class UpdateUserSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
+    # `allow_blank=True` : le front renvoie systématiquement les 7 champs, y
+    # compris "" pour ceux non renseignés. Sans cela, changer le rôle d'un
+    # membre au profil incomplet est rejeté (400 "This field may not be blank.").
+    #
+    # Pas de `default=""` ici (contrairement à Create/SelfProfile) : on veut
+    # garder la sémantique d'update partiel du repository, qui préserve la
+    # valeur existante quand le champ est ABSENT (None) et ne l'écrase qu'avec
+    # une chaîne explicitement fournie.
+    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=[(r, r) for r in ALL_SPECTRE_ROLES])
-    laboratoire = serializers.CharField(max_length=100, required=False)
-    service = serializers.CharField(max_length=100, required=False)
-    numero = serializers.CharField(max_length=30, required=False)
-    bureau = serializers.CharField(max_length=50, required=False)
+    laboratoire = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
+    service = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    numero = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    bureau = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
 
 class UpdateSelfProfileSerializer(serializers.Serializer):
