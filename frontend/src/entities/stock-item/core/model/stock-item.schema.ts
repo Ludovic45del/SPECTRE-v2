@@ -111,7 +111,12 @@ const CONSUMABLE_CATEGORY_VALUES = CATEGORIES_BY_KIND[ITEM_KIND.CONSUMABLE];
  */
 const elementFormObject = z.object({
     kind: z.literal(ITEM_KIND.ELEMENT),
-    name: z.string().max(200),
+    // `.optional().default('')` : en mode paquet, le champ Nom est démonté du
+    // formulaire (remplacé par Quantité) et react-hook-form retire sa valeur au
+    // submit → `undefined`. Un `z.string()` strict rejetterait alors avec une
+    // erreur invisible (champ non rendu) qui bloque silencieusement la création.
+    // La contrainte « non vide » hors mode paquet reste portée par le superRefine.
+    name: z.string().max(200).optional().default(''),
     // Nombre de pièces à créer en mode paquet (structuration uniquement).
     batchQuantity: z
         .number({ invalid_type_error: 'La quantité doit être un entier' })
