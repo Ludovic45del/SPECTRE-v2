@@ -241,24 +241,26 @@ def toggle_active(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
     return result
 
 
-def reset_password(repository: IUserRepository, uuid: uuid_lib.UUID) -> UserBean:
+def reset_password(
+    repository: IUserRepository, uuid: uuid_lib.UUID
+) -> tuple[UserBean, str]:
     """Reinitialise le mot de passe (action admin).
 
-    Invalide l'ancien mot de passe en posant un secret aléatoire jamais
-    retourné. Le nouvel accès se fait via le lien d'activation émis par le
-    controller (cf `app.core.password_activation`).
+    Genere un mot de passe temporaire qui remplace immediatement l'ancien.
+    L'admin le communique a l'utilisateur, qui devra le changer a sa premiere
+    connexion (force_password_change pose par le repository).
 
     Returns:
-        UserBean de l'utilisateur cible.
+        tuple (UserBean cible, mot de passe temporaire en clair a communiquer).
     """
     existing = repository.get_by_uuid(uuid)
     if not existing:
         raise NotFoundException("USER", str(uuid))
 
-    throwaway_password = _generate_temporary_password(length=32)
-    repository.reset_password(uuid, throwaway_password)
+    new_password = _generate_temporary_password()
+    repository.reset_password(uuid, new_password)
     logger.debug("Mot de passe reinitialise pour: %s", existing.username)
-    return existing
+    return existing, new_password
 
 
 def change_password(

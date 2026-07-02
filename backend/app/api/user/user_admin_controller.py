@@ -7,32 +7,12 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from app.api.user.serializers import CreateUserSerializer, UpdateUserSerializer
-from app.core.password_activation import build_activation_url, issue_activation_token
 from app.core.permissions import IsAdmin
 from app.domain.user.services import user_service
 from app.mapper.user.user_mapper import user_mapper_api_to_bean, user_mapper_bean_to_api
-from app.repository.user.models.user_profile_entity import UserProfileEntity
 from app.repository.user.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
-
-
-def _activation_payload(request, profile: UserProfileEntity) -> dict:
-    """Émet un jeton d'activation, loggue le lien, retourne le payload API.
-
-    Le lien est loggué côté serveur (canal de secours si SMTP indisponible) et
-    retourné à l'admin pour transmission hors-bande (mail/SMS/chat). Il est
-    single-use + TTL 24h : beaucoup moins risqué qu'un mot de passe clair.
-    """
-    token = issue_activation_token(profile)
-    base_url = request.build_absolute_uri("/").rstrip("/")
-    url = build_activation_url(token, base_url=base_url)
-    logger.info(
-        "Lien d'activation émis pour %s: %s (TTL 24h, single-use)",
-        profile.user.username,
-        url,
-    )
-    return {"activation_url": url, "activation_token_ttl_hours": 24}
 
 
 class UserAdminController(viewsets.ViewSet):
@@ -72,13 +52,18 @@ class UserAdminController(viewsets.ViewSet):
         return JsonResponse(user_mapper_bean_to_api(bean))
 
     def create(self, request):
-        """POST /api/v1/users/ — retourne un lien d'activation (pas de mot de passe en clair)."""
+        """POST /api/v1/users/ — retourne le mot de passe temporaire a communiquer.
+
+        Le mot de passe (fourni par l'admin ou genere aleatoirement) est renvoye
+        une seule fois, avec Cache-Control: no-store. L'utilisateur devra le
+        changer a sa premiere connexion (force_password_change).
+        """
         serializer = CreateUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         bean = user_mapper_api_to_bean(serializer.validated_data)
         password = serializer.validated_data.get("password")
-        created_bean, _ = user_service.create_user(
+        created_bean, generated_password = user_service.create_user(
             self.repository,
             bean,
             password=password,
@@ -91,11 +76,8 @@ class UserAdminController(viewsets.ViewSet):
             created_bean.role,
         )
 
-        profile = UserProfileEntity.objects.select_related("user").get(
-            uuid=created_bean.uuid
-        )
         response_data = user_mapper_bean_to_api(created_bean)
-        response_data.update(_activation_payload(request, profile))
+        response_data["generated_password"] = generated_password
         response = JsonResponse(response_data, status=201)
         response["Cache-Control"] = "no-store"
         return response
@@ -131,8 +113,15 @@ class UserAdminController(viewsets.ViewSet):
 
     @action(detail=True, methods=["post"], url_path="reset-password")
     def reset_password(self, request, uuid: str = None):
-        """POST /api/v1/users/{uuid}/reset-password/ — retourne un lien d'activation."""
-        target_bean = user_service.reset_password(self.repository, uuid)
+        """POST /api/v1/users/{uuid}/reset-password/ — retourne le mot de passe temporaire.
+
+        L'ancien mot de passe est immediatement invalide ; le nouveau, genere
+        aleatoirement, est renvoye une seule fois (Cache-Control: no-store) et
+        devra etre change a la premiere connexion (force_password_change).
+        """
+        target_bean, generated_password = user_service.reset_password(
+            self.repository, uuid
+        )
 
         logger.info(
             "Admin %s a reinitialise le mot de passe de %s",
@@ -140,14 +129,11 @@ class UserAdminController(viewsets.ViewSet):
             target_bean.username,
         )
 
-        profile = UserProfileEntity.objects.select_related("user").get(
-            uuid=target_bean.uuid
-        )
         response_data = {
-            "message": "Lien d'activation émis avec succès",
+            "message": "Mot de passe temporaire genere avec succes",
             "username": target_bean.username,
+            "generated_password": generated_password,
         }
-        response_data.update(_activation_payload(request, profile))
         response = JsonResponse(response_data)
         response["Cache-Control"] = "no-store"
         return response

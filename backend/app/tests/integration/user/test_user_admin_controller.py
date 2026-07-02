@@ -199,13 +199,15 @@ class TestUserAdminCreate:
         assert data["username"] == "nouveau_user"
         assert data["role"] == "iec"
         assert data["permission_group"] == "operateur"
-        # Fix HAUT sécurité : plus de mot de passe en clair dans la réponse HTTP.
-        assert "temporary_password" not in data
-        assert "password" not in data
-        assert "activation_url" in data
-        assert "/auth/set-initial-password?token=" in data["activation_url"]
-        assert data["activation_token_ttl_hours"] == 24
+        # Mot de passe temporaire généré, renvoyé une seule fois (no-store),
+        # à communiquer au nouvel utilisateur.
+        assert "activation_url" not in data
+        assert len(data["generated_password"]) >= 12
         assert response["Cache-Control"] == "no-store"
+
+        # L'utilisateur peut se connecter avec ce mot de passe.
+        user = User.objects.get(username="nouveau_user")
+        assert user.check_password(data["generated_password"])
 
     def test_create_user_with_explicit_password(
         self, admin_client, create_user_payload
@@ -219,9 +221,8 @@ class TestUserAdminCreate:
 
         assert response.status_code == 201
         data = response.json()
-        # Même avec un mot de passe explicite, on ne le renvoie pas.
-        assert "temporary_password" not in data
-        assert "password" not in data
+        # Le mot de passe effectif (celui fourni) est renvoyé pour affichage.
+        assert data["generated_password"] == "MonMotDePasse123!"
 
     def test_create_user_with_blank_optional_fields(self, admin_client):
         # Champs optionnels vides ou absents : doivent être acceptés (allow_blank).
@@ -246,7 +247,7 @@ class TestUserAdminCreate:
         assert data["username"] == "user_minimal"
         assert data["laboratoire"] == ""
         assert data["bureau"] == ""
-        assert "activation_url" in data
+        assert "generated_password" in data
 
     def test_create_user_duplicate_username(
         self, admin_client, create_user_payload, existing_user
@@ -472,19 +473,20 @@ class TestUserAdminResetPassword:
     """Tests endpoint POST /api/v1/users/{uuid}/reset-password/"""
 
     def test_reset_password_success(self, admin_client, existing_user):
-        _, profile = existing_user
+        user, profile = existing_user
         response = admin_client.post(f"/api/v1/users/{profile.uuid}/reset-password/")
 
         assert response.status_code == 200
         data = response.json()
-        # Fix HAUT sécurité : plus de mot de passe en clair dans la réponse HTTP.
-        assert "temporary_password" not in data
-        assert "password" not in data
         assert data["username"] == "user_existant"
-        assert "activation_url" in data
-        assert "/auth/set-initial-password?token=" in data["activation_url"]
-        assert data["activation_token_ttl_hours"] == 24
+        # Mot de passe temporaire renvoyé une seule fois (no-store) ; l'ancien
+        # est immédiatement invalidé.
+        assert "activation_url" not in data
+        assert len(data["generated_password"]) >= 12
         assert response["Cache-Control"] == "no-store"
+
+        user.refresh_from_db()
+        assert user.check_password(data["generated_password"])
 
     def test_reset_password_sets_force_change_flag(self, admin_client, existing_user):
         _, profile = existing_user

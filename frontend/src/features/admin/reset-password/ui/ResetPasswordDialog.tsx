@@ -1,7 +1,7 @@
 /**
  * ResetPasswordDialog - Dialog de reinitialisation du mot de passe
- * Retourne un lien d'activation signé (TTL 24h, single-use) plutôt qu'un mot
- * de passe en clair — fix audit sécurité.
+ * Génère un mot de passe temporaire (affiché une seule fois) que l'admin
+ * communique à l'utilisateur ; changement obligatoire à la première connexion.
  * @module features/admin/reset-password
  */
 
@@ -55,9 +55,9 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
     }, [user, submitReset]);
 
     const handleCopy = useCallback(() => {
-        if (result?.activationUrl) {
-            navigator.clipboard.writeText(result.activationUrl);
-            showNotification("Lien d'activation copié dans le presse-papier", 'info');
+        if (result?.generatedPassword) {
+            navigator.clipboard.writeText(result.generatedPassword);
+            showNotification('Mot de passe copié dans le presse-papier', 'info');
         }
     }, [result, showNotification]);
 
@@ -76,7 +76,7 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
                     }}
                 >
                     <Typography variant="h6" fontWeight={700} fontSize="0.95rem">
-                        Lien d&apos;activation émis
+                        Mot de passe réinitialisé
                     </Typography>
                     <IconButton onClick={handleClose} size="small" aria-label="Fermer">
                         <CloseIcon />
@@ -85,13 +85,12 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
                 <DialogContent sx={{ p: 3 }}>
                     <Stack spacing={2.5}>
                         <Alert severity="warning">
-                            Communiquez ce lien <strong>hors-bande</strong> à {user?.username}. Il expire dans{' '}
-                            <strong>{result.activationTokenTtlHours}h</strong> et ne pourra être utilisé qu&apos;
-                            <strong>une seule fois</strong>.
+                            Communiquez ce mot de passe temporaire <strong>hors-bande</strong> à {user?.username}. Il ne
+                            sera <strong>plus jamais affiché</strong> : copiez-le avant de fermer cette fenêtre.
                         </Alert>
                         <TextField
-                            label="Lien d'activation (usage unique)"
-                            value={result.activationUrl}
+                            label="Mot de passe temporaire"
+                            value={result.generatedPassword}
                             slotProps={{
                                 input: {
                                     readOnly: true,
@@ -107,8 +106,8 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
                             fullWidth
                         />
                         <Typography variant="body2" color="text.secondary">
-                            L&apos;ancien mot de passe est d&apos;ores et déjà invalidé. L&apos;utilisateur définit son
-                            nouveau mot de passe en ouvrant ce lien.
+                            L&apos;ancien mot de passe est d&apos;ores et déjà invalidé. L&apos;utilisateur se connecte
+                            avec ce mot de passe temporaire et devra le modifier lors de sa première connexion.
                         </Typography>
                     </Stack>
                 </DialogContent>
@@ -144,8 +143,9 @@ function ResetPasswordDialogComponent({ user, open, onClose }: ResetPasswordDial
             </Box>
             <DialogContent sx={{ p: 3 }}>
                 <DialogContentText>
-                    Réinitialiser le mot de passe de <strong>{user?.username}</strong> ? Un lien d&apos;activation signé
-                    (usage unique, TTL 24h) sera généré et l&apos;ancien mot de passe sera immédiatement invalidé.
+                    Réinitialiser le mot de passe de <strong>{user?.username}</strong> ? Un mot de passe temporaire
+                    sera généré et l&apos;ancien sera immédiatement invalidé. L&apos;utilisateur devra le modifier lors
+                    de sa première connexion.
                 </DialogContentText>
             </DialogContent>
             <Divider />

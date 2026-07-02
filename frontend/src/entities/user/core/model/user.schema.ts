@@ -127,38 +127,37 @@ export type User = z.infer<typeof UserSchema>;
 export const UserListSchema = z.array(UserSchema);
 
 /**
- * Schema de reponse creation (inclut le lien d'activation à usage unique).
- * Le mot de passe en clair n'est plus retourné par l'API (fix audit sécurité).
+ * Schema de reponse creation — inclut le mot de passe temporaire (fourni par
+ * l'admin ou généré côté serveur), renvoyé une seule fois pour être communiqué
+ * au nouvel utilisateur. Celui-ci devra le changer à sa première connexion
+ * (force_password_change).
  */
 const UserCreatedApiSchema = UserApiSchema.extend({
-    activation_url: z.string(),
-    activation_token_ttl_hours: z.number().int().positive(),
+    generated_password: z.string(),
 });
 
 export const UserCreatedSchema = UserCreatedApiSchema.transform((api) => ({
     ...mapUserApiToUser(api),
-    activationUrl: api.activation_url,
-    activationTokenTtlHours: api.activation_token_ttl_hours,
+    generatedPassword: api.generated_password,
 }));
 
 export type UserCreated = z.infer<typeof UserCreatedSchema>;
 
 /**
- * Schema reponse reset password — renvoie un lien d'activation signé single-use,
- * plus aucun mot de passe en clair (fix audit sécurité).
+ * Schema reponse reset password — renvoie le mot de passe temporaire généré
+ * (l'ancien est immédiatement invalidé, changement obligatoire à la première
+ * connexion).
  */
 export const PasswordResetResponseSchema = z
     .object({
         message: z.string(),
         username: z.string(),
-        activation_url: z.string(),
-        activation_token_ttl_hours: z.number().int().positive(),
+        generated_password: z.string(),
     })
     .transform((api) => ({
         message: api.message,
         username: api.username,
-        activationUrl: api.activation_url,
-        activationTokenTtlHours: api.activation_token_ttl_hours,
+        generatedPassword: api.generated_password,
     }));
 
 export type PasswordResetResponse = z.infer<typeof PasswordResetResponseSchema>;
@@ -196,7 +195,7 @@ export const UserCreateFormSchema = z.object({
     service: z.string().optional().default(''),
     numero: z.string().optional().default(''),
     bureau: z.string().optional().default(''),
-    // Champ vide = pas de mot de passe (lien d'activation envoyé). Sinon min 8 caractères.
+    // Champ vide = mot de passe temporaire généré côté serveur. Sinon min 8 caractères.
     password: z.preprocess(
         (val) => (val === '' ? undefined : val),
         z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),

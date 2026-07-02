@@ -550,26 +550,27 @@ class TestResetPassword:
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
 
-        bean = user_service.reset_password(mock_user_repository, uid)
+        bean, new_password = user_service.reset_password(mock_user_repository, uid)
 
         assert bean is sample_user_bean
+        assert isinstance(new_password, str)
         mock_user_repository.get_by_uuid.assert_called_once_with(uid)
         mock_user_repository.reset_password.assert_called_once()
 
-    def test_reset_password_invalidates_current_password(
+    def test_reset_password_returns_password_set_in_repository(
         self, mock_user_repository, sample_user_bean
     ):
-        """Le mot de passe courant doit être remplacé par un secret jetable."""
+        """Le mot de passe retourné est bien celui posé en base (communicable)."""
         uid = uuid.uuid4()
         mock_user_repository.get_by_uuid.return_value = sample_user_bean
 
-        user_service.reset_password(mock_user_repository, uid)
+        _, new_password = user_service.reset_password(mock_user_repository, uid)
 
         args, _ = mock_user_repository.reset_password.call_args
-        called_uid, throwaway_password = args
+        called_uid, stored_password = args
         assert called_uid == uid
-        assert isinstance(throwaway_password, str)
-        assert len(throwaway_password) >= 16
+        assert stored_password == new_password
+        assert len(new_password) >= 12
 
     def test_reset_password_user_not_found(self, mock_user_repository):
         uid = uuid.uuid4()
