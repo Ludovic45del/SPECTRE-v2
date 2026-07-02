@@ -21,7 +21,11 @@ export const useCreateFsecStore = create<CreateFsecState>((set) => ({
     isOpen: false,
     preselectedCampaignId: null,
 
-    open: (campaignId?: string) => set({ isOpen: true, preselectedCampaignId: campaignId ?? null }),
+    // Guard against a non-string arg (e.g. a click MouseEvent passed by mistake
+    // when the action is used directly as an onClick handler): only a real
+    // campaign id should preselect/lock the campaign field in the modal.
+    open: (campaignId?: string) =>
+        set({ isOpen: true, preselectedCampaignId: typeof campaignId === 'string' ? campaignId : null }),
     close: () => set({ isOpen: false }),
     reset: () => set({ isOpen: false, preselectedCampaignId: null }),
 }));

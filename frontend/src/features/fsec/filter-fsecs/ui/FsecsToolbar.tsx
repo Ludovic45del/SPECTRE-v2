@@ -28,7 +28,11 @@ const extractYears = (campaigns: CampaignWithRelations[] | undefined, installati
 export function FsecsToolbar() {
     const theme = useTheme();
     const { filters, setFilter, resetFilters } = useFilterFsecsStore();
-    const openCreateFsecModal = useCreateFsecStore((state) => state.open);
+    const openCreateFsecModalAction = useCreateFsecStore((state) => state.open);
+    // Wrap the store action so the "Ajouter" button's click MouseEvent isn't
+    // forwarded as `campaignId`. Passing it would set `preselectedCampaignId`
+    // to a truthy object and disable the campaign selector in the create modal.
+    const openCreateFsecModal = useCallback(() => openCreateFsecModalAction(), [openCreateFsecModalAction]);
     const { data: campaigns } = useCampaigns();
 
     const years = useMemo(() => extractYears(campaigns, filters.installation), [campaigns, filters.installation]);
