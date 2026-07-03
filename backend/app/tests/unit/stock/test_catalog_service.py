@@ -188,9 +188,7 @@ class TestCreateItem:
         assert exc.value.field == "structuration_type"
 
     @pytest.mark.unit
-    def test_create_non_structuration_clears_type(
-        self, mock_stock_catalog_repository
-    ):
+    def test_create_non_structuration_clears_type(self, mock_stock_catalog_repository):
         # Type fourni hors rubrique structuration → remis à None silencieusement.
         bean = StockCatalogItemBean(
             kind=ITEM_KIND_ELEMENT,
@@ -433,7 +431,9 @@ class TestCreateStructurationBatch:
         )
         assert len(result) == 3
         mock_stock_catalog_repository.create_structuration_batch.assert_called_once()
-        template, quantity = mock_stock_catalog_repository.create_structuration_batch.call_args[0]
+        template, quantity = (
+            mock_stock_catalog_repository.create_structuration_batch.call_args[0]
+        )
         assert quantity == 3
         assert template.kind == ITEM_KIND_ELEMENT
         assert template.category == CATEGORY_STRUCTURATION
@@ -451,7 +451,9 @@ class TestCreateStructurationBatch:
             quantity=1,
             fsec_name=None,
         )
-        template = mock_stock_catalog_repository.create_structuration_batch.call_args[0][0]
+        template = mock_stock_catalog_repository.create_structuration_batch.call_args[
+            0
+        ][0]
         assert template.fsec_name is None
 
     @pytest.mark.unit
@@ -465,15 +467,15 @@ class TestCreateStructurationBatch:
             materiaux_mat="Cu/Au",
             fournisseur="CEA Valduc",
         )
-        template = mock_stock_catalog_repository.create_structuration_batch.call_args[0][0]
+        template = mock_stock_catalog_repository.create_structuration_batch.call_args[
+            0
+        ][0]
         assert template.materiaux_mat == "Cu/Au"
         assert template.fournisseur == "CEA Valduc"
 
     @pytest.mark.unit
     @pytest.mark.parametrize("quantity", [0, -1, STRUCTURATION_BATCH_MAX + 1])
-    def test_rejects_invalid_quantity(
-        self, quantity, mock_stock_catalog_repository
-    ):
+    def test_rejects_invalid_quantity(self, quantity, mock_stock_catalog_repository):
         self._setup(mock_stock_catalog_repository)
         with pytest.raises(ValidationException) as exc:
             create_structuration_batch(

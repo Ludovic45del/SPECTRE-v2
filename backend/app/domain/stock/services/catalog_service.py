@@ -212,7 +212,11 @@ def create_structuration_batch(
 
     La FSEC reste optionnelle. Voir CDC §8.1 (mode paquet).
     """
-    if not isinstance(quantity, int) or quantity < 1 or quantity > STRUCTURATION_BATCH_MAX:
+    if (
+        not isinstance(quantity, int)
+        or quantity < 1
+        or quantity > STRUCTURATION_BATCH_MAX
+    ):
         raise ValidationException(
             "quantity",
             f"La quantité doit être un entier entre 1 et {STRUCTURATION_BATCH_MAX}.",

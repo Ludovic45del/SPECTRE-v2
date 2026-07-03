@@ -152,9 +152,7 @@ class StockCatalogController(PaginatedControllerMixin, ViewSet):
             remarques=data.get("remarques"),
         )
         payload = [stock_catalog_mapper_bean_to_api(b) for b in results]
-        return JsonResponse(
-            payload, safe=False, status=201, encoder=DjangoJSONEncoder
-        )
+        return JsonResponse(payload, safe=False, status=201, encoder=DjangoJSONEncoder)
 
     # ----------------------------------------------------------------- update (PUT)
 

@@ -14,16 +14,16 @@ from app.domain.stock.models.stock_constants import (
     ITEM_KIND_CONSUMABLE,
     ITEM_KIND_ELEMENT,
 )
-
-# Clé de verrou consultatif PostgreSQL sérialisant l'attribution des numéros de
-# série de structuration entre requêtes concurrentes (cf. create_structuration_batch).
-_STRUCTURATION_LOCK_KEY = 481516234299
 from app.mapper.stock.catalog_mapper import (
     stock_catalog_mapper_bean_to_entity,
     stock_catalog_mapper_entity_to_bean,
 )
 from app.repository.stock.models.fsec_assembly_item_entity import FsecAssemblyItemEntity
 from app.repository.stock.models.stock_catalog_entity import StockCatalogItemEntity
+
+# Clé de verrou consultatif PostgreSQL sérialisant l'attribution des numéros de
+# série de structuration entre requêtes concurrentes (cf. create_structuration_batch).
+_STRUCTURATION_LOCK_KEY = 481516234299
 
 
 class StockCatalogRepository(IStockCatalogRepository):

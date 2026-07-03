@@ -33,11 +33,19 @@ def _structuration_template(structuration_type=STRUCTURATION_TYPE_STANDARD):
     )
 
 
-def _make_element(name, *, category=CATEGORY_STRUCTURATION, is_active=True, structuration_type=STRUCTURATION_TYPE_STANDARD):
+def _make_element(
+    name,
+    *,
+    category=CATEGORY_STRUCTURATION,
+    is_active=True,
+    structuration_type=STRUCTURATION_TYPE_STANDARD
+):
     return StockCatalogItemEntity.objects.create(
         kind=ITEM_KIND_ELEMENT,
         category=category,
-        structuration_type=structuration_type if category == CATEGORY_STRUCTURATION else None,
+        structuration_type=(
+            structuration_type if category == CATEGORY_STRUCTURATION else None
+        ),
         name=name,
         installation=INSTALLATION_LMJ,
         status=ELEMENT_STATUS_DISPO,

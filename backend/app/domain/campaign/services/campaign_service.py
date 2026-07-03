@@ -102,9 +102,7 @@ def _maybe_regenerate_fa_identifiers(
     # Import différé : fa_service importe l'interface FSEC, dont le package
     # ré-importe fa_service — un import top-level ici formerait un cycle au
     # chargement. L'appel n'a lieu qu'à l'exécution, tous les modules chargés.
-    from app.domain.fa.services.fa_service import (
-        regenerate_fa_identifiers_for_campaign,
-    )
+    from app.domain.fa.services.fa_service import regenerate_fa_identifiers_for_campaign
 
     regenerate_fa_identifiers_for_campaign(
         fa_repository,
@@ -209,9 +207,7 @@ def update_campaign(
         fa_repository,
         fsec_repository,
         result,
-        context_changed=(
-            bean.name != existing.name or bean.year != existing.year
-        ),
+        context_changed=(bean.name != existing.name or bean.year != existing.year),
     )
     return result
 
