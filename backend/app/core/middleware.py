@@ -18,6 +18,7 @@ from app.core.logging import LogContext, api_logger
 from app.domain.exceptions import (
     ConflictException,
     DomainException,
+    ForbiddenException,
     InvalidDataException,
     NotFoundException,
     ValidationException,
@@ -75,6 +76,7 @@ class ErrorHandlerMiddleware:
         ConflictException: (409, "CONFLICT"),
         ValidationException: (400, "VALIDATION_ERROR"),
         InvalidDataException: (400, "INVALID_DATA"),
+        ForbiddenException: (403, "FORBIDDEN"),
     }
 
     def __init__(self, get_response):

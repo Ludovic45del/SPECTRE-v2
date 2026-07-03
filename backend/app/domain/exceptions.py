@@ -44,3 +44,15 @@ class InvalidDataException(DomainException):
 
     def __init__(self, message: str):
         super().__init__(f"Données invalides: {message}")
+
+
+class ForbiddenException(DomainException):
+    """Exception levée quand l'utilisateur n'a pas le droit d'effectuer l'action.
+
+    À la différence de NotFoundException, la ressource existe et est visible :
+    c'est l'action demandée qui est refusée (ex. action réservée au propriétaire).
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(f"Action non autorisée: {message}")

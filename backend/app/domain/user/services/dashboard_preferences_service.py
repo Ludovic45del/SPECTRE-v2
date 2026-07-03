@@ -16,7 +16,14 @@ from app.domain.user.models.dashboard_preferences_bean import (
 logger = logging.getLogger(__name__)
 
 # Widget IDs autorises
-ALLOWED_WIDGET_IDS = {"kpis", "planning", "activity", "shortcuts", "todos"}
+ALLOWED_WIDGET_IDS = {
+    "kpis",
+    "planning",
+    "activity",
+    "shortcuts",
+    "todos",
+    "sharedTasks",
+}
 
 MAX_SHORTCUTS = 50
 MAX_TODOS = 100
@@ -34,6 +41,7 @@ def get_default_preferences() -> DashboardPreferencesBean:
             LayoutItemBean(i="activity", x=6, y=2, w=6, h=4, min_w=4, min_h=3),
             LayoutItemBean(i="shortcuts", x=0, y=6, w=6, h=3, min_w=4, min_h=2),
             LayoutItemBean(i="todos", x=6, y=6, w=6, h=3, min_w=4, min_h=2),
+            LayoutItemBean(i="sharedTasks", x=0, y=9, w=6, h=4, min_w=4, min_h=3),
         ],
         widgets={wid: {"visible": True} for wid in ALLOWED_WIDGET_IDS},
         shortcuts=[],

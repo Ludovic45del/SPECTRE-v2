@@ -53,6 +53,9 @@ from app.api.stock.catalog_controller import StockCatalogController
 from app.api.stock.fsec_assembly_controller import FsecAssemblyItemController
 from app.api.stock.movement_controller import StockMovementController
 
+# Tasklist Controller
+from app.api.tasklist.task_list_controller import TaskListController
+
 # User Controllers
 from app.api.user.change_password_controller import ChangePasswordController
 from app.api.user.dashboard_preferences_controller import DashboardPreferencesController
@@ -137,6 +140,9 @@ router.register(
 
 # Aggregated Gas Steps route (performance optimization: 6 requests → 1)
 router.register(r"all-gas-steps", AllGasStepsController, basename="all-gas-steps")
+
+# Tasklist route (listes de tâches partagées du widget d'accueil)
+router.register(r"task-lists", TaskListController, basename="task-lists")
 
 # Dashboard route (agrégation légère pour la page d'accueil)
 router.register(r"dashboard", DashboardController, basename="dashboard")

@@ -65,7 +65,8 @@ class TestModuleConstants:
         assert "activity" in ALLOWED_WIDGET_IDS
         assert "shortcuts" in ALLOWED_WIDGET_IDS
         assert "todos" in ALLOWED_WIDGET_IDS
-        assert len(ALLOWED_WIDGET_IDS) == 5
+        assert "sharedTasks" in ALLOWED_WIDGET_IDS
+        assert len(ALLOWED_WIDGET_IDS) == 6
 
     def test_max_shortcuts_value(self):
         assert MAX_SHORTCUTS == 50
@@ -108,9 +109,9 @@ class TestGetDefaultPreferences:
         prefs = get_default_preferences()
         assert isinstance(prefs, DashboardPreferencesBean)
 
-    def test_layout_has_five_items(self):
+    def test_layout_has_six_items(self):
         prefs = get_default_preferences()
-        assert len(prefs.layout) == 5
+        assert len(prefs.layout) == 6
 
     def test_layout_contains_all_widgets(self):
         prefs = get_default_preferences()
