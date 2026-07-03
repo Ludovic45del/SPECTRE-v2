@@ -7,6 +7,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { stockHandlers } from './stock-handlers';
+import { tasklistHandlers } from './tasklist-handlers';
 
 // ============================================================================
 // MOCK DATA FACTORIES
@@ -1240,6 +1241,11 @@ export const handlers = [
     // STOCK HANDLERS (cf. CDC §5)
     // ========================================
     ...stockHandlers,
+
+    // ========================================
+    // TASK LIST HANDLERS (listes partagées)
+    // ========================================
+    ...tasklistHandlers,
 ];
 
 // ============================================================================

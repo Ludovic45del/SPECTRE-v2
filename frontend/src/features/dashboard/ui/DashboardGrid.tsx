@@ -10,6 +10,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Box } from '@mui/material';
 
 import { useDashboardPreferences, type LayoutItem } from '@entities/dashboard-preferences';
+import { SharedTasksWidget } from '@features/task-list';
 import { useDashboardStore } from '../model/dashboard.store';
 import { DashboardWidget } from './DashboardWidget';
 
@@ -25,6 +26,7 @@ const WIDGET_COMPONENTS: Record<string, React.ComponentType> = {
     activity: ActivityWidget,
     shortcuts: ShortcutsWidget,
     todos: TodosWidget,
+    sharedTasks: SharedTasksWidget,
 };
 
 const WidgetSlot = memo(function WidgetSlot({
