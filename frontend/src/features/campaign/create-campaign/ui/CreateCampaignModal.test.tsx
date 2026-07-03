@@ -152,12 +152,9 @@ describe('CreateCampaignModal', () => {
             expect(screen.getByText('Type', { selector: 'label' })).toBeInTheDocument();
             expect(screen.getByText('Installation', { selector: 'label' })).toBeInTheDocument();
 
-            // Date fields - MUI DatePicker may produce multiple elements with the same label
-            const startDateInputs = screen.getAllByLabelText(/date de début/i);
-            expect(startDateInputs.length).toBeGreaterThanOrEqual(1);
-
-            const endDateInputs = screen.getAllByLabelText(/date de fin/i);
-            expect(endDateInputs.length).toBeGreaterThanOrEqual(1);
+            // Dates — sélection de plage via le RangeCalendar partagé
+            expect(screen.getByText(/dates de campagne/i)).toBeInTheDocument();
+            expect(screen.getByRole('grid')).toBeInTheDocument();
 
             // DTRI and Description
             expect(screen.getByLabelText(/n° dtri/i)).toBeInTheDocument();
@@ -664,22 +661,21 @@ describe('CreateCampaignModal', () => {
         });
     });
 
-    describe('Date Pickers', () => {
-        it('should render start date field', () => {
+    describe('Date Range Calendar', () => {
+        it('should render the range calendar', () => {
             openModal();
             renderWithProviders(<CreateCampaignModal />);
 
-            // MUI DatePicker creates multiple elements with the same label
-            const startDateInputs = screen.getAllByLabelText(/date de début/i);
-            expect(startDateInputs.length).toBeGreaterThanOrEqual(1);
+            // RangeCalendar partagé : grille de calendrier (DateCalendar)
+            expect(screen.getByRole('grid')).toBeInTheDocument();
         });
 
-        it('should render end date field', () => {
+        it('should prompt for the start date initially', () => {
             openModal();
             renderWithProviders(<CreateCampaignModal />);
 
-            const endDateInputs = screen.getAllByLabelText(/date de fin/i);
-            expect(endDateInputs.length).toBeGreaterThanOrEqual(1);
+            // Récap texte sous le calendrier (aucune plage sélectionnée)
+            expect(screen.getByText(/cliquez la date de début/i)).toBeInTheDocument();
         });
     });
 
